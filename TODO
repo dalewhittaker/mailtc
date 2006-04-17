@@ -1,0 +1,16 @@
+MAILTC NG (PART 1)!!!!!
+
+1) Major testing
+
+Things to test:
+
+a) test work on docklet.c (make sure no mem leaks), also docklet_clicked() for one POP and one IMAP protocol
+b) final simple test; test with valgrind from start to finish what a new user would do (all possibilities)
+
+
+
+1.0.x (PART 2)
+
+1) Make localisable with gettext
+2) Allow to enable debug at compile time (e.g ./configure --enable-debug)
+3) Make modular (with network plugins)
