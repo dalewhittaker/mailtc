@@ -1,6 +1,5 @@
 NEXT RELEASE
-1) sort svn out, and update it
-2) Make localisable with gettext
+1) Make localisable with gettext
 
 ONE AFTER
 1) Make modular (with network plugins)
