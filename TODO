@@ -1,3 +1,2 @@
 1) Make localisable with gettext
-2) Allow to enable debug at compile time (e.g ./configure --enable-debug)
-3) Make modular (with network plugins)
+2) Make modular (with network plugins)
