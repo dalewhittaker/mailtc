@@ -76,7 +76,7 @@
 #define LINE_LENGTH 80
 
 #define PROGRAM_NAME "mailtc"
-#define PROGRAM_VERSION "0.9.6"
+#define PROGRAM_VERSION "1.0.0"
 #define DETAILS_FILE "details"
 #define CONFIG_FILE "config"
 #define UIDL_FILE "uidlfile"
@@ -110,6 +110,9 @@
 #define CONFIG_MODE 0
 #define DETAILS_MODE 1
 
+/*used for various arrays to store account value*/
+#define MAXINTLEN 10
+
 /*values used for the PID routine*/
 #define PID_APPLOAD 1
 #define PID_APPEXIT 2
@@ -117,7 +120,7 @@
 
 /*values used for the icon status*/
 #define ACTIVE_ICON_NONE -1
-#define ACTIVE_ICON_MULTI -2
+#define ACTIVE_ICON_MULTI -2 
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
@@ -243,6 +246,7 @@ gboolean mail_thread(gpointer data);
 void set_icon_colour(GdkPixbuf *pixbuf, char *colourstring);
 
 /*common.c functions*/
+char *get_current_time(void);
 int run_error_dialog(char *errmsg, ...);
 int error_and_log(char *errmsg, ...);
 int error_and_log_no_exit(char *errmsg, ...);

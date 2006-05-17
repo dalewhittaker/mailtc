@@ -208,7 +208,9 @@ static int login_to_pop_server(int sockfd, mail_details *paccount, char *ssl, ch
 {
 	/*create the string for the username and send it*/
 	char *buf= NULL;
-	char *pop_message = (char*)alloc_mem(strlen(paccount->username)+ strlen("USER \r\n")+ 1, pop_message);
+	char *pop_message= NULL;
+	
+	pop_message= (char*)alloc_mem(strlen(paccount->username)+ strlen("USER \r\n")+ 1, pop_message);
 	sprintf(pop_message,"USER %s\r\n", paccount->username);
 	send_net_string(sockfd, pop_message, ssl);
 	free(pop_message);

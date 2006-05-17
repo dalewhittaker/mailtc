@@ -19,6 +19,31 @@
 
 #include "header.h"
 
+
+/*function to get the date and time*/
+char *get_current_time(void)
+{
+	time_t rawtime;
+	struct tm *timeinfo;
+
+	time(&rawtime);
+	timeinfo= localtime(&rawtime);
+
+	return(asctime(timeinfo));
+}
+
+/*by default, asctime() adds a line feed at the end of the string, so we remove it*/
+static void print_time_string(void)
+{
+	char *ptimestring;
+
+	ptimestring= get_current_time();
+	if(ptimestring[strlen(ptimestring)- 1]== '\n')
+		ptimestring[strlen(ptimestring)- 1]= '\0';
+	
+	fprintf(files.logfile, "%s: ", ptimestring);
+}
+
 /*run an error dialog reporting error*/
 int run_error_dialog(char *errmsg, ...)
 {
@@ -48,7 +73,8 @@ int error_and_log(char *errmsg, ...)
 	/*output to stderr and logfile*/
 	vfprintf(stderr, errmsg, list);
 	va_end(list);
-	
+
+	print_time_string();
 	vfprintf(files.logfile, errmsg, list);
 	
 	fflush(stderr);
@@ -68,6 +94,7 @@ int error_and_log_no_exit(char *errmsg, ...)
 	
 	/*output to stderr and logfile*/
 	vfprintf(stderr, errmsg, list);
+	print_time_string();
 	vfprintf(files.logfile, errmsg, list);
 	
 	va_end(list);

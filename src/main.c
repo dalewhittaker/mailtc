@@ -38,18 +38,6 @@ static int config_dialog_start(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
-/*function to get the date and time*/
-static char * get_current_time(void)
-{
-	time_t rawtime;
-	struct tm * timeinfo;
-
-	time (&rawtime);
-	timeinfo = localtime (&rawtime);
-	
-	return(asctime(timeinfo));
-}
-
 /*function to read from the pid file*/
 static int read_pid_file(int action)
 {
@@ -150,7 +138,7 @@ void term_handler(int signal)
 	if(signal== SIGSEGV)
 		error_and_log(S_MAIN_ERR_SEGFAULT, PROGRAM_NAME);
 	else
-		error_and_log(S_MAIN_ERR_APP_KILLED, PROGRAM_NAME, get_current_time());
+		error_and_log(S_MAIN_ERR_APP_KILLED, PROGRAM_NAME);
 }
 
 /*function to write the initial header to the log file when mailtc starts*/

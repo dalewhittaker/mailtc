@@ -42,7 +42,7 @@ char *get_account_file(char *fullpath, char *filename, int account)
 	/*if there is an account param add it to the filename*/
 	if(account>= 0)
 	{
-		char account_string[4]= "    ";
+		char account_string[MAXINTLEN]= "    ";
 		sprintf(account_string, "%d", account);
 		strcat(fullpath, account_string);
 	}
@@ -135,7 +135,9 @@ mail_details **get_account(unsigned int item)
 mail_details *create_account(mail_details **pfirst)
 {
 	/*allocate memory for new account and add it to the list*/
-	mail_details *pnew= (mail_details *)alloc_mem(sizeof(mail_details), pnew);
+	mail_details *pnew= NULL;
+	
+	pnew= (mail_details *)alloc_mem(sizeof(mail_details), pnew);
 	pnew->id= (*pfirst== NULL)? 0: (*pfirst)->id+ 1;
 	pnew->next= *pfirst;
 	pnew->pfilters= NULL;
@@ -213,7 +215,9 @@ mail_details *read_account(mail_details **pfirst, FILE *pfile, const char *detai
 	char filterstring[PORT_LEN];
 		
 	/*allocate mem for new account and copy data to it*/
-	mail_details *pnew= (mail_details *)alloc_mem(sizeof(mail_details), pnew);
+	mail_details *pnew= NULL;
+	
+	pnew= (mail_details *)alloc_mem(sizeof(mail_details), pnew);
 		
 	/*copy the id (0 if it is first account)*/
 	pnew->id= (*pfirst== NULL)? 0: (*pfirst)->id+ 1;

@@ -11,6 +11,14 @@ sasl_libraries = -lgsasl
 sasl_sources = sasl.c
 endif
 
+mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
+
+if DEBUG
+AM_CFLAGS = $(mtc_cflags) -g -DDEBUG
+else
+AM_CFLAGS = $(mtc_cflags)
+endif
+
 #Here we are defining out libraries
 LDADD = @GTK_LIBS@ $(ssl_libraries) $(sasl_libraries)
 

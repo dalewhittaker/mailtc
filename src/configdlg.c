@@ -686,13 +686,13 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 	/*set the option for multiple accounts*/
 	multi_accounts_checkbox= gtk_check_button_new_with_label(S_DOCKLET_MULTIPLE_ACCOUNTS);
 	multi_tooltip= gtk_tooltips_new();
-	gtk_tooltips_set_tip(GTK_TOOLTIPS(multi_tooltip), multi_accounts_checkbox, S_DOCKLET_MULTI_TOOLTIP, S_DOCKLET_MULTI_TOOLTIP);
+	gtk_tooltips_set_tip(GTK_TOOLTIPS(multi_tooltip), multi_accounts_checkbox, S_CONFIGDLG_MULTI_TOOLTIP, S_CONFIGDLG_MULTI_TOOLTIP);
 	
 	/*setup the mail program info*/
 	mailprog_entry= gtk_entry_new();
 	mailprog_label= gtk_label_new(S_CONFIGDLG_MAILAPP);
 	gtk_misc_set_alignment(GTK_MISC(mailprog_label), 0, 0.5);
-	gtk_entry_set_max_length(GTK_ENTRY(mailprog_entry), NAME_MAX+1);
+	gtk_entry_set_max_length(GTK_ENTRY(mailprog_entry), NAME_MAX+ 1);
 
 	/*setup the icon colour info*/
 	cicon_label= gtk_label_new(S_CONFIGDLG_ICON_COLOUR_MULTIPLE);

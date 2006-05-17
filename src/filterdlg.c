@@ -218,9 +218,10 @@ int run_filter_dialog(mail_details **paccount)
 	int i= -1;
 	gint result= 0, saved= 0;
 	filter_details *pfilter= (*paccount)->pfilters;
+	char *label= NULL;
 		
 	/*create the label*/
-	char *label= alloc_mem(strlen(S_FILTERDLG_LABEL_SELECT) + 5, label);
+	label= alloc_mem(strlen(S_FILTERDLG_LABEL_SELECT) + 5, label);
 	sprintf(label, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
 	filter_label= gtk_label_new(label);
 	free(label);

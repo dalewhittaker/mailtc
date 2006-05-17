@@ -16,7 +16,7 @@ SHELL = /bin/sh
 srcdir = .
 top_srcdir = .
 
-prefix = /usr
+prefix = /usr/local
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
@@ -68,7 +68,7 @@ LTLIB = @LTLIB@
 MAKEINFO = makeinfo
 PACKAGE = mailtc
 PKG_CONFIG = /usr/bin/pkg-config
-VERSION = 0.9.6
+VERSION = 1.0.0
 
 SUBDIRS = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

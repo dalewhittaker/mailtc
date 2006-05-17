@@ -35,8 +35,6 @@
 #define S_DOCKLET_NEW_MESSAGES "%s: %d new message%s%s"
 #define S_DOCKLET_CONNECT_ERR "There was an error connecting to the following servers:\n\n%s\nPlease check the %s log for the error.\n"
 #define S_DOCKLET_MULTIPLE_ACCOUNTS "Read/Display new messages for multiple accounts"
-#define S_DOCKLET_MULTI_TOOLTIP "Enable this option to display the number of new messages for all accounts, rather than for a single account at a time.\n\
-								\nThis option will also read all accounts at once, rather than a single account."
 
 /*main.c strings*/
 #define S_MAIN_INSTANCE_RUNNING "An instance of %s is already running.\n"
@@ -73,6 +71,8 @@
 #define S_CONFIGDLG_MAILAPP "Mail reading program:"
 #define S_CONFIGDLG_LTAB_ACCOUNT "Mail Account"
 #define S_CONFIGDLG_LTAB_PROTOCOL "Protocol"
+#define S_CONFIGDLG_MULTI_TOOLTIP "Enable this option to display the number of new messages for all accounts, rather than for a single account at a time.\n\
+								\nThis option will also read all accounts at once, rather than a single account."
 
 /*filterdlg.c strings*/
 #define S_FILTERDLG_NO_FILTERS "You must enter at least one filter string"
@@ -166,7 +166,7 @@
 #define S_MAIN_ERR_ATEXIT_FUNC "Error cannot set exit function: "
 #define S_MAIN_ERR_CLOSE_LOGFILE "Error closing log file: "
 #define S_MAIN_ERR_OPEN_LOGFILE "Error writing header to log file: "
-#define S_MAIN_ERR_APP_KILLED "%s killed: %s\n"
+#define S_MAIN_ERR_APP_KILLED "%s killed.\n"
 #define S_MAIN_ERR_SEGFAULT "%s encountered a segmentation fault.  Please report this bug\n"
 #define S_MAIN_ERR_CLOSE_PIDFILE "Error closing PID file\n"
 #define S_MAIN_ERR_CANNOT_KILL "Error: cannot kill process: %d\n"

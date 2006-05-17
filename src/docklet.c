@@ -43,20 +43,81 @@ static mail_details** get_active_account(void)
 static int run_mailapp(char *mailapp)
 {
 	GError *spawn_error= NULL;
-	gchar *args[2];
+	char appstr[NAME_MAX* 2];
+	char acc_str[MAXINTLEN];
+	unsigned int num_args= 0, i= 0, retval= 1, acount= 0;
+	mail_details **pcurrent;
+	gchar **args= NULL;
+	char c= 0x0D;
 
-	args[0]= (gchar *)mailapp;
-	args[1]= NULL;
+	memset(appstr, '\0', NAME_MAX+ 1);
 	
+	/*This is very ugly, but i think works*/
+	/*find all '$', which means the arg and replace with the actual arg*/
+	for(i= 0; i< strlen(mailapp); i++)
+	{
+		if(mailapp[i]== '$')
+		{
+			/*if the previous is not '\' convert, otherwise just add the '$'*/
+			if((i== 0)|| ((i> 0)&& (mailapp[i- 1]!= '\\')))
+			{
+				/*it is a valid '$' so now we convert each account with new messages to a value*/
+				acount= 0;
+				pcurrent= &paccounts;
+				while(*pcurrent)
+				{
+					if((*pcurrent)->num_messages> 0)
+					{
+						/*this will add each one as a new arg, if you don't want that, its tough shit*/
+						sprintf(acc_str, "%s%d", (acount)? &c: "", (*pcurrent)->id);
+						if(acount++)
+							num_args++;
+						strcat(appstr, acc_str); 
+					}
+					pcurrent= &(*pcurrent)->next;
+				}
+			}
+			else
+				strcat(appstr, "$");
+		}
+		else if(mailapp[i]== ' ')
+		{
+			/*it is a valid new arg, so count it and convert to 0x0D (non printable char)*/
+			if((i== 0)|| ((i> 0)&& (mailapp[i- 1]!= '\\')&& (mailapp[i- 1]!= ' ')))
+			{
+				num_args++;
+				strcat(appstr, &c);
+			}
+			/*it is a space in filename, so strcat normal*/
+			else
+				strcat(appstr, " ");
+		}
+		/*default is to just add the char*/
+		else if(mailapp[i]!= '\\')
+			strncat(appstr, mailapp+ i, 1);
+	}
+
+	args= (char **)alloc_mem((num_args+ 2)* sizeof(char *), args);
+
+	/*set the pointer to the application and its arguments*/
+	args[0]= strtok(appstr, &c);
+	
+	for(i= 1; i<= num_args; i++)
+		args[i]= strtok(NULL, &c);	
+
+	args[num_args+ 1]= NULL;
+
 	/*Run the mail application and report an error if it does not work?*/
 	if(!g_spawn_async(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &spawn_error))
 	{
 		error_and_log_no_exit("%s\n", spawn_error->message);
 		run_error_dialog(spawn_error->message);
 		if(spawn_error) g_error_free(spawn_error);
-		return 0;
+		retval= 0;
 	}
-	return 1;
+	
+	free(args);
+	return(retval);
 }
 
 /*function to destroy the icon*/
@@ -83,7 +144,7 @@ static void docklet_destroy(void)
 
 }
 
-/*TODO function to read the messages (either all, or just the one)*/
+/*function to read the messages (either all, or just the one)*/
 static void read_messages(mail_details **pcurrent)
 {
 	/*POP or APOP click event*/
@@ -167,7 +228,7 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 	if((event->type== GDK_2BUTTON_PRESS)||((event->type== GDK_BUTTON_PRESS)&&(event->button== 3)))
 	{	
 		mail_details **pcurrent;
-
+		
 		/*run mailapp if left double click*/
 		if(event->type== GDK_2BUTTON_PRESS) 
 			if(!run_mailapp(config.mail_program))
@@ -188,8 +249,7 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 		/*Only mark active account as read*/
 		else
 		{
-			pcurrent= get_active_account();
-			if(pcurrent== NULL)
+			if((pcurrent= get_active_account())== NULL)
 				return;
 			read_messages(pcurrent);
 		}
@@ -446,6 +506,7 @@ gboolean mail_thread(gpointer data)
 			if(err_msg) free(err_msg);
 		}
 		status= get_icon_status();
+			
 		if(status!= prev_status)
 		{
 			/*we always destroy if the statuses are not equal*/
@@ -467,6 +528,23 @@ gboolean mail_thread(gpointer data)
 				docklet_create(*pcurrent);
 				(*pcurrent)->active= 1;
 			}
+		}
+		/*this means that the same is active as the last*/
+		else
+		{
+			/*no docklet exists, this almost certainly means the docklet was clicked*/
+			if((status!= ACTIVE_ICON_NONE)&& (docklet== NULL))
+			{
+				/*if there is an active account, get rid of it*/
+				if((pcurrent= get_active_account())!= NULL)
+					(*pcurrent)->active= 0;
+				
+				/*get/set the account*/
+				pcurrent= get_account(status);
+				docklet_create(*pcurrent);
+				(*pcurrent)->active= 1;
+			}
+
 		}
 
 		/*finally, set the text summary for the accounts*/

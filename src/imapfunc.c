@@ -209,7 +209,9 @@ static char *receive_imap_select_string(int sockfd, unsigned int msgid, char *ss
 	}
 	else
 	{
-		char *tempbuf= alloc_mem(epos- spos, tempbuf);
+		char *tempbuf= NULL;
+		
+		tempbuf= alloc_mem(epos- spos, tempbuf);
 		strncpy(tempbuf, spos+ strlen("UIDVALIDITY "), epos- (spos+ strlen("UIDVALIDITY ")));
 		str_cpy(buf, tempbuf);
 		free(tempbuf);
@@ -237,7 +239,9 @@ static int login_to_imap_server(int sockfd, mail_details *paccount, unsigned int
 #endif /*MTC_USE_SSL*/
 {
 	/*send command to login with username and password and check login was successful*/
-	char *imap_message= (char*)alloc_mem(IMAP_ID_LEN+ strlen(paccount->username)+ strlen("a LOGIN  \r\n")+ strlen(paccount->password)+ 1, imap_message);
+	char *imap_message= NULL;
+	
+	imap_message= (char*)alloc_mem(IMAP_ID_LEN+ strlen(paccount->username)+ strlen("a LOGIN  \r\n")+ strlen(paccount->password)+ 1, imap_message);
 	sprintf(imap_message,"a%.4d LOGIN %s %s\r\n", *msgid, paccount->username, paccount->password);
 	send_net_string(sockfd, imap_message, ssl);
 	free(imap_message);
@@ -485,9 +489,10 @@ static int output_uids_to_file(FILE *infile, FILE *outfile, FILE *outreadfile, c
 	if(infile!= NULL)
 	{
 			
-		char *uid_string= (char *)alloc_mem(strlen(uidvalidity)+ strlen(uid)+ 3, uid_string);
+		char *uid_string= NULL;
 		char line[LINE_LENGTH];
 		
+		uid_string= (char *)alloc_mem(strlen(uidvalidity)+ strlen(uid)+ 3, uid_string);
 		/*position the file pointer back at the beginning*/
 		rewind(infile);
 		
@@ -717,7 +722,9 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, char
 			{
 					
 				/*ok so they have both been found, now we need to repeatedly copy the string*/
-				char *tempbuf= (char *)alloc_mem((endpos- startpos)+ 2, tempbuf);
+				char *tempbuf= NULL;
+				
+				tempbuf= (char *)alloc_mem((endpos- startpos)+ 2, tempbuf);
 				strncpy(tempbuf, startpos, (endpos- startpos)+ 1);
 				tempbuf[(endpos- startpos)+ 1]= '\0';
 
@@ -731,7 +738,8 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, char
 						if(((uidepos= strstr(uidspos+ strlen("UID "), " "))!= NULL)&&
 								((uidepos= strstr(uidspos+ strlen("UID "), " "))!= NULL))
 						{
-							char *uid= (char *)alloc_mem(uidepos- (uidspos+ strlen("UID "))+ 1, uid);
+							char *uid= NULL;
+							uid= (char *)alloc_mem(uidepos- (uidspos+ strlen("UID "))+ 1, uid);
 							strncpy(uid, uidspos+ strlen("UID "), uidepos- (uidspos+ strlen("UID ")));
 							uid[uidepos- (uidspos+ strlen("UID "))]= '\0';
 							

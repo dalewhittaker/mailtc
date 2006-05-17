@@ -285,3 +285,20 @@ Fixed all bugs found when testing the config dialog with valgrind.
 
 0.9.6:
 Fixed two minor bugs found when testing network protocols with valgrind.
+
+0.9.7:
+Fixed problem where docklet was not re-loaded after a right click
+
+0.9.8:
+Added configure option to compile with debugging.
+
+0.9.9:
+Added greater functionality to the app launching string.  It is now possible
+to use the character '$' anywhere in the string, and this will be converted to
+the id of the current account that has been clicked (or -1 for multiple
+accounts).  This way it is now possible to launch a different application
+depending on the account that is clicked.
+
+1.0.0:
+Improved the error reporting routines so that they also report the current
+time. Happy 1.0.0 mailtc!!!
