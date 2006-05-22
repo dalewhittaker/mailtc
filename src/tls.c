@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*Initialise SSL connection*/
 SSL_CTX *initialise_ssl_ctx(SSL_CTX *ctx)

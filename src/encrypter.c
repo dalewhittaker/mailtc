@@ -16,7 +16,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
-#include "header.h"
+#include "core.h"
 
 static unsigned char iv[]= {1, 2, 3, 4, 5, 6, 7, 8}; /*string to hold the encryption key*/
 

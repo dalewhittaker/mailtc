@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 static EggTrayIcon *docklet= NULL; /*the docklet used to add the icon to the sys tray*/ 
 static GtkWidget *box= NULL; /*the box to hold the icon, made static to make new mails smoother*/

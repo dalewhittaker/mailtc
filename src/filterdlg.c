@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*widget variables used for most functions*/
 static GtkWidget *filter_combo1[MAX_FILTER_EXP];

@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*function to connect to mail server*/
 int connect_to_server(int *sockfd, mail_details *paccount)

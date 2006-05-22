@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*widget variables used for most functions*/
 static GtkWidget *accname_entry, *hostname_entry, *port_entry, *username_entry, *password_entry, *mailprog_entry, *dicon_table, *cicon_table, *cicon_label, *config_iconcolour_button;

@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*create CRAM-MD5 string to send to server*/
 char *create_cram_string(Gsasl *ctx, char *username, char *password, char *serverdigest, char *clientdigest)

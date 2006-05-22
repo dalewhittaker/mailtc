@@ -305,3 +305,6 @@ time. Happy 1.0.0 mailtc!!!
 
 1.0.1:
 Mailtc can now be internationalised with gettext.
+
+1.0.2:
+Moved header files to separate include directory.

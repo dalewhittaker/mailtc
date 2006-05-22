@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*this is a function to send a QUIT command to the pop server so that the program can retry to connect later*/
 #ifdef MTC_USE_SSL

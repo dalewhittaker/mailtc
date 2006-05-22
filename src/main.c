@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*function to print mailtc options on command line*/
 static void print_usage_and_exit(void)
@@ -146,13 +146,6 @@ static int init_files(void)
 {
 	char logfilename[NAME_MAX];
 	
-#ifdef ENABLE_NLS
-	setlocale (LC_ALL, "");
-	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
-	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
-	textdomain(GETTEXT_PACKAGE);
-#endif
-
 	paccounts= NULL;
 	
 	/*get the path for the program*/
@@ -221,6 +214,13 @@ int main(int argc, char *argv[])
 	gint sleeptime;
 	gint func_ref;
 	
+#ifdef ENABLE_NLS
+	setlocale (LC_ALL, "");
+	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
+	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+	textdomain(GETTEXT_PACKAGE);
+#endif
+
 	paccounts= NULL;
 	
 	/*cleanup at the end*/

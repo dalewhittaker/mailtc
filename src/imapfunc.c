@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "header.h"
+#include "core.h"
 
 /*function to close the connection if an error has occured*/
 #ifdef MTC_USE_SSL
