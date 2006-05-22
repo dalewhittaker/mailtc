@@ -1,5 +1,14 @@
 NEXT RELEASE
-1) Make localisable with gettext
+1) clear up aclocal warnings
+2) move header files to 'include' directory
+3) fix problem with app launching (/usr/bin/sylpheed has problems, but sylpheed does not, because of the dir)
+
+***TO ADD NEW LANG***
+use msginit -l <lang> in po dir to create po file
+translate the po file
+add the lang to ALL_LINGUAS in configure.ac
+aclocal;autoconf;automake
+./configure;make etc
 
 ONE AFTER
 1) Make modular (with network plugins)

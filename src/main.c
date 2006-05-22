@@ -146,6 +146,13 @@ static int init_files(void)
 {
 	char logfilename[NAME_MAX];
 	
+#ifdef ENABLE_NLS
+	setlocale (LC_ALL, "");
+	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
+	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+	textdomain(GETTEXT_PACKAGE);
+#endif
+
 	paccounts= NULL;
 	
 	/*get the path for the program*/

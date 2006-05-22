@@ -61,15 +61,29 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+CATALOGS = @CATALOGS@
+CATOBJEXT = @CATOBJEXT@
 CC = @CC@
+DATADIRNAME = @DATADIRNAME@
+GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GMOFILES = @GMOFILES@
+GMSGFMT = @GMSGFMT@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 HAVE_LIB = @HAVE_LIB@
+INSTOBJEXT = @INSTOBJEXT@
+INTLLIBS = @INTLLIBS@
 LIB = @LIB@
 LTLIB = @LTLIB@
 MAKEINFO = @MAKEINFO@
+MKINSTALLDIRS = @MKINSTALLDIRS@
 PACKAGE = @PACKAGE@
 PKG_CONFIG = @PKG_CONFIG@
+POFILES = @POFILES@
+POSUB = @POSUB@
+PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
+PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
+USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 
 bin_PROGRAMS = mailtc
@@ -81,8 +95,10 @@ bin_PROGRAMS = mailtc
 @SASL_TRUE@sasl_sources = sasl.c
 
 mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
-@DEBUG_TRUE@AM_CFLAGS = $(mtc_cflags) -g -DDEBUG
-@DEBUG_FALSE@AM_CFLAGS = $(mtc_cflags)
+
+locale_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\"
+@DEBUG_TRUE@AM_CFLAGS = $(mtc_cflags) $(locale_cflags) -g -DDEBUG
+@DEBUG_FALSE@AM_CFLAGS = $(mtc_cflags) $(locale_cflags)
 
 #Here we are defining out libraries
 LDADD = @GTK_LIBS@ $(ssl_libraries) $(sasl_libraries)
@@ -146,7 +162,7 @@ OBJECTS = $(mailtc_OBJECTS)
 all: all-redirect
 .SUFFIXES:
 .SUFFIXES: .S .c .o .s
-$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)

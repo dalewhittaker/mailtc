@@ -13,10 +13,12 @@ endif
 
 mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
+locale_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\"
+
 if DEBUG
-AM_CFLAGS = $(mtc_cflags) -g -DDEBUG
+AM_CFLAGS = $(mtc_cflags) $(locale_cflags) -g -DDEBUG
 else
-AM_CFLAGS = $(mtc_cflags)
+AM_CFLAGS = $(mtc_cflags) $(locale_cflags)
 endif
 
 #Here we are defining out libraries

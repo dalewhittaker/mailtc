@@ -61,16 +61,30 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = 
 host_triplet = @host@
+CATALOGS = 
+CATOBJEXT = .gmo
 CC = gcc
+DATADIRNAME = share
+GETTEXT_PACKAGE = mailtc
+GMOFILES = 
+GMSGFMT = /usr/bin/gmsgfmt
 GTK_CFLAGS = -I/usr/include/gtk-2.0 -I/usr/lib/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include  
 GTK_LIBS = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0  
 HAVE_LIB = @HAVE_LIB@
+INSTOBJEXT = .mo
+INTLLIBS = 
 LIB = @LIB@
 LTLIB = @LTLIB@
 MAKEINFO = makeinfo
+MKINSTALLDIRS = ./mkinstalldirs
 PACKAGE = mailtc
 PKG_CONFIG = /usr/bin/pkg-config
-VERSION = 1.0.0
+POFILES = 
+POSUB = po
+PO_IN_DATADIR_FALSE = 
+PO_IN_DATADIR_TRUE = 
+USE_NLS = yes
+VERSION = 1.0.1
 
 bin_PROGRAMS = mailtc
 
@@ -81,8 +95,10 @@ sasl_libraries = -lgsasl
 sasl_sources = sasl.c
 
 mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
-#AM_CFLAGS = $(mtc_cflags) -g -DDEBUG
-AM_CFLAGS = $(mtc_cflags)
+
+locale_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\"
+#AM_CFLAGS = $(mtc_cflags) $(locale_cflags) -g -DDEBUG
+AM_CFLAGS = $(mtc_cflags) $(locale_cflags)
 
 #Here we are defining out libraries
 LDADD = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0   $(ssl_libraries) $(sasl_libraries)
@@ -100,7 +116,7 @@ CONFIG_CLEAN_FILES =
 PROGRAMS =  $(bin_PROGRAMS)
 
 
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.0.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DMTC_USE_SSL=1 -DMTC_USE_SASL=1  -I. -I$(srcdir) 
+DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.0.1\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 -DMTC_USE_SASL=1  -I. -I$(srcdir) 
 CPPFLAGS = 
 LDFLAGS = 
 LIBS = 
@@ -146,7 +162,7 @@ OBJECTS = $(mailtc_OBJECTS)
 all: all-redirect
 .SUFFIXES:
 .SUFFIXES: .S .c .o .s
-$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)

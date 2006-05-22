@@ -302,3 +302,6 @@ depending on the account that is clicked.
 1.0.0:
 Improved the error reporting routines so that they also report the current
 time. Happy 1.0.0 mailtc!!!
+
+1.0.1:
+Mailtc can now be internationalised with gettext.

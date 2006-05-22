@@ -76,7 +76,7 @@
 #define LINE_LENGTH 80
 
 #define PROGRAM_NAME "mailtc"
-#define PROGRAM_VERSION "1.0.0"
+#define PROGRAM_VERSION "1.0.1"
 #define DETAILS_FILE "details"
 #define CONFIG_FILE "config"
 #define UIDL_FILE "uidlfile"
