@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-19 22:39+0100\n"
+"POT-Creation-Date: 2006-05-23 19:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,12 +26,18 @@ msgstr ""
 #. **************************************************************
 #. **DIALOG STRINGS**
 #. docklet.c strings
-#: src/strings.h:42
+#: include/strings.h:41
 #, c-format
-msgid "%s: %d new message%s%s"
+msgid "%s: %d new message%s"
 msgstr ""
 
-#: src/strings.h:43
+#: include/strings.h:42
+#, c-format
+msgid "%s: %d new messages%s"
+msgstr ""
+
+#. #define S_DOCKLET_NEW_MESSAGES _("%s: %d new message%s%s")
+#: include/strings.h:44
 #, c-format
 msgid ""
 "There was an error connecting to the following servers:\n"
@@ -40,23 +46,23 @@ msgid ""
 "Please check the %s log for the error.\n"
 msgstr ""
 
-#: src/strings.h:44
+#: include/strings.h:45
 msgid "Read/Display new messages for multiple accounts"
 msgstr ""
 
 #. main.c strings
-#: src/strings.h:47
+#: include/strings.h:48
 #, c-format
 msgid "An instance of %s is already running.\n"
 msgstr ""
 
-#: src/strings.h:48
+#: include/strings.h:49
 msgid ""
 "No mail configuration was found.\n"
 "Please enter your mail details.\n"
 msgstr ""
 
-#: src/strings.h:49
+#: include/strings.h:50
 #, c-format
 msgid ""
 "You are running a new version of %s.\n"
@@ -66,122 +72,122 @@ msgid ""
 msgstr ""
 
 #. configdlg.c strings
-#: src/strings.h:53
+#: include/strings.h:54
 msgid "password"
 msgstr ""
 
-#: src/strings.h:54
+#: include/strings.h:55
 msgid "username"
 msgstr ""
 
-#: src/strings.h:55
+#: include/strings.h:56
 msgid "port"
 msgstr ""
 
-#: src/strings.h:56
+#: include/strings.h:57
 msgid "hostname"
 msgstr ""
 
-#: src/strings.h:57
+#: include/strings.h:58
 msgid "account name"
 msgstr ""
 
-#: src/strings.h:58
+#: include/strings.h:59
 #, c-format
 msgid "You must enter a %s.\n"
 msgstr ""
 
-#: src/strings.h:59
+#: include/strings.h:60
 #, c-format
 msgid "Now run %s to check mail."
 msgstr ""
 
-#: src/strings.h:60
+#: include/strings.h:61
 msgid "Select Icon Colour"
 msgstr ""
 
-#: src/strings.h:61
+#: include/strings.h:62
 msgid "Account name:"
 msgstr ""
 
-#: src/strings.h:62
+#: include/strings.h:63
 msgid "Mail server:"
 msgstr ""
 
-#: src/strings.h:63
+#: include/strings.h:64
 msgid "Port:"
 msgstr ""
 
-#: src/strings.h:64
+#: include/strings.h:65
 msgid "Username:"
 msgstr ""
 
-#: src/strings.h:65
+#: include/strings.h:66
 msgid "Password:"
 msgstr ""
 
-#: src/strings.h:66
+#: include/strings.h:67
 msgid "Mail protocol:"
 msgstr ""
 
-#: src/strings.h:67
+#: include/strings.h:68
 msgid "Use mail filters"
 msgstr ""
 
-#: src/strings.h:68
+#: include/strings.h:69
 msgid "Configure filters..."
 msgstr ""
 
-#: src/strings.h:69
+#: include/strings.h:70
 msgid "Icon colour:"
 msgstr ""
 
-#: src/strings.h:70
+#: include/strings.h:71
 msgid "Icon colour (multiple accounts):"
 msgstr ""
 
-#: src/strings.h:71
+#: include/strings.h:72
 msgid "Select icon colour..."
 msgstr ""
 
-#: src/strings.h:72
+#: include/strings.h:73
 msgid "Mail Account Configuration"
 msgstr ""
 
-#: src/strings.h:73
+#: include/strings.h:74
 #, c-format
 msgid "%s configuration"
 msgstr ""
 
-#: src/strings.h:74
+#: include/strings.h:75
 msgid "General"
 msgstr ""
 
-#: src/strings.h:75
+#: include/strings.h:76
 msgid "Mail accounts"
 msgstr ""
 
-#: src/strings.h:76
+#: include/strings.h:77
 msgid "Interval in minutes for mail check: "
 msgstr ""
 
-#: src/strings.h:77
+#: include/strings.h:78
 msgid "Use small envelope icon"
 msgstr ""
 
-#: src/strings.h:78
+#: include/strings.h:79
 msgid "Mail reading program:"
 msgstr ""
 
-#: src/strings.h:79
+#: include/strings.h:80
 msgid "Mail Account"
 msgstr ""
 
-#: src/strings.h:80
+#: include/strings.h:81
 msgid "Protocol"
 msgstr ""
 
-#: src/strings.h:81
+#: include/strings.h:82
 msgid ""
 "Enable this option to display the number of new messages for all accounts, "
 "rather than for a single account at a time.\n"
@@ -191,350 +197,351 @@ msgid ""
 msgstr ""
 
 #. filterdlg.c strings
-#: src/strings.h:85
+#: include/strings.h:86
 msgid "You must enter at least one filter string"
 msgstr ""
 
-#: src/strings.h:86
+#: include/strings.h:87
 msgid "Sender"
 msgstr ""
 
-#: src/strings.h:87
+#: include/strings.h:88
 msgid "Subject"
 msgstr ""
 
-#: src/strings.h:88
+#: include/strings.h:89
 msgid "Contains"
 msgstr ""
 
-#: src/strings.h:89
+#: include/strings.h:90
 msgid "Does not contain"
 msgstr ""
 
-#: src/strings.h:90
+#: include/strings.h:91
 msgid "Mail filters"
 msgstr ""
 
-#: src/strings.h:91
+#: include/strings.h:92
 msgid "Match all conditions"
 msgstr ""
 
-#: src/strings.h:92
+#: include/strings.h:93
 msgid "Match any condition"
 msgstr ""
 
-#: src/strings.h:93
+#: include/strings.h:94
 msgid "Clear filters"
 msgstr ""
 
-#: src/strings.h:94
+#: include/strings.h:95
 #, c-format
 msgid "Select up to %u filters:"
 msgstr ""
 
 #. **ERROR STRINGS**
 #. common.c strings
-#: src/strings.h:99
+#: include/strings.h:100
 msgid "Error allocating memory\n"
 msgstr ""
 
-#: src/strings.h:100
+#: include/strings.h:101
 msgid "Error reallocating memory\n"
 msgstr ""
 
-#: src/strings.h:101
+#: include/strings.h:102
 msgid "str_ins error: invalid position!\n"
 msgstr ""
 
 #. configdlg.c strings
-#: src/strings.h:104 src/strings.h:106
+#: include/strings.h:105 include/strings.h:107
 msgid "Error getting listbox iterator\n"
 msgstr ""
 
 #. filterdlg.c strings
-#: src/strings.h:105 src/strings.h:133 src/strings.h:167
+#: include/strings.h:106 include/strings.h:134 include/strings.h:168
 #, c-format
 msgid "Error attempting to write to file %s\n"
 msgstr ""
 
-#: src/strings.h:107
+#: include/strings.h:108
 msgid "Error creating icon pixbuf\n"
 msgstr ""
 
-#: src/strings.h:108
+#: include/strings.h:109
 #, c-format
 msgid "Error getting information for account %d\n"
 msgstr ""
 
 #. docklet.c strings
-#: src/strings.h:111
+#: include/strings.h:112
 #, c-format
 msgid "Error creating fork for mail application %s\n"
 msgstr ""
 
-#: src/strings.h:112
+#: include/strings.h:113
 #, c-format
 msgid "Error executing applicaiton %s\n"
 msgstr ""
 
-#: src/strings.h:113
+#: include/strings.h:114
 msgid "Unknown mail protocol selected\n"
 msgstr ""
 
-#: src/strings.h:114
+#: include/strings.h:115
 msgid "Error, invalid protocol while processing docklet click\n"
 msgstr ""
 
-#: src/strings.h:115 src/strings.h:136 src/strings.h:140 src/strings.h:208
-#: src/strings.h:233
+#: include/strings.h:116 include/strings.h:137 include/strings.h:141
+#: include/strings.h:209 include/strings.h:234
 #, c-format
 msgid "Error closing file %s\n"
 msgstr ""
 
-#: src/strings.h:116
+#: include/strings.h:117
 #, c-format
 msgid "Error opening %s for writing\n"
 msgstr ""
 
-#: src/strings.h:117
+#: include/strings.h:118
 #, c-format
 msgid "Error opening %s for reading\n"
 msgstr ""
 
-#: src/strings.h:118
+#: include/strings.h:119
 #, c-format
 msgid "Error reading file %s\n"
 msgstr ""
 
-#: src/strings.h:119
+#: include/strings.h:120
 #, c-format
 msgid "Error writing file %s\n"
 msgstr ""
 
-#: src/strings.h:120
+#: include/strings.h:121
 #, c-format
 msgid "Error accessing %s when marking read\n"
 msgstr ""
 
-#: src/strings.h:121 src/strings.h:144
+#: include/strings.h:122 include/strings.h:145
 #, c-format
 msgid "Error renaming %s to %s\n"
 msgstr ""
 
 #. encrypter.c strings
-#: src/strings.h:124
+#: include/strings.h:125
 msgid "Error encrypting password\n"
 msgstr ""
 
-#: src/strings.h:125
+#: include/strings.h:126
 msgid "Error finalising password encryption\n"
 msgstr ""
 
-#: src/strings.h:126
+#: include/strings.h:127
 msgid "Error decrypting password\n"
 msgstr ""
 
-#: src/strings.h:127
+#: include/strings.h:128
 msgid "Error finalising password decryption\n"
 msgstr ""
 
-#: src/strings.h:128
+#: include/strings.h:129
 msgid "Error initialising message digest\n"
 msgstr ""
 
-#: src/strings.h:129
+#: include/strings.h:130
 msgid "Error creating MD5 digest\n"
 msgstr ""
 
-#: src/strings.h:130
+#: include/strings.h:131
 msgid "Error finalising digest creation\n"
 msgstr ""
 
 #. filefunc.c strings
-#: src/strings.h:134 src/strings.h:139 src/strings.h:205 src/strings.h:234
+#: include/strings.h:135 include/strings.h:140 include/strings.h:206
+#: include/strings.h:235
 #, c-format
 msgid "Error opening file %s\n"
 msgstr ""
 
-#: src/strings.h:135
+#: include/strings.h:136
 msgid "Error getting combobox iterator\n"
 msgstr ""
 
-#: src/strings.h:141
+#: include/strings.h:142
 msgid "Error retrieving password\n"
 msgstr ""
 
-#: src/strings.h:142
+#: include/strings.h:143
 #, c-format
 msgid "Error setting permissions on file %s\n"
 msgstr ""
 
-#: src/strings.h:143
+#: include/strings.h:144
 #, c-format
 msgid "Error removing file %s\n"
 msgstr ""
 
-#: src/strings.h:145
+#: include/strings.h:146
 msgid "Error writing password to file\n"
 msgstr ""
 
-#: src/strings.h:146
+#: include/strings.h:147
 msgid "Error retrieving mail checking delay information\n"
 msgstr ""
 
-#: src/strings.h:147
+#: include/strings.h:148
 msgid "Error retrieving mail reading application information\n"
 msgstr ""
 
-#: src/strings.h:148
+#: include/strings.h:149
 #, c-format
 msgid "Error retrieving server hostname information for account %d\n"
 msgstr ""
 
-#: src/strings.h:149
+#: include/strings.h:150
 #, c-format
 msgid "Error retrieving server port information for account %d\n"
 msgstr ""
 
-#: src/strings.h:150
+#: include/strings.h:151
 #, c-format
 msgid "Error retrieving username for account %d\n"
 msgstr ""
 
-#: src/strings.h:151
+#: include/strings.h:152
 #, c-format
 msgid "Error retrieving icon type for account %d\n"
 msgstr ""
 
-#: src/strings.h:152
+#: include/strings.h:153
 #, c-format
 msgid "Account %d"
 msgstr ""
 
-#: src/strings.h:153
+#: include/strings.h:154
 #, c-format
 msgid "Error getting filter details %d\n"
 msgstr ""
 
-#: src/strings.h:154
+#: include/strings.h:155
 #, c-format
 msgid "Error retrieving password for account %d\n"
 msgstr ""
 
-#: src/strings.h:155
+#: include/strings.h:156
 msgid "Error writing mail checking delay information to file\n"
 msgstr ""
 
-#: src/strings.h:156
+#: include/strings.h:157
 msgid "Error writing mail reading application to file\n"
 msgstr ""
 
-#: src/strings.h:157
+#: include/strings.h:158
 msgid "Error writing icon size information to file\n"
 msgstr ""
 
-#: src/strings.h:158
+#: include/strings.h:159
 msgid "Error writing read multiple information to file\n"
 msgstr ""
 
-#: src/strings.h:159
+#: include/strings.h:160
 msgid "Error writing multiple icon colour information to file\n"
 msgstr ""
 
-#: src/strings.h:160
+#: include/strings.h:161
 msgid "Error writing server hostname to file\n"
 msgstr ""
 
-#: src/strings.h:161
+#: include/strings.h:162
 msgid "Error writing server port to file\n"
 msgstr ""
 
-#: src/strings.h:162
+#: include/strings.h:163
 msgid "Error writing username to file\n"
 msgstr ""
 
-#: src/strings.h:163
+#: include/strings.h:164
 msgid "Error writing icon type to file\n"
 msgstr ""
 
-#: src/strings.h:164
+#: include/strings.h:165
 msgid "Error writing mail protocol to file\n"
 msgstr ""
 
-#: src/strings.h:165
+#: include/strings.h:166
 msgid "Error writing account name to file\n"
 msgstr ""
 
-#: src/strings.h:166
+#: include/strings.h:167
 msgid "Error writing filter status to file\n"
 msgstr ""
 
-#: src/strings.h:168
+#: include/strings.h:169
 msgid "Error moving file pointer for config file\n"
 msgstr ""
 
 #. main.c strings
-#: src/strings.h:171
+#: include/strings.h:172
 msgid "Error getting delay information\n"
 msgstr ""
 
-#: src/strings.h:172
+#: include/strings.h:173
 #, c-format
 msgid "Error: Instance of %s already running\n"
 msgstr ""
 
-#: src/strings.h:173
+#: include/strings.h:174
 msgid "Error cannot set exit function: "
 msgstr ""
 
-#: src/strings.h:174
+#: include/strings.h:175
 msgid "Error closing log file: "
 msgstr ""
 
-#: src/strings.h:175
+#: include/strings.h:176
 msgid "Error writing header to log file: "
 msgstr ""
 
-#: src/strings.h:176
+#: include/strings.h:177
 #, c-format
 msgid "%s killed.\n"
 msgstr ""
 
-#: src/strings.h:177
+#: include/strings.h:178
 #, c-format
 msgid "%s encountered a segmentation fault.  Please report this bug\n"
 msgstr ""
 
-#: src/strings.h:178
+#: include/strings.h:179
 msgid "Error closing PID file\n"
 msgstr ""
 
-#: src/strings.h:179
+#: include/strings.h:180
 #, c-format
 msgid "Error: cannot kill process: %d\n"
 msgstr ""
 
-#: src/strings.h:180
+#: include/strings.h:181
 #, c-format
 msgid "Error opening pid file %s for writing\n"
 msgstr ""
 
-#: src/strings.h:181
+#: include/strings.h:182
 #, c-format
 msgid "Error reading PID file %s\n"
 msgstr ""
 
-#: src/strings.h:182
+#: include/strings.h:183
 #, c-format
 msgid "Error renaming pid file %s to temp pid file %s\n"
 msgstr ""
 
-#: src/strings.h:183
+#: include/strings.h:184
 #, c-format
 msgid "%s started %s\n"
 msgstr ""
 
-#: src/strings.h:184
+#: include/strings.h:185
 #, c-format
 msgid ""
 "%s %s (C) 2006 Dale Whittaker\n"
@@ -547,221 +554,221 @@ msgstr ""
 
 #. imapfunc.c strings
 #. popfunc.c strings
-#: src/strings.h:190 src/strings.h:221
+#: include/strings.h:191 include/strings.h:222
 #, c-format
 msgid "Connection error. %s closing connection and retrying.\n"
 msgstr ""
 
-#: src/strings.h:191
+#: include/strings.h:192
 #, c-format
 msgid "Error sending LOGIN to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:192
+#: include/strings.h:193
 #, c-format
 msgid "Error sending LOGOUT command to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:193 src/strings.h:229
+#: include/strings.h:194 include/strings.h:230
 #, c-format
 msgid "SASL initialisation failure (%d): %s\n"
 msgstr ""
 
-#: src/strings.h:194
+#: include/strings.h:195
 #, c-format
 msgid "Error sending AUTHENTICATE command to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:195
+#: include/strings.h:196
 #, c-format
 msgid "Error sending CRAM-MD5 string to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:196
+#: include/strings.h:197
 msgid "Error: this does not appear to be a valid IMAP server\n"
 msgstr ""
 
-#: src/strings.h:197
+#: include/strings.h:198
 msgid "Error receiving IMAP capability string\n"
 msgstr ""
 
-#: src/strings.h:198
+#: include/strings.h:199
 msgid "Error getting IMAP server capabilities\n"
 msgstr ""
 
-#: src/strings.h:199 src/strings.h:240
+#: include/strings.h:200 include/strings.h:241
 msgid "Error: CRAM-MD5 authentication does not appear to be supported\n"
 msgstr ""
 
-#: src/strings.h:200
+#: include/strings.h:201
 #, c-format
 msgid "Error opening read file %s\n"
 msgstr ""
 
-#: src/strings.h:201
+#: include/strings.h:202
 msgid "Error retreiving uid\n"
 msgstr ""
 
-#: src/strings.h:202
+#: include/strings.h:203
 #, c-format
 msgid "Error sending UID FETCH to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:203
+#: include/strings.h:204
 #, c-format
 msgid "Error sending STORE to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:204
+#: include/strings.h:205
 msgid "Error closing uid read file\n"
 msgstr ""
 
-#: src/strings.h:206
+#: include/strings.h:207
 msgid "Error opening temp UID file for reading\n"
 msgstr ""
 
-#: src/strings.h:207
+#: include/strings.h:208
 msgid "Error closing temp UID file\n"
 msgstr ""
 
-#: src/strings.h:209
+#: include/strings.h:210
 #, c-format
 msgid "Error sending SELECT to imap server %s\n"
 msgstr ""
 
-#: src/strings.h:210
+#: include/strings.h:211
 msgid "Error removing uid read file\n"
 msgstr ""
 
 #. netfunc.c strings
-#: src/strings.h:213
+#: include/strings.h:214
 #, c-format
 msgid "Error getting ip from hostname %s\n"
 msgstr ""
 
-#: src/strings.h:214
+#: include/strings.h:215
 msgid "Error getting socket\n"
 msgstr ""
 
-#: src/strings.h:215
+#: include/strings.h:216
 #, c-format
 msgid "Error connecting to server %s\n"
 msgstr ""
 
-#: src/strings.h:216
+#: include/strings.h:217
 msgid "Error sending message to server\n"
 msgstr ""
 
-#: src/strings.h:217
+#: include/strings.h:218
 msgid "Error receiving message from server\n"
 msgstr ""
 
-#: src/strings.h:218
+#: include/strings.h:219
 msgid "Error while checking if there is any data to receive from server\n"
 msgstr ""
 
-#: src/strings.h:222
+#: include/strings.h:223
 msgid "Warning, mail header does not conform to spec!\n"
 msgstr ""
 
-#: src/strings.h:223
+#: include/strings.h:224
 msgid "Error: APOP does not appear to be supported\n"
 msgstr ""
 
-#: src/strings.h:224
+#: include/strings.h:225
 msgid "Error encrypting APOP timestamp string\n"
 msgstr ""
 
-#: src/strings.h:225
+#: include/strings.h:226
 #, c-format
 msgid "Error sending APOP details to pop server %s\n"
 msgstr ""
 
-#: src/strings.h:226
+#: include/strings.h:227
 msgid "Error: APOP support not compiled in\n"
 msgstr ""
 
-#: src/strings.h:227
+#: include/strings.h:228
 #, c-format
 msgid "Error sending username to pop server %s\n"
 msgstr ""
 
-#: src/strings.h:228
+#: include/strings.h:229
 #, c-format
 msgid "Error sending password to pop server %s\n"
 msgstr ""
 
-#: src/strings.h:230
+#: include/strings.h:231
 #, c-format
 msgid "Error sending auth command to pop server %s\n"
 msgstr ""
 
-#: src/strings.h:231
+#: include/strings.h:232
 #, c-format
 msgid "Error retrieving number of messages on the pop server %s\n"
 msgstr ""
 
-#: src/strings.h:232
+#: include/strings.h:233
 msgid "Error getting total number of messages\n"
 msgstr ""
 
-#: src/strings.h:235
+#: include/strings.h:236
 msgid "Error retrieving uidl value\n"
 msgstr ""
 
-#: src/strings.h:236
+#: include/strings.h:237
 #, c-format
 msgid "Error getting TOP for message %d\n"
 msgstr ""
 
-#: src/strings.h:237
+#: include/strings.h:238
 #, c-format
 msgid "Error getting UIDL for message %d\n"
 msgstr ""
 
-#: src/strings.h:238
+#: include/strings.h:239
 msgid "Invalid auth method specified\n"
 msgstr ""
 
-#: src/strings.h:239
+#: include/strings.h:240
 #, c-format
 msgid "Error sending QUIT command to pop server %s\n"
 msgstr ""
 
-#: src/strings.h:241
+#: include/strings.h:242
 msgid ""
 "Error testing POP server capabilities, this does not appear to be a valid "
 "POP server\n"
 msgstr ""
 
 #. sasl.c strings
-#: src/strings.h:244
+#: include/strings.h:245
 #, c-format
 msgid "Cannot initialise SASL client (%d): %s\n"
 msgstr ""
 
-#: src/strings.h:245
+#: include/strings.h:246
 #, c-format
 msgid "CRAM-MD5 authentication error (%d): %s\n"
 msgstr ""
 
 #. tls.c strings
-#: src/strings.h:248
+#: include/strings.h:249
 msgid "Error creating CTX\n"
 msgstr ""
 
-#: src/strings.h:249
+#: include/strings.h:250
 msgid "Error creating SSL structure\n"
 msgstr ""
 
-#: src/strings.h:250
+#: include/strings.h:251
 msgid "Error setting SSL file descriptor\n"
 msgstr ""
 
-#: src/strings.h:251
+#: include/strings.h:252
 msgid "Error connecting with SSL\n"
 msgstr ""
 
-#: src/strings.h:252
+#: include/strings.h:253
 msgid "Error shutting down SSL connection\n"
 msgstr ""

@@ -58,7 +58,7 @@ DISTFILES = ChangeLog Makefile.in.in POTFILES.in $(GETTEXT_PACKAGE).pot \
 $(POFILES) $(GMOFILES) $(SOURCES)
 
 POTFILES = \
-	../src/strings.h
+	../include/strings.h 
 
 CATALOGS = 
 CATOBJEXT = .gmo
