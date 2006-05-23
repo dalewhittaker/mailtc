@@ -43,12 +43,10 @@ static mail_details** get_active_account(void)
 static int run_mailapp(char *mailapp)
 {
 	GError *spawn_error= NULL;
-	char appstr[NAME_MAX* 2];
-	char acc_str[MAXINTLEN];
+	char appstr[NAME_MAX* 2], acc_str[MAXINTLEN], c= 0x0D;
 	unsigned int num_args= 0, i= 0, retval= 1, acount= 0;
 	mail_details **pcurrent;
 	gchar **args= NULL;
-	char c= 0x0D;
 
 	memset(appstr, '\0', NAME_MAX+ 1);
 	
@@ -97,17 +95,10 @@ static int run_mailapp(char *mailapp)
 			strncat(appstr, mailapp+ i, 1);
 	}
 
-	args= (char **)alloc_mem((num_args+ 2)* sizeof(char *), args);
-
-	/*set the pointer to the application and its arguments*/
-	args[0]= strtok(appstr, &c);
+	/*split the string into its args*/
+	args= g_strsplit(appstr, &c, 0);
 	
-	for(i= 1; i<= num_args; i++)
-		args[i]= strtok(NULL, &c);	
-
-	args[num_args+ 1]= NULL;
-
-	/*Run the mail application and report an error if it does not work?*/
+	/*Run the mail application and report an error if it does not work*/
 	if(!g_spawn_async(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &spawn_error))
 	{
 		error_and_log_no_exit("%s\n", spawn_error->message);
@@ -116,7 +107,8 @@ static int run_mailapp(char *mailapp)
 		retval= 0;
 	}
 	
-	free(args);
+	/*free the argument vector*/
+	g_strfreev(args);
 	return(retval);
 }
 
@@ -347,8 +339,11 @@ static void set_icon_text()
 			((*pcurrent)->num_messages> 0))
 		{
 			/*if there are messages add it to summary*/
-			sprintf(tmpstring, S_DOCKLET_NEW_MESSAGES, (*pcurrent)->accname, (*pcurrent)->num_messages,
-					((*pcurrent)->num_messages >1)? "s": "", (first)? "": "\n");
+			sprintf(tmpstring, ((*pcurrent)->num_messages> 1)? S_DOCKLET_NEW_MESSAGES: S_DOCKLET_NEW_MESSAGE,
+				(*pcurrent)->accname, (*pcurrent)->num_messages, (first)? "": "\n");
+			
+			/*sprintf(tmpstring, S_DOCKLET_NEW_MESSAGES, (*pcurrent)->accname, (*pcurrent)->num_messages,
+					((*pcurrent)->num_messages> 1)? "s": "", (first)? "": "\n");*/
 		
 			/*insert at the start (to match list order)*/
 			tipstring= str_ins(tipstring, tmpstring, 0);

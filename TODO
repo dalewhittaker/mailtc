@@ -1,7 +1,5 @@
 NEXT RELEASE
-1) need to add 'po' and 'include' dir to svn
-2) fix problem with app launching (/usr/bin/sylpheed has problems, but sylpheed does not, because of the dir)
-3) package the bugger up, do the usual stuff
+1) Add the French translation (from Val) package the bugger up, do the usual stuff
 
 ***TO ADD NEW LANG***
 use msginit -l <lang> in po dir to create po file

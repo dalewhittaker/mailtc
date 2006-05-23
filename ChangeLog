@@ -308,3 +308,6 @@ Mailtc can now be internationalised with gettext.
 
 1.0.2:
 Moved header files to separate include directory.
+
+1.0.3:
+Tidied up application launching to use string split func instead of strtok.
