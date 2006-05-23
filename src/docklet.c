@@ -43,8 +43,8 @@ static mail_details** get_active_account(void)
 static int run_mailapp(char *mailapp)
 {
 	GError *spawn_error= NULL;
-	char appstr[NAME_MAX* 2], acc_str[MAXINTLEN], c= 0x0D;
-	unsigned int num_args= 0, i= 0, retval= 1, acount= 0;
+	char appstr[NAME_MAX* 2], acc_str[MAXINTLEN], *c= "\n";
+	unsigned int i= 0, retval= 1, acount= 0;
 	mail_details **pcurrent;
 	gchar **args= NULL;
 
@@ -66,10 +66,8 @@ static int run_mailapp(char *mailapp)
 				{
 					if((*pcurrent)->num_messages> 0)
 					{
-						/*this will add each one as a new arg, if you don't want that, its tough shit*/
-						sprintf(acc_str, "%s%d", (acount)? &c: "", (*pcurrent)->id);
-						if(acount++)
-							num_args++;
+						/*this will add each one as a new arg, if you don't want that, tough shit, sorry*/
+						sprintf(acc_str, "%s%d", (acount++)? c: "", (*pcurrent)->id);
 						strcat(appstr, acc_str); 
 					}
 					pcurrent= &(*pcurrent)->next;
@@ -82,10 +80,7 @@ static int run_mailapp(char *mailapp)
 		{
 			/*it is a valid new arg, so count it and convert to 0x0D (non printable char)*/
 			if((i== 0)|| ((i> 0)&& (mailapp[i- 1]!= '\\')&& (mailapp[i- 1]!= ' ')))
-			{
-				num_args++;
-				strcat(appstr, &c);
-			}
+				strcat(appstr, c);
 			/*it is a space in filename, so strcat normal*/
 			else
 				strcat(appstr, " ");
@@ -96,7 +91,7 @@ static int run_mailapp(char *mailapp)
 	}
 
 	/*split the string into its args*/
-	args= g_strsplit(appstr, &c, 0);
+	args= g_strsplit(appstr, c, 0);
 	
 	/*Run the mail application and report an error if it does not work*/
 	if(!g_spawn_async(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &spawn_error))
@@ -342,9 +337,6 @@ static void set_icon_text()
 			sprintf(tmpstring, ((*pcurrent)->num_messages> 1)? S_DOCKLET_NEW_MESSAGES: S_DOCKLET_NEW_MESSAGE,
 				(*pcurrent)->accname, (*pcurrent)->num_messages, (first)? "": "\n");
 			
-			/*sprintf(tmpstring, S_DOCKLET_NEW_MESSAGES, (*pcurrent)->accname, (*pcurrent)->num_messages,
-					((*pcurrent)->num_messages> 1)? "s": "", (first)? "": "\n");*/
-		
 			/*insert at the start (to match list order)*/
 			tipstring= str_ins(tipstring, tmpstring, 0);
 

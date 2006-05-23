@@ -142,7 +142,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | /* end confdefs.h.  */
 | #include <ac_nonexistent.h>
 configure:2979: result: gcc -E
@@ -160,7 +160,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | /* end confdefs.h.  */
 | #include <ac_nonexistent.h>
 configure:3091: checking for egrep
@@ -283,7 +283,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | #define STDC_HEADERS 1
 | #define HAVE_SYS_TYPES_H 1
 | #define HAVE_SYS_STAT_H 1
@@ -344,7 +344,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | #define STDC_HEADERS 1
 | #define HAVE_SYS_TYPES_H 1
 | #define HAVE_SYS_STAT_H 1
@@ -471,7 +471,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | #define STDC_HEADERS 1
 | #define HAVE_SYS_TYPES_H 1
 | #define HAVE_SYS_STAT_H 1
@@ -541,7 +541,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | #define STDC_HEADERS 1
 | #define HAVE_SYS_TYPES_H 1
 | #define HAVE_SYS_STAT_H 1
@@ -596,9 +596,9 @@ configure:4679: $? = 0
 configure:4691: result: yes
 configure:4698: checking for _doprnt
 configure:4755: gcc -o conftest    conftest.c  >&5
-/tmp/ccK1zWQR.o: In function `main':
+/tmp/cccRHIR9.o: In function `main':
 conftest.c:(.text+0x22): undefined reference to `_doprnt'
-/tmp/ccK1zWQR.o:(.data+0x0): undefined reference to `_doprnt'
+/tmp/cccRHIR9.o:(.data+0x0): undefined reference to `_doprnt'
 collect2: ld returned 1 exit status
 configure:4761: $? = 1
 configure: failed program was:
@@ -610,7 +610,7 @@ configure: failed program was:
 | #define PACKAGE_STRING ""
 | #define PACKAGE_BUGREPORT ""
 | #define PACKAGE "mailtc"
-| #define VERSION "1.0.2"
+| #define VERSION "1.0.3"
 | #define STDC_HEADERS 1
 | #define HAVE_SYS_TYPES_H 1
 | #define HAVE_SYS_STAT_H 1
@@ -1092,7 +1092,7 @@ CYGPATH_W='echo'
 DATADIRNAME='share'
 DEBUG_FALSE='#'
 DEBUG_TRUE=''
-DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.0.2\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 -DMTC_USE_SASL=1 '
+DEFS='-DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.0.3\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 -DMTC_USE_SASL=1 '
 DEPDIR='.deps'
 ECHO_C=''
 ECHO_N='-n'
@@ -1138,7 +1138,7 @@ SSL_FALSE='#'
 SSL_TRUE=''
 STRIP=''
 USE_NLS='yes'
-VERSION='1.0.2'
+VERSION='1.0.3'
 XGETTEXT='/usr/bin/xgettext'
 ac_ct_CC='gcc'
 ac_ct_STRIP=''
@@ -1226,44 +1226,6 @@ target_alias=''
 #define PACKAGE_VERSION ""
 #define STDC_HEADERS 1
 #define STDC_HEADERS 1
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 
 configure: exit 0
-
-## ---------------------- ##
-## Running config.status. ##
-## ---------------------- ##
-
-This file was extended by config.status, which was
-generated by GNU Autoconf 2.59.  Invocation command line was
-
-  CONFIG_FILES    = po/Makefile.in
-  CONFIG_HEADERS  = 
-  CONFIG_LINKS    = 
-  CONFIG_COMMANDS = 
-  $ ./config.status 
-
-on marmite
-
-config.status:710: creating po/Makefile.in
-config.status:893: executing depfiles commands
-config.status:893: executing default-1 commands
-
-## ---------------------- ##
-## Running config.status. ##
-## ---------------------- ##
-
-This file was extended by config.status, which was
-generated by GNU Autoconf 2.59.  Invocation command line was
-
-  CONFIG_FILES    = po/Makefile.in
-  CONFIG_HEADERS  = 
-  CONFIG_LINKS    = 
-  CONFIG_COMMANDS = 
-  $ ./config.status 
-
-on marmite
-
-config.status:710: creating po/Makefile.in
-config.status:893: executing depfiles commands
-config.status:893: executing default-1 commands

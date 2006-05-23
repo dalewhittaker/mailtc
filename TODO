@@ -1,12 +1,21 @@
 NEXT RELEASE
 1) Add the French translation (from Val) package the bugger up, do the usual stuff
 
+ONE AFTER
+1) Make modular (with network plugins)
+2) Once modular, tidy up core/plugins as follows:
+	a) core should use mainly (if not all) glib/gtk functions rather than standard ANSI/POSIX functions
+	   this is desirable mainly as it is much tidyer, and probably less error prone.
+	b) plugin code should use ONLY ANSI/POSIX. Reason for this is that they are not GUI based, and this
+	   way other apps can use (e.g if i decide i don't like the GTK core or create a different core).
+
+there you go...
+
+
+------------------------------
 ***TO ADD NEW LANG***
 use msginit -l <lang> in po dir to create po file
 translate the po file
 add the lang to ALL_LINGUAS in configure.ac
 aclocal;autoconf;automake
 ./configure;make etc
-
-ONE AFTER
-1) Make modular (with network plugins)
