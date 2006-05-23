@@ -20,7 +20,6 @@
 #ifndef DW_MAILTC_STRINGS_FILE
 #define DW_MAILTC_STRINGS_FILE
 
-
 /*define the gettext stuff*/
 #include <libintl.h>
 #include <locale.h>
@@ -39,7 +38,9 @@
 /***DIALOG STRINGS***/
 
 /*docklet.c strings*/
-#define S_DOCKLET_NEW_MESSAGES _("%s: %d new message%s%s")
+#define S_DOCKLET_NEW_MESSAGE _("%s: %d new message%s")
+#define S_DOCKLET_NEW_MESSAGES _("%s: %d new messages%s")
+/*#define S_DOCKLET_NEW_MESSAGES _("%s: %d new message%s%s")*/
 #define S_DOCKLET_CONNECT_ERR _("There was an error connecting to the following servers:\n\n%s\nPlease check the %s log for the error.\n")
 #define S_DOCKLET_MULTIPLE_ACCOUNTS _("Read/Display new messages for multiple accounts")
 
