@@ -21,19 +21,20 @@
 #define DW_MAILTC_STRINGS_FILE
 
 /*define the gettext stuff*/
+/*TODO i don't know exactly how correct this is, although should work on most systems*/
+#ifdef ENABLE_NLS
+
 #include <libintl.h>
 #include <locale.h>
-
 #define _(text) gettext(text)
+#define N_(text) text
+#else
 
-/****************************************************************
- * This file contains all the GTK strings for the application   *
- * so that they can be easily localised.                        *
- *                                                              *
- * If you wish to use accented strings, you MUST convert this   *
- * file from ASCII to UTF8 before compiling, otherwise GTK will *
- * not read the accented characters correctly.                  *
- ***************************************************************/
+#define _(text) text
+#define N_(text) text
+
+#endif /*ENABLE_NLS*/
+
 
 /***DIALOG STRINGS***/
 
