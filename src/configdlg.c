@@ -197,7 +197,7 @@ static int save_config_details(void)
 static void close_button_pressed(void)
 {
 	/*display message to tell user to run mailtc, then dialog destroy widget*/
-	GtkWidget *msgdlg= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, S_CONFIGDLG_READYTORUN, PROGRAM_NAME);
+	GtkWidget *msgdlg= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, S_CONFIGDLG_READYTORUN, PACKAGE);
 	gtk_dialog_run(GTK_DIALOG(msgdlg));
 	gtk_widget_destroy(msgdlg);
 	gtk_main_quit();
@@ -666,7 +666,7 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 	GtkTreeIter iter;
 
 	/*set the config window title*/
-	sprintf(window_title, S_CONFIGDLG_CONFIG_TITLE, PROGRAM_NAME);
+	sprintf(window_title, S_CONFIGDLG_CONFIG_TITLE, PACKAGE);
 	
 	/*setup the notebook*/
 	notebook= gtk_notebook_new();

@@ -311,3 +311,7 @@ Moved header files to separate include directory.
 
 1.0.3:
 Tidied up application launching to use string split func instead of strtok.
+
+1.0.4:
+Cleaned up a lot of the installation files and made gettext truly optional.
+Made the code use $PACKAGE and $VERSION from the config files.

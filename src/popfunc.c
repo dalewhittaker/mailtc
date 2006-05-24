@@ -29,7 +29,7 @@ static int close_pop_connection(int sockfd, char *ssl, char *ctx)
 	/*send the QUIT command to try and exit nicely then close the socket and report error*/
 	send_net_string(sockfd, "QUIT\r\n", ssl);
 	
-	error_and_log_no_exit(S_POPFUNC_ERR_CONNECT, PROGRAM_NAME);
+	error_and_log_no_exit(S_POPFUNC_ERR_CONNECT, PACKAGE);
 
 #ifdef MTC_USE_SSL
 	/*close the SSL connection*/

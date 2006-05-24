@@ -364,7 +364,7 @@ static void docklet_create(mail_details *paccount)
 		docklet= NULL;
 	}
 	/*initialise widgets*/
-	docklet= egg_tray_icon_new(PROGRAM_NAME);
+	docklet= egg_tray_icon_new(PACKAGE);
 	box= gtk_event_box_new();
 	icon= gtk_image_new();
 
@@ -489,7 +489,7 @@ gboolean mail_thread(gpointer data)
 		/*report if checking an account failed*/
 		if(errflag)
 		{
-			run_error_dialog(S_DOCKLET_CONNECT_ERR, err_msg, PROGRAM_NAME);
+			run_error_dialog(S_DOCKLET_CONNECT_ERR, err_msg, PACKAGE);
 			if(err_msg) free(err_msg);
 		}
 		status= get_icon_status();

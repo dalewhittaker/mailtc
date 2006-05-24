@@ -51,8 +51,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am__mailtc_SOURCES_DIST = eggtrayicon.c configdlg.c docklet.c \
 	filefunc.c common.c netfunc.c popfunc.c imapfunc.c filterdlg.c \
 	encrypter.c tls.c sasl.c main.c
-@SSL_TRUE@am__objects_1 = encrypter.$(OBJEXT) tls.$(OBJEXT)
-@SASL_TRUE@am__objects_2 = sasl.$(OBJEXT)
+@MTC_SSL_TRUE@am__objects_1 = encrypter.$(OBJEXT) tls.$(OBJEXT)
+@MTC_SASL_TRUE@am__objects_2 = sasl.$(OBJEXT)
 am_mailtc_OBJECTS = eggtrayicon.$(OBJEXT) configdlg.$(OBJEXT) \
 	docklet.$(OBJEXT) filefunc.$(OBJEXT) common.$(OBJEXT) \
 	netfunc.$(OBJEXT) popfunc.$(OBJEXT) imapfunc.$(OBJEXT) \
@@ -119,6 +119,12 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
+MTC_NLS_FALSE = @MTC_NLS_FALSE@
+MTC_NLS_TRUE = @MTC_NLS_TRUE@
+MTC_SASL_FALSE = @MTC_SASL_FALSE@
+MTC_SASL_TRUE = @MTC_SASL_TRUE@
+MTC_SSL_FALSE = @MTC_SSL_FALSE@
+MTC_SSL_TRUE = @MTC_SSL_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -132,12 +138,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
-SASL_FALSE = @SASL_FALSE@
-SASL_TRUE = @SASL_TRUE@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SSL_FALSE = @SSL_FALSE@
-SSL_TRUE = @SSL_TRUE@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
@@ -171,10 +173,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-@SSL_TRUE@ssl_libraries = -lcrypto -lssl
-@SSL_TRUE@ssl_sources = encrypter.c tls.c
-@SASL_TRUE@sasl_libraries = -lgsasl
-@SASL_TRUE@sasl_sources = sasl.c
+@MTC_SSL_TRUE@ssl_libraries = -lcrypto -lssl
+@MTC_SSL_TRUE@ssl_sources = encrypter.c tls.c
+@MTC_SASL_TRUE@sasl_libraries = -lgsasl
+@MTC_SASL_TRUE@sasl_sources = sasl.c
 mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 locale_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\"
 mtc_include = $(top_srcdir)/include

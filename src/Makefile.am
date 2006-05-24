@@ -1,12 +1,12 @@
 #AUTOMAKE_OPTIONS = gnu
 bin_PROGRAMS = mailtc
 
-if SSL
+if MTC_SSL
 ssl_libraries = -lcrypto -lssl
 ssl_sources = encrypter.c tls.c
 endif
 
-if SASL
+if MTC_SASL
 sasl_libraries = -lgsasl
 sasl_sources = sasl.c
 endif

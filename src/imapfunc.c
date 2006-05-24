@@ -34,7 +34,7 @@ static int close_imap_connection(int sockfd, unsigned int *msgid, char *ssl, cha
 	
 	send_net_string(sockfd, imap_message, ssl); 
 	
-	error_and_log_no_exit(S_IMAPFUNC_ERR_CONNECT, PROGRAM_NAME);
+	error_and_log_no_exit(S_IMAPFUNC_ERR_CONNECT, PACKAGE);
 
 #ifdef MTC_USE_SSL
 	/*close the connection*/

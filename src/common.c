@@ -125,6 +125,7 @@ void *realloc_mem(size_t size, void *pmem)
 }
 
 /*function to append to a string*/
+/*TODO this is actually only used in network stuff so will be moved to plugin dir*/
 char *str_cat(char *dest, const char *source)
 {
 	size_t dlen= (dest== NULL)? 0: strlen(dest);

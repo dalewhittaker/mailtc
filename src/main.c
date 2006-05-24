@@ -23,7 +23,7 @@
 static void print_usage_and_exit(void)
 {
 	error_and_log(S_MAIN_ERR_PRINT_USAGE, 
-				 PROGRAM_NAME, PROGRAM_VERSION, PROGRAM_NAME, PROGRAM_NAME, PROGRAM_NAME, PROGRAM_NAME, PROGRAM_NAME);
+				 PACKAGE, VERSION, PACKAGE, PACKAGE, PACKAGE, PACKAGE, PACKAGE);
 }
 
 /*function to run the mailtc configuration dialog*/
@@ -136,9 +136,9 @@ void term_handler(int signal)
 	read_pid_file(PID_APPEXIT);
 
 	if(signal== SIGSEGV)
-		error_and_log(S_MAIN_ERR_SEGFAULT, PROGRAM_NAME);
+		error_and_log(S_MAIN_ERR_SEGFAULT, PACKAGE);
 	else
-		error_and_log(S_MAIN_ERR_APP_KILLED, PROGRAM_NAME);
+		error_and_log(S_MAIN_ERR_APP_KILLED, PACKAGE);
 }
 
 /*function to write the initial header to the log file when mailtc starts*/
@@ -170,7 +170,7 @@ static int init_files(void)
 	
 	/*write the log header*/
 	fprintf(files.logfile, "\n*******************************************\n");
-	fprintf(files.logfile, S_MAIN_LOG_STARTED, PROGRAM_NAME, get_current_time());
+	fprintf(files.logfile, S_MAIN_LOG_STARTED, PACKAGE, get_current_time());
 	fprintf(files.logfile, "*******************************************\n"); 
 	fflush(files.logfile);
 	
@@ -199,7 +199,7 @@ static int run_warning_dlg(int argc, char* argv[], char *msg, int startconfig)
 	GtkWidget *dialog;
 	
 	gtk_init(&argc, &argv);
-	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, msg, PROGRAM_NAME);
+	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, msg, PACKAGE);
 	gtk_dialog_run(GTK_DIALOG(dialog)); 
 	gtk_widget_destroy(dialog);
 	
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
-#endif
+#endif /*ENABLE_NLS*/
 
 	paccounts= NULL;
 	
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	   ((argc== 2)&&((strcmp(argv[1], "-d")== 0)|| strcmp(argv[1], "-c")== 0)))&& 
 	   (!read_pid_file(PID_APPLOAD)))
 	{
-		error_and_log_no_exit(S_MAIN_ERR_INSTANCE_RUNNING, PROGRAM_NAME);
+		error_and_log_no_exit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
 		cleanup();
 		return(run_warning_dlg(argc, argv, S_MAIN_INSTANCE_RUNNING, 0));
 	}

@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP DEBUG_TRUE DEBUG_FALSE PKG_CONFIG GTK_CFLAGS GTK_LIBS USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS GETTEXT_PACKAGE SSL_TRUE SSL_FALSE SASL_TRUE SASL_FALSE LIB@&t@OBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP DEBUG_TRUE DEBUG_FALSE PKG_CONFIG GTK_CFLAGS GTK_LIBS USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS MTC_NLS_TRUE MTC_NLS_FALSE GETTEXT_PACKAGE MTC_SSL_TRUE MTC_SSL_FALSE MTC_SASL_TRUE MTC_SASL_FALSE LIB@&t@OBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1302,7 +1302,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=mailtc
-VERSION=1.0.3
+VERSION=1.0.4
 
 am__api_version="1.9"
 ac_aux_dir=
@@ -6448,6 +6448,16 @@ echo "$as_me:$LINENO: checking if NLS should be used" >&5
 echo $ECHO_N "checking if NLS should be used... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: $nls" >&5
 echo "${ECHO_T}$nls" >&6
+ 
+
+if test x$nls = xyes; then
+  MTC_NLS_TRUE=
+  MTC_NLS_FALSE='#'
+else
+  MTC_NLS_TRUE='#'
+  MTC_NLS_FALSE=
+fi
+
 GETTEXT_PACKAGE=$PACKAGE
 
 
@@ -6625,11 +6635,11 @@ echo "${ECHO_T}$ssl" >&6
  
 
 if test x$ssl = xyes; then
-  SSL_TRUE=
-  SSL_FALSE='#'
+  MTC_SSL_TRUE=
+  MTC_SSL_FALSE='#'
 else
-  SSL_TRUE='#'
-  SSL_FALSE=
+  MTC_SSL_TRUE='#'
+  MTC_SSL_FALSE=
 fi
 
 
@@ -6802,11 +6812,11 @@ echo "${ECHO_T}$sasl" >&6
  
 
 if test x$sasl = xyes; then
-  SASL_TRUE=
-  SASL_FALSE='#'
+  MTC_SASL_TRUE=
+  MTC_SASL_FALSE='#'
 else
-  SASL_TRUE='#'
-  SASL_FALSE=
+  MTC_SASL_TRUE='#'
+  MTC_SASL_FALSE=
 fi
 
 
@@ -6956,17 +6966,24 @@ echo "$as_me: error: conditional \"DEBUG\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${SSL_TRUE}" && test -z "${SSL_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"SSL\" was never defined.
+if test -z "${MTC_NLS_TRUE}" && test -z "${MTC_NLS_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"MTC_NLS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"SSL\" was never defined.
+echo "$as_me: error: conditional \"MTC_NLS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${SASL_TRUE}" && test -z "${SASL_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"SASL\" was never defined.
+if test -z "${MTC_SSL_TRUE}" && test -z "${MTC_SSL_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"MTC_SSL\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"SASL\" was never defined.
+echo "$as_me: error: conditional \"MTC_SSL\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${MTC_SASL_TRUE}" && test -z "${MTC_SASL_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"MTC_SASL\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"MTC_SASL\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7559,11 +7576,13 @@ s,@PO_IN_DATADIR_FALSE@,$PO_IN_DATADIR_FALSE,;t t
 s,@POFILES@,$POFILES,;t t
 s,@POSUB@,$POSUB,;t t
 s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
+s,@MTC_NLS_TRUE@,$MTC_NLS_TRUE,;t t
+s,@MTC_NLS_FALSE@,$MTC_NLS_FALSE,;t t
 s,@GETTEXT_PACKAGE@,$GETTEXT_PACKAGE,;t t
-s,@SSL_TRUE@,$SSL_TRUE,;t t
-s,@SSL_FALSE@,$SSL_FALSE,;t t
-s,@SASL_TRUE@,$SASL_TRUE,;t t
-s,@SASL_FALSE@,$SASL_FALSE,;t t
+s,@MTC_SSL_TRUE@,$MTC_SSL_TRUE,;t t
+s,@MTC_SSL_FALSE@,$MTC_SSL_FALSE,;t t
+s,@MTC_SASL_TRUE@,$MTC_SASL_TRUE,;t t
+s,@MTC_SASL_FALSE@,$MTC_SASL_FALSE,;t t
 s,@LIB@&t@OBJS@,$LIB@&t@OBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -8040,3 +8059,18 @@ if test "$no_create" != yes; then
 fi
 
 
+echo "
+Configuration for $PACKAGE $VERSION:
+------------------------------------
+
+ Compiler/Linker .................. : $CC
+ GLIB version ..................... : `pkg-config --modversion gtk+-2.0`
+ GTK+ version ..................... : `pkg-config --modversion glib-2.0`
+ NLS/gettext ...................... : $USE_NLS
+ SASL ............................. : $sasl
+ SSL .............................. : $ssl
+ Debug mode ....................... : $debug
+
+Now type 'make' to build $PACKAGE $VERSION,
+and then type 'make install' for installation.
+"

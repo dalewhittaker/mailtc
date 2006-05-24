@@ -13,6 +13,8 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
+
+#only look at the po subdir if NLS is enabled
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -56,7 +58,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = src po
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -112,6 +114,12 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
+MTC_NLS_FALSE = @MTC_NLS_FALSE@
+MTC_NLS_TRUE = @MTC_NLS_TRUE@
+MTC_SASL_FALSE = @MTC_SASL_FALSE@
+MTC_SASL_TRUE = @MTC_SASL_TRUE@
+MTC_SSL_FALSE = @MTC_SSL_FALSE@
+MTC_SSL_TRUE = @MTC_SSL_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -125,12 +133,8 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
-SASL_FALSE = @SASL_FALSE@
-SASL_TRUE = @SASL_TRUE@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SSL_FALSE = @SSL_FALSE@
-SSL_TRUE = @SSL_TRUE@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
@@ -164,7 +168,9 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = src po
+@MTC_NLS_FALSE@mtc_subdirs = src
+@MTC_NLS_TRUE@mtc_subdirs = src po
+SUBDIRS = $(mtc_subdirs)
 all: all-recursive
 
 .SUFFIXES:

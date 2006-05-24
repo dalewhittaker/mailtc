@@ -25,9 +25,9 @@ int get_program_dir(void)
 	/*get the home path, if not found use /tmp*/
 	char *penv;
 	if((penv= getenv("HOME"))== NULL)
-		sprintf(files.base_name, "/tmp/.%s/", PROGRAM_NAME);
+		sprintf(files.base_name, "/tmp/.%s/", PACKAGE);
 	else 
-		sprintf(files.base_name, "%s%s.%s/", penv, (penv[strlen(penv)-1]== '/') ? "" : "/", PROGRAM_NAME);
+		sprintf(files.base_name, "%s%s.%s/", penv, (penv[strlen(penv)-1]== '/') ? "" : "/", PACKAGE);
 	
 	return 1;
 }
@@ -528,7 +528,7 @@ int write_password_to_file(mail_details *paccount)
 	return 1;
 }
 
-/*function to remove a file in ~/.PROGRAM_NAME and shift the files so they are in order*/
+/*function to remove a file in ~/.PACKAGE and shift the files so they are in order*/
 int remove_file(char *shortname, int count, int fullcount)
 {
 	int i= 0;
