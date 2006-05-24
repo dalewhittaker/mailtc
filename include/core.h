@@ -1,4 +1,4 @@
-/* header.h
+/* core.h
  * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -75,8 +75,6 @@
 #define MAXDATASIZE 200 
 #define LINE_LENGTH 80
 
-#define PROGRAM_NAME "mailtc"
-#define PROGRAM_VERSION "1.0.3"
 #define DETAILS_FILE "details"
 #define CONFIG_FILE "config"
 #define UIDL_FILE "uidlfile"

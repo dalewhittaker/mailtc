@@ -183,7 +183,7 @@
 #define S_MAIN_ERR_OPEN_PIDFILE_READ _("Error reading PID file %s\n")
 #define S_MAIN_ERR_RENAME_PIDFILE _("Error renaming pid file %s to temp pid file %s\n")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
-#define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s program)\
+#define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 					\n\t%s -c (to configure mail details)\
 					\n\t%s -d (run in network debug mode)\
 					\n\t%s -k (kill all mailtc processes)\n")
