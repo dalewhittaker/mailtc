@@ -1,0 +1,10 @@
+ALL plugins (common):
+
+IMPORTANT, DO NOT SVN WITHOUT TAKING PASSWORDS ETC OUT OF plgtest.c
+
+LATER
+1. Docklet click stuff needs to be implemented
+2. Test everything with valgrind (also test when invalid username/password/connection etc)
+mailtc core should test paccount->num_messages as well as return value for MTC_ERR_EXIT
+
+Test filter stuff for both POP and IMAP accounts once integrated with mailtc.
