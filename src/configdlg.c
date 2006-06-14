@@ -84,38 +84,38 @@ static int save_mail_details(int profile)
 	int retval= 0, empty= 0;
 	GtkWidget *msgdlg;
 	char msg[10];
-	GtkTreeModel *model;
 	GtkTreeIter iter;
-	gchar *str = NULL;
-	mail_details **pcurrent= NULL;
-	
-	if((pcurrent= get_account(profile))== NULL)
+	GSList *pcurrent= NULL;
+	mail_details *pcurrent_data= NULL;
+	mtc_plugin_info *pitem= NULL;
+
+	if((pcurrent_data= get_account(profile))== NULL)
 		error_and_log(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, profile);
 	
 	/*check that there are no empty values before saving the details*/
-	if(strcmp(gtk_entry_get_text(GTK_ENTRY(password_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(password_entry)), "")== 0)
 	{
-		strcpy(msg, S_CONFIGDLG_PASSWORD);
+		g_strlcpy(msg, S_CONFIGDLG_PASSWORD, 10);
 		empty++;
 	}
-	if(strcmp(gtk_entry_get_text(GTK_ENTRY(username_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(username_entry)), "")== 0)
 	{
-		strcpy(msg, S_CONFIGDLG_USERNAME);
+		g_strlcpy(msg, S_CONFIGDLG_USERNAME, 10);
 		empty++;
 	}
-	if(strcmp(gtk_entry_get_text(GTK_ENTRY(port_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(port_entry)), "")== 0)
 	{	
-		strcpy(msg, S_CONFIGDLG_PORT);
+		g_strlcpy(msg, S_CONFIGDLG_PORT, 10);
 		empty++;
 	}
-	if(strcmp(gtk_entry_get_text(GTK_ENTRY(hostname_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(hostname_entry)), "")== 0)
 	{
-		strcpy(msg, S_CONFIGDLG_HOSTNAME);
+		g_strlcpy(msg, S_CONFIGDLG_HOSTNAME, 10);
 		empty++;
 	}
-	if(strcmp(gtk_entry_get_text(GTK_ENTRY(accname_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(accname_entry)), "")== 0)
 	{
-		strcpy(msg, S_CONFIGDLG_ACCNAME);
+		g_strlcpy(msg, S_CONFIGDLG_ACCNAME, 10);
 		empty++;
 	}
 	
@@ -128,28 +128,24 @@ static int save_mail_details(int profile)
 		return 0;
 	}
 
-	/*get the active combo box string*/
-	model= gtk_combo_box_get_model(GTK_COMBO_BOX(protocol_combo));
-	if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(protocol_combo), &iter))
-		error_and_log(S_CONFIGDLG_ERR_COMBO_ITER);
- 		
-	gtk_tree_model_get(model, &iter, 0, &str, -1);
-
 	/*copy the mail details to the structure*/
-	strcpy((*pcurrent)->accname, gtk_entry_get_text(GTK_ENTRY(accname_entry)));
-	strcpy((*pcurrent)->hostname, gtk_entry_get_text(GTK_ENTRY(hostname_entry)));
-	strcpy((*pcurrent)->port, gtk_entry_get_text(GTK_ENTRY(port_entry)));
-	strcpy((*pcurrent)->username, gtk_entry_get_text(GTK_ENTRY(username_entry)));
-	strcpy((*pcurrent)->password, gtk_entry_get_text(GTK_ENTRY(password_entry)));
+	g_strlcpy(pcurrent_data->accname, gtk_entry_get_text(GTK_ENTRY(accname_entry)), NAME_MAX);
+	g_strlcpy(pcurrent_data->hostname, gtk_entry_get_text(GTK_ENTRY(hostname_entry)), LOGIN_NAME_MAX+ HOST_NAME_MAX);
+	g_strlcpy(pcurrent_data->port, gtk_entry_get_text(GTK_ENTRY(port_entry)), PORT_LEN);
+	g_strlcpy(pcurrent_data->username, gtk_entry_get_text(GTK_ENTRY(username_entry)), LOGIN_NAME_MAX+ HOST_NAME_MAX);
+	g_strlcpy(pcurrent_data->password, gtk_entry_get_text(GTK_ENTRY(password_entry)), PASSWORD_LEN);
 	
-	/*strcpy((*pcurrent)->icon, colourstring);*/
-	strcpy((*pcurrent)->protocol, str);
-	(*pcurrent)->runfilter= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox));
-	g_free(str);
+	/*get the relevant item depending on the active combo item*/
+	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
+		error_and_log(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 
+	g_strlcpy(pcurrent_data->plgname, g_path_get_basename(g_module_name(pitem->handle)), PROTOCOL_LEN);
+
+	/*get the filter setting*/
+	pcurrent_data->runfilter= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox));
 
 	/*write the details to the file*/
-	retval= write_user_details(pcurrent);
+	retval= write_user_details(pcurrent_data);
 	
 	/*try to get the listbox iterator and add a row if there is no iterator*/
 	if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) 
@@ -161,14 +157,20 @@ static int save_mail_details(int profile)
 
 	/*clear the listbox*/
 	gtk_list_store_clear(store);
-	pcurrent= &paccounts;
+	pcurrent= acclist;
 	
 	/*for each mail account read the details and add it to the listbox*/
-	while(*pcurrent)
+	while(pcurrent!= NULL)
 	{
 		gtk_list_store_prepend(store, &iter);
-		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, (*pcurrent)->accname, PROTOCOL_COLUMN, (*pcurrent)->protocol, -1);
-  		pcurrent= &(*pcurrent)->next;
+		pcurrent_data= (mail_details *)pcurrent->data;
+
+		/*find the plugin and update the list*/
+		if((pitem= find_plugin(pcurrent_data->plgname))== NULL)
+			run_error_dialog(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+
+		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
+  		pcurrent= g_slist_next(pcurrent);
 	}
 
 	return(retval);
@@ -177,15 +179,15 @@ static int save_mail_details(int profile)
 /*function to save the config options to config file*/
 static int save_config_details(void)
 {
-	char delaystring[3];
+	char delaystring[G_ASCII_DTOSTR_BUF_SIZE];
 	int retval= 0;
 	
 	/*get the config information from the widgets*/
-	sprintf(delaystring, "%u", gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(delay_spin))); 
+	g_ascii_dtostr(delaystring, sizeof(delaystring), gtk_spin_button_get_value(GTK_SPIN_BUTTON(delay_spin))); 
 	config.icon_size= ((gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(iconsize_checkbox))== TRUE)? 16: 24); 
 	config.multiple= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(multi_accounts_checkbox)); 
-	strcpy(config.check_delay, delaystring); 
-	strcpy(config.mail_program, gtk_entry_get_text(GTK_ENTRY(mailprog_entry)));
+	g_strlcpy(config.check_delay, delaystring, 3); 
+	g_strlcpy(config.mail_program, gtk_entry_get_text(GTK_ENTRY(mailprog_entry)), NAME_MAX);
   	
 	/*write the config info to the file*/
 	retval= write_config_file();
@@ -212,7 +214,7 @@ static gboolean count_rows(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *
 	(*p_count)++;
 
 	/*return FALSE to keep the function counting*/
-	return FALSE;
+	return(FALSE);
 }
 
 /*signal called when the add button of config dialog is pressed*/
@@ -304,8 +306,6 @@ static void remove_button_pressed(void)
 	}
 }
 
-	
-	
 /*signal called when the icon colour button of config dialog is pressed*/
 static void iconcolour_button_pressed(GtkWidget *widget, char *scolour)
 {
@@ -342,7 +342,7 @@ static void iconcolour_button_pressed(GtkWidget *widget, char *scolour)
 	r= colour.red/ 256;
 	g= colour.green/ 256;
 	b= colour.blue/ 256;
-	sprintf(scolour, "#%02X%02X%02X", r, g, b);
+	g_snprintf(scolour, ICON_LEN, "#%02X%02X%02X", r, g, b);
 
 }
 
@@ -376,7 +376,24 @@ static void config_iconcolour_button_pressed(GtkWidget *widget, char *pcolourstr
 	gtk_widget_show(cicon);
 
 }
+
+/*signal called when plugin information button is pressed*/
+static void plginfo_button_pressed(GtkWidget *widget)
+{
+	mtc_plugin_info *pitem= NULL;
+	GtkWidget *dialog= NULL;
+
+	/*get the relevant item depending on the active combo item*/
+	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
+		error_and_log(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
+	/*set the port to the default port for the specified plugin*/
+	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
+			S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+}
+
 /*signal called when filter checkbox is pressed*/
 static void filter_checkbox_pressed(GtkWidget *widget)
 {
@@ -394,7 +411,7 @@ static void multi_checkbox_pressed(GtkWidget *widget)
 /*signal called when filter button is pressed*/
 static void filter_button_pressed(GtkWidget *widget, gpointer data)
 {
-	mail_details **pcurrent;
+	mail_details *pcurrent= NULL;
 	gint *p_count= (gint*)data;
 
 	if((pcurrent= get_account(*p_count))== NULL)
@@ -404,32 +421,22 @@ static void filter_button_pressed(GtkWidget *widget, gpointer data)
 }
 
 /*signal called when protocol combo box changes*/
-static void set_port_value(GtkComboBox *entry)
+static void protocol_combo_changed(GtkComboBox *entry)
 {
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	gchar *str = NULL;
+	mtc_plugin_info *pitem= NULL;
+	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
 
-	model= gtk_combo_box_get_model(GTK_COMBO_BOX(entry));
-	if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(entry), &iter))
-		error_and_log(S_CONFIGDLG_ERR_COMBO_ITER);
- 		
-	gtk_tree_model_get(model, &iter, 0, &str, -1); 	
-
-	/*set the port to the default port for the specified protocol*/
-	if((strcmp(str, PROTOCOL_POP)== 0)||
-		(strcmp(str, PROTOCOL_POP_CRAM_MD5)== 0)||
-		(strcmp(str, PROTOCOL_APOP)== 0))
-		gtk_entry_set_text(GTK_ENTRY(port_entry), "110"); 
-	else if((strcmp(str, PROTOCOL_IMAP)== 0)||
-		(strcmp(str, PROTOCOL_IMAP_CRAM_MD5)== 0))
-		gtk_entry_set_text(GTK_ENTRY(port_entry), "143");
-	else if((strcmp(str, PROTOCOL_POP_SSL)== 0))
-		gtk_entry_set_text(GTK_ENTRY(port_entry), "995");
-	else if((strcmp(str, PROTOCOL_IMAP_SSL)== 0))
-		gtk_entry_set_text(GTK_ENTRY(port_entry), "993");
+	/*get the relevant item depending on the active combo item*/
+	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(entry))))== NULL)
+		error_and_log(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
-	g_free (str);
+	/*set the port to the default port for the specified plugin*/
+	g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
+	gtk_entry_set_text(GTK_ENTRY(port_entry), port_str); 
+
+	/*Now enable/disable the filter widgets depending on plugin flags*/
+	gtk_widget_set_sensitive(filter_button, (pitem->flags& MTC_ENABLE_FILTERS));
+	gtk_widget_set_sensitive(filter_checkbox, (pitem->flags& MTC_ENABLE_FILTERS));
 }
 
 /*function to set the protocol default text*/
@@ -440,7 +447,7 @@ static gboolean set_combo_text(GtkTreeModel *model, GtkTreePath *path, GtkTreeIt
 	
 	/*compare the value from the details file with the current value
 	 *and set it if it matches*/
-	if(strcmp((char *)userdata, string)== 0)
+	if(g_ascii_strcasecmp((char *)userdata, string)== 0)
 	{	
 		gtk_combo_box_set_active_iter(GTK_COMBO_BOX(protocol_combo), iter);
 		g_free(string);
@@ -454,11 +461,13 @@ static gboolean set_combo_text(GtkTreeModel *model, GtkTreePath *path, GtkTreeIt
 /*display the details dialog*/
 int run_details_dialog(int profile, int newaccount)
 {
-	GtkWidget *dialog, *iconcolour_button;
+	GtkWidget *dialog, *iconcolour_button, *plginfo_button;
 	GtkWidget *accname_label, *hostname_label, *port_label, *username_label, *password_label, *protocol_label, *icon_label;
 	GtkWidget *main_table, *v_box_details;
 	gint result= 0, saved= 0;
-	mail_details **pcurrent= NULL;
+	mail_details *pcurrent= NULL;
+	GSList *plgcurrent= plglist;
+	mtc_plugin_info *pitem= NULL;
 	
 	/*setup the account name info*/
 	accname_entry= gtk_entry_new();
@@ -491,31 +500,24 @@ int run_details_dialog(int profile, int newaccount)
 	protocol_label= gtk_label_new(S_CONFIGDLG_DETAILS_PROTOCOL);
 	protocol_combo= gtk_combo_box_new_text();
 
+	/*setup the plugin info stuff*/
+	plginfo_button= gtk_button_new_with_label(S_CONFIGDLG_PLG_INFO_BUTTON);
+  	g_signal_connect(G_OBJECT(plginfo_button), "clicked", G_CALLBACK(plginfo_button_pressed), NULL);
+
 	/*setup filter stuff*/
 	filter_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_ENABLEFILTERS);
   	g_signal_connect(G_OBJECT(filter_checkbox), "clicked", G_CALLBACK(filter_checkbox_pressed), NULL);
 	filter_button= gtk_button_new_with_label(S_CONFIGDLG_CONFIGFILTERS);
   	g_signal_connect(G_OBJECT(filter_button), "clicked", G_CALLBACK(filter_button_pressed), &profile);
 
-	/*add the protocols to the combo*/
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_POP);
-#ifdef MTC_USE_SSL
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_APOP);
-#endif /*MTC_USE_SSL*/
-#ifdef MTC_USE_SASL
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_POP_CRAM_MD5);
-#endif /*MTC_USE_SASL*/
-#ifdef MTC_USE_SSL
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_POP_SSL);
-#endif /*MTC_USE_SSL*/
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_IMAP);
-#ifdef MTC_USE_SASL
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_IMAP_CRAM_MD5);
-#endif /*MTC_USE_SASL*/
-#ifdef MTC_USE_SSL
-	gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), PROTOCOL_IMAP_SSL);
-#endif /*MTC_USE_SSL*/
-	
+	/*add the plugin protocol names to the combo box*/
+	while(plgcurrent!= NULL)
+	{
+		pitem= (mtc_plugin_info *)plgcurrent->data;
+		gtk_combo_box_append_text(GTK_COMBO_BOX(protocol_combo), pitem->name);
+		plgcurrent= g_slist_next(plgcurrent);
+	}
+
 	/*setup the icon colour info*/
 	icon_label= gtk_label_new(S_CONFIGDLG_ICON_COLOUR);
 	dicon= gtk_image_new();
@@ -523,21 +525,25 @@ int run_details_dialog(int profile, int newaccount)
 	
 	/*set the icon button to open the colour dialog*/
 	iconcolour_button= gtk_button_new_with_label(S_CONFIGDLG_SETICONCOLOUR);
-  
+ 
+ 	/*set initial combo values*/
 	gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
-
+	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed", G_CALLBACK(protocol_combo_changed), NULL);
+	
 	/*read the details for the selected account and display it in the widgets*/
 	if((pcurrent= get_account(profile))!= NULL)
 	{
 		GtkTreeModel *model;
 		GtkTreeIter iter;
 		
-		gtk_entry_set_text(GTK_ENTRY(accname_entry), (*pcurrent)->accname);
-		gtk_entry_set_text(GTK_ENTRY(hostname_entry), (*pcurrent)->hostname);
-		gtk_entry_set_text(GTK_ENTRY(port_entry), (*pcurrent)->port);
-		gtk_entry_set_text(GTK_ENTRY(username_entry), (*pcurrent)->username);
-		gtk_entry_set_text(GTK_ENTRY(password_entry), (*pcurrent)->password);
-		/*strcpy(colourstring, (*pcurrent)->icon);*/
+		/*set the inital combo stuff (must be done after account read, but before port change)*/
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo));
+	
+	gtk_entry_set_text(GTK_ENTRY(accname_entry), pcurrent->accname);
+		gtk_entry_set_text(GTK_ENTRY(hostname_entry), pcurrent->hostname);
+		gtk_entry_set_text(GTK_ENTRY(port_entry), pcurrent->port);
+		gtk_entry_set_text(GTK_ENTRY(username_entry), pcurrent->username);
+		gtk_entry_set_text(GTK_ENTRY(password_entry), pcurrent->password);
 
 		/*set the combobox to first entry and get the iterator*/
 		model= gtk_combo_box_get_model(GTK_COMBO_BOX(protocol_combo));
@@ -545,33 +551,36 @@ int run_details_dialog(int profile, int newaccount)
 				error_and_log(S_CONFIGDLG_ERR_COMBO_ITER);
 				
 		/*loop through listbox entries to see which is selected and run the details dialog for the account*/
-		gtk_tree_model_foreach(model, set_combo_text, (*pcurrent)->protocol);
+		/*if not found for whatever reason, default to the first in the list*/
+		if((pitem= find_plugin(pcurrent->plgname))== NULL)
+			pitem= plglist->data;
+
+		gtk_tree_model_foreach(model, set_combo_text, (char *)pitem->name);
+		/*gtk_tree_model_foreach(model, set_combo_text, pcurrent->plgname);*/
 		
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), (*pcurrent)->runfilter);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), pcurrent->runfilter);
 	}
 	/*set the default pop port if details could not be read*/
 	else
 	{
-		gtk_entry_set_text(GTK_ENTRY(port_entry), "110"); /*default pop3 port*/
-		paccounts= create_account(&paccounts);
+		/*set the initial combo stuff*/
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo));
+	
+		/*set the default port value*/
+		acclist= create_account();
 		pcurrent= get_account(profile);
-		strcpy((*pcurrent)->icon, "#FFFFFF");
+		g_strlcpy(pcurrent->icon, "#FFFFFF", ICON_LEN);
  	}
-  	g_signal_connect(G_OBJECT(iconcolour_button), "clicked", G_CALLBACK(details_iconcolour_button_pressed), (*pcurrent)->icon);
+  	g_signal_connect(G_OBJECT(iconcolour_button), "clicked", G_CALLBACK(details_iconcolour_button_pressed), pcurrent->icon);
 	
 	/*create the icon pixbuf (must be called after read_user_details*/
-	if(!(dicon= create_pixbuf(dicon, (*pcurrent)->icon)))
+	if(!(dicon= create_pixbuf(dicon, pcurrent->icon)))
 		error_and_log(S_CONFIGDLG_ERR_CREATE_PIXBUF);
 
 	gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
 	
-	/*set the default port value when the combo changes*/
-	/*NOTE done after setting initial value in case port is not default*/
-	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed", G_CALLBACK(set_port_value), NULL);
-
-
 	/*pack the stuff into the boxes*/
-	main_table= gtk_table_new(8, 3, FALSE);
+	main_table= gtk_table_new(9, 3, FALSE);
 	gtk_table_set_col_spacings(GTK_TABLE(main_table), 10);
 	gtk_table_set_row_spacings(GTK_TABLE(main_table), 10);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), accname_label, 0, 1, 0, 1);
@@ -586,14 +595,16 @@ int run_details_dialog(int profile, int newaccount)
 	gtk_table_attach_defaults(GTK_TABLE(main_table), password_entry, 2, 3, 4, 5);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), protocol_label, 0, 1, 5, 6);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), protocol_combo, 2, 3, 5, 6);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), plginfo_button, 2, 3, 6, 7);
+
 	dicon_table= gtk_table_new(1, 3, FALSE);
 	gtk_table_set_col_spacings(GTK_TABLE(dicon_table), 5);
   	gtk_table_attach(GTK_TABLE(dicon_table), dicon, 0, 1, 0, 1, GTK_FILL| GTK_EXPAND| GTK_SHRINK, GTK_FILL| GTK_EXPAND| GTK_SHRINK, 0, 0);
   	gtk_table_attach(GTK_TABLE(dicon_table), iconcolour_button, 2, 3, 0, 1, GTK_FILL| GTK_SHRINK, GTK_FILL| GTK_EXPAND| GTK_SHRINK, 0, 0);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), icon_label, 0, 1, 6, 7);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), dicon_table, 2, 3, 6, 7);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_checkbox, 0, 1, 7, 8);
-  	gtk_table_attach(GTK_TABLE(main_table), filter_button, 2, 3, 7, 8, GTK_SHRINK| GTK_FILL, GTK_FILL| GTK_EXPAND| GTK_SHRINK, 0, 0);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), icon_label, 0, 1, 7, 8);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), dicon_table, 2, 3, 7, 8);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_checkbox, 0, 1, 8, 9);
+  	gtk_table_attach(GTK_TABLE(main_table), filter_button, 2, 3, 8, 9, GTK_SHRINK| GTK_FILL, GTK_FILL| GTK_EXPAND| GTK_SHRINK, 0, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(main_table), 10);
 	
 	v_box_details= gtk_vbox_new(FALSE, 10);
@@ -627,7 +638,7 @@ int run_details_dialog(int profile, int newaccount)
 
 					get_account_file(filterfile, FILTER_FILE, profile);
 
-					if((access(filterfile, F_OK)!= -1)&& (remove(filterfile)== -1))
+					if((IS_FILE(filterfile))&& (remove(filterfile)== -1))
 						error_and_log(S_CONFIGDLG_ERR_REMOVE_FILE, filterfile);
 				
 					/*we also must remove the account from the linked list*/
@@ -662,11 +673,13 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 	GtkTooltips *multi_tooltip;
 	gchar window_title[30];
 	GtkWidget *main_table;
-	mail_details **pcurrent= &paccounts;
+	GSList *pcurrent= NULL;
+	mail_details *pcurrent_data= NULL;
 	GtkTreeIter iter;
+	mtc_plugin_info *pitem= NULL;
 
 	/*set the config window title*/
-	sprintf(window_title, S_CONFIGDLG_CONFIG_TITLE, PACKAGE);
+	g_snprintf(window_title, 30, S_CONFIGDLG_CONFIG_TITLE, PACKAGE);
 	
 	/*setup the notebook*/
 	notebook= gtk_notebook_new();
@@ -684,7 +697,7 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 	iconsize_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_SMALLICON);
 	
 	/*set the option for multiple accounts*/
-	multi_accounts_checkbox= gtk_check_button_new_with_label(S_DOCKLET_MULTIPLE_ACCOUNTS);
+	multi_accounts_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_MULTIPLE_ACCOUNTS);
 	multi_tooltip= gtk_tooltips_new();
 	gtk_tooltips_set_tip(GTK_TOOLTIPS(multi_tooltip), multi_accounts_checkbox, S_CONFIGDLG_MULTI_TOOLTIP, S_CONFIGDLG_MULTI_TOOLTIP);
 	
@@ -712,7 +725,8 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 	/*set the config details*/
 	read_config_file();
 	gtk_entry_set_text(GTK_ENTRY(mailprog_entry), config.mail_program);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(delay_spin), atof(config.check_delay));
+
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(delay_spin), g_ascii_strtod(config.check_delay, NULL));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(iconsize_checkbox), (config.icon_size<= 16)? TRUE: FALSE);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(multi_accounts_checkbox), config.multiple);
 	
@@ -746,11 +760,21 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 
 	/*add the accounts to the list*/
 	read_accounts();
-	while(*pcurrent)
+	pcurrent= acclist;
+
+	while(pcurrent!= NULL)
 	{
 		gtk_list_store_prepend(store, &iter);
-		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, (*pcurrent)->accname, PROTOCOL_COLUMN, (*pcurrent)->protocol, -1);
-  		pcurrent= &(*pcurrent)->next;
+		pcurrent_data= (mail_details *)pcurrent->data;
+
+		/*find the plugin and add it to the listbox*/
+		/*Message box here if we cannot find the plugin*/
+		if((pitem= find_plugin(pcurrent_data->plgname))== NULL)
+			run_error_dialog(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+		
+		/*add to the list, if we cannot find it, report that it is not found*/
+		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
+  		pcurrent= g_slist_next(pcurrent);
 	}
   	g_object_unref(store);
   
@@ -820,3 +844,5 @@ GtkWidget *run_config_dialog(GtkWidget *dialog)
 		g_object_unref(cicon);*/
 	return dialog;
 }
+
+

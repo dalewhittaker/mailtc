@@ -41,15 +41,14 @@
 /*docklet.c strings*/
 #define S_DOCKLET_NEW_MESSAGE _("%s: %d new message%s")
 #define S_DOCKLET_NEW_MESSAGES _("%s: %d new messages%s")
-/*#define S_DOCKLET_NEW_MESSAGES _("%s: %d new message%s%s")*/
 #define S_DOCKLET_CONNECT_ERR _("There was an error connecting to the following servers:\n\n%s\nPlease check the %s log for the error.\n")
-#define S_DOCKLET_MULTIPLE_ACCOUNTS _("Read/Display new messages for multiple accounts")
 
 /*main.c strings*/
 #define S_MAIN_INSTANCE_RUNNING _("An instance of %s is already running.\n")
 #define S_MAIN_NO_CONFIG_FOUND _("No mail configuration was found.\nPlease enter your mail details.\n")
 #define S_MAIN_OLD_VERSION_FOUND _("You are running a new version of %s.\nThis version uses a new format for the icons.\n\
-						\nPlease set the icon colours for your mail accounts.\n")
+\nPlease set the icon colours for your mail accounts.\n")
+#define S_MAIN_LOAD_PLUGINS _("Error loading network plugins, please reinstall.\nIf the problem persists please report this as a bug.")
 
 /*configdlg.c strings*/
 #define S_CONFIGDLG_PASSWORD _("password")
@@ -81,7 +80,11 @@
 #define S_CONFIGDLG_LTAB_ACCOUNT _("Mail Account")
 #define S_CONFIGDLG_LTAB_PROTOCOL _("Protocol")
 #define S_CONFIGDLG_MULTI_TOOLTIP _("Enable this option to display the number of new messages for all accounts, rather than for a single account at a time.\n\
-								\nThis option will also read all accounts at once, rather than a single account.")
+\nThis option will also read all accounts at once, rather than a single account.")
+#define S_CONFIGDLG_MULTIPLE_ACCOUNTS _("Read/Display new messages for multiple accounts")
+#define S_CONFIGDLG_DISPLAY_PLG_INFO _("%s plugin by %s.\n\n%s")
+#define S_CONFIGDLG_PLG_INFO_BUTTON _("Plugin information...")
+#define S_CONFIGDLG_FIND_PLUGIN_MSG _("Cannot find the plugin '%s' used for account '%s'.\n\nYou will need to select and resave a plugin from the list for each account.")
 
 /*filterdlg.c strings*/
 #define S_FILTERDLG_NO_FILTERS _("You must enter at least one filter string")
@@ -97,39 +100,26 @@
 
 /***ERROR STRINGS***/
 
-/*common.c strings*/
-#define S_COMMON_ERR_ALLOC _("Error allocating memory\n")
-#define S_COMMON_ERR_REALLOC _("Error reallocating memory\n")
-#define S_COMMON_ERR_STR_INS _("str_ins error: invalid position!\n")
-
 /*configdlg.c strings*/
 #define S_CONFIGDLG_ERR_COMBO_ITER _("Error getting listbox iterator\n")
 #define S_CONFIGDLG_ERR_REMOVE_FILE _("Error attempting to write to file %s\n")
 #define S_CONFIGDLG_ERR_LISTBOX_ITER _("Error getting listbox iterator\n")
 #define S_CONFIGDLG_ERR_CREATE_PIXBUF _("Error creating icon pixbuf\n")
 #define S_CONFIGDLG_ERR_GET_ACCOUNT_INFO _("Error getting information for account %d\n")
+#define S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN _("Error: cannot get active plugin from combo box\n")
+#define S_CONFIGDLG_ERR_WRITE_PLUGIN _("Error writing plugin information.\n")
+#define S_CONFIGDLG_ERR_FIND_PLUGIN _("Plugin not found")
 
 /*docklet.c strings*/
-#define S_DOCKLET_ERR_FORK_APP _("Error creating fork for mail application %s\n")
-#define S_DOCKLET_ERR_EXEC_APP _("Error executing applicaiton %s\n")
-#define S_DOCKLET_ERR_UNKNOWN_PROTOCOL _("Unknown mail protocol selected\n")
-#define S_DOCKLET_ERR_CLICK_INVALID_PROTOCOL _("Error, invalid protocol while processing docklet click\n")
-#define S_DOCKLET_ERR_CLOSE_FILE _("Error closing file %s\n")
-#define S_DOCKLET_ERR_OPEN_FILE_WRITE _("Error opening %s for writing\n")
-#define S_DOCKLET_ERR_OPEN_FILE_READ _("Error opening %s for reading\n")
-#define S_DOCKLET_ERR_READ_FILE _("Error reading file %s\n")
-#define S_DOCKLET_ERR_WRITE_FILE _("Error writing file %s\n")
-#define S_DOCKLET_ERR_ACCESS_FILE _("Error accessing %s when marking read\n")
-#define S_DOCKLET_ERR_RENAME_FILE _("Error renaming %s to %s\n")
+#define S_DOCKLET_ERR_FIND_PLUGIN _("Error finding plugin %s\n")
+#define S_DOCKLET_ERR_FIND_PLUGIN_MSG _("Cannot find the plugin '%s' used for account '%s'.\n\n\
+You will need to select and resave a plugin from the list for each account.")
 
 /*encrypter.c strings*/
 #define S_ENCRYPTER_ERR_ENC_PW _("Error encrypting password\n")
 #define S_ENCRYPTER_ERR_ENC_PW_FINAL _("Error finalising password encryption\n")
 #define S_ENCRYPTER_ERR_DEC_PW _("Error decrypting password\n")
 #define S_ENCRYPTER_ERR_DEC_PW_FINAL _("Error finalising password decryption\n")
-#define S_ENCRYPTER_ERR_APOP_DIGEST_INIT _("Error initialising message digest\n")
-#define S_ENCRYPTER_ERR_APOP_DIGEST_CREATE _("Error creating MD5 digest\n")
-#define S_ENCRYPTER_ERR_APOP_DIGEST_FINAL _("Error finalising digest creation\n")
 
 /*filterdlg.c strings*/
 #define S_FILTERDLG_ERR_REMOVE_FILE _("Error attempting to write to file %s\n")
@@ -167,12 +157,12 @@
 #define S_FILEFUNC_ERR_WRITE_ACCNAME _("Error writing account name to file\n")
 #define S_FILEFUNC_ERR_WRITE_FILTER _("Error writing filter status to file\n")
 #define S_FILEFUNC_ERR_ATTEMPT_WRITE _("Error attempting to write to file %s\n")
-#define S_FILEFUNCT_ERR_MOVE_FP _("Error moving file pointer for config file\n")
-		
+#define S_FILEFUNC_ERR_MOVE_FP _("Error moving file pointer for config file\n")
+#define S_FILEFUNC_ERR_READ_PLUGIN	_("Error reading plugin for account %d\n")
+#define S_FILEFUNC_ERR_GET_HOMEDIR _("Error getting home directory\n")
+
 /*main.c strings*/
-#define S_MAIN_ERR_DELAY_INFO _("Error getting delay information\n")
 #define S_MAIN_ERR_INSTANCE_RUNNING _("Error: Instance of %s already running\n")
-#define S_MAIN_ERR_ATEXIT_FUNC _("Error cannot set exit function: ")
 #define S_MAIN_ERR_CLOSE_LOGFILE _("Error closing log file: ")
 #define S_MAIN_ERR_OPEN_LOGFILE _("Error writing header to log file: ")
 #define S_MAIN_ERR_APP_KILLED _("%s killed.\n")
@@ -183,74 +173,20 @@
 #define S_MAIN_ERR_OPEN_PIDFILE_READ _("Error reading PID file %s\n")
 #define S_MAIN_ERR_RENAME_PIDFILE _("Error renaming pid file %s to temp pid file %s\n")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
+#define S_MAIN_ERR_NOT_DIRECTORY _("%s exists, but is not a directory, you must remove this before %s can run\n")
 #define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
-					\n\t%s -c (to configure mail details)\
-					\n\t%s -d (run in network debug mode)\
-					\n\t%s -k (kill all mailtc processes)\n")
+\n\t%s -c (to configure mail details)\
+\n\t%s -d (run in network debug mode)\
+\n\t%s -k (kill all mailtc processes)\n")
+#define S_MAIN_ERR_LOAD_PLUGINS ("Error loading network plugins\n")
 
-/*imapfunc.c strings*/
-#define S_IMAPFUNC_ERR_CONNECT _("Connection error. %s closing connection and retrying.\n")
-#define S_IMAPFUNC_ERR_SEND_LOGIN _("Error sending LOGIN to imap server %s\n")
-#define S_IMAPFUNC_ERR_SEND_LOGOUT _("Error sending LOGOUT command to imap server %s\n")
-#define S_IMAPFUNC_ERR_SASL_INIT _("SASL initialisation failure (%d): %s\n")
-#define S_IMAPFUNC_ERR_SEND_AUTHENTICATE _("Error sending AUTHENTICATE command to imap server %s\n")
-#define S_IMAPFUNC_ERR_SEND_CRAM_MD5 _("Error sending CRAM-MD5 string to imap server %s\n")
-#define S_IMAPFUNC_ERR_NOT_IMAP_SERVER _("Error: this does not appear to be a valid IMAP server\n")
-#define S_IMAPFUNC_ERR_RECEIVE_CAPABILITY _("Error receiving IMAP capability string\n")
-#define S_IMAPFUNC_ERR_GET_IMAP_CAPABILITIES _("Error getting IMAP server capabilities\n")
-#define S_IMAPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED _("Error: CRAM-MD5 authentication does not appear to be supported\n")
-#define S_IMAPFUNC_ERR_OPEN_READ_FILE _("Error opening read file %s\n")
-#define S_IMAPFUNC_ERR_GET_UID _("Error retreiving uid\n")
-#define S_IMAPFUNC_ERR_SEND_UID_FETCH _("Error sending UID FETCH to imap server %s\n")
-#define S_IMAPFUNC_ERR_SEND_STORE _("Error sending STORE to imap server %s\n")
-#define S_IMAPFUNC_ERR_CLOSE_READ_FILE _("Error closing uid read file\n")
-#define S_IMAPFUNC_ERR_OPEN_FILE _("Error opening file %s\n")
-#define S_IMAPFUNC_ERR_OPEN_TEMP_FILE _("Error opening temp UID file for reading\n")
-#define S_IMAPFUNC_ERR_CLOSE_TEMP_FILE _("Error closing temp UID file\n")
-#define S_IMAPFUNC_ERR_CLOSE_FILE _("Error closing file %s\n")
-#define S_IMAPFUNC_ERR_SEND_SELECT _("Error sending SELECT to imap server %s\n")
-#define S_IMAPFUNC_ERR_REMOVE_READ_FILE _("Error removing uid read file\n")
-
-/*netfunc.c strings*/
-#define S_NETFUNC_ERR_IP _("Error getting ip from hostname %s\n")
-#define S_NETFUNC_ERR_SOCKET _("Error getting socket\n")
-#define S_NETFUNC_ERR_CONNECT _("Error connecting to server %s\n")
-#define S_NETFUNC_ERR_SEND _("Error sending message to server\n")
-#define S_NETFUNC_ERR_RECEIVE _("Error receiving message from server\n")
-#define S_NETFUNC_ERR_DATA_AVAILABLE _("Error while checking if there is any data to receive from server\n")
-
-/*popfunc.c strings*/
-#define S_POPFUNC_ERR_CONNECT _("Connection error. %s closing connection and retrying.\n")
-#define S_POPFUNC_ERR_BAD_MAIL_HEADER _("Warning, mail header does not conform to spec!\n")
-#define S_POPFUNC_ERR_APOP_NOT_SUPPORTED _("Error: APOP does not appear to be supported\n")
-#define S_POPFUNC_ERR_APOP_ENCRYPT_TIMESTAMP _("Error encrypting APOP timestamp string\n")
-#define S_POPFUNC_ERR_APOP_SEND_DETAILS _("Error sending APOP details to pop server %s\n")
-#define S_POPFUNC_ERR_APOP_NOT_COMPILED _("Error: APOP support not compiled in\n")
-#define S_POPFUNC_ERR_SEND_USERNAME _("Error sending username to pop server %s\n")
-#define S_POPFUNC_ERR_SEND_PASSWORD _("Error sending password to pop server %s\n")
-#define S_POPFUNC_ERR_SASL_INIT _("SASL initialisation failure (%d): %s\n")
-#define S_POPFUNC_ERR_SEND_CRAM_MD5_AUTH _("Error sending auth command to pop server %s\n")
-#define S_POPFUNC_ERR_RECEIVE_NUM_MESSAGES _("Error retrieving number of messages on the pop server %s\n")
-#define S_POPFUNC_ERR_GET_TOTAL_MESSAGES _("Error getting total number of messages\n")
-#define S_POPFUNC_ERR_CLOSE_FILE _("Error closing file %s\n")
-#define S_POPFUNC_ERR_OPEN_FILE _("Error opening file %s\n")
-#define S_POPFUNC_ERR_GET_UIDL _("Error retrieving uidl value\n")
-#define S_POPFUNC_ERR_RECEIVE_TOP _("Error getting TOP for message %d\n")
-#define S_POPFUNC_ERR_RECEIVE_UIDL _("Error getting UIDL for message %d\n")
-#define S_POPFUNC_ERR_INVALID_AUTH _("Invalid auth method specified\n")
-#define S_POPFUNC_ERR_SEND_QUIT _("Error sending QUIT command to pop server %s\n")
-#define S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED _("Error: CRAM-MD5 authentication does not appear to be supported\n")
-#define S_POPFUNC_ERR_TEST_CAPABILITIES _("Error testing POP server capabilities, this does not appear to be a valid POP server\n")
-	
-/*sasl.c strings*/
-#define S_SASL_ERR_INITIALISE _("Cannot initialise SASL client (%d): %s\n")
-#define S_SASL_ERR_CRAM_MD5_AUTH _("CRAM-MD5 authentication error (%d): %s\n")
-
-/*tls.c strings*/
-#define S_TLS_ERR_CTX _("Error creating CTX\n")
-#define S_TLS_ERR_CREATE_STRUCT _("Error creating SSL structure\n")
-#define S_TLS_ERR_SSL_DESC _("Error setting SSL file descriptor\n")
-#define S_TLS_ERR_SSL_CONNECT _("Error connecting with SSL\n")
-#define S_TLS_ERR_SSL_SHUTDOWN _("Error shutting down SSL connection\n")
+/*plugin.c strings*/
+#define S_PLUGIN_ERR_CLOSE_PLUGIN _("Error closing plugin %s: %s")
+#define S_PLUGIN_ERR_MODULE_SUPPORT _("Error: module loading not supported on this system")
+#define S_PLUGIN_ERR_OPEN_PLUGIN _("Error opening plugin %s: %s\n")
+#define S_PLUGIN_ERR_PLUGIN_POINTER _("Error getting plugin pointer: %s\n")
+#define S_PLUGIN_ERR_INIT_PLUGIN _("Error initialising plugin %s: %s\n")
+#define S_PLUGIN_ERR_COMPATIBILITY _("Error: plugin %s is not compatible with %s %s\n")
+#define S_PLUGIN_ERR_FIND_PLUGIN _("Error: cannot find plugin %s\n")
 
 #endif /*DW_MAILTC_STRINGS_FILE*/

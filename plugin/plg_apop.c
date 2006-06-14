@@ -21,64 +21,18 @@
 #include "plg_common.h"
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
-#define MTC_REVISION 0.1
 #define PLUGIN_NAME "POP (APOP)"
 #define PLUGIN_AUTHOR "Dale Whittaker (dayul@users.sf.net)"
 #define PLUGIN_DESC "POP3 network plugin with APOP authentication."
-
-/*function to create md5 digest for APOP authentication*/
-unsigned int encrypt_apop_string(char *decstring, char *encstring)
-{
-	unsigned int md_len= 0, i;
-	char octet[3]= "";
-	
-	EVP_MD_CTX ctx;
-	const EVP_MD *md;
-	unsigned char md_value[EVP_MAX_MD_SIZE]; /*string to hold the digest*/
-
-	/*Enable openssl to use all digests and set digest to MD5*/
-	OpenSSL_add_all_digests();
-	md= EVP_md5();
-	
-	/*Initialise message digest cipher content*/
-	EVP_MD_CTX_init(&ctx);
-	if(!EVP_DigestInit_ex(&ctx, md, NULL))
-		error_and_log_no_exit(S_PLG_APOP_ERR_DIGEST_INIT);
-
-	/*Encrypt the string and final padding to MD5*/
-	if(!EVP_DigestUpdate(&ctx, (unsigned char *)decstring, strlen(decstring)))
-		error_and_log_no_exit(S_PLG_APOP_ERR_DIGEST_CREATE);
-	if(!EVP_DigestFinal_ex(&ctx, md_value, &md_len))
-		error_and_log_no_exit(S_PLG_APOP_ERR_DIGEST_FINAL);
-
-	/*cleanup*/
-	EVP_MD_CTX_cleanup(&ctx);
-	
-	/*convert digest into hex string for APOP and return length of string*/
-	for(i=0; i< md_len; i++)
-	{	
-		sprintf(octet, "%02x", md_value[i]);
-		strcat(encstring, octet);
-	}	
-	EVP_cleanup();
-
-	return(md_len);
-	
-}
-
-/*simply calls check_pop_mail with correct params*/
-static int check_apop_mail(mail_details *paccount, const char *cfgdir)
-{
-	enum pop_protocol protocol= APOP_PROTOCOL;
-	return(check_pop_mail(paccount, cfgdir, protocol));
-}
+#define DEFAULT_PORT 110
 
 /*this is called every n minutes by mailtc to check for new messages*/
-int load(mail_details *paccount, const char *cfgdir, unsigned int flags, FILE *plog)
+int apop_get_messages(void *pdata, const char *cfgdir, void *plog, unsigned int flags)
 {
 	/*set the network debug flag and log file*/
+	mail_details *paccount= (mail_details *)pdata;
 	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= plog;
+	plglog= (FILE *)plog;
 
 	return(check_apop_mail(paccount, cfgdir));
 }
@@ -91,23 +45,32 @@ int load(mail_details *paccount, const char *cfgdir, unsigned int flags, FILE *p
 }*/
 
 /*this is called when the docklet is clicked*/
-int clicked(mail_details *paccount)
+int apop_clicked(void *pdata, const char *cfgdir)
 {
-	/*TODO we need to sort this bit*/
-	printf("docklet clicked %d!\n", paccount->id);
-	return(MTC_RETURN_TRUE);
+	mail_details *paccount= (mail_details *)pdata;
+	return(pop_read_mail(paccount, cfgdir));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
-mtc_plugin_info pluginfo =
+static mtc_plugin_info apop_pluginfo =
 {
-	MTC_REVISION,
-	(const char *)PLUGIN_NAME,
-	(const char *)PLUGIN_AUTHOR,
-	(const char *)PLUGIN_DESC,
+	NULL, /*pointer to handle, set to NULL*/
+	VERSION,
+	PLUGIN_NAME,
+	PLUGIN_AUTHOR,
+	PLUGIN_DESC,
 	MTC_ENABLE_FILTERS,
-	load,
-	NULL/*unload*/, /*currently nothing needs to be unloaded*/
-	clicked
+	DEFAULT_PORT,
+	NULL/*load*/, /*currently does nothing*/
+	NULL/*unload*/, /*currently does nothing*/
+	&apop_get_messages,
+	&apop_clicked
 };
+
+/*the initialisation function*/
+mtc_plugin_info *init_plugin(void)
+{
+	/*set the plugin pointer passed to point to the struct*/
+	return(&apop_pluginfo);
+}
 

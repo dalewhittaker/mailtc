@@ -36,11 +36,11 @@ static void print_time_string(void)
 	if(ptimestring[strlen(ptimestring)- 1]== '\n')
 		ptimestring[strlen(ptimestring)- 1]= '\0';
 	
-	fprintf(plglog, "%s: ", ptimestring);
+	fprintf(plglog, "%s: plugin: ", ptimestring);
 }
 
 /*function to report error and log*/
-int error_and_log_no_exit(char *errmsg, ...)
+int plg_report_error(char *errmsg, ...)
 {
 	/*create va_list of arguments*/
 	va_list list;
@@ -64,7 +64,7 @@ void *alloc_mem(size_t size, void *pmem)
 	/*allocate the memory and return the pointer if allocated successfully*/
 	if((pmem= calloc(size, sizeof(char)))== NULL)
 	{
-		error_and_log_no_exit(S_PLG_COMMON_ERR_ALLOC);
+		plg_report_error(S_PLG_COMMON_ERR_ALLOC);
 		exit(EXIT_FAILURE);
 	}
 	return(pmem);
@@ -76,7 +76,7 @@ void *realloc_mem(size_t size, void *pmem)
 	/*allocate the memory and return the pointer if allocated successfully*/
 	if((pmem= realloc(pmem, size))== NULL)
 	{
-		error_and_log_no_exit(S_PLG_COMMON_ERR_REALLOC);
+		plg_report_error(S_PLG_COMMON_ERR_REALLOC);
 		exit(EXIT_FAILURE);
 	}
 	return(pmem);
@@ -118,50 +118,113 @@ char *str_cpy(char *dest, const char *source)
 }
 
 /*function to return relevant filename in mailtc directory filename*/
-char *get_account_file(char *fullpath, const char *cfgdir, char *filename, int account)
+char *plg_get_account_file(char *fullpath, const char *cfgdir, char *filename, unsigned int account)
 {
 	/*clear the buffer and create the full name from base_name and filename*/
 	memset(fullpath, '\0', NAME_MAX);
-	sprintf(fullpath, "%s%s%d", cfgdir, filename, account);
+	sprintf(fullpath, "%s/%s%d", cfgdir, filename, account);
 	return(fullpath);
 }
 
 /*create CRAM-MD5 string to send to server*/
-#ifdef MTC_USE_SASL
-char *create_cram_string(Gsasl *ctx, char *username, char *password, char *serverdigest, char *clientdigest)
+#ifdef SSL_PLUGIN
+/*TODO replace this with our SSL stuff*/
+char *create_cram_string(mail_details *paccount, char *serverdigest, char *clientdigest)
 {
-	Gsasl_session *session;
-	const char *mech= "CRAM-MD5";
-	int rc;
+	HMAC_CTX ctx;
+	char octet[3];
+	unsigned char *tmpbuf= NULL;
+	unsigned char keyed[16];
+	int slen, keyed_len, i;
 
-	/*Create new authentication session*/
-	if((rc= gsasl_client_start(ctx, mech, &session)) != GSASL_OK)
+	memset(keyed, '\0', sizeof(keyed));
+	keyed_len= sizeof(keyed);
+	slen= strlen(serverdigest);
+	tmpbuf= (unsigned char *)alloc_mem(slen+ 1, tmpbuf);
+
+	/*stage 1, decode the base64 encoded string from the server*/
+	if(EVP_DecodeBlock(tmpbuf, (unsigned char *)serverdigest, slen)> slen)
 	{
-		error_and_log_no_exit(S_PLG_COMMON_ERR_SASL_INIT, rc, gsasl_strerror(rc));
+		plg_report_error(S_PLG_COMMON_ERR_BASE64_DECODE);
 		return(NULL);
 	}
 
-	/*set username and password in session handle*/
-	gsasl_property_set(session, GSASL_AUTHID, username);
-	gsasl_property_set(session, GSASL_PASSWORD, password);
+	/*stage 2, now do the keyed-md5 (hmac) stuff*/
+	HMAC_CTX_init(&ctx);
+	HMAC_Init(&ctx, (unsigned char *)paccount->password, strlen(paccount->password), EVP_md5());
+	HMAC_Update(&ctx, tmpbuf, strlen(tmpbuf));
+	HMAC_Final(&ctx, keyed, &keyed_len);
+	HMAC_CTX_cleanup(&ctx);
+	free(tmpbuf);
 
-	/*create the base64 string to send back to the server
-	 *from the username, password and server base64 string*/
-	if((rc= gsasl_step64(session, serverdigest, &clientdigest))!= GSASL_OK)
-	{
-		error_and_log_no_exit(S_PLG_COMMON_ERR_CRAM_MD5_AUTH, rc, gsasl_strerror(rc));
-		free(clientdigest);
-		return(NULL);
+	/*stage 3, we now do "username digest"*/
+	tmpbuf= (unsigned char *)alloc_mem((keyed_len* 2)+ strlen(paccount->username)+ 2, tmpbuf);
+	strcpy(tmpbuf, paccount->username);
+	strcat(tmpbuf, " ");
+
+	/*TODO This works, but is a bit crap*/
+	for(i=0; i< keyed_len; i++)
+	{	
+		sprintf(octet, "%02x", keyed[i]);
+		strcat(tmpbuf, octet);
 	}
 	
-	/*cleanup*/
-	gsasl_finish(session);
-
+	/*stage 4, encode keyed digest back to base64*/
+	/*allocate memory for our final digest to send to server*/
+	slen= 4 *((strlen(tmpbuf)+ 2)/ 3);
+	clientdigest= (char *)calloc(slen+ 1, sizeof(char));
+	
+	/*now base64 encode the string*/
+	if(EVP_EncodeBlock((unsigned char *)clientdigest, tmpbuf, strlen(tmpbuf))!= slen)
+	{
+		plg_report_error(S_PLG_COMMON_ERR_BASE64_ENCODE);
+		return(NULL);
+	}
+	free(tmpbuf);
+	clientdigest[slen]= '\0';
 	return(clientdigest);
 }
-#endif /*MTC_USE_SASL*/
 
-#ifdef MTC_USE_SSL
+/*function to create md5 digest for APOP authentication*/
+unsigned int encrypt_apop_string(char *decstring, char *encstring)
+{
+	unsigned int md_len= 0, i;
+	char octet[3];
+	
+	EVP_MD_CTX ctx;
+	const EVP_MD *md;
+	unsigned char md_value[EVP_MAX_MD_SIZE]; /*string to hold the digest*/
+
+	/*Enable openssl to use all digests and set digest to MD5*/
+	OpenSSL_add_all_digests();
+	md= EVP_md5();
+	
+	/*Initialise message digest cipher content*/
+	EVP_MD_CTX_init(&ctx);
+	if(!EVP_DigestInit_ex(&ctx, md, NULL))
+		plg_report_error(S_PLG_APOP_ERR_DIGEST_INIT);
+
+	/*Encrypt the string and final padding to MD5*/
+	if(!EVP_DigestUpdate(&ctx, (unsigned char *)decstring, strlen(decstring)))
+		plg_report_error(S_PLG_APOP_ERR_DIGEST_CREATE);
+	if(!EVP_DigestFinal_ex(&ctx, md_value, &md_len))
+		plg_report_error(S_PLG_APOP_ERR_DIGEST_FINAL);
+
+	/*cleanup*/
+	EVP_MD_CTX_cleanup(&ctx);
+	
+	/*convert digest into hex string for APOP and return length of string*/
+	for(i= 0; i< md_len; i++)
+	{	
+		sprintf(octet, "%02x", md_value[i]);
+		strcat(encstring, octet);
+	}	
+	EVP_cleanup();
+
+	return(md_len);
+	
+}
+
 /*Initialise SSL connection*/
 SSL_CTX *initialise_ssl_ctx(SSL_CTX *ctx)
 {
@@ -174,7 +237,7 @@ SSL_CTX *initialise_ssl_ctx(SSL_CTX *ctx)
 	/*choose TLS method and create CTX*/
 	method= SSLv23_client_method();
 	if((ctx= SSL_CTX_new(method))== NULL)
-		error_and_log_no_exit(S_PLG_COMMON_ERR_CTX);
+		plg_report_error(S_PLG_COMMON_ERR_CTX);
 
 	return(ctx);
 }
@@ -184,16 +247,16 @@ SSL *initialise_ssl_connection(SSL *ssl, SSL_CTX *ctx, int *sockfd)
 {
 	/*create an SSL structure for the TLS connection*/
 	if((ssl= SSL_new(ctx))== NULL)
-		error_and_log_no_exit(S_PLG_COMMON_ERR_CREATE_SSL_STRUCT);
+		plg_report_error(S_PLG_COMMON_ERR_CREATE_SSL_STRUCT);
 
 	/*set the SSL file descriptor*/
 	if(SSL_set_fd(ssl, *sockfd)== 0)
-		error_and_log_no_exit(S_PLG_COMMON_ERR_SSL_DESC);
+		plg_report_error(S_PLG_COMMON_ERR_SSL_DESC);
 
 	
 	/*connect with SSL*/
 	if(SSL_connect(ssl)<= 0)
-		error_and_log_no_exit(S_PLG_COMMON_ERR_SSL_CONNECT);
+		plg_report_error(S_PLG_COMMON_ERR_SSL_CONNECT);
 	
 	return(ssl);
 }
@@ -203,7 +266,7 @@ int uninitialise_ssl(SSL *ssl, SSL_CTX *ctx)
 {
 	/*TODO see SSL_shutdown, this may need to be done a different way*/
 	if(SSL_shutdown(ssl)== -1)
-		error_and_log_no_exit(S_PLG_COMMON_ERR_SSL_SHUTDOWN);
+		plg_report_error(S_PLG_COMMON_ERR_SSL_SHUTDOWN);
 		
 	SSL_free(ssl);
 	SSL_CTX_free(ctx);
@@ -211,10 +274,10 @@ int uninitialise_ssl(SSL *ssl, SSL_CTX *ctx)
 
 	return(MTC_RETURN_TRUE);
 }
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 
 /*case insensitive search returns position, or -1*/
-int str_case_search(char *haystack, char *needle)
+static int str_case_search(char *haystack, char *needle)
 {
 	unsigned int i= 0;
 	

@@ -25,7 +25,7 @@ static GtkWidget *filter_combo2[MAX_FILTER_EXP];
 static GtkWidget *filter_entry[MAX_FILTER_EXP];
 static GtkWidget *filter_radio[2];
 static GtkWidget *clear_button;
-/**/
+
 /*function to write the filter information to the file*/
 static int write_filter_info(mail_details *paccount)
 {
@@ -38,7 +38,7 @@ static int write_filter_info(mail_details *paccount)
 	/*first check if we have values*/
 	for(i= 0; i< MAX_FILTER_EXP; i++)
 	{
-		if(strcmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 			++valid;
 	}
 
@@ -50,7 +50,7 @@ static int write_filter_info(mail_details *paccount)
 	get_account_file(outfilename, FILTER_FILE, paccount->id);
 
 	/*first check if file can be written to*/
-	if((access(outfilename, F_OK)!= -1)&& (remove(outfilename)== -1))
+	if((IS_FILE(outfilename))&& (remove(outfilename)== -1))
 		error_and_log(S_FILTERDLG_ERR_REMOVE_FILE, outfilename);
 	
 	/*open the file*/
@@ -64,7 +64,7 @@ static int write_filter_info(mail_details *paccount)
 	for(i= 0; i< MAX_FILTER_EXP; i++)
 	{
 		/*test if the entry is empty*/
-		if(strcmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 		{
 			GtkTreeModel *model1, *model2;
 			GtkTreeIter iter1, iter2;
@@ -76,7 +76,7 @@ static int write_filter_info(mail_details *paccount)
 				error_and_log(S_FILTERDLG_ERR_COMBO_ITER);
 			gtk_tree_model_get(model2, &iter2, 0, &str2, -1);
 			
-			if(strcmp(str2, S_FILTERDLG_COMBO_CONTAINS)!= 0) fprintf(outfile, "<NOT>");
+			if(g_ascii_strcasecmp(str2, S_FILTERDLG_COMBO_CONTAINS)!= 0) fprintf(outfile, "<NOT>");
 			g_free(str2);
 			
 			/*get the active combo value for sender/subject and output*/
@@ -84,7 +84,7 @@ static int write_filter_info(mail_details *paccount)
 			if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo1[i]), &iter1))
 				error_and_log(S_FILTERDLG_ERR_COMBO_ITER);
 			gtk_tree_model_get(model1, &iter1, 0, &str1, -1);
-			(strcmp(str1, S_FILTERDLG_COMBO_SENDER)== 0)? fprintf(outfile, "<SENDER>"): fprintf(outfile, "<SUBJECT>");
+			(g_ascii_strcasecmp(str1, S_FILTERDLG_COMBO_SENDER)== 0)? fprintf(outfile, "<SENDER>"): fprintf(outfile, "<SUBJECT>");
 			g_free(str1);
 			
 			/*output the filter search string*/
@@ -120,7 +120,7 @@ int read_filter_info(mail_details *paccount)
 	get_account_file(infilename, FILTER_FILE, paccount->id);
 
 	/*first test if there is an existing file*/
-	if(access(infilename, F_OK)== -1)
+	if(!IS_FILE(infilename))
 		return 0;
 	
 	/*open the file for reading and clear the struct*/
@@ -128,7 +128,7 @@ int read_filter_info(mail_details *paccount)
 		error_and_log(S_FILTERDLG_ERR_OPEN_FILE, infilename);
 	
 	/*allocate memory for the filter struct*/
-	paccount->pfilters= alloc_mem(sizeof(filter_details), paccount->pfilters);
+	paccount->pfilters= g_malloc0(sizeof(filter_details));
 	pfilter= paccount->pfilters;
 	
 	/*set default to contains and sender*/
@@ -178,7 +178,7 @@ int read_filter_info(mail_details *paccount)
 		/*get the filter search string*/
 		if(strlen(pstring) > 1)
 		{	
-			strcpy(pfilter->search_string[i], pstring);
+			g_strlcpy(pfilter->search_string[i], pstring, FILTERSTRING_LEN);
 			if(pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]== '\n')
 				pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]= '\0';
 			retval= 1;
@@ -210,21 +210,21 @@ static void clear_button_pressed(void)
 }
 		
 /*display the filter dialog*/
-int run_filter_dialog(mail_details **paccount)
+int run_filter_dialog(mail_details *paccount)
 {
 	GtkWidget *dialog;
 	GtkWidget *filter_label;
 	GtkWidget *main_table, *v_box_filter;
 	int i= -1;
 	gint result= 0, saved= 0;
-	filter_details *pfilter= (*paccount)->pfilters;
+	filter_details *pfilter= paccount->pfilters;
 	char *label= NULL;
 		
 	/*create the label*/
-	label= alloc_mem(strlen(S_FILTERDLG_LABEL_SELECT) + 5, label);
-	sprintf(label, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
+	label= g_malloc0(strlen(S_FILTERDLG_LABEL_SELECT) + 5);
+	g_snprintf(label, strlen(S_FILTERDLG_LABEL_SELECT)+ 4, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
 	filter_label= gtk_label_new(label);
-	free(label);
+	g_free(label);
 	
 	main_table= gtk_table_new(MAX_FILTER_EXP+ 2, 3, FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, 0, 1);
@@ -257,7 +257,7 @@ int run_filter_dialog(mail_details **paccount)
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_combo2[i], 1, 2, i+ 1, i+ 2);
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_entry[i], 2, 3, i+ 1, i+ 2);
 		
-		if((*paccount)->pfilters)
+		if(paccount->pfilters)
 		{
 			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->subject[i]);
 			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains[i]);
@@ -271,7 +271,7 @@ int run_filter_dialog(mail_details **paccount)
 	
 	filter_radio[0]= gtk_radio_button_new_with_label(NULL, S_FILTERDLG_BUTTON_MATCHALL);
 	filter_radio[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(filter_radio[0]), S_FILTERDLG_BUTTON_MATCHANY);
-	if((*paccount)->pfilters)
+	if(paccount->pfilters)
 	{
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), (pfilter->matchall)? TRUE: FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), (pfilter->matchall)? FALSE: TRUE);
@@ -301,7 +301,7 @@ int run_filter_dialog(mail_details **paccount)
 		{
 			/*if OK get the value of saved to check if details are saved correctly*/
 			case GTK_RESPONSE_ACCEPT:
-				saved= write_filter_info(*paccount);
+				saved= write_filter_info(paccount);
 			break;
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
@@ -315,85 +315,4 @@ int run_filter_dialog(mail_details **paccount)
 	return 1;
 }
 
-/*function to search header for filter*/
-int search_for_filter_match(mail_details **paccount, char *header)
-{
-	char *spos= NULL;
-	int initpos= 0;
-	int found= 0;
-	unsigned int i= 0;
-	filter_details *pfilter= (*paccount)->pfilters;
 
-	/*for each filter value*/
-	for(i= 0; i< MAX_FILTER_EXP; ++i)
-	{
-		char field[15];
-		
-		/*set the field to search for*/
-		sprintf(field, "\r\n%s", (pfilter->subject[i])? "Subject": "From");
-		
-		/*if the search string is empty no more filters*/
-		if(strcmp(pfilter->search_string[i], "")== 0)
-			break;
-		
-		/*perform a case insensitive search on either subject or sender*/
-		if((initpos= str_case_search(header, field))== -1)
-			return 0;
-
-		/*move to the found position*/
-		spos= header+ initpos;
-			
-		/*find where we can get our data*/
-		if((spos= strchr(spos, ':'))!= NULL)
-		{
-			/*set endpos to startpos to begin our search for end of data*/
-			char *epos= spos;
-			char *tmpbuf= NULL;
-					
-			/*while '\r\n' is found...*/
-			while((epos= strstr(epos+ 1, "\r\n"))!= NULL)
-			{
-				/*if a ' ' or '\t' is found carry on, otherwise break*/
-				if((*(epos+ 2)!= ' ')&& (*(epos+ 2)!= '\t'))
-					break;
-			}
-				
-			/*check they were valid*/
-			if(epos > spos)
-			{
-				/*Allocate a temporary string to hold the data to search*/
-				tmpbuf= alloc_mem((epos- spos)+ 2, tmpbuf);
-				strncpy(tmpbuf, spos+ 1, (epos- spos));
-				tmpbuf[epos- spos -1]= '\0';
-				
-				/*if the string is found, return 1 to say so, test if -1 for match all*/
-				if((strstr(tmpbuf, pfilter->search_string[i])!= NULL)&& (found!= -1))
-				{
-					if(!pfilter->contains[i])
-					{
-						if(pfilter->matchall)
-							found= -1;
-					}
-					else
-						found= 1;
-				}
-				/*set to -1 if not found as all must match to return 1*/
-				else
-				{
-					if(pfilter->contains[i])
-					{	
-						if(pfilter->matchall)
-							found= -1;
-					}
-					else
-						found= 1;
-				}
-
-				free(tmpbuf);
-			}
-			
-		}
-	}
-	/*if found is -1 return 0 as was not matched*/
-	return((found== -1)? 0: found);
-}

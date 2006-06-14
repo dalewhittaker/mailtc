@@ -28,14 +28,14 @@ int connect_to_server(int *sockfd, mail_details *paccount)
 	/*get the ip from the hostname*/
 	if((he= gethostbyname(paccount->hostname))== NULL)
 	{
-		error_and_log_no_exit(S_NETFUNC_ERR_IP, paccount->hostname);
+		plg_report_error(S_NETFUNC_ERR_IP, paccount->hostname);
 		return(MTC_RETURN_FALSE);
 	}
 		
 	/*get the socket for the connection*/
 	if((*sockfd= socket(AF_INET, SOCK_STREAM, 0))== -1)
 	{
-		error_and_log_no_exit(S_NETFUNC_ERR_SOCKET);
+		plg_report_error(S_NETFUNC_ERR_SOCKET);
 		return(MTC_RETURN_FALSE);
 	}
 
@@ -48,7 +48,7 @@ int connect_to_server(int *sockfd, mail_details *paccount)
 	/*try to connect only if doconnect is true (for non SSL)*/
 	if(connect(*sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr))== -1)
 	{
-		error_and_log_no_exit(S_NETFUNC_ERR_CONNECT, paccount->hostname);
+		plg_report_error(S_NETFUNC_ERR_CONNECT, paccount->hostname);
 		close(*sockfd);
 		return(MTC_RETURN_FALSE);
 	}
@@ -56,18 +56,52 @@ int connect_to_server(int *sockfd, mail_details *paccount)
 	return(MTC_RETURN_TRUE);
 }
 
-/* function to send a message to the network server */
-#ifdef MTC_USE_SSL
-int send_net_string(int sockfd, char *sendstring, SSL *ssl)
-#else
-int send_net_string(int sockfd, char *sendstring, char *ssl)
-#endif /*MTC_USE_SSL*/
+/*function to blank out the password chars before sending*/
+static int print_pw_string(const char *sendstring)
 {
+	char *pwstring= NULL, *ptr= NULL;
+	unsigned int slen;
+			
+	slen= strlen(sendstring);
+	pwstring= alloc_mem(slen+ 1, pwstring);
+			
+	/*we replace all the password chars with * if it is a password*/
+	strcpy(pwstring, sendstring);
+	if((ptr= strrchr(pwstring, ' '))== NULL)
+	{
+		plg_report_error(S_NETFUNC_ERR_PW_STRING);
+		return(MTC_RETURN_FALSE);
+	}
+			
+	/*iterate until '\r' is found*/
+	while((*(++ptr))&& (*ptr!= '\r'))
+		*ptr= '*';
+			
+	printf(pwstring);
+	free(pwstring);
+	
+	return(MTC_RETURN_TRUE);
+}
 
+/* function to send a message to the network server */
+#ifdef SSL_PLUGIN
+int ssl_send_net_string(int sockfd, char *sendstring, SSL *ssl, unsigned int pw)
+#else
+int std_send_net_string(int sockfd, char *sendstring, char *ssl, unsigned int pw)
+#endif /*SSL_PLUGIN*/
+{
+	
 	/*if debug mode is selected print the string to send*/
 	if(net_debug)
 	{
-		printf(sendstring);
+		if(pw)
+		{
+			if(!print_pw_string(sendstring))
+				return(MTC_RETURN_FALSE);
+		}
+		else
+			printf(sendstring);
+		
 		fflush(stdout);
 	}
 
@@ -76,36 +110,36 @@ int send_net_string(int sockfd, char *sendstring, char *ssl)
 	{
 		if(send(sockfd, sendstring, strlen(sendstring), 0)== -1)
 		{
-			error_and_log_no_exit(S_NETFUNC_ERR_SEND);
+			plg_report_error(S_NETFUNC_ERR_SEND);
 			return(MTC_RETURN_FALSE);
 		}
 	}
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	else
 	{
 		if(SSL_write(ssl, sendstring, strlen(sendstring))<= 0)
 		{
-			error_and_log_no_exit(S_NETFUNC_ERR_SEND);
+			plg_report_error(S_NETFUNC_ERR_SEND);
 			return(MTC_RETURN_FALSE);
 		}
 	}
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 	
 	return(MTC_RETURN_TRUE);
 }
 
 /*function to check if data is available at the server*/
-#ifdef MTC_USE_SSL
-int net_data_available(int sockfd, SSL *ssl)
+#ifdef SSL_PLUGIN
+int ssl_net_data_available(int sockfd, SSL *ssl)
 #else
-int net_data_available(int sockfd, char *ssl)
-#endif /*MTC_USE_SSL*/
+int std_net_data_available(int sockfd, char *ssl)
+#endif /*SSL_PLUGIN*/
 {
 	fd_set fds;
 	struct timeval tv;
 	int n;
 
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	/*SSL handles things differently, so we have to check if there is any pending first*/
 	if((ssl)&& (SSL_pending(ssl)))
 		return(MTC_RETURN_TRUE);
@@ -129,7 +163,7 @@ int net_data_available(int sockfd, char *ssl)
 	/*error with select command*/
 	else if(n== -1)
 	{
-		error_and_log_no_exit(S_NETFUNC_ERR_DATA_AVAILABLE);
+		plg_report_error(S_NETFUNC_ERR_DATA_AVAILABLE);
 		return(MTC_RETURN_FALSE);
 	}
 
@@ -138,45 +172,44 @@ int net_data_available(int sockfd, char *ssl)
 }
 
 /*general function for network receiving*/
-#ifdef MTC_USE_SSL
-int receive_net_string(int sockfd, char *buf, SSL *ssl)
+#ifdef SSL_PLUGIN
+int ssl_receive_net_string(int sockfd, char *recvstring, SSL *ssl)
 #else
-int receive_net_string(int sockfd, char *buf, char *ssl)
+int std_receive_net_string(int sockfd, char *recvstring, char *ssl)
 #endif
 {
 	int numbytes= 0;
 
 	/*clear the buffer*/
-	memset(buf, '\0', MAXDATASIZE);
+	memset(recvstring, '\0', MAXDATASIZE);
 	
 	/*receive a string from the server*/
-
 	if(ssl== NULL)
 	{
-		if((numbytes= recv(sockfd, buf, MAXDATASIZE- 1, 0))== -1)
+		if((numbytes= recv(sockfd, recvstring, MAXDATASIZE- 1, 0))== -1)
 		{
-			error_and_log_no_exit(S_NETFUNC_ERR_RECEIVE);
+			plg_report_error(S_NETFUNC_ERR_RECEIVE);
 			return(MTC_ERR_CONNECT);
 		}
 	}
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	else
 	{
-		if((numbytes= SSL_read(ssl, buf, MAXDATASIZE- 1))<= 0)
+		if((numbytes= SSL_read(ssl, recvstring, MAXDATASIZE- 1))<= 0)
 		{
-			error_and_log_no_exit(S_NETFUNC_ERR_RECEIVE);
+			plg_report_error(S_NETFUNC_ERR_RECEIVE);
 			return(MTC_ERR_CONNECT);
 		}
 	}
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 	
 	/*terminate the string*/
-	buf[numbytes]= '\0';
+	recvstring[numbytes]= '\0';
 	
 	/*if debug mode print the received string*/
 	if(net_debug)
 	{
-		printf(buf);
+		printf(recvstring);
 		fflush(stdout);
 	}
 

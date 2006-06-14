@@ -24,17 +24,21 @@ static GtkWidget *box= NULL; /*the box to hold the icon, made static to make new
 static GtkTooltips *tooltip= NULL; /*the tooltip to display the number of messages*/
 static int lock= 0; /*lock variable used so that only one account can be checked at a time*/
 
-static mail_details** get_active_account(void)
+/*function to get the active account*/
+static mail_details* get_active_account(void)
 {
-	mail_details **pfirst= &paccounts;
+	mail_details *pcurrent_data= NULL;
+	GSList *pcurrent= acclist;
 
 	/*iterate through them all until it is found*/
-	while(*pfirst)
+	while(pcurrent!= NULL)
 	{
-		if((*pfirst)->active)
-		return(pfirst);
+		pcurrent_data= (mail_details *)pcurrent->data;
+
+		if(pcurrent_data->active)
+			return(pcurrent_data);
 		
-		pfirst= &(*pfirst)->next;
+		pcurrent= g_slist_next(pcurrent);
 	}
 	return(NULL);
 }
@@ -43,15 +47,17 @@ static mail_details** get_active_account(void)
 static int run_mailapp(char *mailapp)
 {
 	GError *spawn_error= NULL;
-	char appstr[NAME_MAX* 2], acc_str[MAXINTLEN], *c= "\n";
+	char appstr[NAME_MAX* 2], acc_str[G_ASCII_DTOSTR_BUF_SIZE+ 1], *c= "\n";
 	unsigned int i= 0, retval= 1, acount= 0;
-	mail_details **pcurrent;
+	GSList *pcurrent= acclist;
+	mail_details *pcurrent_data= NULL;
 	gchar **args= NULL;
 
 	memset(appstr, '\0', NAME_MAX+ 1);
 	
 	/*This is very ugly, but i think works*/
 	/*find all '$', which means the arg and replace with the actual arg*/
+	/*TODO if we were ever to port to other platforms we would need to do something here with G_DIR_SEPARATOR*/
 	for(i= 0; i< strlen(mailapp); i++)
 	{
 		if(mailapp[i]== '$')
@@ -61,35 +67,35 @@ static int run_mailapp(char *mailapp)
 			{
 				/*it is a valid '$' so now we convert each account with new messages to a value*/
 				acount= 0;
-				pcurrent= &paccounts;
-				while(*pcurrent)
+				while(pcurrent!= NULL)
 				{
-					if((*pcurrent)->num_messages> 0)
+					pcurrent_data= (mail_details *)pcurrent->data;
+					if(pcurrent_data->num_messages> 0)
 					{
 						/*this will add each one as a new arg, if you don't want that, tough shit, sorry*/
-						sprintf(acc_str, "%s%d", (acount++)? c: "", (*pcurrent)->id);
-						strcat(appstr, acc_str); 
+						g_snprintf(acc_str, sizeof(acc_str), "%s%d", (acount++)? c: "", pcurrent_data->id);
+						g_strlcat(appstr, acc_str, sizeof(appstr)); 
 					}
-					pcurrent= &(*pcurrent)->next;
+					pcurrent= g_slist_next(pcurrent);
 				}
 			}
 			else
-				strcat(appstr, "$");
+				appstr[strlen(appstr)]= '$';
 		}
 		else if(mailapp[i]== ' ')
 		{
 			/*it is a valid new arg, so count it and convert to 0x0D (non printable char)*/
 			if((i== 0)|| ((i> 0)&& (mailapp[i- 1]!= '\\')&& (mailapp[i- 1]!= ' ')))
-				strcat(appstr, c);
+				g_strlcat(appstr, c, sizeof(appstr));
 			/*it is a space in filename, so strcat normal*/
 			else
-				strcat(appstr, " ");
+				g_strlcat(appstr, " ", sizeof(appstr));
 		}
 		/*default is to just add the char*/
 		else if(mailapp[i]!= '\\')
-			strncat(appstr, mailapp+ i, 1);
+			appstr[strlen(appstr)]= *(mailapp+ i);
 	}
-
+	
 	/*split the string into its args*/
 	args= g_strsplit(appstr, c, 0);
 	
@@ -131,80 +137,25 @@ static void docklet_destroy(void)
 
 }
 
-/*function to read the messages (either all, or just the one)*/
-static void read_messages(mail_details **pcurrent)
+/*function to read the messages by calling the plugin function*/
+static void read_messages(mail_details *paccount)
 {
-	/*POP or APOP click event*/
-	if((strcmp((*pcurrent)->protocol, PROTOCOL_POP)== 0)|| (strcmp((*pcurrent)->protocol, PROTOCOL_APOP)== 0)
-		|| (strcmp((*pcurrent)->protocol, PROTOCOL_POP_SSL)== 0)|| (strcmp((*pcurrent)->protocol, PROTOCOL_POP_CRAM_MD5)== 0))
+	mtc_plugin_info *pitem= NULL;
+
+	/*find the correct pluin to handle the click*/
+	if((pitem= find_plugin(paccount->plgname))== NULL)
 	{
-		char uidlfile[NAME_MAX], tmpuidlfile[NAME_MAX];
+		run_error_dialog(S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->accname);
+			
+		/*this should not happen, so we exit (if it is found in the main mail read thread it should be found here)*/
+		error_and_log(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
 
-		/*get full paths of files*/
-		get_account_file(uidlfile, UIDL_FILE, (*pcurrent)->id);
-		get_account_file(tmpuidlfile, ".tmpuidlfile", (*pcurrent)->id);
-
-		/*rename the temp uidl file to uidl file if it exists*/
-		if((access(tmpuidlfile, F_OK))!= -1)
-		{
-			if(rename(tmpuidlfile, uidlfile)== -1)
-				error_and_log(S_DOCKLET_ERR_RENAME_FILE, tmpuidlfile, uidlfile);
-		}
-		/*remove the temp file and cleanup*/
-		remove(tmpuidlfile);
-		
 	}
-	/*IMAP click event*/
-	else if((strcmp((*pcurrent)->protocol, PROTOCOL_IMAP)== 0)|| (strcmp((*pcurrent)->protocol, PROTOCOL_IMAP_CRAM_MD5)== 0)
-			|| (strcmp((*pcurrent)->protocol, PROTOCOL_IMAP_SSL)== 0))
-	{
-		/*set the flag to mark as read on next mail check*/
-		FILE *infile= NULL, *outfile= NULL;
-		char uidlfile[NAME_MAX], tmpuidlfile[NAME_MAX];
-		char buf[MAXDATASIZE];
-		int numbytes= 0;
-		
-		memset(buf, '\0', MAXDATASIZE);
-		
-		/*get full paths of files*/
-		get_account_file(uidlfile, UIDL_FILE, (*pcurrent)->id);
-		get_account_file(tmpuidlfile, ".tmpuidlfile", (*pcurrent)->id);
-
-		/*rename the temp uidl file to uidl file if it exists*/
-		if((access(uidlfile, F_OK))== -1)
-			error_and_log(S_DOCKLET_ERR_ACCESS_FILE, uidlfile);
+	/*call the plugin 'clicked' function to handle mail reading*/
+	if(paccount->num_messages> 0)
+		if((*pitem->clicked)(paccount, config.base_name)== 0)
+			exit(EXIT_FAILURE);
 			
-		/*Open the read/write files*/
-		if((infile= fopen(uidlfile, "rt"))== NULL)
-			error_and_log(S_DOCKLET_ERR_OPEN_FILE_READ, uidlfile);
-
-		if((outfile= fopen(tmpuidlfile, "wt"))== NULL)
-			error_and_log(S_DOCKLET_ERR_OPEN_FILE_WRITE, tmpuidlfile);
-			
-		while(!feof(infile))
-		{
-			numbytes= fread(buf, sizeof(char), MAXDATASIZE, infile);
-			
-			if(ferror(infile))
-				error_and_log(S_DOCKLET_ERR_READ_FILE, uidlfile);
-
-			fwrite(buf, sizeof(char), numbytes, outfile);
-
-			if(ferror(outfile))
-				error_and_log(S_DOCKLET_ERR_WRITE_FILE, tmpuidlfile);
-		}
-			
-		/*Close the files*/
-		if(fclose(outfile)== EOF)
-			error_and_log(S_DOCKLET_ERR_CLOSE_FILE, tmpuidlfile);
-			
-		if(fclose(infile)== EOF)
-			error_and_log(S_DOCKLET_ERR_CLOSE_FILE, uidlfile);
-			
-	}
-	/*invalid event*/
-	else
-		error_and_log(S_DOCKLET_ERR_CLICK_INVALID_PROTOCOL);
 }
 
 /*function that is called when the icon is clicked*/
@@ -214,7 +165,8 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 	/*check if the mouse button that was pressed was either left double click or right single click*/
 	if((event->type== GDK_2BUTTON_PRESS)||((event->type== GDK_BUTTON_PRESS)&&(event->button== 3)))
 	{	
-		mail_details **pcurrent;
+		GSList *pcurrent= acclist;
+		mail_details *pcurrent_data= NULL;
 		
 		/*run mailapp if left double click*/
 		if(event->type== GDK_2BUTTON_PRESS) 
@@ -224,26 +176,25 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 		/*Mark all accounts as read*/
 		if(config.multiple)
 		{
-			pcurrent= &paccounts;
-			while(*pcurrent)
+			while(pcurrent!= NULL)
 			{
-				if((*pcurrent)->num_messages> 0)
-					read_messages(pcurrent);
-				
-				pcurrent= &(*pcurrent)->next;
+				pcurrent_data= (mail_details *)pcurrent->data;
+				read_messages(pcurrent_data);
+				pcurrent= g_slist_next(pcurrent);
 			}
 		}
 		/*Only mark active account as read*/
 		else
 		{
-			if((pcurrent= get_active_account())== NULL)
+			if((pcurrent_data= get_active_account())== NULL)
 				return;
-			read_messages(pcurrent);
+
+			read_messages(pcurrent_data);
 		}
 		
 		/*destroy the icon if it exists*/
-		if((pcurrent= get_active_account())!= NULL)
-			(*pcurrent)->active= 0;
+		if((pcurrent_data= get_active_account())!= NULL)
+			pcurrent_data->active= 0;
 		
 		if(docklet!= NULL) docklet_destroy();
 
@@ -257,17 +208,15 @@ void set_icon_colour(GdkPixbuf *pixbuf, char *colourstring)
 	guchar *pixels, *p;
 	unsigned int r, g, b;
 	int i= 0, j= 0;
-	char shorthex[2]= "";
+	char shorthex[3];
 	
 	/*copy each RGB value to separate integers for setting the colour later*/
-	strncpy(shorthex, colourstring, 2); 
-	shorthex[2]= '\0';
+	/*don't really like using sscanf but i can't find how to do otherwise*/
+	g_strlcpy(shorthex, colourstring, sizeof(shorthex)); 
 	sscanf(shorthex, "%x", &r);
-	strncpy(shorthex, colourstring+ 2, 2);
-	shorthex[2]= '\0';
+	g_strlcpy(shorthex, colourstring+ 2, sizeof(shorthex));
 	sscanf(shorthex, "%x", &g);
-	strncpy(shorthex, colourstring+ 4, 2);
-	shorthex[2]= '\0';
+	g_strlcpy(shorthex, colourstring+ 4, sizeof(shorthex));
 	sscanf(shorthex, "%x", &b);
 
 	/*check icon details are valid*/
@@ -310,12 +259,13 @@ void set_icon_colour(GdkPixbuf *pixbuf, char *colourstring)
 static void set_icon_text()
 {
 	
-	char *tipstring= NULL;
+	GString *tipstring= NULL;
 	char tmpstring[NAME_MAX+ 30];
 	int first= 1;
-	mail_details **pcurrent= &paccounts;
+	GSList *pcurrent= acclist;
+	mail_details *pcurrent_data= NULL;
 	
-	memset(tmpstring, 0, 25);
+	memset(tmpstring, 0, NAME_MAX+ 30);
 	
 	/*if already a tooltip, destroy it*/
 	if(tooltip)
@@ -326,29 +276,31 @@ static void set_icon_text()
 	
 	/*create tooltip and display it*/
 	tooltip= gtk_tooltips_new();
-	
+	tipstring= g_string_new(NULL);
+
 	/*create the summary of the accounts for the tooltip*/
-	while(*pcurrent)
+	while(pcurrent!= NULL)
 	{
-		if((config.multiple|| ((!config.multiple)&& (*pcurrent)->active))&&
-			((*pcurrent)->num_messages> 0))
+		pcurrent_data= (mail_details *)pcurrent->data;
+		if((config.multiple|| ((!config.multiple)&& pcurrent_data->active))&&
+			(pcurrent_data->num_messages> 0))
 		{
 			/*if there are messages add it to summary*/
-			sprintf(tmpstring, ((*pcurrent)->num_messages> 1)? S_DOCKLET_NEW_MESSAGES: S_DOCKLET_NEW_MESSAGE,
-				(*pcurrent)->accname, (*pcurrent)->num_messages, (first)? "": "\n");
+			g_snprintf(tmpstring, sizeof(tmpstring), (pcurrent_data->num_messages> 1)? S_DOCKLET_NEW_MESSAGES: S_DOCKLET_NEW_MESSAGE,
+				pcurrent_data->accname, pcurrent_data->num_messages, (first)? "": "\n");
 			
 			/*insert at the start (to match list order)*/
-			tipstring= str_ins(tipstring, tmpstring, 0);
+			tipstring= g_string_prepend(tipstring, tmpstring);
 
 			first= 0;
 		}
-		pcurrent= &(*pcurrent)->next;
+		pcurrent= g_slist_next(pcurrent);
 	}
 	
 	/*set the text*/	
-	gtk_tooltips_set_tip(GTK_TOOLTIPS(tooltip), box, tipstring, tipstring);
+	gtk_tooltips_set_tip(GTK_TOOLTIPS(tooltip), box, tipstring->str, tipstring->str);
 	
-	free(tipstring);
+	g_string_free(tipstring, TRUE);
 }
 
 /*function to create the icon*/
@@ -412,14 +364,17 @@ static void docklet_create(mail_details *paccount)
 static int get_icon_status(void)
 {
 	/*we need to report different icon statuses*/
-	mail_details **pfirst= &paccounts;
-	mail_details **plast= NULL;
+	GSList *pcurrent= acclist;
+	mail_details *pcurrent_data= NULL;
+	mail_details *plast_data= NULL;
 	unsigned int multi= 0;
 	
-	while(*pfirst)
+	while(pcurrent!= NULL)
 	{
+		pcurrent_data= (mail_details *)pcurrent->data;
+
 		/*increment if multiple option is selected*/
-		if(config.multiple&& ((*pfirst)->num_messages> 0))
+		if(config.multiple&& (pcurrent_data->num_messages> 0))
 			multi++;
 
 		/*return multiple icon status if more than one*/
@@ -427,13 +382,13 @@ static int get_icon_status(void)
 			return(ACTIVE_ICON_MULTI);
 	
 		/*set the last pointer to return if needed*/
-		if((*pfirst)->num_messages> 0)
-			plast= &(*pfirst);
-
-		pfirst= &(*pfirst)->next;
+		if(pcurrent_data->num_messages> 0)
+			plast_data= &(*pcurrent_data);
+		
+		pcurrent= g_slist_next(pcurrent);
 	}
 	
-	return((plast== NULL)? ACTIVE_ICON_NONE: (int)(*plast)->id);
+	return((plast_data== NULL)? ACTIVE_ICON_NONE: (int)plast_data->id);
 }
 
 /*the main thread that is called to check the various mail accounts*/
@@ -443,9 +398,11 @@ gboolean mail_thread(gpointer data)
 	if(!lock)
 	{
 		unsigned int errflag= 0;
-		char *err_msg= NULL;
-		
-		mail_details **pcurrent= &paccounts;
+		GString *err_msg= NULL;
+		int retval= 0;
+		mtc_plugin_info *pitem= NULL;
+		GSList *pcurrent= acclist;
+		mail_details *pcurrent_data= NULL;
 	
 		/*get the previous status of the icon*/
 		int status= ACTIVE_ICON_NONE;
@@ -453,44 +410,61 @@ gboolean mail_thread(gpointer data)
 	
 		/*lock the thread*/
 		lock= 1;
-		
-		/*TODO check this*/
+
 		/*go through each account*/
-		while(*pcurrent)
+		while(pcurrent!= NULL)
 		{	
+			pcurrent_data= (mail_details *)pcurrent->data;
+
 			/*initialise the array values to -1*/
-			(*pcurrent)->num_messages= -1;
+			pcurrent_data->num_messages= -1;
 			
-			/*check the mail depending on the protocol*/
-			if((strcmp((*pcurrent)->protocol, PROTOCOL_POP)== 0)||
-				(strcmp((*pcurrent)->protocol, PROTOCOL_APOP)== 0)||
-				(strcmp((*pcurrent)->protocol, PROTOCOL_POP_CRAM_MD5)== 0)||
-				(strcmp((*pcurrent)->protocol, PROTOCOL_POP_SSL)== 0))
-					check_pop_mail(*pcurrent);
-			
-			else if((strcmp((*pcurrent)->protocol, PROTOCOL_IMAP)== 0)||
-				(strcmp((*pcurrent)->protocol, PROTOCOL_IMAP_CRAM_MD5)== 0)||
-				(strcmp((*pcurrent)->protocol, PROTOCOL_IMAP_SSL)== 0))
-					check_imap_mail(*pcurrent);
-			else
-				error_and_log(S_DOCKLET_ERR_UNKNOWN_PROTOCOL);
-			
-			/*if there was an error*/
-			if((*pcurrent)->num_messages== -1)
+			/*search for the plugin, if it is not found, report and error*/
+			if((pitem= find_plugin(pcurrent_data->plgname))== NULL)
 			{
-				err_msg= str_ins(err_msg, "\n", 0);
-				err_msg= str_ins(err_msg, (*pcurrent)->hostname, 0);
-				errflag++;
+				error_and_log_no_exit(S_DOCKLET_ERR_FIND_PLUGIN, pcurrent_data->plgname);
+				run_error_dialog(S_DOCKLET_ERR_FIND_PLUGIN_MSG,
+					pcurrent_data->plgname, pcurrent_data->accname);
+
+				/*now go to the next account*/
+				pcurrent= g_slist_next(pcurrent);
+				continue;
 			}
 
-			pcurrent= &(*pcurrent)->next;
+			/*use the plugin to check the mail and get number of messages*/
+			retval= (*pitem->get_messages)
+				(pcurrent_data, config.base_name, config.logfile, (config.net_debug)? MTC_DEBUG_MODE: 0);
+			
+			/*if there was a connection error*/
+			if((retval== MTC_ERR_CONNECT)|| (pcurrent_data->num_messages== MTC_ERR_CONNECT))
+			{
+				if(err_msg== NULL)
+					err_msg= g_string_new(NULL);
+				
+				err_msg= g_string_prepend(err_msg, "\n");
+				err_msg= g_string_prepend(err_msg, pcurrent_data->hostname);
+				errflag++;
+			}
+			/*if there was a bad error (i.e we must exit)*/
+			if((retval== MTC_ERR_EXIT)|| (pcurrent_data->num_messages== MTC_ERR_EXIT))
+			{
+				/*extremely unlikely this will be allocated, but just to be safe*/
+				if(err_msg!= NULL)
+					g_string_free(err_msg, TRUE);
+
+				/*message has (should have) already been reported by plugin, so exit*/
+				exit(EXIT_FAILURE);
+			}
+			pcurrent= g_slist_next(pcurrent);
 		}
 		
 		/*report if checking an account failed*/
 		if(errflag)
 		{
-			run_error_dialog(S_DOCKLET_CONNECT_ERR, err_msg, PACKAGE);
-			if(err_msg) free(err_msg);
+			run_error_dialog(S_DOCKLET_CONNECT_ERR, err_msg->str, PACKAGE);
+			if(err_msg!= NULL)
+				g_string_free(err_msg, TRUE);
+			
 		}
 		status= get_icon_status();
 			
@@ -500,8 +474,8 @@ gboolean mail_thread(gpointer data)
 			if(docklet!= NULL) docklet_destroy();
 
 			/*if there is an active icon, set it to 0*/
-			if((pcurrent= get_active_account())!= NULL)
-				(*pcurrent)->active= 0;
+			if((pcurrent_data= get_active_account())!= NULL)
+				pcurrent_data->active= 0;
 			
 			/*now add our icon*/
 			/*add the multiple icon if it is set*/
@@ -511,9 +485,9 @@ gboolean mail_thread(gpointer data)
 			/*otherwise add the active one*/
 			else if(status!= ACTIVE_ICON_NONE)
 			{
-				pcurrent= get_account(status);
-				docklet_create(*pcurrent);
-				(*pcurrent)->active= 1;
+				pcurrent_data= get_account(status);
+				docklet_create(pcurrent_data);
+				pcurrent_data->active= 1;
 			}
 		}
 		/*this means that the same is active as the last*/
@@ -523,13 +497,13 @@ gboolean mail_thread(gpointer data)
 			if((status!= ACTIVE_ICON_NONE)&& (docklet== NULL))
 			{
 				/*if there is an active account, get rid of it*/
-				if((pcurrent= get_active_account())!= NULL)
-					(*pcurrent)->active= 0;
+				if((pcurrent_data= get_active_account())!= NULL)
+					pcurrent_data->active= 0;
 				
 				/*get/set the account*/
-				pcurrent= get_account(status);
-				docklet_create(*pcurrent);
-				(*pcurrent)->active= 1;
+				pcurrent_data= get_account(status);
+				docklet_create(pcurrent_data);
+				pcurrent_data->active= 1;
 			}
 
 		}
@@ -543,5 +517,5 @@ gboolean mail_thread(gpointer data)
 
 	}
 	
-	return TRUE;
+	return(TRUE);
 }

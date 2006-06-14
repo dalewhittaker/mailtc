@@ -1,16 +1,14 @@
-NEXT RELEASE
-1) Add the French translation (from Val) package the bugger up, do the usual stuff
+NEXT RELEASE:
+1)  Valgrind. Test filters with plugins. Test config dialog with plugins.
+	Test all network stuff (i.e no connection/wrong password etc) for each plugin.
+	Test docklet click stuff.
+	Test all GSList stuff.
+	Test app launching.
+	Test everything basically.
+2) Add the French translation (from Val) package the bugger up, do the usual stuff
 
-ONE AFTER
-1) Make modular (with network plugins)
-2) Once modular, tidy up core/plugins as follows:
-	a) core should use mainly (if not all) glib/gtk functions rather than standard ANSI/POSIX functions
-	   this is desirable mainly as it is much tidyer, and probably less error prone.
-	b) plugin code should use ONLY ANSI/POSIX. Reason for this is that they are not GUI based, and this
-	   way other apps can use (e.g if i decide i don't like the GTK core or create a different core).
-
-there you go...
-
+RELEASE AFTER
+1) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. Possibly improve filter disabling too.
 
 ------------------------------
 ***TO ADD NEW LANG***

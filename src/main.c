@@ -19,11 +19,14 @@
 
 #include "core.h"
 
+static gint func_ref= 0;
+
 /*function to print mailtc options on command line*/
 static void print_usage_and_exit(void)
 {
-	error_and_log(S_MAIN_ERR_PRINT_USAGE, 
+	fprintf(stderr, S_MAIN_ERR_PRINT_USAGE, 
 				 PACKAGE, VERSION, PACKAGE, PACKAGE, PACKAGE, PACKAGE, PACKAGE);
+	exit(EXIT_FAILURE);
 }
 
 /*function to run the mailtc configuration dialog*/
@@ -35,7 +38,7 @@ static int config_dialog_start(int argc, char* argv[])
 	run_config_dialog(dialog);
 	gtk_main();
 	
-	return EXIT_SUCCESS;
+	return(EXIT_SUCCESS);
 }
 
 /*function to read from the pid file*/
@@ -51,10 +54,10 @@ static int read_pid_file(int action)
 	get_account_file(tmppidfilename, PID_FILE, 0);
 	
 	/*rename the pidfile to a temp pid file*/
-	if((access(pidfilename, F_OK)!= -1)&& (rename(pidfilename, tmppidfilename)== -1))
+	if((IS_FILE(pidfilename))&& (rename(pidfilename, tmppidfilename)== -1))
 		error_and_log(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
 
-	if(access(tmppidfilename, F_OK)!= -1)
+	if(IS_FILE(tmppidfilename))
 	{	
 		int instance_running= 0;
 		
@@ -129,11 +132,30 @@ static int read_pid_file(int action)
 	return(retval);
 }
 
+/*function called when the app exits*/
+static void atexit_func(void)
+{
+	/*remove the source if it was active*/
+	if(func_ref)
+		g_source_remove(func_ref);
+
+	/*free the account list*/
+	free_accounts();
+
+	/*unload the plugins and free the plugin list*/
+	unload_plugins();	
+	
+	/*remove the pid from the file*/
+	read_pid_file(PID_APPEXIT);
+
+	/*finally, close the log file if it is open*/
+	if((config.logfile!= NULL)&& fclose(config.logfile)== EOF)
+		g_printerr("%s %s\n", S_MAIN_ERR_CLOSE_LOGFILE, g_strerror(errno));
+}
+
 /*function to cleanup in case the program is killed*/
 void term_handler(int signal)
 {
-	/*remove the pid and report relevant message*/
-	read_pid_file(PID_APPEXIT);
 
 	if(signal== SIGSEGV)
 		error_and_log(S_MAIN_ERR_SEGFAULT, PACKAGE);
@@ -146,50 +168,45 @@ static int init_files(void)
 {
 	char logfilename[NAME_MAX];
 	
-	paccounts= NULL;
-	
-	/*get the path for the program*/
-	memset(&files, '\0', sizeof(mailtc_files));
-	get_program_dir();
+	/*initialise stuff*/
+	acclist= NULL;
+	config.logfile= NULL;
 
-	/* here we need to create our dir*/
-	mkdir(files.base_name, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-
-	/*set the logfilename*/
-	get_account_file(logfilename, LOG_FILE, -1);
-	
 	/*clear the structures*/
 	memset(&config, '\0', sizeof(config_details));
 	
+	/*get the path for the program*/
+	get_program_dir();
+
+	/* here we need to create our dir*/
+	if(!IS_DIR(config.base_name))
+	{
+		if(FILE_EXISTS(config.base_name))
+		{
+			g_printerr(S_MAIN_ERR_NOT_DIRECTORY, config.base_name, PACKAGE);
+			exit(EXIT_FAILURE);
+		}
+		else
+			mkdir(config.base_name, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+	}
+	/*set the logfilename*/
+	get_account_file(logfilename, LOG_FILE, -1);
+
 	/*open the logfile for writing*/
-	if((files.logfile= fopen(logfilename, "wt"))== NULL) /*open log file for appending*/
+	if((config.logfile= fopen(logfilename, "wt"))== NULL) /*open log file for appending*/
 	{	
-		perror(S_MAIN_ERR_OPEN_LOGFILE);
+		g_printerr("%s %s\n", S_MAIN_ERR_OPEN_LOGFILE, g_strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	
 	/*write the log header*/
-	fprintf(files.logfile, "\n*******************************************\n");
-	fprintf(files.logfile, S_MAIN_LOG_STARTED, PACKAGE, get_current_time());
-	fprintf(files.logfile, "*******************************************\n"); 
-	fflush(files.logfile);
+	fprintf(config.logfile, "\n*******************************************\n");
+	fprintf(config.logfile, S_MAIN_LOG_STARTED, PACKAGE, get_current_time());
+	fprintf(config.logfile, "*******************************************\n"); 
+	fflush(config.logfile);
 	
 	/*add the pid to the file and return*/
 	return 1;
-}
-
-/*function called before program exits*/
-static void cleanup(void)
-{
-	/*close the log file*/
-	if(fclose(files.logfile)== EOF)
-	{	
-		perror(S_MAIN_ERR_CLOSE_LOGFILE);
-		exit(EXIT_FAILURE);
-	}
-	
-	/*remove the pid from the file*/
-	read_pid_file(PID_APPEXIT);
 }
 
 /*function to run the warning dialog*/
@@ -207,13 +224,16 @@ static int run_warning_dlg(int argc, char* argv[], char *msg, int startconfig)
 	return((startconfig)? config_dialog_start(argc, argv): 1);
 }
 
-
 /*the main function*/
 int main(int argc, char *argv[])
 {
-	gint sleeptime;
-	gint func_ref;
+	guint sleeptime;
 	
+	/*first step is to check our arguments are valid*/
+	if((argc!= 2)&& (argc!= 1))
+		print_usage_and_exit();
+
+/*now setup the gettext stuff if needed*/
 #ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
 	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
@@ -221,34 +241,12 @@ int main(int argc, char *argv[])
 	textdomain(GETTEXT_PACKAGE);
 #endif /*ENABLE_NLS*/
 
-	paccounts= NULL;
-	
+	acclist= NULL;
+
 	/*cleanup at the end*/
-	if(atexit(free_accounts)!= 0)
-	{
-		perror(S_MAIN_ERR_ATEXIT_FUNC);
-		exit(EXIT_FAILURE);
-	}
-	
-	/*first step is to check our arguments are valid*/
-	if((argc!= 2)&& (argc!=1))
-		print_usage_and_exit();
-
-	/*intitialise the stuctures*/
-	init_files();
-
-	/*check if instance is running*/
-	if(((argc== 1)||
-	   ((argc== 2)&&((strcmp(argv[1], "-d")== 0)|| strcmp(argv[1], "-c")== 0)))&& 
-	   (!read_pid_file(PID_APPLOAD)))
-	{
-		error_and_log_no_exit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
-		cleanup();
-		return(run_warning_dlg(argc, argv, S_MAIN_INSTANCE_RUNNING, 0));
-	}
+	g_atexit(atexit_func);
 	
 	/*setup to cleanup on exit*/
-	/*atexit(cleanup);*/
 	signal(SIGHUP, term_handler);
 	signal(SIGQUIT, term_handler);
 	signal(SIGTERM, term_handler);
@@ -256,30 +254,52 @@ int main(int argc, char *argv[])
 	signal(SIGINT, term_handler);
 	signal(SIGSEGV, term_handler);
 	
+	/*intitialise the stuctures*/
+	init_files();
+	
+	/*check if instance is running*/
+	if((argc== 1)|| ((argc== 2)&&((g_ascii_strcasecmp(argv[1], "-d")== 0)|| g_ascii_strcasecmp(argv[1], "-c")== 0))) 
+	{   
+	    if(!read_pid_file(PID_APPLOAD))
+		{
+			error_and_log_no_exit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
+			return(run_warning_dlg(argc, argv, S_MAIN_INSTANCE_RUNNING, 0));
+		}
+		/*load the network plugins*/
+		else if(!load_plugins())
+		{
+			error_and_log_no_exit(S_MAIN_ERR_LOAD_PLUGINS);
+			return(run_warning_dlg(argc, argv, S_MAIN_LOAD_PLUGINS, 0));
+		}
+	
+	}
+
 	/*if mailtc or mailtc -d*/
-	if((argc== 1) || ((argc== 2)&& (strcmp(argv[1], "-d")== 0))) 
+	if((argc== 1) || ((argc== 2)&& (g_ascii_strcasecmp(argv[1], "-d")== 0))) 
 	{	
 		/*set debug mode if -d*/
 		config.net_debug= (argc== 1)? 0: 1;
 	
 		/*check mail details and run dialog if none found*/
 		read_accounts();
-		if((paccounts== NULL)|| !(read_config_file()))
+		if((acclist== NULL)|| !(read_config_file()))
 		{	
 			return(run_warning_dlg(argc, argv, S_MAIN_NO_CONFIG_FOUND, 1));
 		}
 		/*code to check that icon is valid (e.g for old mailtc versions*/
 		else
 		{
-			if(paccounts->icon[0]!= '#')
+			mail_details *pacclist;
+			pacclist= (mail_details *)acclist->data;
+			if(pacclist->icon[0]!= '#')
 				return(run_warning_dlg(argc, argv, S_MAIN_OLD_VERSION_FOUND, 1));
 		}
 	}
 	/*if mailtc -c*/
-	else if((argc== 2)&& strcmp(argv[1], "-c")== 0)
+	else if((argc== 2)&& g_ascii_strcasecmp(argv[1], "-c")== 0)
 		return(config_dialog_start(argc, argv));
 	/*if mailtc -k*/
-	else if((argc== 2)&& strcmp(argv[1], "-k")== 0)
+	else if((argc== 2)&& g_ascii_strcasecmp(argv[1], "-k")== 0)
 		return(!read_pid_file(PID_APPKILL));
 	/*invalid option*/
 	else
@@ -290,23 +310,17 @@ int main(int argc, char *argv[])
 	gtk_init(&argc, &argv);
 
 	/*set the time interval for mail checks from the check_delay variable*/
-	if(sscanf(config.check_delay, "%d", &sleeptime)!= 1)
-		error_and_log(S_MAIN_ERR_DELAY_INFO);
-
-	sleeptime= (sleeptime* 60* 1000);
+	sleeptime= (int)g_ascii_strtod(config.check_delay, NULL)* 60* 1000;
 
 	/*call the mail thread for the initial mail check
 	 *(otherwise it will wait a full minute or more before initial check)*/
 	mail_thread(NULL);
-	
 	/*call the mail thread to check every sleeptime milliseconds*/
 	func_ref= g_timeout_add(sleeptime, mail_thread, NULL);
 	gtk_main();
-	g_source_remove(func_ref);
-	
-	cleanup();
+	/*g_source_remove(func_ref);*/
 
-	return EXIT_SUCCESS;
+	return(EXIT_SUCCESS);
 
 }
 

@@ -20,11 +20,11 @@
 #include "plg_common.h"
 
 /*function to close the connection if an error has occured*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int close_imap_connection(int sockfd, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int close_imap_connection(int sockfd, unsigned int *msgid, char *ssl, char *ctx)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	/*basically try to logout then terminate the connection*/
 	char imap_message[IMAP_ID_LEN+ strlen("a LOGOUT\r\n")];
@@ -32,15 +32,15 @@ static int close_imap_connection(int sockfd, unsigned int *msgid, char *ssl, cha
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a LOGOUT\r\n"));
 	sprintf(imap_message, "a%.4d LOGOUT\r\n", (*msgid)++);
 	
-	send_net_string(sockfd, imap_message, ssl); 
+	SEND_NET_STRING(sockfd, imap_message, ssl); 
 	
-	error_and_log_no_exit(S_IMAPFUNC_ERR_CONNECT, PACKAGE);
+	plg_report_error(S_IMAPFUNC_ERR_CONNECT, PACKAGE);
 
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	/*close the connection*/
 	if(ssl)
 		uninitialise_ssl(ssl, ctx);
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 	
 	close(sockfd);
 
@@ -49,11 +49,11 @@ static int close_imap_connection(int sockfd, unsigned int *msgid, char *ssl, cha
 }
 
 /*function to receive the initial string from the server*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int receive_imap_initial_string(int sockfd, SSL *ssl)
 #else
 static int receive_imap_initial_string(int sockfd, char *ssl)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	/*clear the buffer*/
 	int numbytes= 1;
@@ -61,9 +61,9 @@ static int receive_imap_initial_string(int sockfd, char *ssl)
 	char *buf= NULL;
 	
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(MTC_RETURN_FALSE);
@@ -96,11 +96,11 @@ static int receive_imap_initial_string(int sockfd, char *ssl)
 }
 
 /*function to receive the string for login/logout commands*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int receive_imap_login_string(int sockfd, unsigned int msgid, SSL *ssl)
 #else
 static int receive_imap_login_string(int sockfd, unsigned int msgid, char *ssl)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	char okstring[12], badstring[12], nostring[12];
 	int numbytes= 1;
@@ -113,9 +113,9 @@ static int receive_imap_login_string(int sockfd, unsigned int msgid, char *ssl)
 	sprintf(nostring, "a%.4d NO", msgid);
 
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(MTC_RETURN_FALSE);
@@ -148,7 +148,7 @@ static int receive_imap_login_string(int sockfd, unsigned int msgid, char *ssl)
 }
 
 /*function to receive the string for login/logout commands*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static char *receive_imap_select_string(int sockfd, unsigned int msgid, SSL *ssl, char *buf)
 #else
 static char *receive_imap_select_string(int sockfd, unsigned int msgid, char *ssl, char *buf)
@@ -167,9 +167,9 @@ static char *receive_imap_select_string(int sockfd, unsigned int msgid, char *ss
 
 
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(NULL);
@@ -222,41 +222,41 @@ static char *receive_imap_select_string(int sockfd, unsigned int msgid, char *ss
 }
 
 /*function to receive the imap LOGOUT command result*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static unsigned int receive_imap_logout_string(int sockfd, unsigned int msgid, SSL *ssl)
 #else
 static unsigned int receive_imap_logout_string(int sockfd, unsigned int msgid, char *ssl)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	/*function is identical to login so just use that*/
 	return(receive_imap_login_string(sockfd, msgid, ssl));	
 }
 
 /*function to login to IMAP server*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int login_to_imap_server(int sockfd, mail_details *paccount, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int login_to_imap_server(int sockfd, mail_details *paccount, unsigned int *msgid, char *ssl, char *ctx)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	/*send command to login with username and password and check login was successful*/
 	char *imap_message= NULL;
 	
 	imap_message= (char*)alloc_mem(IMAP_ID_LEN+ strlen(paccount->username)+ strlen("a LOGIN  \r\n")+ strlen(paccount->password)+ 1, imap_message);
 	sprintf(imap_message,"a%.4d LOGIN %s %s\r\n", *msgid, paccount->username, paccount->password);
-	send_net_string(sockfd, imap_message, ssl);
+	SEND_NET_PW_STRING(sockfd, imap_message, ssl);
 	free(imap_message);
 
 	if((!(receive_imap_login_string(sockfd, (*msgid)++, ssl)))&& (close_imap_connection(sockfd, msgid, ssl, ctx))) 
 	{	
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_LOGIN, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_LOGIN, paccount->hostname);
 		return(MTC_RETURN_FALSE);
 	}
 	return(MTC_RETURN_TRUE);
 }
 
 /*function to logout of IMAP server*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int logout_from_imap_server(int sockfd, mail_details *paccount, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int logout_from_imap_server(int sockfd, mail_details *paccount, unsigned int *msgid, char *ssl, char *ctx)
@@ -267,15 +267,15 @@ static int logout_from_imap_server(int sockfd, mail_details *paccount, unsigned 
 
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a LOGOUT\r\n"));
 	sprintf(imap_message, "a%.4d LOGOUT\r\n", *msgid);
-	send_net_string(sockfd, imap_message, ssl); 
+	SEND_NET_STRING(sockfd, imap_message, ssl); 
 	
 	if((!(receive_imap_logout_string(sockfd, (*msgid)++, ssl)))&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_LOGOUT, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_LOGOUT, paccount->hostname);
 		return(MTC_RETURN_FALSE);
 	}
 
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	/*close the SSL connection*/
 	if(ssl)
 		uninitialise_ssl(ssl, ctx);
@@ -285,7 +285,7 @@ static int logout_from_imap_server(int sockfd, mail_details *paccount, unsigned 
 	return(MTC_RETURN_TRUE);
 }
 
-#ifdef MTC_USE_SASL
+#ifdef SSL_PLUGIN
 /*function to receive the CRAM-MD5 string from the server*/
 static char *receive_crammd5_string(int sockfd, char *buf)
 {
@@ -295,9 +295,9 @@ static char *receive_crammd5_string(int sockfd, char *buf)
 	buf= NULL;
 	
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, NULL))
+	while(NET_DATA_AVAILABLE(sockfd, NULL))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, NULL))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, NULL))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(NULL);
@@ -323,37 +323,25 @@ static char *receive_crammd5_string(int sockfd, char *buf)
 	
 	return(buf);
 }
-#endif /*MTC_USE_SASL*/
 
-#ifdef MTC_USE_SASL
 /*function to login to IMAP server with CRAM-MD5 auth*/
 static int login_to_cramimap_server(int sockfd, mail_details *paccount, unsigned int *msgid)
 {
-	Gsasl *ctx= NULL;
 	char imap_message[IMAP_ID_LEN+ strlen("a AUTHENTICATE CRAM-MD5\r\n")];
-
 	char *buf= NULL;
 	char *digest= NULL;
-	int rc= 0;
 	
-	if((rc= gsasl_init(&ctx))!= GSASL_OK)
-	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SASL_INIT, rc, gsasl_strerror(rc));
-		return(MTC_RETURN_FALSE);
-	}
-
 	/*send auth command*/
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a AUTHENTICATE CRAM-MD5\r\n"));
 	sprintf(imap_message, "a%.4d AUTHENTICATE CRAM-MD5\r\n", *msgid);
-	send_net_string(sockfd, imap_message, NULL);
+	SEND_NET_STRING(sockfd, imap_message, NULL);
 
 	/*receive back from server to check username was sent ok*/
 	if((!(buf= receive_crammd5_string(sockfd, buf)))&& (close_imap_connection(sockfd, msgid, NULL, NULL)))
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_AUTHENTICATE, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_AUTHENTICATE, paccount->hostname);
 		return(MTC_RETURN_FALSE);
 	}
-	
 	
 	/*remove '\r\n' etc*/
 	if(buf[strlen(buf)- 2]== '\r')
@@ -362,8 +350,7 @@ static int login_to_cramimap_server(int sockfd, mail_details *paccount, unsigned
 		buf[strlen(buf)- 1]= '\0';
 
 	/*create CRAM-MD5 string to send to server*/
-	digest= create_cram_string(ctx, paccount->username, paccount->password, buf+ 2, digest);
-	gsasl_done(ctx);
+	digest= create_cram_string(paccount, buf+ 2, digest);
 	free(buf);
 
 	/*check the digest value before continuing*/
@@ -371,26 +358,24 @@ static int login_to_cramimap_server(int sockfd, mail_details *paccount, unsigned
 		return(MTC_RETURN_FALSE);
 
 	/*send the digest to log in*/
-	buf= alloc_mem(strlen(digest)+ 3, buf);
-	strcpy(buf, digest);
-	strcat(buf, "\r\n");
-	send_net_string(sockfd, buf, NULL);
-	free(buf);
+	digest= realloc_mem(strlen(digest)+ 3, digest);
+	strcat(digest, "\r\n");
+	SEND_NET_STRING(sockfd, digest, NULL);
 	free(digest);
 
 	/*receive back from server to check username was sent ok*/
 	if((!(receive_imap_login_string(sockfd, (*msgid)++, NULL)))&& (close_imap_connection(sockfd, msgid, NULL, NULL))) 
 	{	
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_CRAM_MD5, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_CRAM_MD5, paccount->hostname);
 		return(MTC_RETURN_FALSE);
 	}
 
 	return(MTC_RETURN_TRUE);
 }
-#endif /*MTC_USE_SASL*/
+#endif /*SSL_PLUGIN*/
 
 /*function to receive the string for login/logout commands*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static char *receive_imap_capability_string(int sockfd, unsigned int msgid, SSL *ssl, char *buf)
 #else
 static char *receive_imap_capability_string(int sockfd, unsigned int msgid, char *ssl, char *buf)
@@ -407,9 +392,9 @@ static char *receive_imap_capability_string(int sockfd, unsigned int msgid, char
 	sprintf(badstring, "a%.4d BAD", msgid);
 
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(NULL);
@@ -435,7 +420,7 @@ static char *receive_imap_capability_string(int sockfd, unsigned int msgid, char
 	if((strncmp(buf, "* CAPABILITY", strlen("* CAPABILITY")))!= 0)
 	{
 		free(buf);
-		error_and_log_no_exit(S_IMAPFUNC_ERR_NOT_IMAP_SERVER);
+		plg_report_error(S_IMAPFUNC_ERR_NOT_IMAP_SERVER);
 		return(NULL);
 	}
 	
@@ -443,7 +428,7 @@ static char *receive_imap_capability_string(int sockfd, unsigned int msgid, char
 	if((strstr(buf, okstring)== NULL)|| (buf[strlen(buf)- 1]!= '\n')) 
 	{
 		free(buf);
-		error_and_log_no_exit(S_IMAPFUNC_ERR_RECEIVE_CAPABILITY);
+		plg_report_error(S_IMAPFUNC_ERR_RECEIVE_CAPABILITY);
 		return(NULL);
 	}
 	
@@ -451,7 +436,7 @@ static char *receive_imap_capability_string(int sockfd, unsigned int msgid, char
 }
 
 /*test the capabilities of the IMAP server*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int test_imap_server_capabilities(int sockfd, enum imap_protocol protocol, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int test_imap_server_capabilities(int sockfd, enum imap_protocol protocol, unsigned int *msgid, char *ssl, char *ctx)
@@ -463,12 +448,12 @@ static int test_imap_server_capabilities(int sockfd, enum imap_protocol protocol
 
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a CAPABILITY\r\n"));
 	sprintf(imap_message,"a%.4d CAPABILITY\r\n", *msgid);
-	send_net_string(sockfd, imap_message, ssl);
+	SEND_NET_STRING(sockfd, imap_message, ssl);
 
 	/*get the capability string*/
 	if(((buf= receive_imap_capability_string(sockfd, (*msgid)++, ssl, buf))== NULL)&& (close_imap_connection(sockfd, msgid, ssl, ctx))) 
 	{	
-		error_and_log_no_exit(S_IMAPFUNC_ERR_GET_IMAP_CAPABILITIES);
+		plg_report_error(S_IMAPFUNC_ERR_GET_IMAP_CAPABILITIES);
 		return(MTC_RETURN_FALSE);
 	}
 	
@@ -476,7 +461,7 @@ static int test_imap_server_capabilities(int sockfd, enum imap_protocol protocol
 	if((protocol== IMAPCRAM_PROTOCOL)&& (strstr(buf, "CRAM-MD5")== NULL))
 	{
 		close_imap_connection(sockfd, msgid, ssl, ctx);
-		error_and_log_no_exit(S_IMAPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
+		plg_report_error(S_IMAPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
 		free(buf);
 		return(MTC_RETURN_FALSE);
 	}
@@ -525,11 +510,11 @@ static int output_uids_to_file(FILE *infile, FILE *outfile, FILE *outreadfile, c
 }
 
 /*function to receive the string for login/logout commands*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static char *receive_imap_message_header(int sockfd, unsigned int msgid, SSL *ssl, char *buf)
 #else
 static char *receive_imap_message_header(int sockfd, unsigned int msgid, char *ssl, char *buf)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	char okstring[12], badstring[12], nostring[12];
 	int numbytes= 1;
@@ -542,9 +527,9 @@ static char *receive_imap_message_header(int sockfd, unsigned int msgid, char *s
 	sprintf(nostring, "a%.4d NO", msgid);
 
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(NULL);
@@ -576,7 +561,7 @@ static char *receive_imap_message_header(int sockfd, unsigned int msgid, char *s
 }
 
 /*function to check whether message is filtered out*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, char *ssl, char *ctx)
@@ -592,7 +577,7 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 		FILE *infile= NULL;
 			
 		/*get the full path for the uidl file*/
-		get_account_file(uidfile, cfgdir, UIDL_FILE, paccount->id);
+		plg_get_account_file(uidfile, cfgdir, UIDL_FILE, paccount->id);
 
 		/*if it does not exist we do not need to mark as read*/
 		if(access(uidfile, F_OK)== -1)
@@ -601,7 +586,7 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 		/*open the read file*/
 		if((infile= fopen(uidfile, "r"))== NULL)
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_OPEN_READ_FILE, uidfile);
+			plg_report_error(S_IMAPFUNC_ERR_OPEN_READ_FILE, uidfile);
 			return(MTC_ERR_EXIT);
 		}
 		memset(line, '\0', LINE_LENGTH);
@@ -618,18 +603,18 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 			
 			if((spos= strchr(line, '-'))== NULL)
 			{
-				error_and_log_no_exit(S_IMAPFUNC_ERR_GET_UID);
+				plg_report_error(S_IMAPFUNC_ERR_GET_UID);
 				return(MTC_ERR_EXIT);
 			}
 			/*send the message to get the UID header*/
 			memset(imap_message, '\0', strlen("a UID FETCH +(FLAGS BODY[HEADER])\r\n")+ 25);
 			sprintf(imap_message, "a%.4d UID FETCH %s (FLAGS BODY[HEADER])\r\n", *msgid, spos+ 1);
-			send_net_string(sockfd, imap_message, ssl);
+			SEND_NET_STRING(sockfd, imap_message, ssl);
 				
 			/*get the message header*/
 			if((!(buf= receive_imap_message_header(sockfd, (*msgid)++, ssl, buf)))&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 			{
-				error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_UID_FETCH, paccount->hostname);
+				plg_report_error(S_IMAPFUNC_ERR_SEND_UID_FETCH, paccount->hostname);
 				return(MTC_RETURN_FALSE);
 			}
 					
@@ -641,12 +626,12 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 			/*As header has now been read we need to remark as unseen*/
 			memset(imap_message, '\0', strlen("a UID FETCH +(FLAGS BODY[HEADER]\r\n")+ 25);
 			sprintf(imap_message, "a%.4d UID STORE %s -FLAGS.SILENT (\\Seen)\r\n", *msgid, spos+ 1);
-			send_net_string(sockfd, imap_message, ssl);
+			SEND_NET_STRING(sockfd, imap_message, ssl);
 	
 			/*recieve message to tell us it was successful*/
 			if((!(receive_imap_login_string(sockfd, (*msgid)++, ssl)))&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 			{
-				error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_STORE, paccount->hostname);
+				plg_report_error(S_IMAPFUNC_ERR_SEND_STORE, paccount->hostname);
 				return(MTC_RETURN_FALSE);
 			}
 		
@@ -655,7 +640,7 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 		/*close file and cleanup*/
 		if(fclose(infile)== EOF)
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_READ_FILE);
+			plg_report_error(S_IMAPFUNC_ERR_CLOSE_READ_FILE);
 			return(MTC_ERR_EXIT);
 		}
 	}
@@ -664,7 +649,7 @@ static int filter_messages(int sockfd, mail_details *paccount, const char *cfgdi
 }
 
 /*function to receive the string for uids*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int receive_imap_messages_string(int sockfd, mail_details *paccount, const char *cfgdir, char *uidvalidity, unsigned int msgid, SSL *ssl)
 #else
 static int receive_imap_messages_string(int sockfd, mail_details *paccount, const char *cfgdir, char *uidvalidity, unsigned int msgid, char *ssl)
@@ -684,18 +669,18 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, cons
 	sprintf(badstring, "a%.4d BAD", msgid);
 	
 	/*get the full path for the uidl file*/
-	get_account_file(uidlfile, cfgdir, UIDL_FILE, paccount->id);
-	get_account_file(tmpuidlfile, cfgdir, ".tmpuidlfile", paccount->id);
-	get_account_file(readfile, cfgdir, ".readfile", paccount->id);
+	plg_get_account_file(uidlfile, cfgdir, UIDL_FILE, paccount->id);
+	plg_get_account_file(tmpuidlfile, cfgdir, TMP_UIDL_FILE, paccount->id);
+	plg_get_account_file(readfile, cfgdir, ".readfile", paccount->id);
 
 	if((outfile= fopen(uidlfile, "wt"))== NULL)
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_OPEN_FILE, uidlfile);
+		plg_report_error(S_IMAPFUNC_ERR_OPEN_FILE, uidlfile);
 		return(MTC_ERR_EXIT);
 	}
 	if((outreadfile= fopen(readfile, "wt"))== NULL)
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_OPEN_FILE, readfile);
+		plg_report_error(S_IMAPFUNC_ERR_OPEN_FILE, readfile);
 		return(MTC_ERR_EXIT);
 	}
 	/*open temp file for reading*/
@@ -703,20 +688,20 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, cons
 	{
 		if((infile= fopen(tmpuidlfile, "r"))== NULL)
 		{	
-			error_and_log_no_exit(S_IMAPFUNC_ERR_OPEN_TEMP_FILE);
+			plg_report_error(S_IMAPFUNC_ERR_OPEN_TEMP_FILE);
 			return(MTC_ERR_EXIT);
 		}
 	}
 		
 	/*while there is data available read from server*/
-	while(net_data_available(sockfd, ssl))
+	while(NET_DATA_AVAILABLE(sockfd, ssl))
 	{
 		char *startpos= NULL, *endpos= NULL;
 	
 		/* OK, if we find no '*' in the string, assuming end of receive and break
 		 * otherwise get uid, increment and copy end bit*/
 		
-		if((numbytes= receive_net_string(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
 		{
 			if(buf!= NULL) free(buf);
 			return(MTC_ERR_CONNECT);
@@ -793,14 +778,14 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, cons
 	{
 		if(fclose(infile)== EOF)
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_TEMP_FILE);
+			plg_report_error(S_IMAPFUNC_ERR_CLOSE_TEMP_FILE);
 			if(buf!= NULL) free(buf);
 			return(MTC_ERR_EXIT);
 		}
 	
 		if(remove(tmpuidlfile)== -1)
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_TEMP_FILE);
+			plg_report_error(S_IMAPFUNC_ERR_CLOSE_TEMP_FILE);
 			if(buf!= NULL) free(buf);
 			return(MTC_ERR_EXIT);
 		}
@@ -808,9 +793,9 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, cons
 	
 	/*close the uidlfile*/
 	if(fclose(outreadfile)== EOF)
-		error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_FILE, readfile);
+		plg_report_error(S_IMAPFUNC_ERR_CLOSE_FILE, readfile);
 	if(fclose(outfile)== EOF)
-		error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_FILE, uidlfile);
+		plg_report_error(S_IMAPFUNC_ERR_CLOSE_FILE, uidlfile);
 	
 	if(buf== NULL)
 		return(MTC_ERR_CONNECT);
@@ -827,7 +812,7 @@ static int receive_imap_messages_string(int sockfd, mail_details *paccount, cons
 }
 
 /*function to Select the INBOX as the mailbox to use*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static char *select_inbox_as_mailbox(int sockfd, mail_details *paccount, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx, char *buf)
 #else
 static char *select_inbox_as_mailbox(int sockfd, mail_details *paccount, unsigned int *msgid, char *ssl, char *ctx, char *buf)
@@ -842,11 +827,11 @@ static char *select_inbox_as_mailbox(int sockfd, mail_details *paccount, unsigne
 
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a SELECT INBOX\r\n"));
 	sprintf(imap_message, "a%.4d SELECT INBOX\r\n", *msgid);
-	send_net_string(sockfd, imap_message, ssl);
+	SEND_NET_STRING(sockfd, imap_message, ssl);
 	
 	if(((buf= receive_imap_select_string(sockfd, (*msgid)++, ssl, buf))== NULL)&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_SELECT, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_SELECT, paccount->hostname);
 		return(NULL);
 	}
 
@@ -854,11 +839,11 @@ static char *select_inbox_as_mailbox(int sockfd, mail_details *paccount, unsigne
 }
 
 /*function to output the uids of each message*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int get_num_messages(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int get_num_messages(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, char *ssl, char *ctx)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	char imap_message[IMAP_ID_LEN+ strlen("a UID FETCH 1:* FLAGS\r\n")];
 	char *uidvalidity= NULL;
@@ -871,25 +856,25 @@ static int get_num_messages(int sockfd, mail_details *paccount, const char *cfgd
 	/*send message to get uids command was successful*/
 	memset(imap_message, '\0', IMAP_ID_LEN+ strlen("a UID FETCH 1:* FLAGS\r\n"));
 	sprintf(imap_message,"a%.4d UID FETCH 1:* FLAGS\r\n", *msgid);
-	send_net_string(sockfd, imap_message, ssl);
+	SEND_NET_STRING(sockfd, imap_message, ssl);
 
 	/*get the UID's of the messages*/
 	if((((num_messages= receive_imap_messages_string(sockfd, paccount, cfgdir, uidvalidity, (*msgid)++, ssl))== MTC_ERR_CONNECT)||
 		(num_messages== MTC_ERR_EXIT))
 		&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_UID_FETCH, paccount->hostname);
+		plg_report_error(S_IMAPFUNC_ERR_SEND_UID_FETCH, paccount->hostname);
 	}
 	free(uidvalidity);
 	return(num_messages);
 }
 
 /*function to mark the messages as read*/
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, SSL *ssl, SSL_CTX *ctx)
 #else
 static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, unsigned int *msgid, char *ssl, char *ctx)
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 {
 	/*create the string to send to mark messages as read and check that they were successfully marked*/
 	char imap_message[IMAP_ID_LEN+ strlen("a STORE 1: +FLAGS.SILENT (\\Seen)\r\n")+ 15];
@@ -897,7 +882,7 @@ static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, 
 	FILE *infile= NULL;
 
 	/*get the full path for the uidl file*/
-	get_account_file(readfile, cfgdir, ".readfile", paccount->id);
+	plg_get_account_file(readfile, cfgdir, ".readfile", paccount->id);
 
 	/*if it does not exist we do not need to mark as read*/
 	if(access(readfile, F_OK)== -1)
@@ -906,7 +891,7 @@ static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, 
 	/*open the read file*/
 	if((infile= fopen(readfile, "r"))== NULL)
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_OPEN_READ_FILE, readfile);
+		plg_report_error(S_IMAPFUNC_ERR_OPEN_READ_FILE, readfile);
 		return(MTC_ERR_EXIT);
 	}
 	memset(line, '\0', LINE_LENGTH);
@@ -922,17 +907,17 @@ static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, 
 		
 		if((spos= strchr(line, '-'))== NULL)
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_GET_UID);
+			plg_report_error(S_IMAPFUNC_ERR_GET_UID);
 			return(MTC_ERR_EXIT);
 		}
 		/*send message to mark as read and receive*/
 		memset(imap_message, '\0', strlen("a UID STORE : +FLAGS.SILENT (\\Seen)\r\n")+ 16);
 		sprintf(imap_message, "a%.4d UID STORE %s +FLAGS.SILENT (\\Seen)\r\n", *msgid, spos+ 1);
-		send_net_string(sockfd, imap_message, ssl);
+		SEND_NET_STRING(sockfd, imap_message, ssl);
 	
 		if((!(receive_imap_login_string(sockfd, (*msgid)++, ssl)))&& (close_imap_connection(sockfd, msgid, ssl, ctx)))
 		{
-			error_and_log_no_exit(S_IMAPFUNC_ERR_SEND_STORE, paccount->hostname);
+			plg_report_error(S_IMAPFUNC_ERR_SEND_STORE, paccount->hostname);
 			return(MTC_RETURN_FALSE);
 		}
 		memset(line, '\0', LINE_LENGTH);
@@ -942,46 +927,46 @@ static int mark_as_read(int sockfd, mail_details *paccount, const char *cfgdir, 
 	/*close file and cleanup*/
 	if(fclose(infile)== EOF)
 	{
-		error_and_log_no_exit(S_IMAPFUNC_ERR_CLOSE_READ_FILE);
+		plg_report_error(S_IMAPFUNC_ERR_CLOSE_READ_FILE);
 		return(MTC_ERR_EXIT);
 	}
 	
 	/*remove the file after marking as read*/
 	if(remove(readfile)== -1)
 	{	
-		error_and_log_no_exit(S_IMAPFUNC_ERR_REMOVE_READ_FILE);
+		plg_report_error(S_IMAPFUNC_ERR_REMOVE_READ_FILE);
 		return(MTC_ERR_EXIT);
 	}
 	return(MTC_RETURN_TRUE);
 }
 
 /*function to check mail (in clear text mode)*/
-int check_imap_mail(mail_details *paccount, const char *cfgdir, enum imap_protocol protocol)
+static int check_mail(mail_details *paccount, const char *cfgdir, enum imap_protocol protocol)
 {
 	int sockfd= 0;
 	unsigned int msgid= 1;
 
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	SSL *ssl= NULL;
 	SSL_CTX *ctx= NULL;
 #else
 	/*use char * to save code (values are unused)*/
 	char *ssl= NULL;
 	char *ctx= NULL;
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 	
 	/*connect to the imap server*/
 	if(!connect_to_server(&sockfd, paccount))
 		return(MTC_ERR_CONNECT);
 
-#ifdef MTC_USE_SSL
+#ifdef SSL_PLUGIN
 	if(protocol== IMAPSSL_PROTOCOL)
 	{
 		/*initialise SSL connection*/
 		ctx= initialise_ssl_ctx(ctx);
 		ssl= initialise_ssl_connection(ssl, ctx, &sockfd);
 	}
-#endif /*MTC_USE_SSL*/
+#endif /*SSL_PLUGIN*/
 	
 	/*receive the string back from the server*/
 	receive_imap_initial_string(sockfd, ssl); 
@@ -997,14 +982,14 @@ int check_imap_mail(mail_details *paccount, const char *cfgdir, enum imap_protoc
 			return(MTC_ERR_CONNECT);
 	}
 
-#ifdef MTC_USE_SASL
+#ifdef SSL_PLUGIN
 	/*CRAM-MD5 login to imap server*/
 	else if(protocol== IMAPCRAM_PROTOCOL)
 	{
 		if(!login_to_cramimap_server(sockfd, paccount, &msgid))
 			return(MTC_ERR_CONNECT);
 	}
-#endif /*MTC_USE_SASL*/
+#endif /*SSL_PLUGIN*/
 	
 	/*get the number of messages and outputs the uids to file*/
 	if(((paccount->num_messages= get_num_messages(sockfd, paccount, cfgdir, &msgid, ssl, ctx))== MTC_ERR_CONNECT)||
@@ -1023,5 +1008,88 @@ int check_imap_mail(mail_details *paccount, const char *cfgdir, enum imap_protoc
 		return(MTC_ERR_CONNECT);
 
 	return(MTC_RETURN_TRUE);
+}
+
+/*function to read the IMAP mail*/
+int imap_read_mail(mail_details *paccount, const char *cfgdir)
+{
+	/*set the flag to mark as read on next mail check*/
+
+	FILE *infile= NULL, *outfile= NULL;
+	char uidlfile[NAME_MAX], tmpuidlfile[NAME_MAX];
+	char buf[MAXDATASIZE];
+	int numbytes= 0;
+	
+	memset(buf, '\0', MAXDATASIZE);
+		
+	/*get full paths of files*/
+	plg_get_account_file(uidlfile, cfgdir, UIDL_FILE, paccount->id);
+	plg_get_account_file(tmpuidlfile, cfgdir, TMP_UIDL_FILE, paccount->id);
+
+	/*rename the temp uidl file to uidl file if it exists*/
+	if(access(uidlfile, F_OK)== -1)
+	{
+		plg_report_error(S_IMAPFUNC_ERR_ACCESS_FILE, uidlfile); 
+		return(MTC_RETURN_FALSE);
+		
+	}	
+	/*Open the read/write files*/
+	if((infile= fopen(uidlfile, "rt"))== NULL)
+	{
+		plg_report_error(S_IMAPFUNC_ERR_OPEN_FILE_READ, uidlfile);
+		return(MTC_RETURN_FALSE);
+	}
+	if((outfile= fopen(tmpuidlfile, "wt"))== NULL)
+	{
+		plg_report_error(S_IMAPFUNC_ERR_OPEN_FILE_WRITE, tmpuidlfile); 
+		return(MTC_RETURN_FALSE);
+	}
+	while(!feof(infile))
+	{
+		numbytes= fread(buf, sizeof(char), MAXDATASIZE, infile);
+		
+		if(ferror(infile))
+		{
+			plg_report_error(S_IMAPFUNC_ERR_READ_FILE, uidlfile); 
+			return(MTC_RETURN_FALSE);
+
+		}
+		fwrite(buf, sizeof(char), numbytes, outfile);
+
+		if(ferror(outfile))
+		{
+			plg_report_error(S_IMAPFUNC_ERR_WRITE_FILE, tmpuidlfile); 
+			return(MTC_RETURN_FALSE);
+		}
+	}
+			
+	/*Close the files*/
+	if((fclose(outfile)== EOF)|| (fclose(infile)== EOF))
+	{
+		plg_report_error(S_IMAPFUNC_ERR_CLOSE_FILE, tmpuidlfile); 
+		return(MTC_RETURN_FALSE);
+	}	
+	return(MTC_RETURN_TRUE);
+}
+
+/*call check_mail for IMAP*/
+int check_imap_mail(mail_details *paccount, const char *cfgdir)
+{
+	enum imap_protocol protocol= IMAP_PROTOCOL;
+	return(check_mail(paccount, cfgdir, protocol));
+}
+
+/*call check_mail for IMAP (CRAM-MD5)*/
+int check_cramimap_mail(mail_details *paccount, const char *cfgdir)
+{
+	enum imap_protocol protocol= IMAPCRAM_PROTOCOL;
+	return(check_mail(paccount, cfgdir, protocol));
+}
+
+/*call check_mail for IMAP (SSL/TLS)*/
+int check_imapssl_mail(mail_details *paccount, const char *cfgdir)
+{
+	enum imap_protocol protocol= IMAPSSL_PROTOCOL;
+	return(check_mail(paccount, cfgdir, protocol));
 }
 

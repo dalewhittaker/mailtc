@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/main.c)
 
 PACKAGE=mailtc
-VERSION=1.0.4
+VERSION=1.1.7
 
 AM_INIT_AUTOMAKE([$PACKAGE], [$VERSION])
 
@@ -13,6 +13,11 @@ AC_AIX
 AC_ISC_POSIX
 AC_MINIX
 AC_HEADER_STDC
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+dnl prevent libtool outputting lots of messages
+LIBTOOL="$LIBTOOL --silent"
+dnl we only want shared libs
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -76,23 +81,9 @@ AC_MSG_CHECKING([if OpenSSL should be used])
 AC_MSG_RESULT($ssl)
 AM_CONDITIONAL(MTC_SSL, test x$ssl = xyes)
 
-dnl Check whether to enable SASL
-AC_ARG_ENABLE(sasl,AS_HELP_STRING([--disable-sasl],[don't use libgsasl]),[sasl=no],[sasl=yes])
-if test $sasl == yes ; then
-	AC_CHECK_HEADER([gsasl.h],[sasl=yes],[sasl=no])
-	if test $sasl != yes ; then
-		AC_MSG_WARN([Cannot find libgsasl headers, disabling])
-	else
-		AC_DEFINE(MTC_USE_SASL,1)
-	fi
-fi
-AC_MSG_CHECKING([if libgsasl should be used])
-AC_MSG_RESULT($sasl)
-AM_CONDITIONAL(MTC_SASL, test x$sasl = xyes)
-
 AC_SUBST(VERSION)
 
-AC_OUTPUT([Makefile src/Makefile po/Makefile.in])
+AC_OUTPUT([Makefile src/Makefile plugin/Makefile po/Makefile.in])
 
 echo "
 Configuration for $PACKAGE $VERSION:
@@ -102,7 +93,6 @@ Configuration for $PACKAGE $VERSION:
  GLIB version ..................... : `pkg-config --modversion gtk+-2.0`
  GTK+ version ..................... : `pkg-config --modversion glib-2.0`
  NLS/gettext ...................... : $USE_NLS
- SASL ............................. : $sasl
  SSL .............................. : $ssl
  Debug mode ....................... : $debug
 

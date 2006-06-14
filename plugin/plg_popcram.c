@@ -21,53 +21,55 @@
 #include "plg_common.h"
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
-#define MTC_REVISION 0.1
 #define PLUGIN_NAME "POP (CRAM-MD5)"
 #define PLUGIN_AUTHOR "Dale Whittaker (dayul@users.sf.net)"
 #define PLUGIN_DESC "POP3 network plugin with CRAM-MD5 authentication."
-
-/*simply calls check_pop_mail with correct params*/
-static int check_crampop_mail(mail_details *paccount, const char *cfgdir)
-{
-	enum pop_protocol protocol= POPCRAM_PROTOCOL;
-	return(check_pop_mail(paccount, cfgdir, protocol));
-}
+#define DEFAULT_PORT 110
 
 /*this is called every n minutes by mailtc to check for new messages*/
-int load(mail_details *paccount, const char *cfgdir, unsigned int flags, FILE *plog)
+int popcram_get_messages(void *pdata, const char *cfgdir, void *plog, unsigned int flags)
 {
 	/*set the network debug flag and log file*/
+	mail_details *paccount= (mail_details *)pdata;
 	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= plog;
-
+	plglog= (FILE *)plog;
+	
 	return(check_crampop_mail(paccount, cfgdir));
 }
 
 /*this is called when unloading, one use for this is to free memory*/
-/*int unload(mail_details *paccount)
+/*int unload(void *paccount)
 {
 	printf("unload %d\n", paccount->id);
 	return 1;
 }*/
 
 /*this is called when the docklet is clicked*/
-int clicked(mail_details *paccount)
+int popcram_clicked(void *pdata, const char *cfgdir)
 {
-	/*TODO we need to sort this bit*/
-	printf("docklet clicked %d!\n", paccount->id);
-	return(MTC_RETURN_TRUE);
+	mail_details *paccount= (mail_details *)pdata;
+	return(pop_read_mail(paccount, cfgdir));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
-mtc_plugin_info pluginfo =
+static mtc_plugin_info popcram_pluginfo =
 {
-	MTC_REVISION,
-	(const char *)PLUGIN_NAME,
-	(const char *)PLUGIN_AUTHOR,
-	(const char *)PLUGIN_DESC,
+	NULL, /*pointer to handle, set to NULL*/
+	VERSION,
+	PLUGIN_NAME,
+	PLUGIN_AUTHOR,
+	PLUGIN_DESC,
 	MTC_ENABLE_FILTERS,
-	load,
-	NULL/*unload*/, /*currently nothing needs to be unloaded*/
-	clicked
+	DEFAULT_PORT,
+	NULL/*load*/, /*currently does nothing*/
+	NULL/*unload*/, /*currently does nothing*/
+	&popcram_get_messages,
+	&popcram_clicked
 };
 
+/*the initialisation function*/
+mtc_plugin_info *init_plugin(void)
+{
+	/*set the plugin pointer passed to point to the struct*/
+	return(&popcram_pluginfo);
+}
