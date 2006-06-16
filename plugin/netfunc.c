@@ -70,6 +70,7 @@ static int print_pw_string(const char *sendstring)
 	if((ptr= strrchr(pwstring, ' '))== NULL)
 	{
 		plg_report_error(S_NETFUNC_ERR_PW_STRING);
+		free(pwstring);
 		return(MTC_RETURN_FALSE);
 	}
 			

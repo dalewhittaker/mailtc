@@ -83,7 +83,6 @@ static gboolean load_plugin(const char *plugin_name)
 	if((module= g_module_open(plugin_name, G_MODULE_BIND_LOCAL/*1*//*0*//*G_MODULE_BIND_LAZY*/))== NULL)
 	{
 		error_and_log_no_exit(S_PLUGIN_ERR_OPEN_PLUGIN, plugin_name, g_module_error());
-		g_free(pitem);
 		return(TRUE);
 	}
 	
@@ -95,7 +94,6 @@ static gboolean load_plugin(const char *plugin_name)
 		if(!g_module_close(module))
 			error_and_log_no_exit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(module), g_module_error());
 		
-		g_free(pitem);		
 		return(TRUE);
 	}
 	
@@ -103,7 +101,6 @@ static gboolean load_plugin(const char *plugin_name)
 	if((pitem= init_plugin())== NULL)
 	{
 		error_and_log_no_exit(S_PLUGIN_ERR_INIT_PLUGIN, g_module_name(module), g_module_error());
-		g_free(pitem);
 		return(TRUE);
 	}
 	pitem->handle= module;

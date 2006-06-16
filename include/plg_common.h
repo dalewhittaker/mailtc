@@ -54,7 +54,7 @@
 #define LINE_LENGTH 80
 #define UIDL_FILE "uidlfile"
 #define TMP_UIDL_FILE ".tmpuidlfile"
-#define NET_TIMEOUT 25
+#define NET_TIMEOUT 5
 
 #define DIGEST_LEN 32
 #define UIDL_LEN 70

@@ -309,6 +309,7 @@ static int get_number_of_messages(int sockfd, mail_details *paccount, char *ssl,
 	if(sscanf(buf, "%*s%d%*d", &num_messages)!= 1)
 	{
 		plg_report_error(S_POPFUNC_ERR_GET_TOTAL_MESSAGES);
+		free(buf);
 		return(MTC_ERR_CONNECT);
 	}
 	free(buf);
@@ -503,6 +504,7 @@ int output_uidls_to_file(int sockfd, mail_details *paccount, const char *cfgdir,
 			if((pos= strrchr(buf, ' '))== NULL)
 			{
 				plg_report_error(S_POPFUNC_ERR_GET_UIDL);
+				free(buf);
 				return(MTC_ERR_EXIT);
 			}
 			

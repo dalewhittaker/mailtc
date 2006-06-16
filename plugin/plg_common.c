@@ -146,6 +146,7 @@ char *create_cram_string(mail_details *paccount, char *serverdigest, char *clien
 	if(EVP_DecodeBlock(tmpbuf, (unsigned char *)serverdigest, slen)> slen)
 	{
 		plg_report_error(S_PLG_COMMON_ERR_BASE64_DECODE);
+		free(tmpbuf);
 		return(NULL);
 	}
 
@@ -178,6 +179,7 @@ char *create_cram_string(mail_details *paccount, char *serverdigest, char *clien
 	if(EVP_EncodeBlock((unsigned char *)clientdigest, tmpbuf, strlen(tmpbuf))!= slen)
 	{
 		plg_report_error(S_PLG_COMMON_ERR_BASE64_ENCODE);
+		free(tmpbuf);
 		return(NULL);
 	}
 	free(tmpbuf);
