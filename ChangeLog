@@ -361,3 +361,10 @@ All the libgsasl stuff removed and CRAM-MD5 code ported to openssl, mailtc now n
 
 1.1.7:
 Passwords are no longer displayed in network debug mode.
+
+1.1.8:
+Added some free()'s where they were missing, and removed some free()'s where
+they shouldn't have been.
+
+1.1.9:
+Fixed problem reported on sourceforge about receiving capability string

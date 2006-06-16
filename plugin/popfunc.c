@@ -45,15 +45,17 @@ static int close_pop_connection(int sockfd, char *ssl, char *ctx)
 
 /* function to receive a message from the pop3 server */
 #ifdef SSL_PLUGIN
-static char *receive_pop_string(int sockfd, SSL *ssl, char *buf)
+static char *receive_pop_string_func(int sockfd, SSL *ssl, char *buf, char *endstring)
 #else
-static char *receive_pop_string(int sockfd, char *ssl, char *buf)
+static char *receive_pop_string_func(int sockfd, char *ssl, char *buf, char *endstring)
 #endif /*SSL_PLUGIN*/
 {
 	int numbytes= 1;
 	char tmpbuf[MAXDATASIZE];
+	unsigned int buflen= 0, endslen= 0;
 
 	buf= NULL;
+	endslen= strlen(endstring);
 
 	/*while there is data available receive data*/
 	while(NET_DATA_AVAILABLE(sockfd, ssl))
@@ -69,9 +71,10 @@ static char *receive_pop_string(int sockfd, char *ssl, char *buf)
 
 		/*add the received string to the buffer*/
 		buf= str_cat(buf, tmpbuf);
+		buflen= strlen(buf);
 
 		/*added so we dont have to wait for select() timeout every time*/
-		if((buf[strlen(buf)-2]== '\r')&& (buf[strlen(buf)- 1]== '\n'))
+		if((buflen>= endslen)&& (strncmp(buf+ (buflen- endslen), endstring, endslen)== 0))
 			break;
 	}
 	
@@ -82,13 +85,34 @@ static char *receive_pop_string(int sockfd, char *ssl, char *buf)
 		return(NULL);
 	}
 	
-	/*check that the received string was receive fully (i.e ends with \r\n*/
-	if((buf!= NULL)&& ((buf[strlen(buf)- 2]!= '\r')|| (buf[strlen(buf)- 1]!= '\n')))
+	/*check that the received string was receive fully (i.e ends with endstring)*/
+	if((buflen< endslen)||
+	((buf!= NULL)&& (strncmp(buf+ (buflen- endslen), endstring, endslen)!= 0)))
 	{
 		free(buf);
 		return(NULL);
 	}
 	return(buf);
+}
+
+/* function to receive a message from the pop3 server */
+#ifdef SSL_PLUGIN
+static char *receive_pop_string(int sockfd, SSL *ssl, char *buf)
+#else
+static char *receive_pop_string(int sockfd, char *ssl, char *buf)
+#endif /*SSL_PLUGIN*/
+{
+	return(receive_pop_string_func(sockfd, ssl, buf, "\r\n"));
+}
+
+/* function to receive a message from the pop3 server */
+#ifdef SSL_PLUGIN
+static char *receive_capability_string(int sockfd, SSL *ssl, char *buf)
+#else
+static char *receive_capability_string(int sockfd, char *ssl, char *buf)
+#endif /*SSL_PLUGIN*/
+{
+	return(receive_pop_string_func(sockfd, ssl, buf, ".\r\n"));
 }
 
 /* function to receive a message from the pop3 server */
@@ -361,7 +385,7 @@ static int test_pop_server_capabilities(int sockfd, enum pop_protocol protocol, 
 	
 	/*assumption is made that ERR means server does not have CAPA command*/
 	/*also means that CRAM-MD5 is not supported*/
-	if((!(buf= receive_pop_string(sockfd, ssl, buf))))
+	if((!(buf= receive_capability_string(sockfd, ssl, buf))))
 	{
 		if(protocol== POPCRAM_PROTOCOL)
 		{
