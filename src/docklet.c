@@ -138,7 +138,7 @@ static void docklet_destroy(void)
 }
 
 /*function to read the messages by calling the plugin function*/
-static void read_messages(mail_details *paccount)
+static void read_messages(mail_details *paccount, unsigned int exitflag)
 {
 	mtc_plugin_info *pitem= NULL;
 
@@ -146,14 +146,16 @@ static void read_messages(mail_details *paccount)
 	if((pitem= find_plugin(paccount->plgname))== NULL)
 	{
 		run_error_dialog(S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->accname);
-			
-		/*this should not happen, so we exit (if it is found in the main mail read thread it should be found here)*/
-		error_and_log(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
+		error_and_log_no_exit(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
+		
+		/*this should not happen for single mode; if it is active, it should exist*/
+		if(exitflag)
+			exit(EXIT_FAILURE);
 
 	}
 	/*call the plugin 'clicked' function to handle mail reading*/
 	if(paccount->num_messages> 0)
-		if((*pitem->clicked)(paccount, config.base_name)== 0)
+		if((*pitem->clicked)(paccount)== 0)
 			exit(EXIT_FAILURE);
 			
 }
@@ -179,7 +181,7 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 			while(pcurrent!= NULL)
 			{
 				pcurrent_data= (mail_details *)pcurrent->data;
-				read_messages(pcurrent_data);
+				read_messages(pcurrent_data, 0);
 				pcurrent= g_slist_next(pcurrent);
 			}
 		}
@@ -189,7 +191,7 @@ static void docklet_clicked(GtkWidget *button, GdkEventButton *event)
 			if((pcurrent_data= get_active_account())== NULL)
 				return;
 
-			read_messages(pcurrent_data);
+			read_messages(pcurrent_data, 1);
 		}
 		
 		/*destroy the icon if it exists*/
@@ -399,7 +401,6 @@ gboolean mail_thread(gpointer data)
 	{
 		unsigned int errflag= 0;
 		GString *err_msg= NULL;
-		int retval= 0;
 		mtc_plugin_info *pitem= NULL;
 		GSList *pcurrent= acclist;
 		mail_details *pcurrent_data= NULL;
@@ -432,11 +433,10 @@ gboolean mail_thread(gpointer data)
 			}
 
 			/*use the plugin to check the mail and get number of messages*/
-			retval= (*pitem->get_messages)
-				(pcurrent_data, config.base_name, config.logfile, (config.net_debug)? MTC_DEBUG_MODE: 0);
+			pcurrent_data->num_messages= (*pitem->get_messages)(pcurrent_data);
 			
 			/*if there was a connection error*/
-			if((retval== MTC_ERR_CONNECT)|| (pcurrent_data->num_messages== MTC_ERR_CONNECT))
+			if(pcurrent_data->num_messages== MTC_ERR_CONNECT)
 			{
 				if(err_msg== NULL)
 					err_msg= g_string_new(NULL);
@@ -446,7 +446,7 @@ gboolean mail_thread(gpointer data)
 				errflag++;
 			}
 			/*if there was a bad error (i.e we must exit)*/
-			if((retval== MTC_ERR_EXIT)|| (pcurrent_data->num_messages== MTC_ERR_EXIT))
+			if(pcurrent_data->num_messages== MTC_ERR_EXIT)
 			{
 				/*extremely unlikely this will be allocated, but just to be safe*/
 				if(err_msg!= NULL)

@@ -368,3 +368,9 @@ they shouldn't have been.
 
 1.1.9:
 Fixed problem reported on sourceforge about receiving capability string
+
+1.2.0:
+Updated the message handling so that the return value from the plugin is used as the number of new messages.
+This value MUST be returned from the plugin in order for mailtc to correctly report.
+Also wrote an example plugin that can be used as a template for anyone who wishes to write their own plugin.
+Added load/unload routines to all plugins.

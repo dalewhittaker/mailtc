@@ -47,6 +47,9 @@ static void unload_plugin(gpointer data, gpointer user_data)
 {
 	mtc_plugin_info *pitem= (mtc_plugin_info *)data;
 
+	/*call the unload routine*/
+	(*pitem->unload)();
+	
 	if(!g_module_close(pitem->handle))
 		error_and_log_no_exit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(pitem->handle), g_module_error());
 	
@@ -115,6 +118,9 @@ static gboolean load_plugin(const char *plugin_name)
 
 	/*add the bugger to the start of the list*/
 	plglist= g_slist_insert_sorted(plglist, (gpointer)pitem, (GCompareFunc)compare_plugin_names);
+
+	/*call the plugin load routine*/
+	(*pitem->load)(config.base_name, config.logfile, (config.net_debug)? MTC_DEBUG_MODE: 0);
 
 	return(TRUE);
 }

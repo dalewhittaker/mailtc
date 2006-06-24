@@ -80,10 +80,10 @@ typedef struct _mtc_plugin_info
 	int default_port; /*default port, set it to -1 if you don't want to set one*/
 
 	/*stuff launched by the core*/
-	int (*load)(void *);
-	int (*unload)(void *);
-	int (*get_messages)(void *, const char *, void *, unsigned int);
-	int (*clicked)(void *, const char *);
+	int (*load)(const char *, void *, unsigned int);
+	int (*unload)(void);
+	int (*get_messages)(void *);
+	int (*clicked)(void *);
 	
 } mtc_plugin_info;
 

@@ -27,29 +27,36 @@
 #define DEFAULT_PORT 143
 
 /*this is called every n minutes by mailtc to check for new messages*/
-int imap_get_messages(void *pdata, const char *cfgdir, void *plog, unsigned int flags)
+int imap_get_messages(void *pdata)
 {
-	/*set the network debug flag and log file*/
 	mail_details *paccount= (mail_details *)pdata;
-	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= (FILE *)plog;
-
-	return(check_imap_mail(paccount, cfgdir));
-
+	return(check_imap_mail(paccount, mtc_dir));
 }
 
-/*this is called when unloading, one use for this is to free memory*/
-/*int unload(mail_details *paccount)
+/*this is called when the plugin is first loaded. it is here that we set globals passed from the core app*/
+int imap_load(const char *cfgdir, void *plog, unsigned int flags)
 {
-	printf("unload %d\n", paccount->id);
-	return 1;
-}*/
+	/*set the network debug flag and log file*/
+	mtc_dir= cfgdir;
+	net_debug= flags& MTC_DEBUG_MODE;
+	plglog= (FILE *)plog;
+	
+	fprintf(plglog, PLUGIN_NAME " plugin loaded\n");
+	return(MTC_RETURN_TRUE);
+}
+
+/*this is called when unloading, one use for this is to free memory if needed*/
+int imap_unload(void)
+{
+	plglog= NULL;
+	return(MTC_RETURN_TRUE);
+}
 
 /*this is called when the docklet is clicked*/
-int imap_clicked(void *pdata, const char *cfgdir)
+int imap_clicked(void *pdata)
 {
 	mail_details *paccount= (mail_details *)pdata;
-	return(imap_read_mail(paccount, cfgdir));
+	return(imap_read_mail(paccount, mtc_dir));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -62,8 +69,8 @@ static mtc_plugin_info imap_pluginfo =
 	PLUGIN_DESC,
 	MTC_ENABLE_FILTERS,
 	DEFAULT_PORT,
-	NULL/*load*/, /*currently does nothing*/
-	NULL/*unload*/, /*currently does nothing*/
+	&imap_load,
+	&imap_unload, 
 	&imap_get_messages,
 	&imap_clicked
 };

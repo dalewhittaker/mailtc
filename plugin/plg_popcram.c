@@ -27,28 +27,36 @@
 #define DEFAULT_PORT 110
 
 /*this is called every n minutes by mailtc to check for new messages*/
-int popcram_get_messages(void *pdata, const char *cfgdir, void *plog, unsigned int flags)
+int popcram_get_messages(void *pdata)
+{
+	mail_details *paccount= (mail_details *)pdata;
+	return(check_crampop_mail(paccount, mtc_dir));
+}
+
+/*this is called when the plugin is first loaded. it is here that we set globals passed from the core app*/
+int popcram_load(const char *cfgdir, void *plog, unsigned int flags)
 {
 	/*set the network debug flag and log file*/
-	mail_details *paccount= (mail_details *)pdata;
+	mtc_dir= cfgdir;
 	net_debug= flags& MTC_DEBUG_MODE;
 	plglog= (FILE *)plog;
 	
-	return(check_crampop_mail(paccount, cfgdir));
+	fprintf(plglog, PLUGIN_NAME " plugin loaded\n");
+	return(MTC_RETURN_TRUE);
 }
 
-/*this is called when unloading, one use for this is to free memory*/
-/*int unload(void *paccount)
+/*this is called when unloading, one use for this is to free memory if needed*/
+int popcram_unload(void)
 {
-	printf("unload %d\n", paccount->id);
-	return 1;
-}*/
+	plglog= NULL;
+	return(MTC_RETURN_TRUE);
+}
 
 /*this is called when the docklet is clicked*/
-int popcram_clicked(void *pdata, const char *cfgdir)
+int popcram_clicked(void *pdata)
 {
 	mail_details *paccount= (mail_details *)pdata;
-	return(pop_read_mail(paccount, cfgdir));
+	return(pop_read_mail(paccount, mtc_dir));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -61,8 +69,8 @@ static mtc_plugin_info popcram_pluginfo =
 	PLUGIN_DESC,
 	MTC_ENABLE_FILTERS,
 	DEFAULT_PORT,
-	NULL/*load*/, /*currently does nothing*/
-	NULL/*unload*/, /*currently does nothing*/
+	&popcram_load,
+	&popcram_unload, 
 	&popcram_get_messages,
 	&popcram_clicked
 };
@@ -73,3 +81,4 @@ mtc_plugin_info *init_plugin(void)
 	/*set the plugin pointer passed to point to the struct*/
 	return(&popcram_pluginfo);
 }
+

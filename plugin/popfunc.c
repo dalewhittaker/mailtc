@@ -681,13 +681,13 @@ static int check_mail(mail_details *paccount, const char *cfgdir, enum pop_proto
 		return(MTC_ERR_CONNECT);
 	
 	/*output the uidls to the temp file and get the number of new messages*/
-	paccount->num_messages= output_uidls_to_file(sockfd, paccount, cfgdir, num_messages, ssl);
+	num_messages= output_uidls_to_file(sockfd, paccount, cfgdir, num_messages, ssl);
 
 	/*logout of the server and return the number of new messages*/
 	if(!(logout_of_pop_server(sockfd, paccount, ssl, ctx)))
 		return(MTC_ERR_CONNECT);
 
-	return(MTC_RETURN_TRUE);
+	return(num_messages);
 }
 
 /*function to read the POP mail*/

@@ -945,6 +945,7 @@ static int check_mail(mail_details *paccount, const char *cfgdir, enum imap_prot
 {
 	int sockfd= 0;
 	unsigned int msgid= 1;
+	int num_messages= 0;
 
 #ifdef SSL_PLUGIN
 	SSL *ssl= NULL;
@@ -992,12 +993,12 @@ static int check_mail(mail_details *paccount, const char *cfgdir, enum imap_prot
 #endif /*SSL_PLUGIN*/
 	
 	/*get the number of messages and outputs the uids to file*/
-	if(((paccount->num_messages= get_num_messages(sockfd, paccount, cfgdir, &msgid, ssl, ctx))== MTC_ERR_CONNECT)||
-		(paccount->num_messages== MTC_ERR_EXIT))
-		return(paccount->num_messages);
+	if(((num_messages= get_num_messages(sockfd, paccount, cfgdir, &msgid, ssl, ctx))== MTC_ERR_CONNECT)||
+		(num_messages== MTC_ERR_EXIT))
+		return(num_messages);
 
 	/*deduct number of filtered messages from new messages*/
-	paccount->num_messages-= filter_messages(sockfd, paccount, cfgdir, &msgid, ssl, ctx);
+	num_messages-= filter_messages(sockfd, paccount, cfgdir, &msgid, ssl, ctx);
 	
 	/*mark all of the messages in INBOX as read*/
 	if(!mark_as_read(sockfd, paccount, cfgdir, &msgid, ssl, ctx))
@@ -1007,7 +1008,7 @@ static int check_mail(mail_details *paccount, const char *cfgdir, enum imap_prot
 	if(!logout_from_imap_server(sockfd, paccount, &msgid, ssl, ctx))
 		return(MTC_ERR_CONNECT);
 
-	return(MTC_RETURN_TRUE);
+	return(num_messages);
 }
 
 /*function to read the IMAP mail*/

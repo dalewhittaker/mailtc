@@ -80,6 +80,7 @@ enum imap_protocol { IMAP_PROTOCOL= 0, IMAPCRAM_PROTOCOL, IMAPSSL_PROTOCOL };
 /*global variables, currently just the debug flag and the pointer to log file*/
 unsigned int net_debug;
 FILE *plglog;
+const char *mtc_dir;
 
 /*netfunc.c functions*/
 /*these must have different names as otherwise when loaded they will be duplicates*/

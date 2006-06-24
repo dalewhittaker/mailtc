@@ -27,28 +27,35 @@
 #define DEFAULT_PORT 995
 
 /*this is called every n minutes by mailtc to check for new messages*/
-int popssl_get_messages(void *pdata, const char *cfgdir, void *plog, unsigned int flags)
+int popssl_get_messages(void *pdata)
 {
-	/*set the network debug flag and log file*/
 	mail_details *paccount= (mail_details *)pdata;
-	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= (FILE *)plog;
-
-	return(check_popssl_mail(paccount, cfgdir));
+	return(check_popssl_mail(paccount, mtc_dir));
 }
 
-/*this is called when unloading, one use for this is to free memory*/
-/*int unload(void *paccount)
+/*this is called when the plugin is first loaded. it is here that we set globals passed from the core app*/
+int popssl_load(const char *cfgdir, void *plog, unsigned int flags)
 {
-	printf("unload %d\n", paccount->id);
-	return 1;
-}*/
+	/*set the network debug flag and log file*/
+	mtc_dir= cfgdir;
+	net_debug= flags& MTC_DEBUG_MODE;
+	plglog= (FILE *)plog;
+	fprintf(plglog, PLUGIN_NAME " plugin loaded\n");
+	return(MTC_RETURN_TRUE);
+}
+
+/*this is called when unloading, one use for this is to free memory if needed*/
+int popssl_unload(void)
+{
+	plglog= NULL;
+	return(MTC_RETURN_TRUE);
+}
 
 /*this is called when the docklet is clicked*/
-int popssl_clicked(void *pdata, const char *cfgdir)
+int popssl_clicked(void *pdata)
 {
 	mail_details *paccount= (mail_details *)pdata;
-	return(pop_read_mail(paccount, cfgdir));
+	return(pop_read_mail(paccount, mtc_dir));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -61,8 +68,8 @@ static mtc_plugin_info popssl_pluginfo =
 	PLUGIN_DESC,
 	MTC_ENABLE_FILTERS,
 	DEFAULT_PORT,
-	NULL/*load*/, /*currently does nothing*/
-	NULL/*unload*/, /*currently does nothing*/
+	&popssl_load,
+	&popssl_unload, 
 	&popssl_get_messages,
 	&popssl_clicked
 };

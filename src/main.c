@@ -256,6 +256,9 @@ int main(int argc, char *argv[])
 	
 	/*intitialise the stuctures*/
 	init_files();
+
+	/*set debug mode if -d*/
+	config.net_debug= (argc== 1)? 0: 1;
 	
 	/*check if instance is running*/
 	if((argc== 1)|| ((argc== 2)&&((g_ascii_strcasecmp(argv[1], "-d")== 0)|| g_ascii_strcasecmp(argv[1], "-c")== 0))) 
@@ -277,9 +280,7 @@ int main(int argc, char *argv[])
 	/*if mailtc or mailtc -d*/
 	if((argc== 1) || ((argc== 2)&& (g_ascii_strcasecmp(argv[1], "-d")== 0))) 
 	{	
-		/*set debug mode if -d*/
-		config.net_debug= (argc== 1)? 0: 1;
-	
+
 		/*check mail details and run dialog if none found*/
 		read_accounts();
 		if((acclist== NULL)|| !(read_config_file()))
