@@ -37,9 +37,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = i686-pc-linux-gnu
 host_triplet = i686-pc-linux-gnu
+target_triplet = i686-pc-linux-gnu
 bin_PROGRAMS = mailtc$(EXEEXT)
 subdir = src
-DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
+DIST_COMMON = $(am__noinst_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in TODO
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -50,12 +51,14 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am__mailtc_SOURCES_DIST = eggtrayicon.c configdlg.c docklet.c \
-	filefunc.c common.c filterdlg.c plugin.c encrypter.c main.c
+am__mailtc_SOURCES_DIST = configdlg.c docklet.c filefunc.c common.c \
+	plugin.c encrypter.c filterdlg.c eggtrayicon.c main.c
 am__objects_1 = encrypter.$(OBJEXT)
-am_mailtc_OBJECTS = eggtrayicon.$(OBJEXT) configdlg.$(OBJEXT) \
-	docklet.$(OBJEXT) filefunc.$(OBJEXT) common.$(OBJEXT) \
-	filterdlg.$(OBJEXT) plugin.$(OBJEXT) $(am__objects_1) \
+am__objects_2 = filterdlg.$(OBJEXT)
+am__objects_3 = eggtrayicon.$(OBJEXT)
+am_mailtc_OBJECTS = configdlg.$(OBJEXT) docklet.$(OBJEXT) \
+	filefunc.$(OBJEXT) common.$(OBJEXT) plugin.$(OBJEXT) \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	main.$(OBJEXT)
 mailtc_OBJECTS = $(am_mailtc_OBJECTS)
 mailtc_LDADD = $(LDADD)
@@ -74,6 +77,10 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(mailtc_SOURCES)
 DIST_SOURCES = $(am__mailtc_SOURCES_DIST)
+am__noinst_HEADERS_DIST = $(mtc_include)/core.h \
+	$(mtc_include)/strings.h $(mtc_include)/envelope_large.h \
+	$(mtc_include)/plugin.h $(mtc_include)/eggtrayicon.h \
+	$(mtc_include)/envelope_small.h
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -102,19 +109,20 @@ CYGPATH_W = echo
 DATADIRNAME = share
 DEBUG_FALSE = 
 DEBUG_TRUE = #
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.2.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 
+DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.3.4\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 -DMTC_USE_POP=1 -DMTC_USE_IMAP=1 -DMTC_NOTMINIMAL=1 -DMTC_EGGTRAYICON=1
 DEPDIR = .deps
 ECHO = echo
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
-EGREP = grep -E
+EGREP = /bin/grep -E
 EXEEXT = 
-F77 = g77
+F77 = gfortran
 FFLAGS = -g -O2
 GETTEXT_PACKAGE = mailtc
 GMOFILES = 
 GMSGFMT = /usr/bin/gmsgfmt
+GREP = /bin/grep
 GTK_CFLAGS = -I/usr/include/gtk-2.0 -I/usr/lib/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include  
 GTK_LIBS = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0  
 INSTALL_DATA = ${INSTALL} -m 644
@@ -132,8 +140,16 @@ LTLIBOBJS =
 MAKEINFO = ${SHELL} /home/dale/code/mailtc/missing --run makeinfo
 MKINSTALLDIRS = ./mkinstalldirs
 MSGFMT = /usr/bin/msgfmt
+MTC_ALLFEATURES_FALSE = #
+MTC_ALLFEATURES_TRUE = 
+MTC_EGG_FALSE = #
+MTC_EGG_TRUE = 
+MTC_IMAP_FALSE = #
+MTC_IMAP_TRUE = 
 MTC_NLS_FALSE = #
 MTC_NLS_TRUE = 
+MTC_POP_FALSE = #
+MTC_POP_TRUE = 
 MTC_SSL_FALSE = #
 MTC_SSL_TRUE = 
 OBJEXT = o
@@ -154,14 +170,11 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 1.2.0
+VERSION = 1.3.4
 XGETTEXT = /usr/bin/xgettext
-ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
-ac_ct_F77 = g77
-ac_ct_RANLIB = ranlib
-ac_ct_STRIP = strip
+ac_ct_F77 = gfortran
 am__fastdepCC_FALSE = #
 am__fastdepCC_TRUE = 
 am__fastdepCXX_FALSE = #
@@ -177,31 +190,42 @@ build_alias =
 build_cpu = i686
 build_os = linux-gnu
 build_vendor = pc
-datadir = ${prefix}/share
+datadir = ${datarootdir}
+datarootdir = ${prefix}/share
+docdir = ${datarootdir}/doc/${PACKAGE}
+dvidir = ${docdir}
 exec_prefix = ${prefix}
 host = i686-pc-linux-gnu
 host_alias = 
 host_cpu = i686
 host_os = linux-gnu
 host_vendor = pc
+htmldir = ${docdir}
 includedir = ${prefix}/include
-infodir = ${prefix}/info
+infodir = ${datarootdir}/info
 install_sh = /home/dale/code/mailtc/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
+localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
-mandir = ${prefix}/man
+mandir = ${datarootdir}/man
 mkdir_p = mkdir -p --
 oldincludedir = /usr/include
-prefix = /usr/local
+pdfdir = ${docdir}
+prefix = /home/dale/test
 program_transform_name = s,x,x,
+psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 sysconfdir = ${prefix}/etc
+target = i686-pc-linux-gnu
 target_alias = 
+target_cpu = i686
+target_os = linux-gnu
+target_vendor = pc
 ssl_libraries = -lcrypto -lssl
 ssl_sources = encrypter.c
-mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
+mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
 extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
@@ -210,8 +234,13 @@ extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
 				-DVERSION=\"$(VERSION)\"
 
 mtc_include = $(top_srcdir)/include
-AM_CFLAGS = $(mtc_cflags) $(extra_cflags)
-#AM_CFLAGS = $(mtc_cflags) $(extra_cflags) -g -DDEBUG
+msglist_cflags = -DMTC_NOTMINIMAL
+msglist_sources = filterdlg.c
+msglist_headers = $(mtc_include)/envelope_small.h
+#debug_cflags = -g -DDEBUG
+egg_sources = eggtrayicon.c
+egg_headers = $(mtc_include)/eggtrayicon.h
+AM_CFLAGS = $(mtc_cflags) $(extra_cflags) $(msglist_cflags) $(debug_cflags)
 
 #Here we are defining out libraries
 LDADD = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0   $(ssl_libraries)
@@ -219,13 +248,25 @@ LDADD = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-
 INCLUDES = -I$(mtc_include) -I/usr/include/gtk-2.0 -I/usr/lib/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include   
 
 #define the various builds
-mailtc_SOURCES = eggtrayicon.c configdlg.c docklet.c \
-	filefunc.c common.c filterdlg.c \
-	plugin.c $(ssl_sources) $(sasl_sources) main.c
+mailtc_SOURCES = configdlg.c \
+	docklet.c \
+	filefunc.c \
+	common.c \
+	plugin.c \
+	$(ssl_sources) \
+	$(msglist_sources) \
+	$(egg_sources) \
+	main.c
 
-noinst_HEADERS = $(mtc_include)/eggtrayicon.h $(mtc_include)/core.h \
-		$(mtc_include)/strings.h $(mtc_include)/envelope_white.h \
-		$(mtc_include)/envelope_small.h $(mtc_include)/plugin.h
+
+#TODO summary removed for now as it is broken
+#summarydlg.c
+noinst_HEADERS = $(mtc_include)/core.h \
+		$(mtc_include)/strings.h \
+		$(mtc_include)/envelope_large.h \
+		$(mtc_include)/plugin.h \
+		$(egg_headers) \
+		$(msglist_headers)
 
 all: all-am
 

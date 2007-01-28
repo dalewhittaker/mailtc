@@ -39,6 +39,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 subdir = plugin
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in TODO
@@ -58,63 +59,106 @@ am__installdirs = "$(DESTDIR)$(plugindir)"
 pluginLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-@MTC_SSL_TRUE@mtc_apop_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mtc_apop_la_SOURCES_DIST = plg_common.c netfunc.c popfunc.c \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_apop_la_DEPENDENCIES =  \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1)
+am__mtc_apop_la_SOURCES_DIST = plg_common.c netfunc.c msg.c popfunc.c \
 	plg_apop.c
-am__objects_1 = mtc_apop_la-plg_common.lo mtc_apop_la-netfunc.lo
-am__objects_2 = $(am__objects_1) mtc_apop_la-popfunc.lo
-@MTC_SSL_TRUE@am_mtc_apop_la_OBJECTS = $(am__objects_2) \
-@MTC_SSL_TRUE@	mtc_apop_la-plg_apop.lo
+@MTC_ALLFEATURES_TRUE@am__objects_1 = mtc_apop_la-msg.lo
+am__objects_2 = mtc_apop_la-plg_common.lo mtc_apop_la-netfunc.lo \
+	$(am__objects_1)
+@MTC_POP_TRUE@am__objects_3 = $(am__objects_2) mtc_apop_la-popfunc.lo
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_apop_la_OBJECTS = $(am__objects_3) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_apop_la-plg_apop.lo
 mtc_apop_la_OBJECTS = $(am_mtc_apop_la_OBJECTS)
-@MTC_SSL_TRUE@am_mtc_apop_la_rpath = -rpath $(plugindir)
-mtc_imap_la_LIBADD =
-am__objects_3 = mtc_imap_la-plg_common.lo mtc_imap_la-netfunc.lo
-am__objects_4 = $(am__objects_3) mtc_imap_la-imapfunc.lo
-am_mtc_imap_la_OBJECTS = $(am__objects_4) mtc_imap_la-plg_imap.lo
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_apop_la_rpath = -rpath $(plugindir)
+@MTC_IMAP_TRUE@mtc_imap_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__mtc_imap_la_SOURCES_DIST = plg_common.c netfunc.c msg.c imapfunc.c \
+	plg_imap.c
+@MTC_ALLFEATURES_TRUE@am__objects_4 = mtc_imap_la-msg.lo
+am__objects_5 = mtc_imap_la-plg_common.lo mtc_imap_la-netfunc.lo \
+	$(am__objects_4)
+@MTC_IMAP_TRUE@am__objects_6 = $(am__objects_5) \
+@MTC_IMAP_TRUE@	mtc_imap_la-imapfunc.lo
+@MTC_IMAP_TRUE@am_mtc_imap_la_OBJECTS = $(am__objects_6) \
+@MTC_IMAP_TRUE@	mtc_imap_la-plg_imap.lo
 mtc_imap_la_OBJECTS = $(am_mtc_imap_la_OBJECTS)
-@MTC_SSL_TRUE@mtc_imapcram_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mtc_imapcram_la_SOURCES_DIST = plg_common.c netfunc.c imapfunc.c \
-	plg_imapcram.c
-am__objects_5 = mtc_imapcram_la-plg_common.lo \
-	mtc_imapcram_la-netfunc.lo
-am__objects_6 = $(am__objects_5) mtc_imapcram_la-imapfunc.lo
-@MTC_SSL_TRUE@am_mtc_imapcram_la_OBJECTS = $(am__objects_6) \
-@MTC_SSL_TRUE@	mtc_imapcram_la-plg_imapcram.lo
+@MTC_IMAP_TRUE@am_mtc_imap_la_rpath = -rpath $(plugindir)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapcram_la_DEPENDENCIES =  \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1) \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1)
+am__mtc_imapcram_la_SOURCES_DIST = plg_common.c netfunc.c msg.c \
+	imapfunc.c plg_imapcram.c
+@MTC_ALLFEATURES_TRUE@am__objects_7 = mtc_imapcram_la-msg.lo
+am__objects_8 = mtc_imapcram_la-plg_common.lo \
+	mtc_imapcram_la-netfunc.lo $(am__objects_7)
+@MTC_IMAP_TRUE@am__objects_9 = $(am__objects_8) \
+@MTC_IMAP_TRUE@	mtc_imapcram_la-imapfunc.lo
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@am_mtc_imapcram_la_OBJECTS =  \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__objects_9) \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapcram_la-plg_imapcram.lo
 mtc_imapcram_la_OBJECTS = $(am_mtc_imapcram_la_OBJECTS)
-@MTC_SSL_TRUE@am_mtc_imapcram_la_rpath = -rpath $(plugindir)
-@MTC_SSL_TRUE@mtc_imapssl_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mtc_imapssl_la_SOURCES_DIST = plg_common.c netfunc.c imapfunc.c \
-	plg_imapssl.c
-am__objects_7 = mtc_imapssl_la-plg_common.lo mtc_imapssl_la-netfunc.lo
-am__objects_8 = $(am__objects_7) mtc_imapssl_la-imapfunc.lo
-@MTC_SSL_TRUE@am_mtc_imapssl_la_OBJECTS = $(am__objects_8) \
-@MTC_SSL_TRUE@	mtc_imapssl_la-plg_imapssl.lo
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@am_mtc_imapcram_la_rpath = -rpath \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(plugindir)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapssl_la_DEPENDENCIES =  \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1) \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1)
+am__mtc_imapssl_la_SOURCES_DIST = plg_common.c netfunc.c msg.c \
+	imapfunc.c plg_imapssl.c
+@MTC_ALLFEATURES_TRUE@am__objects_10 = mtc_imapssl_la-msg.lo
+am__objects_11 = mtc_imapssl_la-plg_common.lo \
+	mtc_imapssl_la-netfunc.lo $(am__objects_10)
+@MTC_IMAP_TRUE@am__objects_12 = $(am__objects_11) \
+@MTC_IMAP_TRUE@	mtc_imapssl_la-imapfunc.lo
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@am_mtc_imapssl_la_OBJECTS =  \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(am__objects_12) \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapssl_la-plg_imapssl.lo
 mtc_imapssl_la_OBJECTS = $(am_mtc_imapssl_la_OBJECTS)
-@MTC_SSL_TRUE@am_mtc_imapssl_la_rpath = -rpath $(plugindir)
-mtc_pop_la_LIBADD =
-am__objects_9 = mtc_pop_la-plg_common.lo mtc_pop_la-netfunc.lo
-am__objects_10 = $(am__objects_9) mtc_pop_la-popfunc.lo
-am_mtc_pop_la_OBJECTS = $(am__objects_10) mtc_pop_la-plg_pop.lo
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@am_mtc_imapssl_la_rpath = -rpath \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	$(plugindir)
+@MTC_POP_TRUE@mtc_pop_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__mtc_pop_la_SOURCES_DIST = plg_common.c netfunc.c msg.c popfunc.c \
+	plg_pop.c
+@MTC_ALLFEATURES_TRUE@am__objects_13 = mtc_pop_la-msg.lo
+am__objects_14 = mtc_pop_la-plg_common.lo mtc_pop_la-netfunc.lo \
+	$(am__objects_13)
+@MTC_POP_TRUE@am__objects_15 = $(am__objects_14) mtc_pop_la-popfunc.lo
+@MTC_POP_TRUE@am_mtc_pop_la_OBJECTS = $(am__objects_15) \
+@MTC_POP_TRUE@	mtc_pop_la-plg_pop.lo
 mtc_pop_la_OBJECTS = $(am_mtc_pop_la_OBJECTS)
-@MTC_SSL_TRUE@mtc_popcram_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mtc_popcram_la_SOURCES_DIST = plg_common.c netfunc.c popfunc.c \
-	plg_popcram.c
-am__objects_11 = mtc_popcram_la-plg_common.lo \
-	mtc_popcram_la-netfunc.lo
-am__objects_12 = $(am__objects_11) mtc_popcram_la-popfunc.lo
-@MTC_SSL_TRUE@am_mtc_popcram_la_OBJECTS = $(am__objects_12) \
-@MTC_SSL_TRUE@	mtc_popcram_la-plg_popcram.lo
+@MTC_POP_TRUE@am_mtc_pop_la_rpath = -rpath $(plugindir)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popcram_la_DEPENDENCIES =  \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1)
+am__mtc_popcram_la_SOURCES_DIST = plg_common.c netfunc.c msg.c \
+	popfunc.c plg_popcram.c
+@MTC_ALLFEATURES_TRUE@am__objects_16 = mtc_popcram_la-msg.lo
+am__objects_17 = mtc_popcram_la-plg_common.lo \
+	mtc_popcram_la-netfunc.lo $(am__objects_16)
+@MTC_POP_TRUE@am__objects_18 = $(am__objects_17) \
+@MTC_POP_TRUE@	mtc_popcram_la-popfunc.lo
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_popcram_la_OBJECTS =  \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__objects_18) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_popcram_la-plg_popcram.lo
 mtc_popcram_la_OBJECTS = $(am_mtc_popcram_la_OBJECTS)
-@MTC_SSL_TRUE@am_mtc_popcram_la_rpath = -rpath $(plugindir)
-@MTC_SSL_TRUE@mtc_popssl_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__mtc_popssl_la_SOURCES_DIST = plg_common.c netfunc.c popfunc.c \
-	plg_popssl.c
-am__objects_13 = mtc_popssl_la-plg_common.lo mtc_popssl_la-netfunc.lo
-am__objects_14 = $(am__objects_13) mtc_popssl_la-popfunc.lo
-@MTC_SSL_TRUE@am_mtc_popssl_la_OBJECTS = $(am__objects_14) \
-@MTC_SSL_TRUE@	mtc_popssl_la-plg_popssl.lo
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_popcram_la_rpath = -rpath \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(plugindir)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popssl_la_DEPENDENCIES =  \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__DEPENDENCIES_1)
+am__mtc_popssl_la_SOURCES_DIST = plg_common.c netfunc.c msg.c \
+	popfunc.c plg_popssl.c
+@MTC_ALLFEATURES_TRUE@am__objects_19 = mtc_popssl_la-msg.lo
+am__objects_20 = mtc_popssl_la-plg_common.lo mtc_popssl_la-netfunc.lo \
+	$(am__objects_19)
+@MTC_POP_TRUE@am__objects_21 = $(am__objects_20) \
+@MTC_POP_TRUE@	mtc_popssl_la-popfunc.lo
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_popssl_la_OBJECTS =  \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(am__objects_21) \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_popssl_la-plg_popssl.lo
 mtc_popssl_la_OBJECTS = $(am_mtc_popssl_la_OBJECTS)
-@MTC_SSL_TRUE@am_mtc_popssl_la_rpath = -rpath $(plugindir)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@am_mtc_popssl_la_rpath = -rpath \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	$(plugindir)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -130,9 +174,11 @@ SOURCES = $(mtc_apop_la_SOURCES) $(mtc_imap_la_SOURCES) \
 	$(mtc_imapcram_la_SOURCES) $(mtc_imapssl_la_SOURCES) \
 	$(mtc_pop_la_SOURCES) $(mtc_popcram_la_SOURCES) \
 	$(mtc_popssl_la_SOURCES)
-DIST_SOURCES = $(am__mtc_apop_la_SOURCES_DIST) $(mtc_imap_la_SOURCES) \
+DIST_SOURCES = $(am__mtc_apop_la_SOURCES_DIST) \
+	$(am__mtc_imap_la_SOURCES_DIST) \
 	$(am__mtc_imapcram_la_SOURCES_DIST) \
-	$(am__mtc_imapssl_la_SOURCES_DIST) $(mtc_pop_la_SOURCES) \
+	$(am__mtc_imapssl_la_SOURCES_DIST) \
+	$(am__mtc_pop_la_SOURCES_DIST) \
 	$(am__mtc_popcram_la_SOURCES_DIST) \
 	$(am__mtc_popssl_la_SOURCES_DIST)
 HEADERS = $(noinst_HEADERS)
@@ -176,6 +222,7 @@ FFLAGS = @FFLAGS@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
+GREP = @GREP@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
@@ -193,8 +240,16 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
+MTC_ALLFEATURES_FALSE = @MTC_ALLFEATURES_FALSE@
+MTC_ALLFEATURES_TRUE = @MTC_ALLFEATURES_TRUE@
+MTC_EGG_FALSE = @MTC_EGG_FALSE@
+MTC_EGG_TRUE = @MTC_EGG_TRUE@
+MTC_IMAP_FALSE = @MTC_IMAP_FALSE@
+MTC_IMAP_TRUE = @MTC_IMAP_TRUE@
 MTC_NLS_FALSE = @MTC_NLS_FALSE@
 MTC_NLS_TRUE = @MTC_NLS_TRUE@
+MTC_POP_FALSE = @MTC_POP_FALSE@
+MTC_POP_TRUE = @MTC_POP_TRUE@
 MTC_SSL_FALSE = @MTC_SSL_FALSE@
 MTC_SSL_TRUE = @MTC_SSL_TRUE@
 OBJEXT = @OBJEXT@
@@ -217,12 +272,9 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 XGETTEXT = @XGETTEXT@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -239,90 +291,126 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = @docdir@
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
+htmldir = @htmldir@
 includedir = $(top_srcdir)/include
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 
 #define the directory to install to
 plugindir = "$(libdir)/mailtc"
 
-#define the common source files
-commonsrc = plg_common.c netfunc.c
-popsrc = $(commonsrc) popfunc.c
-imapsrc = $(commonsrc) imapfunc.c
-@MTC_SSL_TRUE@ssl_cflags = -DSSL_PLUGIN
-@MTC_SSL_TRUE@ssl_libfiles = \
-@MTC_SSL_TRUE@	mtc_apop.la \
-@MTC_SSL_TRUE@	mtc_popcram.la \
-@MTC_SSL_TRUE@	mtc_imapcram.la \
-@MTC_SSL_TRUE@	mtc_popssl.la \
-@MTC_SSL_TRUE@	mtc_imapssl.la
+#define the message list stuff
+@MTC_ALLFEATURES_TRUE@msglist_cflags = -DMTC_NOTMINIMAL
+@MTC_ALLFEATURES_TRUE@msglist_src = msg.c
 
+#define the common source files
+common_src = plg_common.c netfunc.c $(msglist_src)
+
+#define the POP3 stuff
+@MTC_POP_TRUE@pop_src = $(common_src) popfunc.c
+@MTC_POP_TRUE@pop_libfiles = mtc_pop.la
+@MTC_POP_TRUE@@MTC_SSL_TRUE@pop_ssl_libfiles = \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_apop.la \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_popcram.la \
+@MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_popssl.la
+
+
+#define the IMAP4 stuff
+@MTC_IMAP_TRUE@imap_src = $(common_src) imapfunc.c
+@MTC_IMAP_TRUE@imap_libfiles = mtc_imap.la
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@imap_ssl_libfiles = \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapcram.la \
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapssl.la
+
+
+#define the SSL stuff
+@MTC_SSL_TRUE@ssl_cflags = -DSSL_PLUGIN
+@MTC_SSL_TRUE@ssl_libraries = -lcrypto -lssl
+
+#define the debug stuff
 @DEBUG_TRUE@debug_cflags = -g -DDEBUG
 
 #define the common cflags
-plg_cflags = -Wall -W \
+plg_cflags = $(CFLAGS) \
+			-Wall -W \
+			-DGTK_DISABLE_DEPRECATED \
+			-DGDK_DISABLE_DEPRECATED \
+			-DGDK_PIXBUF_DISABLE_DEPRECATED \
+			-DG_DISABLE_DEPRECATED \
 			-DPACKAGE=\"$(PACKAGE)\" \
 			-DVERSION=\"$(VERSION)\"
 
 common_ldflags = -no-undefined -module -avoid-version -rpath $(plugindir)
-INCLUDES = -I$(includedir)
-
-#define the plugins
-mtc_pop_la_CFLAGS = $(plg_cflags) $(debug_cflags)
-mtc_pop_la_LDFLAGS = $(common_ldflags)
-mtc_imap_la_CFLAGS = $(plg_cflags) $(debug_cflags)
-mtc_imap_la_LDFLAGS = $(common_ldflags)
+INCLUDES = -I$(includedir) @GTK_CFLAGS@
 
 #use noinst, as we do not want to install the actual .la files
 plugin_LTLIBRARIES = \
-	mtc_pop.la \
-	mtc_imap.la \
-	$(ssl_libfiles)
+	$(pop_libfiles) \
+	$(imap_libfiles) \
+	$(pop_ssl_libfiles) \
+	$(imap_ssl_libfiles)
 
-mtc_pop_la_SOURCES = $(popsrc) plg_pop.c
-mtc_imap_la_SOURCES = $(imapsrc) plg_imap.c
 
-#if SSL is defined we want to build the extra plugins
-@MTC_SSL_TRUE@ssl_libraries = -lcrypto -lssl
-@MTC_SSL_TRUE@mtc_popcram_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags)
-@MTC_SSL_TRUE@mtc_popcram_la_LDFLAGS = $(common_ldflags)
-@MTC_SSL_TRUE@mtc_popcram_la_LIBADD = $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_popcram_la_SOURCES = $(popsrc) plg_popcram.c
-@MTC_SSL_TRUE@mtc_imapcram_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags)
-@MTC_SSL_TRUE@mtc_imapcram_la_LDFLAGS = $(common_ldflags)
-@MTC_SSL_TRUE@mtc_imapcram_la_LIBADD = $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_imapcram_la_SOURCES = $(imapsrc) plg_imapcram.c
-@MTC_SSL_TRUE@mtc_popssl_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags)
-@MTC_SSL_TRUE@mtc_popssl_la_LDFLAGS = $(common_ldflags)
-@MTC_SSL_TRUE@mtc_popssl_la_LIBADD = $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_popssl_la_SOURCES = $(popsrc) plg_popssl.c
-@MTC_SSL_TRUE@mtc_apop_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags)
-@MTC_SSL_TRUE@mtc_apop_la_LDFLAGS = $(common_ldflags) $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_apop_la_SOURCES = $(popsrc) plg_apop.c
-@MTC_SSL_TRUE@mtc_apop_la_LIBADD = $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_imapssl_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags)
-@MTC_SSL_TRUE@mtc_imapssl_la_LDFLAGS = $(common_ldflags) $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_imapssl_la_LIBADD = $(ssl_libraries)
-@MTC_SSL_TRUE@mtc_imapssl_la_SOURCES = $(imapsrc) plg_imapssl.c
+#we now use glib/GTK for plugins
+common_libraries = @GTK_LIBS@
+
+#define the plugins
+@MTC_POP_TRUE@mtc_pop_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(msglist_cflags)
+@MTC_POP_TRUE@mtc_pop_la_LDFLAGS = $(common_ldflags)
+@MTC_POP_TRUE@mtc_pop_la_LIBADD = $(common_libraries)
+@MTC_POP_TRUE@mtc_pop_la_SOURCES = $(pop_src) plg_pop.c
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popcram_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags) $(msglist_cflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popcram_la_LDFLAGS = $(common_ldflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popcram_la_LIBADD = $(common_libraries) $(ssl_libraries)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popcram_la_SOURCES = $(pop_src) plg_popcram.c
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popssl_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags) $(msglist_cflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popssl_la_LDFLAGS = $(common_ldflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popssl_la_LIBADD = $(common_libraries) $(ssl_libraries)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_popssl_la_SOURCES = $(pop_src) plg_popssl.c
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_apop_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags) $(msglist_cflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_apop_la_LDFLAGS = $(common_ldflags)
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_apop_la_SOURCES = $(pop_src) plg_apop.c
+@MTC_POP_TRUE@@MTC_SSL_TRUE@mtc_apop_la_LIBADD = $(common_libraries) $(ssl_libraries)
+@MTC_IMAP_TRUE@mtc_imap_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(msglist_cflags)
+@MTC_IMAP_TRUE@mtc_imap_la_LDFLAGS = $(common_ldflags)
+@MTC_IMAP_TRUE@mtc_imap_la_LIBADD = $(common_libraries)
+@MTC_IMAP_TRUE@mtc_imap_la_SOURCES = $(imap_src) plg_imap.c
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapcram_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags) $(msglist_cflags)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapcram_la_LDFLAGS = $(common_ldflags)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapcram_la_LIBADD = $(common_libraries) $(ssl_libraries)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapcram_la_SOURCES = $(imap_src) plg_imapcram.c
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapssl_la_CFLAGS = $(plg_cflags) $(debug_cflags) $(ssl_cflags) $(msglist_cflags)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapssl_la_LDFLAGS = $(common_ldflags) $(ssl_libraries)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapssl_la_LIBADD = $(common_libraries) $(ssl_libraries)
+@MTC_IMAP_TRUE@@MTC_SSL_TRUE@mtc_imapssl_la_SOURCES = $(imap_src) plg_imapssl.c
 noinst_HEADERS = \
 	$(includedir)/plugin.h \
 	$(includedir)/plg_strings.h \
@@ -391,13 +479,13 @@ clean-pluginLTLIBRARIES:
 mtc_apop.la: $(mtc_apop_la_OBJECTS) $(mtc_apop_la_DEPENDENCIES) 
 	$(LINK) $(am_mtc_apop_la_rpath) $(mtc_apop_la_LDFLAGS) $(mtc_apop_la_OBJECTS) $(mtc_apop_la_LIBADD) $(LIBS)
 mtc_imap.la: $(mtc_imap_la_OBJECTS) $(mtc_imap_la_DEPENDENCIES) 
-	$(LINK) -rpath $(plugindir) $(mtc_imap_la_LDFLAGS) $(mtc_imap_la_OBJECTS) $(mtc_imap_la_LIBADD) $(LIBS)
+	$(LINK) $(am_mtc_imap_la_rpath) $(mtc_imap_la_LDFLAGS) $(mtc_imap_la_OBJECTS) $(mtc_imap_la_LIBADD) $(LIBS)
 mtc_imapcram.la: $(mtc_imapcram_la_OBJECTS) $(mtc_imapcram_la_DEPENDENCIES) 
 	$(LINK) $(am_mtc_imapcram_la_rpath) $(mtc_imapcram_la_LDFLAGS) $(mtc_imapcram_la_OBJECTS) $(mtc_imapcram_la_LIBADD) $(LIBS)
 mtc_imapssl.la: $(mtc_imapssl_la_OBJECTS) $(mtc_imapssl_la_DEPENDENCIES) 
 	$(LINK) $(am_mtc_imapssl_la_rpath) $(mtc_imapssl_la_LDFLAGS) $(mtc_imapssl_la_OBJECTS) $(mtc_imapssl_la_LIBADD) $(LIBS)
 mtc_pop.la: $(mtc_pop_la_OBJECTS) $(mtc_pop_la_DEPENDENCIES) 
-	$(LINK) -rpath $(plugindir) $(mtc_pop_la_LDFLAGS) $(mtc_pop_la_OBJECTS) $(mtc_pop_la_LIBADD) $(LIBS)
+	$(LINK) $(am_mtc_pop_la_rpath) $(mtc_pop_la_LDFLAGS) $(mtc_pop_la_OBJECTS) $(mtc_pop_la_LIBADD) $(LIBS)
 mtc_popcram.la: $(mtc_popcram_la_OBJECTS) $(mtc_popcram_la_DEPENDENCIES) 
 	$(LINK) $(am_mtc_popcram_la_rpath) $(mtc_popcram_la_LDFLAGS) $(mtc_popcram_la_OBJECTS) $(mtc_popcram_la_LIBADD) $(LIBS)
 mtc_popssl.la: $(mtc_popssl_la_OBJECTS) $(mtc_popssl_la_DEPENDENCIES) 
@@ -409,30 +497,37 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_apop_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_apop_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_apop_la-plg_apop.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_apop_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_apop_la-popfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imap_la-imapfunc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imap_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imap_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imap_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imap_la-plg_imap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapcram_la-imapfunc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapcram_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapcram_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapcram_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapcram_la-plg_imapcram.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapssl_la-imapfunc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapssl_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapssl_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapssl_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_imapssl_la-plg_imapssl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_pop_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_pop_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_pop_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_pop_la-plg_pop.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_pop_la-popfunc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popcram_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popcram_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popcram_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popcram_la-plg_popcram.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popcram_la-popfunc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popssl_la-msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popssl_la-netfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popssl_la-plg_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtc_popssl_la-plg_popssl.Plo@am__quote@
@@ -473,6 +568,13 @@ mtc_apop_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_apop_la_CFLAGS) $(CFLAGS) -c -o mtc_apop_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
 
+mtc_apop_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_apop_la_CFLAGS) $(CFLAGS) -MT mtc_apop_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_apop_la-msg.Tpo" -c -o mtc_apop_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_apop_la-msg.Tpo" "$(DEPDIR)/mtc_apop_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_apop_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_apop_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_apop_la_CFLAGS) $(CFLAGS) -c -o mtc_apop_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
+
 mtc_apop_la-popfunc.lo: popfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_apop_la_CFLAGS) $(CFLAGS) -MT mtc_apop_la-popfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_apop_la-popfunc.Tpo" -c -o mtc_apop_la-popfunc.lo `test -f 'popfunc.c' || echo '$(srcdir)/'`popfunc.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_apop_la-popfunc.Tpo" "$(DEPDIR)/mtc_apop_la-popfunc.Plo"; else rm -f "$(DEPDIR)/mtc_apop_la-popfunc.Tpo"; exit 1; fi
@@ -500,6 +602,13 @@ mtc_imap_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netfunc.c' object='mtc_imap_la-netfunc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imap_la_CFLAGS) $(CFLAGS) -c -o mtc_imap_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
+
+mtc_imap_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imap_la_CFLAGS) $(CFLAGS) -MT mtc_imap_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_imap_la-msg.Tpo" -c -o mtc_imap_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_imap_la-msg.Tpo" "$(DEPDIR)/mtc_imap_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_imap_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_imap_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imap_la_CFLAGS) $(CFLAGS) -c -o mtc_imap_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
 
 mtc_imap_la-imapfunc.lo: imapfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imap_la_CFLAGS) $(CFLAGS) -MT mtc_imap_la-imapfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_imap_la-imapfunc.Tpo" -c -o mtc_imap_la-imapfunc.lo `test -f 'imapfunc.c' || echo '$(srcdir)/'`imapfunc.c; \
@@ -529,6 +638,13 @@ mtc_imapcram_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapcram_la_CFLAGS) $(CFLAGS) -c -o mtc_imapcram_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
 
+mtc_imapcram_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapcram_la_CFLAGS) $(CFLAGS) -MT mtc_imapcram_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_imapcram_la-msg.Tpo" -c -o mtc_imapcram_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_imapcram_la-msg.Tpo" "$(DEPDIR)/mtc_imapcram_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_imapcram_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_imapcram_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapcram_la_CFLAGS) $(CFLAGS) -c -o mtc_imapcram_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
+
 mtc_imapcram_la-imapfunc.lo: imapfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapcram_la_CFLAGS) $(CFLAGS) -MT mtc_imapcram_la-imapfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_imapcram_la-imapfunc.Tpo" -c -o mtc_imapcram_la-imapfunc.lo `test -f 'imapfunc.c' || echo '$(srcdir)/'`imapfunc.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_imapcram_la-imapfunc.Tpo" "$(DEPDIR)/mtc_imapcram_la-imapfunc.Plo"; else rm -f "$(DEPDIR)/mtc_imapcram_la-imapfunc.Tpo"; exit 1; fi
@@ -556,6 +672,13 @@ mtc_imapssl_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netfunc.c' object='mtc_imapssl_la-netfunc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapssl_la_CFLAGS) $(CFLAGS) -c -o mtc_imapssl_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
+
+mtc_imapssl_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapssl_la_CFLAGS) $(CFLAGS) -MT mtc_imapssl_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_imapssl_la-msg.Tpo" -c -o mtc_imapssl_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_imapssl_la-msg.Tpo" "$(DEPDIR)/mtc_imapssl_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_imapssl_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_imapssl_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapssl_la_CFLAGS) $(CFLAGS) -c -o mtc_imapssl_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
 
 mtc_imapssl_la-imapfunc.lo: imapfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_imapssl_la_CFLAGS) $(CFLAGS) -MT mtc_imapssl_la-imapfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_imapssl_la-imapfunc.Tpo" -c -o mtc_imapssl_la-imapfunc.lo `test -f 'imapfunc.c' || echo '$(srcdir)/'`imapfunc.c; \
@@ -585,6 +708,13 @@ mtc_pop_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_pop_la_CFLAGS) $(CFLAGS) -c -o mtc_pop_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
 
+mtc_pop_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_pop_la_CFLAGS) $(CFLAGS) -MT mtc_pop_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_pop_la-msg.Tpo" -c -o mtc_pop_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_pop_la-msg.Tpo" "$(DEPDIR)/mtc_pop_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_pop_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_pop_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_pop_la_CFLAGS) $(CFLAGS) -c -o mtc_pop_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
+
 mtc_pop_la-popfunc.lo: popfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_pop_la_CFLAGS) $(CFLAGS) -MT mtc_pop_la-popfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_pop_la-popfunc.Tpo" -c -o mtc_pop_la-popfunc.lo `test -f 'popfunc.c' || echo '$(srcdir)/'`popfunc.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_pop_la-popfunc.Tpo" "$(DEPDIR)/mtc_pop_la-popfunc.Plo"; else rm -f "$(DEPDIR)/mtc_pop_la-popfunc.Tpo"; exit 1; fi
@@ -613,6 +743,13 @@ mtc_popcram_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popcram_la_CFLAGS) $(CFLAGS) -c -o mtc_popcram_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
 
+mtc_popcram_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popcram_la_CFLAGS) $(CFLAGS) -MT mtc_popcram_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_popcram_la-msg.Tpo" -c -o mtc_popcram_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_popcram_la-msg.Tpo" "$(DEPDIR)/mtc_popcram_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_popcram_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_popcram_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popcram_la_CFLAGS) $(CFLAGS) -c -o mtc_popcram_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
+
 mtc_popcram_la-popfunc.lo: popfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popcram_la_CFLAGS) $(CFLAGS) -MT mtc_popcram_la-popfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_popcram_la-popfunc.Tpo" -c -o mtc_popcram_la-popfunc.lo `test -f 'popfunc.c' || echo '$(srcdir)/'`popfunc.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_popcram_la-popfunc.Tpo" "$(DEPDIR)/mtc_popcram_la-popfunc.Plo"; else rm -f "$(DEPDIR)/mtc_popcram_la-popfunc.Tpo"; exit 1; fi
@@ -640,6 +777,13 @@ mtc_popssl_la-netfunc.lo: netfunc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netfunc.c' object='mtc_popssl_la-netfunc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popssl_la_CFLAGS) $(CFLAGS) -c -o mtc_popssl_la-netfunc.lo `test -f 'netfunc.c' || echo '$(srcdir)/'`netfunc.c
+
+mtc_popssl_la-msg.lo: msg.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popssl_la_CFLAGS) $(CFLAGS) -MT mtc_popssl_la-msg.lo -MD -MP -MF "$(DEPDIR)/mtc_popssl_la-msg.Tpo" -c -o mtc_popssl_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/mtc_popssl_la-msg.Tpo" "$(DEPDIR)/mtc_popssl_la-msg.Plo"; else rm -f "$(DEPDIR)/mtc_popssl_la-msg.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='msg.c' object='mtc_popssl_la-msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popssl_la_CFLAGS) $(CFLAGS) -c -o mtc_popssl_la-msg.lo `test -f 'msg.c' || echo '$(srcdir)/'`msg.c
 
 mtc_popssl_la-popfunc.lo: popfunc.c
 @am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mtc_popssl_la_CFLAGS) $(CFLAGS) -MT mtc_popssl_la-popfunc.lo -MD -MP -MF "$(DEPDIR)/mtc_popssl_la-popfunc.Tpo" -c -o mtc_popssl_la-popfunc.lo `test -f 'popfunc.c' || echo '$(srcdir)/'`popfunc.c; \

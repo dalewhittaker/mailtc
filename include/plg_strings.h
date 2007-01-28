@@ -25,8 +25,8 @@
 /*plg_common.c strings*/
 #define S_PLG_COMMON_ERR_ALLOC "Error allocating memory\n"
 #define S_PLG_COMMON_ERR_REALLOC "Error reallocating memory\n"
-#define S_PLG_COMMON_ERR_SASL_INIT "Cannot initialise SASL client (%d: %s\n"
-#define S_PLG_COMMON_ERR_CRAM_MD5_AUTH "CRAM-MD5 authentication error (%d: %s\n"
+#define S_PLG_COMMON_ERR_SASL_INIT "Cannot initialise SASL client (%d: %s)\n"
+#define S_PLG_COMMON_ERR_CRAM_MD5_AUTH "CRAM-MD5 authentication error (%d: %s)\n"
 #define S_PLG_COMMON_ERR_CTX "Error creating CTX\n"
 #define S_PLG_COMMON_ERR_CREATE_SSL_STRUCT "Error creating SSL structure\n"
 #define S_PLG_COMMON_ERR_SSL_DESC "Error setting SSL file descriptor\n"
@@ -67,8 +67,22 @@
 #define S_IMAPFUNC_ERR_OPEN_FILE_WRITE "Error opening %s for writing\n"
 #define S_IMAPFUNC_ERR_READ_FILE "Error reading file %s\n"
 #define S_IMAPFUNC_ERR_WRITE_FILE "Error writing file %s\n"
+#define S_IMAPFUNC_ERR_REMOVE_FILE "Error removing file %s\n"
+#define S_IMAPFUNC_ERR_VERIFY_MSGLIST "Error verifying message list\n"
+#define S_IMAPFUNC_ERR_SEND "Error sending %s to server %s\n"
+
+/*msg.c strings*/
+#define S_MSG_ERR_NO_FIELD_HEADER "Warning: header has no field '%s'\n"
+#define S_MSG_ERR_VERIFY_HEADER "Message header verification failed!\n"
+#define S_MSG_ERR_GET_HEADER "Error getting header for message %s\n"
+#define S_MSG_HEADER_DATE "\r\nDate"
+#define S_MSG_HEADER_FROM "\r\nFrom"
+#define S_MSG_HEADER_TO "\r\nTo"
+#define S_MSG_HEADER_CC "\r\nCc"
+#define S_MSG_HEADER_SUBJECT "\r\nSubject"
 
 /*netfunc.c strings*/
+#define S_NETFUNC_ERR_WINSOCK_INIT "Error initialising windows sockets\n"
 #define S_NETFUNC_ERR_IP "Error getting ip from hostname %s\n"
 #define S_NETFUNC_ERR_SOCKET "Error getting socket\n"
 #define S_NETFUNC_ERR_CONNECT "Error connecting to server %s\n"
@@ -76,6 +90,9 @@
 #define S_NETFUNC_ERR_RECEIVE "Error receiving message from server\n"
 #define S_NETFUNC_ERR_DATA_AVAILABLE "Error while checking if there is any data to receive from server\n"
 #define S_NETFUNC_ERR_PW_STRING "Error getting start of password string\n"
+#define S_NETFUNC_ERR_GET_TIMEOUT "Error getting current connection timeout value\n"
+#define S_NETFUNC_ERR_SET_TIMEOUT "Error setting connection timeout value\n"
+#define S_NETFUNC_ERR_RESET_TIMEOUT "Error resetting connection timeout value\n"
 
 /*popfunc.c strings*/
 #define S_POPFUNC_ERR_CONNECT "Connection error. %s closing connection and retrying.\n"
@@ -100,5 +117,9 @@
 #define S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED "Error: CRAM-MD5 authentication does not appear to be supported\n"
 #define S_POPFUNC_ERR_TEST_CAPABILITIES "Error testing POP server capabilities, this does not appear to be a valid POP server\n"
 #define S_POPFUNC_ERR_RENAME_FILE "Error renaming %s to %s\n"
+#define S_POPFUNC_ERR_VERIFY_MSGLIST "Error verifying message list\n"
+#define S_POPFUNC_ERR_SEND "Error sending %s to server %s\n"
+#define S_POPFUNC_ERR_RECV "Error receiving %s for account %s\n"
+#define S_POPFUNC_ERR_RECV_HEADER "Error receiving message header %d for account %s\n"
 
 #endif /*MTC_PLUGIN_STRINGS*/

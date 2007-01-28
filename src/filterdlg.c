@@ -19,6 +19,12 @@
 
 #include "core.h"
 
+#define SFILTER_AND "<AND>"
+#define SFILTER_OR "<OR>"
+#define SFILTER_NOT "<NOT>"
+#define SFILTER_SENDER "<SENDER>"
+#define SFILTER_SUBJECT "<SUBJECT>"
+
 /*widget variables used for most functions*/
 static GtkWidget *filter_combo1[MAX_FILTER_EXP];
 static GtkWidget *filter_combo2[MAX_FILTER_EXP];
@@ -27,13 +33,13 @@ static GtkWidget *filter_radio[2];
 static GtkWidget *clear_button;
 
 /*function to write the filter information to the file*/
-static int write_filter_info(mail_details *paccount)
+static gboolean filter_write(mtc_account *paccount)
 {
 
 	FILE *outfile;
-	char outfilename[NAME_MAX];
-	int i= 0;
-	int valid= 0;
+	gchar outfilename[NAME_MAX];
+	gint i= 0;
+	gint valid= 0;
 
 	/*first check if we have values*/
 	for(i= 0; i< MAX_FILTER_EXP; i++)
@@ -43,22 +49,22 @@ static int write_filter_info(mail_details *paccount)
 	}
 
 	if(!valid)
-		return(!run_error_dialog(S_FILTERDLG_NO_FILTERS));
+		return(!err_dlg(S_FILTERDLG_NO_FILTERS));
 	
 	/*get the full path of the filter file*/
 	memset(outfilename, '\0', NAME_MAX);
-	get_account_file(outfilename, FILTER_FILE, paccount->id);
+	mtc_file(outfilename, FILTER_FILE, paccount->id);
 
 	/*first check if file can be written to*/
-	if((IS_FILE(outfilename))&& (remove(outfilename)== -1))
-		error_and_log(S_FILTERDLG_ERR_REMOVE_FILE, outfilename);
+	if((IS_FILE(outfilename))&& (g_remove(outfilename)== -1))
+		err_exit(S_FILTERDLG_ERR_REMOVE_FILE, outfilename);
 	
 	/*open the file*/
-	if((outfile= fopen(outfilename, "wt"))== NULL)
-		error_and_log(S_FILTERDLG_ERR_OPEN_FILE, outfilename);
+	if((outfile= g_fopen(outfilename, "wt"))== NULL)
+		err_exit(S_FILTERDLG_ERR_OPEN_FILE, outfilename);
 	
 	/*output whether to match all or match any*/
-	(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0])))? fprintf(outfile, "<AND>\n"): fprintf(outfile, "<OR>\n");
+	g_fprintf(outfile, (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0])))? SFILTER_AND"\n": SFILTER_OR"\n");
 			
 	/*for each filter entry*/
 	for(i= 0; i< MAX_FILTER_EXP; i++)
@@ -73,80 +79,85 @@ static int write_filter_info(mail_details *paccount)
 			/*get the active combo value for contains/does not contain and output*/
 			model2= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo2[i]));
 			if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo2[i]), &iter2))
-				error_and_log(S_FILTERDLG_ERR_COMBO_ITER);
+				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
 			gtk_tree_model_get(model2, &iter2, 0, &str2, -1);
 			
-			if(g_ascii_strcasecmp(str2, S_FILTERDLG_COMBO_CONTAINS)!= 0) fprintf(outfile, "<NOT>");
+			if(g_ascii_strcasecmp(str2, S_FILTERDLG_COMBO_CONTAINS)!= 0) g_fprintf(outfile, SFILTER_NOT);
 			g_free(str2);
 			
 			/*get the active combo value for sender/subject and output*/
 			model1= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo1[i]));
 			if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo1[i]), &iter1))
-				error_and_log(S_FILTERDLG_ERR_COMBO_ITER);
+				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
 			gtk_tree_model_get(model1, &iter1, 0, &str1, -1);
-			(g_ascii_strcasecmp(str1, S_FILTERDLG_COMBO_SENDER)== 0)? fprintf(outfile, "<SENDER>"): fprintf(outfile, "<SUBJECT>");
+			g_fprintf(outfile, (g_ascii_strcasecmp(str1, S_FILTERDLG_COMBO_SENDER)== 0)? SFILTER_SENDER: SFILTER_SUBJECT);
 			g_free(str1);
 			
 			/*output the filter search string*/
-			fprintf(outfile, "%s\n", gtk_entry_get_text(GTK_ENTRY(filter_entry[i])));
+			g_fprintf(outfile, "%s\n", gtk_entry_get_text(GTK_ENTRY(filter_entry[i])));
 		}
 	}
 
 	/*close the file*/
 	if(fclose(outfile)== EOF)
-		error_and_log(S_FILTERDLG_ERR_CLOSE_FILE, outfilename);
+		err_exit(S_FILTERDLG_ERR_CLOSE_FILE, outfilename);
 
 	/*now we must read the filter info back in!*/
 	/*TODO this should never happen, but probably a better thing to do is error*/
-	if(!read_filter_info(paccount))
-		paccount->runfilter= 0;
+	if(!filter_read(paccount))
+		paccount->runfilter= FALSE;
 	
-	return 1;
+	return TRUE;
 }
 
 /*function to read the filter information in*/
-int read_filter_info(mail_details *paccount)
+gboolean filter_read(mtc_account *paccount)
 {
 	FILE *infile;
-	char infilename[NAME_MAX];
-	char line[FILTERSTRING_LEN+ strlen("<NOT>")+ strlen("<SUBJECT>")+ 1];
-	char *pstring= NULL;
-	int i= 0;
-	int retval= 0;
-	filter_details *pfilter;
+	gchar infilename[NAME_MAX];
+	gchar line[FILTERSTRING_LEN+ 15]; /*strlen("<NOT>")+ strlen("<SUBJECT>")+ 1;*/
+	gchar *pstring= NULL;
+	gint i= 0;
+	gboolean retval= 0;
+	mtc_filter *pfilter;
+    guint notlen, subjlen, senderlen;
+
+    notlen= strlen(SFILTER_NOT);
+    subjlen= strlen(SFILTER_SUBJECT);
+    senderlen= strlen(SFILTER_SENDER);
 
 	/*get the full path of the filter file*/
 	memset(infilename, '\0', NAME_MAX);
-	get_account_file(infilename, FILTER_FILE, paccount->id);
+	mtc_file(infilename, FILTER_FILE, paccount->id);
 
 	/*first test if there is an existing file*/
 	if(!IS_FILE(infilename))
-		return 0;
+		return FALSE;
 	
 	/*open the file for reading and clear the struct*/
-	if((infile= fopen(infilename, "rt"))== NULL)
-		error_and_log(S_FILTERDLG_ERR_OPEN_FILE, infilename);
+	if((infile= g_fopen(infilename, "rt"))== NULL)
+		err_exit(S_FILTERDLG_ERR_OPEN_FILE, infilename);
 	
 	/*allocate memory for the filter struct*/
-	paccount->pfilters= g_malloc0(sizeof(filter_details));
+	paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
 	pfilter= paccount->pfilters;
 	
 	/*set default to contains and sender*/
 	for(i= 0; i< MAX_FILTER_EXP; ++i)
 	{
-		pfilter->contains[i]= 1;
-		pfilter->subject[i]= 0;
+		pfilter->contains[i]= TRUE;
+		pfilter->subject[i]= FALSE;
 	}
 	i= 0;
 	
 	/*get the first line (match all or any)*/
 	fgets(line, sizeof(line), infile);
-	if(strncmp(line, "<AND>", strlen("<AND>"))== 0)
-		pfilter->matchall= 1;
-	if(strncmp(line, "<OR>", strlen("<OR>"))== 0)
-		pfilter->matchall= 0;
+	if(g_ascii_strncasecmp(line, SFILTER_AND, strlen(SFILTER_AND))== 0)
+		pfilter->matchall= TRUE;
+	if(g_ascii_strncasecmp(line, SFILTER_OR, strlen(SFILTER_OR))== 0)
+		pfilter->matchall= FALSE;
 	else
-		pfilter->matchall= 1;
+		pfilter->matchall= TRUE;
 	
 	/*for each subsequent line*/
 	while(!feof(infile)&& (i< MAX_FILTER_EXP))
@@ -157,22 +168,22 @@ int read_filter_info(mail_details *paccount)
 		
 		/*get contains/not contains*/
 		fgets(line, sizeof(line), infile);
-		if(strncmp(pstring, "<NOT>", strlen("<NOT>"))== 0)
+		if(g_ascii_strncasecmp(pstring, SFILTER_NOT, notlen)== 0)
 		{
-			pfilter->contains[i]= 0;
-			pstring+= strlen("<NOT>");
+			pfilter->contains[i]= FALSE;
+			pstring+= notlen;
 		}
 			
 		/*get subject/sender*/
-		if(strncmp(pstring, "<SUBJECT>", strlen("<SUBJECT>"))== 0)
+		if(g_ascii_strncasecmp(pstring, SFILTER_SUBJECT, subjlen)== 0)
 		{
-			pfilter->subject[i]= 1;
-			pstring+= strlen("<SUBJECT>");
+			pfilter->subject[i]= TRUE;
+			pstring+= subjlen;
 		}
-		else if(strncmp(pstring, "<SENDER>", strlen("<SENDER>"))== 0)
+		else if(g_ascii_strncasecmp(pstring, SFILTER_SENDER, senderlen)== 0)
 		{
-			pfilter->subject[i]= 0;
-			pstring+= strlen("<SENDER>");
+			pfilter->subject[i]= FALSE;
+			pstring+= senderlen;
 		}
 		
 		/*get the filter search string*/
@@ -181,7 +192,7 @@ int read_filter_info(mail_details *paccount)
 			g_strlcpy(pfilter->search_string[i], pstring, FILTERSTRING_LEN);
 			if(pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]== '\n')
 				pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]= '\0';
-			retval= 1;
+			retval= TRUE;
 		}
 
 		++i;
@@ -189,7 +200,7 @@ int read_filter_info(mail_details *paccount)
 
 	/*close the file*/
 	if(fclose(infile)== EOF)
-		error_and_log(S_FILTERDLG_ERR_CLOSE_FILE, infilename);
+		err_exit(S_FILTERDLG_ERR_CLOSE_FILE, infilename);
 
 	return(retval);
 }
@@ -197,7 +208,7 @@ int read_filter_info(mail_details *paccount)
 /*button to clear the filter entries*/
 static void clear_button_pressed(void)
 {
-	int i= 0;	
+	gint i= 0;	
 	for(i= 0; i< MAX_FILTER_EXP; ++i)
 	{
 		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
@@ -210,18 +221,19 @@ static void clear_button_pressed(void)
 }
 		
 /*display the filter dialog*/
-int run_filter_dialog(mail_details *paccount)
+gboolean filterdlg_run(mtc_account *paccount)
 {
 	GtkWidget *dialog;
 	GtkWidget *filter_label;
 	GtkWidget *main_table, *v_box_filter;
-	int i= -1;
-	gint result= 0, saved= 0;
-	filter_details *pfilter= paccount->pfilters;
-	char *label= NULL;
+	gint i= -1;
+	gint result= 0;
+    gboolean saved= FALSE;
+	mtc_filter *pfilter= paccount->pfilters;
+	gchar *label= NULL;
 		
 	/*create the label*/
-	label= g_malloc0(strlen(S_FILTERDLG_LABEL_SELECT) + 5);
+	label= (gchar *)g_malloc0(strlen(S_FILTERDLG_LABEL_SELECT) + 5);
 	g_snprintf(label, strlen(S_FILTERDLG_LABEL_SELECT)+ 4, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
 	filter_label= gtk_label_new(label);
 	g_free(label);
@@ -273,8 +285,8 @@ int run_filter_dialog(mail_details *paccount)
 	filter_radio[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(filter_radio[0]), S_FILTERDLG_BUTTON_MATCHANY);
 	if(paccount->pfilters)
 	{
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), (pfilter->matchall)? TRUE: FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), (pfilter->matchall)? FALSE: TRUE);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), pfilter->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), pfilter->matchall);
 	}
 	
 	gtk_table_attach(GTK_TABLE(main_table), clear_button, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
@@ -301,18 +313,18 @@ int run_filter_dialog(mail_details *paccount)
 		{
 			/*if OK get the value of saved to check if details are saved correctly*/
 			case GTK_RESPONSE_ACCEPT:
-				saved= write_filter_info(paccount);
+				saved= filter_write(paccount);
 			break;
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
 			default:
-				saved= 1;
+				saved= TRUE;
 		}
 	}
 	/*destroy the dialog now that it is finished*/
 	gtk_widget_destroy(dialog);
 	
-	return 1;
+	return TRUE;
 }
 
 

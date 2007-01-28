@@ -18,25 +18,25 @@
  */
 #include "core.h"
 
-static unsigned char iv[]= {1, 2, 3, 4, 5, 6, 7, 8}; /*string to hold the encryption key*/
+static guchar iv[]= {1, 2, 3, 4, 5, 6, 7, 8}; /*string to hold the encryption key*/
 
 /*function to encrypt the password before it gets written to the password file*/
-int encrypt_password(char *decstring, char *encstring)
+gulong pw_encrypt(gchar *decstring, gchar *encstring)
 {
-	int encrypted_len, tmplen;
+	gint encrypted_len, tmplen;
 	
 	/*initialise cipher content*/
 	EVP_CIPHER_CTX ctx;
 	EVP_CIPHER_CTX_init(&ctx); 
 
 	/*set up cipher context with cipher type (base64)*/
-	EVP_EncryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (unsigned char *)ENCRYPTION_KEY, iv); 
+	EVP_EncryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 
 	/*encrypt the data and the final padding*/
-	if(!EVP_EncryptUpdate(&ctx, (unsigned char *)encstring, &encrypted_len, (unsigned char *)decstring, strlen(decstring)))
-		error_and_log(S_ENCRYPTER_ERR_ENC_PW);
-	if(!EVP_EncryptFinal_ex(&ctx, (unsigned char *)(encstring+ encrypted_len), &tmplen))
-		error_and_log(S_ENCRYPTER_ERR_ENC_PW_FINAL);
+	if(!EVP_EncryptUpdate(&ctx, (guchar *)encstring, &encrypted_len, (guchar *)decstring, strlen(decstring)))
+		err_exit(S_ENCRYPTER_ERR_ENC_PW);
+	if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(encstring+ encrypted_len), &tmplen))
+		err_exit(S_ENCRYPTER_ERR_ENC_PW_FINAL);
 	
 	/*set length equal to encrypted string plus encrypted padding*/
 	encrypted_len+= tmplen; 
@@ -48,22 +48,22 @@ int encrypt_password(char *decstring, char *encstring)
 }
 
 /*function to decrypt the password before it gets used*/
-int decrypt_password(char *encstring, int enclen, char *decstring)
+gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring)
 {
-	int outlen, tmplen;
+	gint outlen, tmplen;
 
 	/*initialise cipher content*/
 	EVP_CIPHER_CTX ctx;
 	EVP_CIPHER_CTX_init(&ctx);
 
 	/*set up cipher context with cipher type (base64)*/
-	EVP_DecryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (unsigned char *)ENCRYPTION_KEY, iv); 
+	EVP_DecryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 	
 	/*Decrypt the data and the final padding at the end*/
-	if(!EVP_DecryptUpdate(&ctx, (unsigned char *)decstring, &outlen, (unsigned char *)encstring, enclen))
-		error_and_log(S_ENCRYPTER_ERR_DEC_PW);
-	if(!EVP_DecryptFinal_ex(&ctx, (unsigned char *)(decstring+ outlen), &tmplen))
-		error_and_log(S_ENCRYPTER_ERR_DEC_PW_FINAL);
+	if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, (guchar *)encstring, enclen))
+		err_exit(S_ENCRYPTER_ERR_DEC_PW);
+	if(!EVP_DecryptFinal_ex(&ctx, (guchar *)(decstring+ outlen), &tmplen))
+		err_exit(S_ENCRYPTER_ERR_DEC_PW_FINAL);
 	
 	/*set the length and cleanup*/
 	outlen+= tmplen;
@@ -71,6 +71,6 @@ int decrypt_password(char *encstring, int enclen, char *decstring)
 	
 	decstring[outlen]= '\0';
 	
-	return 1;
+	return TRUE;
 }
 

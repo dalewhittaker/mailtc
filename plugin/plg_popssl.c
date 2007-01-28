@@ -26,40 +26,40 @@
 #define PLUGIN_DESC "POP3 network plugin with SSL/TLS authentication."
 #define DEFAULT_PORT 995
 
+G_MODULE_EXPORT mtc_plugin *init_plugin(void);
+
 /*this is called every n minutes by mailtc to check for new messages*/
-int popssl_get_messages(void *pdata)
+mtc_error popssl_get_messages(gpointer pdata)
 {
-	mail_details *paccount= (mail_details *)pdata;
-	return(check_popssl_mail(paccount, mtc_dir));
+	mtc_account *paccount= (mtc_account *)pdata;
+	return(check_popssl_mail(paccount, cfg_get()));
 }
 
 /*this is called when the plugin is first loaded. it is here that we set globals passed from the core app*/
-int popssl_load(const char *cfgdir, void *plog, unsigned int flags)
+mtc_error popssl_load(gpointer pdata)
 {
 	/*set the network debug flag and log file*/
-	mtc_dir= cfgdir;
-	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= (FILE *)plog;
-	fprintf(plglog, PLUGIN_NAME " plugin loaded\n");
+    cfg_load((mtc_cfg *)pdata);
+	g_fprintf(((mtc_cfg  *)pdata)->logfile, PLUGIN_NAME " plugin loaded\n");
 	return(MTC_RETURN_TRUE);
 }
 
 /*this is called when unloading, one use for this is to free memory if needed*/
-int popssl_unload(void)
+mtc_error popssl_unload(void)
 {
-	plglog= NULL;
+	cfg_unload();
 	return(MTC_RETURN_TRUE);
 }
 
 /*this is called when the docklet is clicked*/
-int popssl_clicked(void *pdata)
+mtc_error popssl_clicked(gpointer pdata)
 {
-	mail_details *paccount= (mail_details *)pdata;
-	return(pop_read_mail(paccount, mtc_dir));
+	mtc_account *paccount= (mtc_account *)pdata;
+	return(pop_read_mail(paccount, cfg_get()));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
-static mtc_plugin_info popssl_pluginfo =
+static mtc_plugin popssl_pluginfo =
 {
 	NULL, /*pointer to handle, set to NULL*/
 	VERSION,
@@ -75,7 +75,7 @@ static mtc_plugin_info popssl_pluginfo =
 };
 
 /*the initialisation function*/
-mtc_plugin_info *init_plugin(void)
+G_MODULE_EXPORT mtc_plugin *init_plugin(void)
 {
 	/*set the plugin pointer passed to point to the struct*/
 	return(&popssl_pluginfo);

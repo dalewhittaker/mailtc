@@ -20,20 +20,21 @@
 #ifndef DW_MAILTC_HEADER_FILE
 #define DW_MAILTC_HEADER_FILE
 
-#include <string.h> /*memset, strlen, strcmp*/
+#include <string.h> /*memset, strlen*/
 #include <signal.h> /*signal stuff*/
 #include <errno.h> /*not sure if this is actually required*/
 #include <stdlib.h> /*exit, atoi*/
 #include <time.h> /*asctime etc in common.c*/
-#include <stdio.h> /*rename remove and all kinds of other file related stuff*/
-#include <unistd.h> /*getpid*/
-#include <sys/types.h> /*mkdir chmod kill*/
-#include <sys/stat.h>
-#include <limits.h>
+
+/*The pid stuff is UNIX only*/
+#ifdef _POSIX_SOURCE
+#include <unistd.h> /*for getpid*/
+#include <sys/types.h> /*for kill*/
+#define MTC_USE_PIDFUNC
+#endif /*_POSIX_SOURCE*/
 
 #include <gmodule.h> /*would be nice to know the exact headers to include here*/
-#include <glib.h>
-#include <gtk/gtkmain.h>
+#include <glib/gstdio.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkeventbox.h>
@@ -53,19 +54,22 @@
 #include <gtk/gtkspinbutton.h>
 #include <gtk/gtkcolorsel.h>
 #include <gtk/gtkcolorseldialog.h>
-#include <gtk/gtktooltips.h>
 #include <gtk/gtkradiobutton.h>
+#include <gtk/gtkfontbutton.h>
+#include <gtk/gtktextview.h>
 
 #ifdef MTC_USE_SSL
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #endif /*MTC_USE_SSL*/
 
-#include "eggtrayicon.h"
 #include "plugin.h"
 #include "strings.h"
-#include "envelope_white.h"
+#include "envelope_large.h"
+
+#ifdef MTC_NOTMINIMAL
 #include "envelope_small.h"
+#endif /*MTC_NOTMINIMAL*/
 
 #define DETAILS_FILE "details"
 #define CONFIG_FILE "config"
@@ -76,7 +80,6 @@
 #define ENCRYPTION_KEY "mailtc password encryption key"
 #define PASSWORD_FILE "encpwd"
 
-#define DELAY_STRLEN 10
 #define FILTERSTRING_LEN 100
 #define MAX_FILTER_EXP 5 
 
@@ -101,7 +104,7 @@
 #define NAME_MAX 255
 #endif
 
-/*TODO this is mainly for testing purposes*/
+/*this is mainly for testing purposes*/
 /*#undef LIBDIR*/
 #ifndef LIBDIR
 #define LIBDIR "../plugin/.libs"
@@ -110,72 +113,80 @@
 #define IS_FILE(file) g_file_test(file, G_FILE_TEST_IS_REGULAR)
 #define IS_DIR(file) g_file_test(file, G_FILE_TEST_IS_DIR)
 #define FILE_EXISTS(file) g_file_test(file, G_FILE_TEST_EXISTS)
+#define PATH_DELIM (G_DIR_SEPARATOR == '/') ? '\\' : '/'
 
-/*structure to hold mailtc configuration details*/
-typedef struct _config_details
-{
-	char check_delay[DELAY_STRLEN];
-	char mail_program[NAME_MAX+1];
-	unsigned int icon_size;
-	unsigned int multiple;
-	unsigned int net_debug;
-	char icon[ICON_LEN];
-	
-	/*some additional stuff used*/
-	char base_name[NAME_MAX+ 1];
-	FILE *logfile;
-	
-} config_details;
+/*As i don't know the maximum length a font name can be
+ *it is currently set to maximum filename length*/
+#define MAX_FONTNAME_LEN NAME_MAX
+
+/*used to define when to report connection errors*/
+#define CONNECT_ERR_NEVER -1
+#define CONNECT_ERR_ALWAYS 0
 
 /*global variables*/
 enum { ACCOUNT_COLUMN= 0, PROTOCOL_COLUMN, N_COLUMNS };
-config_details config;
+mtc_cfg config;
 GSList *acclist;
 GSList *plglist;
 
 /*configdlg.c functions*/
-GtkWidget * run_config_dialog(GtkWidget *dialog);
-int run_details_dialog(int profile, int newaccount);
+GtkWidget *cfgdlg_run(GtkWidget *dialog);
+gboolean accdlg_run(gint profile, gint newaccount);
 
 /*filefunc.c functions*/
-int get_program_dir(void);
-mail_details *get_account(unsigned int item);
-void remove_account(unsigned int item);
+gboolean mtc_dir(void);
+mtc_account *get_account(guint item);
+void remove_account(guint item);
 void free_accounts(void);
 GSList *create_account(void);
-int read_accounts(void);
-int read_config_file(void);
-int write_user_details(mail_details *pcurrent);
-int write_config_file(void);
-int read_password_from_file(mail_details *paccount);
-int write_password_to_file(mail_details *paccount);
-char *get_account_file(char *fullpath, char *filename, int account);
-int remove_file(char *shortname, int count, int fullcount);
+gboolean read_accounts(void);
+gboolean cfg_read(void);
+gboolean acc_write(mtc_account *pcurrent);
+gboolean cfg_write(void);
+gboolean pw_read(mtc_account *paccount);
+gboolean pw_write(mtc_account *paccount);
+gchar *mtc_file(gchar *fullpath, gchar *filename, gint account);
+gint rm_mtc_file(gchar *shortname, gint count, gint fullcount);
 
 /*docklet.c functions*/
 gboolean mail_thread(gpointer data);
-void set_icon_colour(GdkPixbuf *pixbuf, char *colourstring);
+#ifdef MTC_EGGTRAYICON
+void docklet_clicked(GtkWidget *button, GdkEventButton *event);
+#else
+void docklet_rclicked(GtkStatusIcon *status_icon, guint button, guint activate_time, gpointer user_data);
+void docklet_lclicked(GtkStatusIcon *status_icon, gpointer user_data);
+#endif /*MTC_EGGTRAYICON*/
 
 /*common.c functions*/
-char *get_current_time(void);
-int run_error_dialog(char *errmsg, ...);
-int error_and_log(char *errmsg, ...);
-int error_and_log_no_exit(char *errmsg, ...);
+gchar *str_time(void);
+gboolean err_dlg(gchar *errmsg, ...);
+gboolean err_exit(gchar *errmsg, ...);
+gboolean err_noexit(gchar *errmsg, ...);
+mtc_icon *pixbuf_create(mtc_icon *picon);
 
 /*encrypter.c functions*/
 #ifdef MTC_USE_SSL
-int encrypt_password(char *decstring, char *encstring);
-int decrypt_password(char *encstring, int enclen, char *decstring);
+gulong pw_encrypt(gchar *decstring, gchar *encstring);
+gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring);
 #endif /*MTC_USE_SSL*/
 
 /*plugin.c functions*/
-gboolean load_plugins(void);
-gboolean unload_plugins(void);
-mtc_plugin_info *find_plugin(const gchar *plugin_name);
+gboolean plg_load_all(void);
+gboolean plg_unload_all(void);
+mtc_plugin *plg_find(const gchar *plugin_name);
 
 /*filterdlg.c functions*/
-int run_filter_dialog(mail_details *paccount);
-int read_filter_info(mail_details *paccount);
+gboolean filterdlg_run(mtc_account *paccount);
+gboolean filter_read(mtc_account *paccount);
+
+/*summarydlg.c functions*/
+#ifdef MTC_EXPERIMENTAL
+gint sumcfgdlg_run(gchar *default_font);
+gboolean sumdlg_create(void);
+gboolean sumdlg_show(void);
+gboolean sumdlg_hide(void);
+gboolean sumdlg_destroy(void);
+#endif /*MTC_EXPERIMENTAL*/
 
 #endif /*DW_MAILTC_HEADER_FILE*/
 

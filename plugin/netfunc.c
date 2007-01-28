@@ -19,152 +19,292 @@
 
 #include "plg_common.h"
 
-/*function to connect to mail server*/
-int connect_to_server(int *sockfd, mail_details *paccount)
+#ifdef SSL_PLUGIN
+/*initialise SSL connection*/
+static mtc_error ssl_net_connect(mtc_net *pnetinfo)
 {
-	struct hostent *he;
-	struct sockaddr_in their_addr;
-	
-	/*get the ip from the hostname*/
-	if((he= gethostbyname(paccount->hostname))== NULL)
-	{
-		plg_report_error(S_NETFUNC_ERR_IP, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-		
-	/*get the socket for the connection*/
-	if((*sockfd= socket(AF_INET, SOCK_STREAM, 0))== -1)
-	{
-		plg_report_error(S_NETFUNC_ERR_SOCKET);
-		return(MTC_RETURN_FALSE);
-	}
+    SSL_METHOD *method= NULL;
+	gboolean err= FALSE;
 
-	/*setup the connection details*/
-	their_addr.sin_family= AF_INET;
-	their_addr.sin_port= htons(atoi(paccount->port));
-	their_addr.sin_addr= *((struct in_addr *)he->h_addr);
-	memset(&(their_addr.sin_zero),'\0', 8);
-	
-	/*try to connect only if doconnect is true (for non SSL)*/
-	if(connect(*sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr))== -1)
+	/*initialise SSL*/
+	SSL_load_error_strings();
+	SSL_library_init();
+
+	/*choose TLS method and create CTX*/
+	method= SSLv23_client_method();
+	if((pnetinfo->pctx= SSL_CTX_new(method))== NULL)
 	{
-		plg_report_error(S_NETFUNC_ERR_CONNECT, paccount->hostname);
-		close(*sockfd);
-		return(MTC_RETURN_FALSE);
-	}
+        plg_err(S_PLG_COMMON_ERR_CTX);
+        err= TRUE;
+    }
+	/*create an SSL structure for the TLS connection*/
+    if((pnetinfo->pssl= SSL_new(pnetinfo->pctx))== NULL)
+	{
+        plg_err(S_PLG_COMMON_ERR_CREATE_SSL_STRUCT);
+        err= TRUE;
+    }
+	/*set the SSL file descriptor*/
+	if(SSL_set_fd(pnetinfo->pssl, pnetinfo->sockfd)== 0)
+	{
+        plg_err(S_PLG_COMMON_ERR_SSL_DESC);
+	    err= TRUE;
+    }
+	/*connect with SSL*/
+	if(SSL_connect(pnetinfo->pssl)<= 0)
+	{
+        plg_err(S_PLG_COMMON_ERR_SSL_CONNECT);
+	    err= TRUE;
+    }
+
+    if(err)
+    {    
+        net_disconnect(pnetinfo);
+        return(MTC_ERR_CONNECT);
+    }
+    return(MTC_RETURN_TRUE);
+}
+
+/*Uninitialise SSL connection*/
+static mtc_error ssl_net_disconnect(mtc_net *pnetinfo)
+{
+	/*I think this is ok, if not see SSL_shutdown, this may need to be done a different way*/
+	if(SSL_shutdown(pnetinfo->pssl)== -1)
+		plg_err(S_PLG_COMMON_ERR_SSL_SHUTDOWN);
+		
+	if(pnetinfo->pssl)
+        SSL_free(pnetinfo->pssl);
+	if(pnetinfo->pctx)
+        SSL_CTX_free(pnetinfo->pctx);
+	ERR_free_strings();
 
 	return(MTC_RETURN_TRUE);
 }
 
-/*function to blank out the password chars before sending*/
-static int print_pw_string(const char *sendstring)
+#endif /*SSL_PLUGIN*/
+
+/*wrapper function to close a socket and cleanup*/
+static gint sock_close(mtc_net *pnetinfo)
 {
-	char *pwstring= NULL, *ptr= NULL;
-	unsigned int slen;
+#ifdef _WIN32
+    closesocket(pnetinfo->sockfd);
+    return(WSACleanup());
+#else
+    return(close(pnetinfo->sockfd));
+#endif /*_WIN32*/
+}
+
+/*called if there is a network error,
+ *and connect() has not yet been called*/
+static mtc_error sock_err(void)
+{
+#ifdef _WIN32
+        WSACleanup();
+#endif /*_WIN32*/
+    return(MTC_ERR_CONNECT);
+}
+
+/*function to connect to mail server*/
+mtc_error net_connect(mtc_net *pnetinfo, mtc_account *paccount)
+{
+	struct hostent *he;
+	struct sockaddr_in their_addr;
+
+    /*used for connection timeouts*/
+	struct timeval t_old;
+    socklen_t t_oldlen= sizeof(t_old);
+    struct timeval t_new;
+
+#ifdef _WIN32
+    /*initialise windows sockets if required*/
+    WSADATA wsadata;
+    if(WSAStartup(MAKEWORD(2, 2), &wsadata)!= 0)
+    {
+        plg_err(S_NETFUNC_ERR_WINSOCK_INIT);
+        return(MTC_ERR_CONNECT);
+    }
+#endif /*_WIN32*/
+
+    /*get the ip from the hostname*/
+	if((he= gethostbyname(paccount->hostname))== NULL)
+	{
+		plg_err(S_NETFUNC_ERR_IP, paccount->hostname);
+		return(sock_err());
+	}
+		
+	/*get the socket for the connection*/
+	if((pnetinfo->sockfd= socket(AF_INET, SOCK_STREAM, 0))== INVALID_SOCKET)
+	{
+		plg_err(S_NETFUNC_ERR_SOCKET);
+		return(sock_err());
+	}
+
+	/*setup the connection details*/
+	their_addr.sin_family= AF_INET;
+	their_addr.sin_addr= *((struct in_addr *)he->h_addr_list[0]);
+	their_addr.sin_port= htons(atoi(paccount->port));
+	memset(&(their_addr.sin_zero), '\0', 8);
+	
+    /*get the current connect timeout val*/
+    if(getsockopt(pnetinfo->sockfd, SOL_SOCKET, SO_RCVTIMEO, (gchar *)&t_old, &t_oldlen)== SOCKET_ERROR)
+    {
+		plg_err(S_NETFUNC_ERR_GET_TIMEOUT);
+		return(sock_err());
+    }
+
+    /*set the actual no. seconds for timeout*/
+    t_new.tv_sec= CONNECT_TIMEOUT;
+    t_new.tv_usec = 0;
+	
+    /*set the new timeout value*/
+    if(setsockopt(pnetinfo->sockfd, SOL_SOCKET, SO_RCVTIMEO, (gchar *)&t_new, sizeof(t_new))== SOCKET_ERROR)
+    {
+    	plg_err(S_NETFUNC_ERR_SET_TIMEOUT);
+		return(sock_err());
+    }
+
+	/*try to connect only if doconnect is true (for non SSL)*/
+	if(connect(pnetinfo->sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr))== SOCKET_ERROR)
+	{
+		plg_err(S_NETFUNC_ERR_CONNECT, paccount->hostname);
+        sock_close(pnetinfo);
+        return(MTC_ERR_CONNECT);
+	}
+
+    /*now reset the old timeout value back*/
+    if(setsockopt(pnetinfo->sockfd, SOL_SOCKET, SO_RCVTIMEO, (gchar *)&t_old, sizeof(t_old))== SOCKET_ERROR)
+    {
+		plg_err(S_NETFUNC_ERR_RESET_TIMEOUT);
+        sock_close(pnetinfo);
+        return(MTC_ERR_CONNECT);
+    }
+
+#ifdef SSL_PLUGIN
+    pnetinfo->pssl= NULL;
+    pnetinfo->pctx= NULL;
+
+    if(IS_SSL_AUTH(pnetinfo->authtype))
+		return(ssl_net_connect(pnetinfo));
+#endif /*SSL_PLUGIN*/
+
+	return(MTC_RETURN_TRUE);
+}
+
+/*function to uninitialise and close the socket*/
+mtc_error net_disconnect(mtc_net *pnetinfo)
+{
+#ifdef SSL_PLUGIN
+	/*close the SSL connection*/
+	if(pnetinfo->pssl)
+		ssl_net_disconnect(pnetinfo);
+#endif
+
+    /*finally close the socket*/
+    sock_close(pnetinfo);
+    return(MTC_RETURN_TRUE);
+}
+
+/*function to blank out the password chars before sending*/
+static mtc_error pwprint(const gchar *sendstring)
+{
+	gchar *pwstring= NULL, *ptr= NULL;
+	guint slen;
 			
 	slen= strlen(sendstring);
-	pwstring= alloc_mem(slen+ 1, pwstring);
+	pwstring= (gchar *)g_malloc0(slen+ 1);
 			
 	/*we replace all the password chars with * if it is a password*/
-	strcpy(pwstring, sendstring);
+	g_strlcpy(pwstring, sendstring, slen+ 1);
 	if((ptr= strrchr(pwstring, ' '))== NULL)
 	{
-		plg_report_error(S_NETFUNC_ERR_PW_STRING);
-		free(pwstring);
+		plg_err(S_NETFUNC_ERR_PW_STRING);
+		g_free(pwstring);
 		return(MTC_RETURN_FALSE);
 	}
 			
 	/*iterate until '\r' is found*/
-	while((*(++ptr))&& (*ptr!= '\r'))
+	while((*(++ptr))&& ((*ptr!= '\r')&& (*ptr!= '\n')))
 		*ptr= '*';
 			
-	printf(pwstring);
-	free(pwstring);
+	g_print(pwstring);
+	g_free(pwstring);
 	
 	return(MTC_RETURN_TRUE);
 }
 
 /* function to send a message to the network server */
-#ifdef SSL_PLUGIN
-int ssl_send_net_string(int sockfd, char *sendstring, SSL *ssl, unsigned int pw)
-#else
-int std_send_net_string(int sockfd, char *sendstring, char *ssl, unsigned int pw)
-#endif /*SSL_PLUGIN*/
+mtc_error net_send(mtc_net *pnetinfo, gchar *sendstring, gboolean pw)
 {
 	
 	/*if debug mode is selected print the string to send*/
-	if(net_debug)
+	if(cfg_get()->net_debug)
 	{
 		if(pw)
 		{
-			if(!print_pw_string(sendstring))
-				return(MTC_RETURN_FALSE);
+			if(!pwprint(sendstring))
+				return(MTC_ERR_CONNECT);
 		}
 		else
-			printf(sendstring);
+			g_print(sendstring);
 		
 		fflush(stdout);
 	}
 
-	/*send the string to the server*/
-	if(!ssl)
-	{
-		if(send(sockfd, sendstring, strlen(sendstring), 0)== -1)
-		{
-			plg_report_error(S_NETFUNC_ERR_SEND);
-			return(MTC_RETURN_FALSE);
-		}
-	}
 #ifdef SSL_PLUGIN
-	else
+	if(pnetinfo->pssl)
 	{
-		if(SSL_write(ssl, sendstring, strlen(sendstring))<= 0)
+        if(SSL_write(pnetinfo->pssl, sendstring, strlen(sendstring))<= 0)
 		{
-			plg_report_error(S_NETFUNC_ERR_SEND);
-			return(MTC_RETURN_FALSE);
+			plg_err(S_NETFUNC_ERR_SEND);
+			return(MTC_ERR_CONNECT);
 		}
-	}
+    }
+    else
+    {
 #endif /*SSL_PLUGIN*/
-	
+	/*send the string to the server*/
+		if(send(pnetinfo->sockfd, sendstring, strlen(sendstring), 0)== SOCKET_ERROR)
+		{
+			plg_err(S_NETFUNC_ERR_SEND);
+			return(MTC_ERR_CONNECT);
+		}
+#ifdef SSL_PLUGIN
+	}
+#endif /*SSL_PLUGIN*/	
 	return(MTC_RETURN_TRUE);
 }
 
 /*function to check if data is available at the server*/
-#ifdef SSL_PLUGIN
-int ssl_net_data_available(int sockfd, SSL *ssl)
-#else
-int std_net_data_available(int sockfd, char *ssl)
-#endif /*SSL_PLUGIN*/
+mtc_error net_available(mtc_net *pnetinfo)
 {
 	fd_set fds;
 	struct timeval tv;
-	int n;
+	gint n;
 
 #ifdef SSL_PLUGIN
 	/*SSL handles things differently, so we have to check if there is any pending first*/
-	if((ssl)&& (SSL_pending(ssl)))
+	if((pnetinfo->pssl)&& (SSL_pending(pnetinfo->pssl)))
 		return(MTC_RETURN_TRUE);
 #endif
 		
 	/*set up the file descriptor set*/
 	FD_ZERO(&fds);
-	FD_SET(sockfd, &fds);
+	FD_SET(pnetinfo->sockfd, &fds);
 			
 	/*setup the timeval for the timeout*/
 	tv.tv_sec= NET_TIMEOUT; 
 	tv.tv_usec= 0;
 
 	/*wait until timeout or data is available*/
-	n= select(sockfd+ 1, &fds, NULL, NULL, &tv);
+	n= select((gint)(pnetinfo->sockfd+ 1), &fds, NULL, NULL, &tv);
 	
 	/*timeout*/
 	if(n== 0)
 		return(MTC_RETURN_FALSE);
 	
 	/*error with select command*/
-	else if(n== -1)
+	else if(n== SOCKET_ERROR)
 	{
-		plg_report_error(S_NETFUNC_ERR_DATA_AVAILABLE);
+		plg_err(S_NETFUNC_ERR_DATA_AVAILABLE);
 		return(MTC_RETURN_FALSE);
 	}
 
@@ -173,49 +313,46 @@ int std_net_data_available(int sockfd, char *ssl)
 }
 
 /*general function for network receiving*/
-#ifdef SSL_PLUGIN
-int ssl_receive_net_string(int sockfd, char *recvstring, SSL *ssl)
-#else
-int std_receive_net_string(int sockfd, char *recvstring, char *ssl)
-#endif
+gint net_recv(mtc_net *pnetinfo, gchar *recvstring, guint recvslen)
 {
-	int numbytes= 0;
+	gint numbytes= 0;
 
 	/*clear the buffer*/
-	memset(recvstring, '\0', MAXDATASIZE);
+	memset(recvstring, '\0', recvslen);
 	
-	/*receive a string from the server*/
-	if(ssl== NULL)
-	{
-		if((numbytes= recv(sockfd, recvstring, MAXDATASIZE- 1, 0))== -1)
+#ifdef SSL_PLUGIN
+    if(pnetinfo->pssl!= NULL)
+ 	{
+		if((numbytes= SSL_read(pnetinfo->pssl, recvstring, recvslen- 1))<= 0)
 		{
-			plg_report_error(S_NETFUNC_ERR_RECEIVE);
+			plg_err(S_NETFUNC_ERR_RECEIVE);
 			return(MTC_ERR_CONNECT);
 		}
 	}
-#ifdef SSL_PLUGIN
 	else
-	{
-		if((numbytes= SSL_read(ssl, recvstring, MAXDATASIZE- 1))<= 0)
+    {
+#endif /*SSL_PLUGIN*/
+	/*receive a string from the server*/
+		if((numbytes= recv(pnetinfo->sockfd, recvstring, recvslen- 1, 0))== SOCKET_ERROR)
 		{
-			plg_report_error(S_NETFUNC_ERR_RECEIVE);
+			plg_err(S_NETFUNC_ERR_RECEIVE);
 			return(MTC_ERR_CONNECT);
 		}
+#ifdef SSL_PLUGIN
 	}
 #endif /*SSL_PLUGIN*/
-	
+
 	/*terminate the string*/
 	recvstring[numbytes]= '\0';
 	
 	/*if debug mode print the received string*/
-	if(net_debug)
+	if(cfg_get()->net_debug)
 	{
-		printf(recvstring);
+		g_print(recvstring);
 		fflush(stdout);
 	}
 
 	/*return number of bytes received*/
 	return(numbytes);
-
 }
 

@@ -19,202 +19,176 @@
 
 #include "plg_common.h"
 
-/*this is a function to send a QUIT command to the pop server so that the program can retry to connect later*/
-#ifdef SSL_PLUGIN
-static int close_pop_connection(int sockfd, SSL *ssl, SSL_CTX *ctx)
-#else
-static int close_pop_connection(int sockfd, char *ssl, char *ctx)
-#endif /*SSL_PLUGIN*/
-{
-	/*send the QUIT command to try and exit nicely then close the socket and report error*/
-	SEND_NET_STRING(sockfd, "QUIT\r\n", ssl);
-	
-	plg_report_error(S_POPFUNC_ERR_CONNECT, PACKAGE);
-
-#ifdef SSL_PLUGIN
-	/*close the SSL connection*/
-	if(ssl)
-		uninitialise_ssl(ssl, ctx);
-#endif /*SSL_PLUGIN*/
-	
-	close(sockfd);
-	
-	return(MTC_RETURN_TRUE);
-	
-}
-
 /* function to receive a message from the pop3 server */
-#ifdef SSL_PLUGIN
-static char *receive_pop_string_func(int sockfd, SSL *ssl, char *buf, char *endstring)
-#else
-static char *receive_pop_string_func(int sockfd, char *ssl, char *buf, char *endstring)
-#endif /*SSL_PLUGIN*/
+static GString *pop_recvfunc(mtc_net *pnetinfo, GString *msg, gchar *endstring, gboolean getheader)
 {
-	int numbytes= 1;
-	char tmpbuf[MAXDATASIZE];
-	unsigned int buflen= 0, endslen= 0;
+	gint numbytes= 1;
+	gchar tmpbuf[MAXDATASIZE];
+	guint endslen= 0;
 
-	buf= NULL;
+    msg= g_string_new(NULL);
 	endslen= strlen(endstring);
 
 	/*while there is data available receive data*/
-	while(NET_DATA_AVAILABLE(sockfd, ssl))
+	while(net_available(pnetinfo))
 	{
 
-		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
+		if((numbytes= net_recv(pnetinfo, tmpbuf, sizeof(tmpbuf)))== MTC_ERR_CONNECT)
 		{
-			if(buf!= NULL) free(buf);
+			g_string_free(msg, TRUE);
 			return(NULL);
 		}
 		if(!numbytes)
 			break;
 
 		/*add the received string to the buffer*/
-		buf= str_cat(buf, tmpbuf);
-		buflen= strlen(buf);
+        msg= g_string_append(msg, tmpbuf);
 
 		/*added so we dont have to wait for select() timeout every time*/
-		if((buflen>= endslen)&& (strncmp(buf+ (buflen- endslen), endstring, endslen)== 0))
+		if((msg->len>= endslen)&& (g_ascii_strncasecmp(msg->str+ (msg->len- endslen), endstring, endslen)== 0))
 			break;
 	}
 	
 	/*check if there was an error with the command*/
-	if((buf!= NULL)&& (strncmp(buf, "-ERR", 4))== 0)
+	if((msg->str!= NULL)&& (g_ascii_strncasecmp(msg->str, "-ERR", 4))== 0)
 	{	
-		free(buf);
+		g_string_free(msg, TRUE);
 		return(NULL);
 	}
 	
 	/*check that the received string was receive fully (i.e ends with endstring)*/
-	if((buflen< endslen)||
-	((buf!= NULL)&& (strncmp(buf+ (buflen- endslen), endstring, endslen)!= 0)))
+	if((msg->len< endslen)||
+	((msg->str!= NULL)&& (g_ascii_strncasecmp(msg->str+ (msg->len- endslen), endstring, endslen)!= 0)))
 	{
-		free(buf);
+        if(getheader)
+        {
+            /*It was found that some servers return headers from TOP that do not conform to spec
+		    *such emails are handled here (although will be delayed as punishment ;)*/
+            gint nendslen= strlen("\r\n.\r\n");
+            if(g_ascii_strncasecmp(msg->str+ (msg->len- nendslen), "\r\n.\r\n", nendslen)== 0)
+			{   
+                plg_err(S_POPFUNC_ERR_BAD_MAIL_HEADER);
+			    return(msg);
+            }
+		}
+	
+		g_string_free(msg, TRUE);
 		return(NULL);
 	}
+	return(msg);
+}
+
+/*function to send a message to the pop3 server*/
+static mtc_error pop_send(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcmd, gchar *buf, ...)
+{
+    gchar *pop_msg= NULL;
+    gsize msglen= 0;
+    mtc_error retval= MTC_RETURN_TRUE;
+    va_list list;
+    
+    /*calculate length of format string*/
+    va_start(list, buf);
+    msglen= g_printf_string_upper_bound(buf, list)+ 1;
+    pop_msg= (gchar *)g_malloc0(msglen);
+    
+    if(g_vsnprintf(pop_msg, msglen, buf, list)>= (gint)msglen)
+        retval= MTC_ERR_CONNECT;
+    else
+        retval= net_send(pnetinfo, pop_msg, (g_ascii_strncasecmp("PASS ", pop_msg, 5)== 0));
+    
+    g_free(pop_msg);
+    va_end(list);
+    if(retval!= MTC_RETURN_TRUE)
+    {
+        plg_err(S_POPFUNC_ERR_SEND, errcmd, paccount->hostname);
+        net_disconnect(pnetinfo);
+    }
+    return(retval);
+}
+
+/*this is a function to send a QUIT command to the pop server so that the program can retry to connect later*/
+static mtc_error pop_close(mtc_net *pnetinfo, mtc_account *paccount)
+{
+	/*send the QUIT command to try and exit nicely then close the socket and report error*/
+	pop_send(pnetinfo, paccount, "QUIT", "QUIT\r\n");
+	plg_err(S_POPFUNC_ERR_CONNECT, PACKAGE);
+	net_disconnect(pnetinfo);
+    return(MTC_ERR_CONNECT);
+}
+
+/*function to receive a string from pop 3 server and handle any errors*/
+static GString *pop_recv(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcmd, GString *buf)
+{
+	if(!(buf= pop_recvfunc(pnetinfo, buf, "\r\n", FALSE)))
+	{
+        plg_err(S_POPFUNC_ERR_RECV, errcmd, paccount->hostname);
+	    pop_close(pnetinfo, paccount);
+        return(NULL);
+    }
 	return(buf);
 }
 
-/* function to receive a message from the pop3 server */
-#ifdef SSL_PLUGIN
-static char *receive_pop_string(int sockfd, SSL *ssl, char *buf)
-#else
-static char *receive_pop_string(int sockfd, char *ssl, char *buf)
-#endif /*SSL_PLUGIN*/
+/* function to receive a capability string from the pop3 server */
+static GString *pop_recv_capa(mtc_net *pnetinfo, GString *buf)
 {
-	return(receive_pop_string_func(sockfd, ssl, buf, "\r\n"));
+    return(pop_recvfunc(pnetinfo, buf, ".\r\n", FALSE));
 }
 
-/* function to receive a message from the pop3 server */
-#ifdef SSL_PLUGIN
-static char *receive_capability_string(int sockfd, SSL *ssl, char *buf)
-#else
-static char *receive_capability_string(int sockfd, char *ssl, char *buf)
-#endif /*SSL_PLUGIN*/
+#ifdef MTC_NOTMINIMAL
+/* function to receive a message header from the pop3 server */
+static GString *pop_recv_header(mtc_net *pnetinfo, mtc_account *paccount, gint msgid, GString *buf)
 {
-	return(receive_pop_string_func(sockfd, ssl, buf, ".\r\n"));
-}
-
-/* function to receive a message from the pop3 server */
-#ifdef SSL_PLUGIN
-static char *receive_header_string(int sockfd, SSL *ssl, char *buf)
-#else
-static char *receive_header_string(int sockfd, char *ssl, char *buf)
-#endif /*SSL_PLUGIN*/
-{
-	int numbytes= 1;
-	char tmpbuf[MAXDATASIZE];
-
-	buf= NULL;
-
-	/*while there is data available receive data*/
-	while(NET_DATA_AVAILABLE(sockfd, ssl))
-	{
-
-		if((numbytes= RECEIVE_NET_STRING(sockfd, tmpbuf, ssl))== -1)
-		{
-			if(buf!= NULL) free(buf);
-			return(NULL);
-		}
-		if(!numbytes)
-			break;
-
-		/*add the received string to the buffer*/
-		buf= str_cat(buf, tmpbuf);
-
-		/*added so we dont have to wait for select() timeout every time*/
-		if(strstr(buf, "\r\n\r\n.\r\n")!= NULL)
-			break;
-
-	}
-	
-	/*check if there was an error with the command*/
-	if((buf!= NULL)&& (strncmp(buf, "-ERR", 4))== 0)
-	{	
-		free(buf);
-		return(NULL);
-	}
-	
-	/*check that the received string was receive fully (i.e ends with \r\n*/
-	if((buf!= NULL)&& (strstr(buf, "\r\n\r\n.\r\n")== NULL))
-	{
-		/*It was found that some servers return headers from TOP that do not conform to spec
-		 *such emails are handled here (although will be delayed as punishment ;)*/
-		if(strstr(buf, "\r\n.\r\n")!= NULL)
-		{
-			plg_report_error(S_POPFUNC_ERR_BAD_MAIL_HEADER);
-			return(buf);
-		}
-		free(buf);
-		return(NULL);
-	}
+    if(!(buf= pop_recvfunc(pnetinfo, buf, "\r\n\r\n.\r\n", TRUE)))
+    {
+        plg_err(S_POPFUNC_ERR_RECV_HEADER, msgid, paccount->hostname);
+	    pop_close(pnetinfo, paccount);
+        return(NULL);
+    }
 	return(buf);
 }
+#endif /*MTC_NOTMINIMAL*/
 
 #ifdef SSL_PLUGIN
 /*function to login to APOP server*/
-static int login_to_apop_server(int sockfd, mail_details *paccount, char *buf)
+static mtc_error apop_login(mtc_net *pnetinfo, mtc_account *paccount)
 {
-	char apopstring[LOGIN_NAME_MAX+ HOST_NAME_MAX+ PASSWORD_LEN+ 3];
-	char digest[DIGEST_LEN+ 1];
-	char *startpos= NULL, *endpos= NULL, *rstring= NULL;
-	
+	gchar apopstring[LOGIN_NAME_MAX+ HOST_NAME_MAX+ PASSWORD_LEN+ 3];
+	gchar digest[DIGEST_LEN+ 1];
+	gchar *startpos= NULL, *endpos= NULL;
+    GString *rstring= NULL;
+    mtc_error retval= MTC_RETURN_TRUE;
+
 	/*search for the timestamp character start and end*/
-	if((buf)&& ((startpos= strchr(buf, '<'))!= NULL))
+	if((pnetinfo->pdata->str)&& ((startpos= strchr(pnetinfo->pdata->str, '<'))!= NULL))
 		endpos= strchr(startpos, '>');
 
 	/*if timestamp character and end arent found report that APOP is not supported*/
-	if(((startpos== NULL)|| (endpos== NULL))&& (close_pop_connection(sockfd, NULL, NULL)))
+	if((startpos== NULL)|| (endpos== NULL))
 	{
-		plg_report_error(S_POPFUNC_ERR_APOP_NOT_SUPPORTED);
-		return(MTC_RETURN_FALSE);
+		plg_err(S_POPFUNC_ERR_APOP_NOT_SUPPORTED);
+		return(pop_close(pnetinfo, paccount));
 	}
 	
 	/*copy the timestamp part of message to apopstring and append the password*/
 	memset(apopstring, '\0', LOGIN_NAME_MAX+ HOST_NAME_MAX+ PASSWORD_LEN+ 3);
-	strncpy(apopstring, startpos, (endpos- startpos)+ 1);
-	strcat(apopstring, paccount->password);
+	g_strlcpy(apopstring, startpos, (endpos- startpos)+ 2);
+	g_strlcat(apopstring, paccount->password, sizeof(apopstring));
 
 	/*encrypt the apop string and copy it into the digest buffer*/
 	memset(digest, '\0', DIGEST_LEN);
-	if((encrypt_apop_string(apopstring, digest)!= ((unsigned int)DIGEST_LEN/ 2)))
+	if((apop_encrypt(apopstring, digest)!= ((guint)DIGEST_LEN/ 2)))
 	{
-		plg_report_error(S_POPFUNC_ERR_APOP_ENCRYPT_TIMESTAMP);
-		return(MTC_ERR_EXIT);
+		plg_err(S_POPFUNC_ERR_APOP_ENCRYPT_TIMESTAMP);
+		pop_close(pnetinfo, paccount);
+        return(MTC_ERR_EXIT);
 	}
-	/*create the full APOP string to send from the digest and username*/
-	memset(apopstring, '\0', LOGIN_NAME_MAX+ HOST_NAME_MAX+ PASSWORD_LEN+ 3);
-	sprintf(apopstring, "APOP %s %s\r\n", paccount->username, digest);
-	
 	/*send the APOP auth string and check it was successfull*/
-	SEND_NET_STRING(sockfd, apopstring, NULL);
+	if((retval= pop_send(pnetinfo, paccount, "APOP", "APOP %s %s\r\n", paccount->username, digest))!= MTC_RETURN_TRUE)
+        return(retval);
 	
-	if((!(rstring= receive_pop_string(sockfd, NULL, rstring)))&& (close_pop_connection(sockfd, NULL, NULL)))
-	{
-		plg_report_error(S_POPFUNC_ERR_APOP_SEND_DETAILS, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-	free(rstring);
+	if(!(rstring= pop_recv(pnetinfo, paccount, "APOP", rstring)))
+	    return(MTC_ERR_CONNECT);
+    g_string_free(rstring, TRUE);
 		
 	return(MTC_RETURN_TRUE);
 
@@ -222,523 +196,459 @@ static int login_to_apop_server(int sockfd, mail_details *paccount, char *buf)
 #endif /*SSL_PLUGIN*/
 
 /*function to login to POP server*/
-#ifdef SSL_PLUGIN
-static int login_to_pop_server(int sockfd, mail_details *paccount, SSL *ssl, SSL_CTX *ctx)
-#else
-static int login_to_pop_server(int sockfd, mail_details *paccount, char *ssl, char *ctx)
-#endif /*SSL_PLUGIN*/
+static mtc_error pop_login(mtc_net *pnetinfo, mtc_account *paccount)
 {
 	/*create the string for the username and send it*/
-	char *buf= NULL;
-	char *pop_message= NULL;
-	
-	pop_message= (char*)alloc_mem(strlen(paccount->username)+ strlen("USER \r\n")+ 1, pop_message);
-	sprintf(pop_message,"USER %s\r\n", paccount->username);
-	SEND_NET_STRING(sockfd, pop_message, ssl);
-	free(pop_message);
-	
-	/*receive back from server to check username was sent ok*/
-	if((!(buf= receive_pop_string(sockfd, ssl, buf)))&& (close_pop_connection(sockfd, ssl, ctx)))
-	{
-		plg_report_error(S_POPFUNC_ERR_SEND_USERNAME, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-	free(buf);
+	GString *buf= NULL;
+	mtc_error retval= MTC_RETURN_TRUE;
 
-	/*create password string and send it*/
-	pop_message = (char*)alloc_mem(strlen(paccount->password)+ strlen("PASS \r\n")+ 1, pop_message);
-	sprintf(pop_message,"PASS %s\r\n", paccount->password); /*send the password*/
-	SEND_NET_PW_STRING(sockfd, pop_message, ssl);
-	free(pop_message);
-	
-	/*receive message back from server to check that login was successful*/
-	if((!(buf= receive_pop_string(sockfd, ssl, buf)))&& (close_pop_connection(sockfd, ssl, ctx)))
-	{
-		plg_report_error(S_POPFUNC_ERR_SEND_PASSWORD, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-	free(buf);
+    /*send/receive user*/
+	if((retval= pop_send(pnetinfo, paccount, "USER", "USER %s\r\n", paccount->username))!= MTC_RETURN_TRUE)
+        return(retval);
+	if(!(buf= pop_recv(pnetinfo, paccount, "USER", buf)))
+	    return(MTC_ERR_CONNECT);
+
+    g_string_free(buf, TRUE);
+    buf= NULL;
+
+	/*send/receive password*/
+	if((retval= pop_send(pnetinfo, paccount, "PASS", "PASS %s\r\n", paccount->password))!= MTC_RETURN_TRUE)
+        return(retval);
+	if(!(buf= pop_recv(pnetinfo, paccount, "PASS", buf)))
+	    return(MTC_ERR_CONNECT);
+
+    g_string_free(buf, TRUE);
 	return(MTC_RETURN_TRUE);
 }
 
 #ifdef SSL_PLUGIN	
 /*function to login to POP server with CRAM-MD5 auth*/
-static int login_to_crammd5_server(int sockfd, mail_details *paccount)
+static mtc_error crammd5_login(mtc_net *pnetinfo, mtc_account *paccount)
 {
-	char *buf= NULL;
-	char *digest= NULL;
+	GString *buf= NULL;
+	gchar *digest= NULL;
+    mtc_error retval= MTC_RETURN_TRUE;
 
 	/*send auth command*/
-	SEND_NET_STRING(sockfd, "AUTH CRAM-MD5\r\n", NULL);
+	if((retval= pop_send(pnetinfo, paccount, "AUTH CRAM-MD5", "AUTH CRAM-MD5\r\n"))!= MTC_RETURN_TRUE)
+        return(retval);
 
 	/*receive back from server to check username was sent ok*/
-	if((!(buf= receive_pop_string(sockfd, NULL, buf)))&& (close_pop_connection(sockfd, NULL, NULL)))
-	{
-		plg_report_error(S_POPFUNC_ERR_SEND_CRAM_MD5_AUTH, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
+	if(!(buf= pop_recv(pnetinfo, paccount, "AUTH CRAM-MD5", buf)))
+        return(MTC_ERR_CONNECT);
 
-	/*remove '\r\n' etc*/
-	if(buf[strlen(buf)- 2]== '\r')
-		buf[strlen(buf)- 2]= '\0';
-	if(buf[strlen(buf)- 1]== '\n')
-		buf[strlen(buf)- 1]= '\0';
-	
+    /*remove trailing whitespace*/
+    g_strchomp(buf->str);
+
 	/*create CRAM-MD5 string to send to server*/
-	digest= create_cram_string(paccount, buf+ 2, digest);
-	free(buf);
-	
+	digest= mk_cramstr(paccount, buf->str+ 2, digest);
+	g_string_free(buf, TRUE);
+	buf= NULL;
+
 	/*check the digest value that is returned*/
 	if(digest== NULL)
-		return(MTC_RETURN_FALSE);
+		return(net_disconnect(pnetinfo));
 
 	/*send the digest to log in*/
-	digest= realloc_mem(strlen(digest)+ 3, digest);
-	strcat(digest, "\r\n");
-	SEND_NET_STRING(sockfd, digest, NULL);
-	free(digest);
+	retval= pop_send(pnetinfo, paccount, "CRAM-MD5 digest", "%s\r\n", digest);
+	g_free(digest);
 	
+    if(retval!= MTC_RETURN_TRUE)
+        return(retval);
+
 	/*receive back from server to check username was sent ok*/
-	if((!(buf= receive_pop_string(sockfd, NULL, buf)))&& (close_pop_connection(sockfd, NULL, NULL)))
-	{
-		plg_report_error(S_POPFUNC_ERR_SEND_USERNAME, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-	free(buf);
+	if(!(buf= pop_recv(pnetinfo, paccount, "CRAM-MD5 digest", buf)))
+	    return(MTC_ERR_CONNECT);
+
+    g_string_free(buf, TRUE);
 
 	return(MTC_RETURN_TRUE);
 }
-#endif
+#endif /*SSL_PLUGIN*/
+
 
 /*function to get the number of messages from POP server*/
-#ifdef SSL_PLUGIN
-static int get_number_of_messages(int sockfd, mail_details *paccount, SSL *ssl, SSL_CTX *ctx)
-#else
-static int get_number_of_messages(int sockfd, mail_details *paccount, char *ssl, char *ctx)
-#endif /*SSL_PLUGIN*/
+static mtc_error pop_get_msgs(mtc_net *pnetinfo, mtc_account *paccount)
 {
-	int num_messages= 0;
-	char *buf= NULL;
+    mtc_error retval= MTC_RETURN_TRUE;
+	GString *buf= NULL;
 
 	/*get the total number of messages from server*/
-	SEND_NET_STRING(sockfd, "STAT\r\n", ssl);
-	
-	if((!(buf= receive_pop_string(sockfd, ssl, buf)))&& (close_pop_connection(sockfd, ssl, ctx)))
-	{
-		plg_report_error(S_POPFUNC_ERR_RECEIVE_NUM_MESSAGES, paccount->hostname);
-		return(MTC_ERR_CONNECT);
-	}
-	
-	/*if received ok, create the number of messages from string and return it*/
-	if(sscanf(buf, "%*s%d%*d", &num_messages)!= 1)
-	{
-		plg_report_error(S_POPFUNC_ERR_GET_TOTAL_MESSAGES);
-		free(buf);
-		return(MTC_ERR_CONNECT);
-	}
-	free(buf);
+	if((retval= pop_send(pnetinfo, paccount, "STAT", "STAT\r\n"))!= MTC_RETURN_TRUE)
+	    return(retval);
+	if(!(buf= pop_recv(pnetinfo, paccount, "STAT", buf)))
+	    return(MTC_ERR_CONNECT);
 
-	return(num_messages);
+	/*if received ok, create the number of messages from string and return it*/
+#ifdef MTC_NOTMINIMAL
+    if(sscanf(buf->str, "%*s%d%*d", &paccount->msginfo.num_messages)!= 1)
+#else
+    if(sscanf(buf->str, "%*s%d%*d", &paccount->num_messages)!= 1)
+#endif /*MTC_NOTMINIMAL*/
+    {
+		plg_err(S_POPFUNC_ERR_GET_TOTAL_MESSAGES);
+		g_string_free(buf, TRUE);
+		return(MTC_ERR_CONNECT);
+	}
+	g_string_free(buf, TRUE);
+
+	return(MTC_RETURN_TRUE);
 }
 
 /*function to logout and close the pop connection*/
-#ifdef SSL_PLUGIN
-static int logout_of_pop_server(int sockfd, mail_details *paccount, SSL *ssl, SSL_CTX *ctx)
-#else
-static int logout_of_pop_server(int sockfd, mail_details *paccount, char *ssl, char *ctx)
-#endif /*SSL_PLUGIN*/
+static mtc_error pop_logout(mtc_net *pnetinfo, mtc_account *paccount)
 {
-	char *buf= NULL;
+	GString *buf= NULL;
+    mtc_error retval= MTC_RETURN_TRUE;
 
-	/*send the message to logout of the server*/
-	SEND_NET_STRING(sockfd,"QUIT\r\n", ssl); /*quit from the POP server*/
+	/*send/receive the message to logout of the server*/
+	if((retval= pop_send(pnetinfo, paccount, "QUIT", "QUIT\r\n"))!= MTC_RETURN_TRUE)
+        return(retval);
+	if(!(buf= pop_recv(pnetinfo, paccount, "QUIT", buf)))
+		return(MTC_ERR_CONNECT);
 	
-	if((!(buf= receive_pop_string(sockfd, ssl, buf)))&& (close_pop_connection(sockfd, ssl, ctx)))
-	{
-		plg_report_error(S_POPFUNC_ERR_SEND_QUIT, paccount->hostname);
-		return(MTC_RETURN_FALSE);
-	}
-	free(buf);
+    g_string_free(buf, TRUE);
 
-#ifdef SSL_PLUGIN
-	/*close the SSL connection*/
-	if(ssl)
-		uninitialise_ssl(ssl, ctx);
-#endif
-
-	/*if logout was successful close the socket*/
-	close(sockfd);
-	return(MTC_RETURN_TRUE);
+    return(net_disconnect(pnetinfo));
 }
 
 /*function to test capabilities of POP/IMAP server*/
-#ifdef SSL_PLUGIN
-static int test_pop_server_capabilities(int sockfd, enum pop_protocol protocol, SSL *ssl, SSL_CTX *ctx)
-#else
-static int test_pop_server_capabilities(int sockfd, enum pop_protocol protocol, char *ssl, char *ctx)
-#endif /*SSL_PLUGIN*/
+static mtc_error pop_capa(mtc_net *pnetinfo, mtc_account *paccount)
 {
-	char *buf= NULL;
+	GString *buf= NULL;
+    mtc_error retval= MTC_RETURN_TRUE;
 
 	/*send the message to check capabilities of the server*/
-	SEND_NET_STRING(sockfd, "CAPA\r\n", ssl); 
+	if((retval= pop_send(pnetinfo, paccount, "CAPA", "CAPA\r\n"))!= MTC_RETURN_TRUE)
+        return(retval);
 	
 	/*assumption is made that ERR means server does not have CAPA command*/
 	/*also means that CRAM-MD5 is not supported*/
-	if((!(buf= receive_capability_string(sockfd, ssl, buf))))
+	if(!(buf= pop_recv_capa(pnetinfo, buf)))
 	{
-		if(protocol== POPCRAM_PROTOCOL)
+		if(pnetinfo->authtype== POPCRAM_PROTOCOL)
 		{
-			close_pop_connection(sockfd, ssl, ctx);
-			plg_report_error(S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
-			return(MTC_RETURN_FALSE);
+			plg_err(S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
+			return(pop_close(pnetinfo, paccount));
 		}
 		return(MTC_RETURN_TRUE);
 	}
 	/*First we check for OK, otherwise report that its not a valid POP server and return*/
-	if(strncmp(buf, "+OK", 3)!= 0)
+	if(g_ascii_strncasecmp(buf->str, "+OK", 3)!= 0)
 	{
-		free(buf);
-		close_pop_connection(sockfd, ssl, ctx);
-		plg_report_error(S_POPFUNC_ERR_TEST_CAPABILITIES);
-		return(MTC_RETURN_FALSE);
+		g_string_free(buf, TRUE);
+		plg_err(S_POPFUNC_ERR_TEST_CAPABILITIES);
+		return(pop_close(pnetinfo, paccount));
 	}
 	
 	/*here we test the capabilites*/
 	/*no need to test simple POP as it would just return OK*/
 	/*APOP is not handled by CAPA command*/
-	if(protocol== POPCRAM_PROTOCOL)
+	if(pnetinfo->authtype== POPCRAM_PROTOCOL)
 	{
 		/*If CRAM_MD5 is not found in the string it is not supported*/
-		if(strstr(buf, "CRAM-MD5")== NULL)
+		if(strstr(buf->str, "CRAM-MD5")== NULL)
 		{
-			free(buf);
-			close_pop_connection(sockfd, ssl, ctx);
-			plg_report_error(S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
-			return(MTC_RETURN_FALSE);
+			g_string_free(buf, TRUE);
+			plg_err(S_POPFUNC_ERR_CRAM_MD5_NOT_SUPPORTED);
+			return(pop_close(pnetinfo, paccount));
 		}
 	}
-	free(buf);
+	g_string_free(buf, TRUE);
 
 	return(MTC_RETURN_TRUE);
 }
 
-/*function to check whether message is filtered out*/
-#ifdef SSL_PLUGIN
-static int filter_message(int sockfd, mail_details *paccount, int message, SSL *ssl)
-#else
-static int filter_message(int sockfd, mail_details *paccount, int message, char *ssl)
-#endif
+/*function to get the header of a message*/
+#ifdef MTC_NOTMINIMAL
+static GString *pop_get_header(mtc_net *pnetinfo, mtc_account *paccount, GString *buf, gint message)
 {
-	unsigned int found= MTC_RETURN_FALSE;
-
-	/*check if filters need to be applied*/
-	if(paccount->runfilter)
-	{
-		char pop_message[MAXDATASIZE];	
-		char *buf= NULL;
-
-		/*send the TOP message to get the mail header*/
-		memset(pop_message, '\0', MAXDATASIZE);
-		sprintf(pop_message, "TOP %d 0\r\n", message);
-		SEND_NET_STRING(sockfd, pop_message, ssl);
-
-		if(!(buf= receive_header_string(sockfd, ssl, buf))&& (close_pop_connection(sockfd, NULL, NULL))) 
-		{	
-			plg_report_error(S_POPFUNC_ERR_RECEIVE_TOP, message);
-			if(buf!= NULL) free(buf);
-			return(MTC_RETURN_FALSE);
-		}
-		
-		/*search for a filter match now*/
-		found= search_for_filter_match(&paccount, buf);
-	
-		free(buf);
-	}
-	return(found);
-	
+   	if(pop_send(pnetinfo, paccount, "TOP", "TOP %d 0\r\n", message)== MTC_RETURN_TRUE)
+	    buf= pop_recv_header(pnetinfo, paccount, message, buf);
+    
+    return(buf);
 }
-
+#endif /*MTC_NOTMINIMAL*/
 
 /*function to get the uidl for a message*/
-#ifdef SSL_PLUGIN
-static char *get_uidl_of_message(int sockfd, int message, SSL *ssl, char *buf)
-#else
-static char *get_uidl_of_message(int sockfd, int message, char *ssl, char *buf)
-#endif
+static GString *pop_recv_uidl(mtc_net *pnetinfo, mtc_account *paccount, gint message, GString *buf)
 {
 	/*clear the buffer*/
-	char pop_message[MAXDATASIZE];
-	
 	buf= NULL;
 
 	/*send the uidl string to get the uidl for the current message*/
-	memset(pop_message, '\0', MAXDATASIZE);
-	sprintf(pop_message, "UIDL %d\r\n", message);
-	SEND_NET_STRING(sockfd, pop_message, ssl);
+	if(pop_send(pnetinfo, paccount, "UIDL", "UIDL %d\r\n", message)== MTC_RETURN_TRUE)
+	    buf= pop_recv(pnetinfo, paccount, "UIDL", buf);
+    return(buf);
+}
 
-	if(!(buf= receive_pop_string(sockfd, ssl, buf))&& (close_pop_connection(sockfd, NULL, NULL))) 
-	{	
-		plg_report_error(S_POPFUNC_ERR_RECEIVE_UIDL, message);
-		if(buf!= NULL) free(buf);
-		return(NULL);
+/*function to get the uidl from the received string*/
+static mtc_error pop_get_uidl(GString *buf, gchar *uidl_string)
+{
+	/*int uidllen= 0;*/
+	gchar *pos= NULL;
+
+	if((pos= strrchr(buf->str, ' '))== NULL)
+	{
+		plg_err(S_POPFUNC_ERR_GET_UIDL);
+		g_string_free(buf, TRUE);
+		return(MTC_ERR_EXIT);
 	}
-	/*return ok if uidl was returned*/
-	return(buf);
+
+	memset(uidl_string, '\0', UIDL_LEN);
+	g_strlcpy(uidl_string, pos+ 1, UIDL_LEN);
+    g_strlcat(g_strchomp(uidl_string), "\n", UIDL_LEN);
+	
+    return(MTC_RETURN_TRUE);
 }
 
 /* function to get uidl values of messages on server, 
  * and compare them with values in stored uidl file
  * to check if there are any new messages */
-#ifdef SSL_PLUGIN
-int output_uidls_to_file(int sockfd, mail_details *paccount, const char *cfgdir, int num_messages, SSL *ssl)
-#else
-int output_uidls_to_file(int sockfd, mail_details *paccount, const char *cfgdir, int num_messages, char *ssl)
-#endif
+mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	int new_messages= 0, i;
+	gint total_messages= 0, i;
 	FILE *outfile;
-	char uidl_string[UIDL_LEN];
-	char uidlfile[NAME_MAX]; 
-	char tmpuidlfile[NAME_MAX];
-	
+	FILE *infile= NULL;
+	gchar uidl_string[UIDL_LEN];
+	gchar uidlfile[NAME_MAX]; 
+	gchar tmpuidlfile[NAME_MAX];
+	GString *buf= NULL;
+	gboolean uidlfound= 0;
+	gchar line[LINE_LENGTH];
+    mtc_error retval= MTC_RETURN_TRUE;
+    gboolean uexists = FALSE;
+
+#ifdef MTC_NOTMINIMAL
+    total_messages= paccount->msginfo.num_messages;
+    
+    /*reset the list so we know what is new*/
+    msglist_reset(paccount);
+#else
+    total_messages= paccount->num_messages;
+    paccount->num_messages= 0;
+#endif /*MTC_NOTMINIMAL*/
+
 	/*get the full path for the uidl file and temp uidl file*/
-	plg_get_account_file(uidlfile, cfgdir, UIDL_FILE, paccount->id);
-	plg_get_account_file(tmpuidlfile, cfgdir, TMP_UIDL_FILE, paccount->id);
+	mtc_file(uidlfile, pconfig->dir, UIDL_FILE, paccount->id);
+	mtc_file(tmpuidlfile, pconfig->dir, TMP_UIDL_FILE, paccount->id);
 
 	/*open temp file for writing*/
-	if((outfile= fopen(tmpuidlfile, "wt"))==NULL)
+	if((outfile= g_fopen(tmpuidlfile, "w"))== NULL)
 	{
-		plg_report_error(S_POPFUNC_ERR_OPEN_FILE, tmpuidlfile);
+		plg_err(S_POPFUNC_ERR_OPEN_FILE, tmpuidlfile);
 		return(MTC_ERR_EXIT);
 	}
+
+    /*test if uidl file exists, we need to know for later*/
+    uexists= IS_FILE(uidlfile);
+    
+    /*open the UIDL file if exists*/
+    if(uexists)
+    {
+        if((infile= g_fopen(uidlfile, "r"))== NULL)
+        {
+		    plg_err(S_POPFUNC_ERR_OPEN_FILE, uidlfile);
+		    return(MTC_ERR_EXIT);
+	    }
+    }
+    
 	/*for each message on server*/
-	for(i= 1; i<= num_messages; ++i)
+	for(i= 1; i<= total_messages; ++i)
 	{
-		char *buf= NULL;
+		buf= NULL;
 
 		/*get the uidl of the message*/
-		if((buf= get_uidl_of_message(sockfd, i, ssl, buf)))
+		if((buf= pop_recv_uidl(pnetinfo, paccount, i, buf)))
 		{
-			FILE *infile;
-			int uidlfound= 0;
+            uidlfound= FALSE;
 			
-			/*get the uidl from the received string*/
-			char *pos;
-			if((pos= strrchr(buf, ' '))== NULL)
-			{
-				plg_report_error(S_POPFUNC_ERR_GET_UIDL);
-				free(buf);
-				return(MTC_ERR_EXIT);
-			}
-			
-			memset(uidl_string, '\0', UIDL_LEN);
-			strcpy(uidl_string, pos+ 1);
-			
-			free(buf);
+            /*get the uidl part from the received string*/
+            if(pop_get_uidl(buf, uidl_string)!= MTC_RETURN_TRUE)
+                return(MTC_ERR_EXIT);
+		
+			g_string_free(buf, TRUE);
+		    buf= NULL;
 
-			if(isspace(uidl_string[strlen(uidl_string)- 2]))
-				uidl_string[strlen(uidl_string)- 2]= '\0';
-			else if(isspace(uidl_string[strlen(uidl_string)- 1]))
-				uidl_string[strlen(uidl_string)- 1]= '\0';
-					
-			strcat(uidl_string, "\n");
-			
-			/*if there is no uidl file already there simply increment the new message count*/
-			if((access(uidlfile, F_OK))== -1)
+			/*if there is a uidl file look for the UIDL*/
+            /*NOTE if there is no uidl file it is assumed that this is
+             *initial (first ever) read, so no messages are added*/
+            if(uexists&& infile!= NULL)
 			{
-				/*check if message should be filtered out before incrementing*/
-				if(!filter_message(sockfd, paccount, i, ssl))
-					new_messages++;
-			}
-			/*if the uidl file does exist*/
-			else 
-			{
-				char line[LINE_LENGTH];
-				
-				/*open the uidl file for reading*/
-				if((infile= fopen(uidlfile, "rt"))== NULL)
-				{
-					plg_report_error(S_POPFUNC_ERR_OPEN_FILE, uidlfile);
-					return(MTC_ERR_EXIT);
-				}
-			
-				/*get each line from uidl file and compare it with the uidl value received*/
+			    memset(line, '\0', LINE_LENGTH);
+			    rewind(infile);
+
+                /*get each line from uidl file and compare it with the uidl value received*/
 				while(fgets(line, LINE_LENGTH, infile)!= NULL)
 				{
-					if(strcmp(uidl_string, line)== 0)
-						uidlfound=1;
-						
-					memset(line, '\0', LINE_LENGTH);
+					if(g_ascii_strcasecmp(uidl_string, line)== 0)
+					{
+                        uidlfound= TRUE; break;
+			        }
+                    memset(line, '\0', LINE_LENGTH);
 				}
-			
-				/*if the uidl was not found in the uidl file increment the new message count*/
-				/*also check if filters should be applied*/
-				if((!uidlfound)&& (!filter_message(sockfd, paccount, i, ssl)))
-					new_messages++;
-			
-				if(fclose(infile)== EOF)
-					plg_report_error(S_POPFUNC_ERR_CLOSE_FILE, uidlfile);
+			    /*if the uidl was not found in the uidl file increment the new message count*/
+			    /*also check if filters should be applied*/
+			    if(!uidlfound)
+			    {
+#ifdef MTC_NOTMINIMAL
+
+#ifdef MTC_EXPERIMENTAL
+	                if(paccount->runfilter|| pconfig->run_summary)
+#else
+	                if(paccount->runfilter)
+#endif /*MTC_EXPERIMENTAL*/
+                    {
+                        if((buf= pop_get_header(pnetinfo, paccount, buf, i))== NULL)
+                            retval= MTC_ERR_CONNECT;
+                    }
+				    paccount->msginfo.msglist= msglist_add(paccount, uidl_string, buf);
+			        if(buf!= NULL)
+                        g_string_free(buf, TRUE);
+#else
+                    paccount->num_messages++;
+#endif /*MTC_NOTMINIMAL*/
+
+			    }   
+                /*in case of error we must break after the file is closed*/
+                if(retval!= MTC_RETURN_TRUE)
+                    break;
 			}
-			/*output the uidl string to the temp file*/
+            /*output the uidl string to the temp file*/
 			fputs(uidl_string, outfile);
 		}
-	
+        else
+        {
+            retval= MTC_ERR_CONNECT;
+            break;
+        }
 	}
-	
+    
+    if((infile!= NULL)&& (fclose(infile)== EOF))
+		plg_err(S_POPFUNC_ERR_CLOSE_FILE, uidlfile);
+ 
 	if(fclose(outfile)== EOF)
-		plg_report_error(S_POPFUNC_ERR_CLOSE_FILE, tmpuidlfile);
+		plg_err(S_POPFUNC_ERR_CLOSE_FILE, tmpuidlfile);
 	
-	return(new_messages);
+#ifdef MTC_NOTMINIMAL
+    paccount->msginfo.msglist= msglist_cleanup(paccount);
+    if(!msglist_verify(paccount))
+    {
+        plg_err(S_POPFUNC_ERR_VERIFY_MSGLIST);
+        return(MTC_RETURN_FALSE);
+    }
+#endif /*MTC_NOTMINIMAL*/
+
+    /*if the UID file did not exist, rename the temp file*/
+    /*this effectively marks everything as read on the first pass*/
+	if(!uexists)
+    {
+        /*rename the temp uidl file to uidl file if it exists*/
+        if((IS_FILE(tmpuidlfile))&& (g_rename(tmpuidlfile, uidlfile)== -1))
+	    {
+		    plg_err(S_POPFUNC_ERR_RENAME_FILE, tmpuidlfile, uidlfile);
+		    return(MTC_RETURN_FALSE);
+	    }
+
+	    /*remove the temp file and cleanup*/
+	    g_remove(tmpuidlfile);
+    }
+
+    return(retval);
 }
 
-
 /*function to check mail (in clear text mode)*/
-static int check_mail(mail_details *paccount, const char *cfgdir, enum pop_protocol protocol)
+static mtc_error check_mail(mtc_net *pnetinfo, mtc_account *paccount, mtc_error (*authfunc)(mtc_net *, mtc_account *), const mtc_cfg *pconfig)
 {
-	int sockfd= 0;
-	int num_messages= 0;
-	char *buf= NULL;
-
-#ifdef SSL_PLUGIN
-	int retval= 0;
-	SSL *ssl= NULL;
-	SSL_CTX *ctx= NULL;
-#else
-	/*use char * to save code (values are unused)*/
-	char *ssl= NULL;
-	char *ctx= NULL;
-#endif /*SSL_PLUGIN*/
+	mtc_error retval= MTC_RETURN_TRUE;
 	
 	/*connect to the server and receive the string back*/
-	if(!(connect_to_server(&sockfd, paccount)))
+	if(net_connect(pnetinfo, paccount)!= MTC_RETURN_TRUE)
 		return(MTC_ERR_CONNECT);
 	
-#ifdef SSL_PLUGIN
-	if(protocol== POPSSL_PROTOCOL)
-	{
-		/*initialise SSL connection*/
-		ctx= initialise_ssl_ctx(ctx);
-		ssl= initialise_ssl_connection(ssl, ctx, &sockfd);
-	}
-#endif /*SSL_PLUGIN*/
-	
-	buf= receive_pop_string(sockfd, ssl, buf);
+    /*some servers don't give us anything to receive, so don't disconnect if we don't get anything*/
+	pnetinfo->pdata= pop_recv(pnetinfo, paccount, "connect", pnetinfo->pdata);
 
 	/*test server capabilities*/
-	if(!(test_pop_server_capabilities(sockfd, protocol, ssl, ctx)))
+	if(pop_capa(pnetinfo, paccount)!= MTC_RETURN_TRUE)
 	{
-		if(buf!= NULL) free(buf);
+		if(pnetinfo->pdata!= NULL) g_string_free(pnetinfo->pdata, TRUE);
 		return(MTC_ERR_CONNECT);
 	}
-	
-	/*test the type of login*/
-	switch(protocol)
-	{
-		/*TLS auth before pop connection and POP*/
-		case POP_PROTOCOL:
-		case POPSSL_PROTOCOL:
-			if(!(login_to_pop_server(sockfd, paccount, ssl, ctx)))
-			{
-				if(buf!= NULL) free(buf);
-				return(MTC_ERR_CONNECT);
-			}
-		break;
 
-#ifdef SSL_PLUGIN
-		/*APOP*/
-		case APOP_PROTOCOL:
-			if(((retval= login_to_apop_server(sockfd, paccount, buf))== 0)||
-				(retval== MTC_ERR_EXIT))
-			{
-				if(buf!= NULL) free(buf);
-				return((retval== 0)? MTC_ERR_CONNECT: MTC_ERR_EXIT);
-			}
-		break;
-#endif /*SSL_PLUGIN*/
-
-#ifdef SSL_PLUGIN
-		/*CRAM-MD5*/
-		case POPCRAM_PROTOCOL:
-			if(!(login_to_crammd5_server(sockfd, paccount)))
-			{
-				if(buf!= NULL) free(buf);
-				return(MTC_ERR_CONNECT);
-			}
-		break;
-#endif /*SSL_PLUGIN*/
-		
-		default: 
-			plg_report_error(S_POPFUNC_ERR_INVALID_AUTH);
-			if(buf!= NULL) free(buf);
-			return(MTC_ERR_CONNECT);
-	}
-
-	if(buf!= NULL) free(buf);
+    /*run the authentication function*/
+    retval= (*authfunc)(pnetinfo, paccount);
+    
+    if(pnetinfo->pdata!= NULL)
+        g_string_free(pnetinfo->pdata, TRUE);
+    
+    if(retval!= MTC_RETURN_TRUE)
+        return(retval);
 
 	/*get the total number of messages from the server*/
-	if((num_messages= get_number_of_messages(sockfd, paccount, ssl, ctx))== MTC_ERR_CONNECT)
-		return(MTC_ERR_CONNECT);
+	if((retval= pop_get_msgs(pnetinfo, paccount))!= MTC_RETURN_TRUE)
+        return(retval);
 	
-	/*output the uidls to the temp file and get the number of new messages*/
-	num_messages= output_uidls_to_file(sockfd, paccount, cfgdir, num_messages, ssl);
-
-	/*logout of the server and return the number of new messages*/
-	if(!(logout_of_pop_server(sockfd, paccount, ssl, ctx)))
-		return(MTC_ERR_CONNECT);
-
-	return(num_messages);
+    /*output the uidls to the temp file and get the number of new messages*/
+	if((retval= pop_calc_new(pnetinfo, paccount, pconfig))!= MTC_RETURN_TRUE)
+        return(retval);
+	
+    /*logout of the server and return the number of new messages*/
+	return(pop_logout(pnetinfo, paccount));
 }
 
 /*function to read the POP mail*/
-int pop_read_mail(mail_details *paccount, const char *cfgdir)
+mtc_error pop_read_mail(mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	char uidlfile[NAME_MAX], tmpuidlfile[NAME_MAX];
+	gchar uidlfile[NAME_MAX], tmpuidlfile[NAME_MAX];
 
 	/*get full paths of files*/
-	plg_get_account_file(uidlfile, cfgdir, UIDL_FILE, paccount->id);
-	plg_get_account_file(tmpuidlfile, cfgdir, TMP_UIDL_FILE, paccount->id);
+	mtc_file(uidlfile, pconfig->dir, UIDL_FILE, paccount->id);
+	mtc_file(tmpuidlfile, pconfig->dir, TMP_UIDL_FILE, paccount->id);
 
 	/*rename the temp uidl file to uidl file if it exists*/
-	if((access(tmpuidlfile, F_OK)!= -1)&& (rename(tmpuidlfile, uidlfile)== -1))
+    if((IS_FILE(tmpuidlfile))&& (g_rename(tmpuidlfile, uidlfile)== -1))
 	{
-		plg_report_error(S_POPFUNC_ERR_RENAME_FILE, tmpuidlfile, uidlfile);
+		plg_err(S_POPFUNC_ERR_RENAME_FILE, tmpuidlfile, uidlfile);
 		return(MTC_RETURN_FALSE);
 	}
 
 	/*remove the temp file and cleanup*/
-	remove(tmpuidlfile);
+	g_remove(tmpuidlfile);
 
 	return(MTC_RETURN_TRUE);
-
 }
 
 /*call check_mail for POP*/
-int check_pop_mail(mail_details *paccount, const char *cfgdir)
+mtc_error check_pop_mail(mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	enum pop_protocol protocol= POP_PROTOCOL;
-	return(check_mail(paccount, cfgdir, protocol));
+    mtc_net netinfo;
+	netinfo.authtype= POP_PROTOCOL;
+	return(check_mail(&netinfo, paccount, &pop_login, pconfig));
 }
 
+#ifdef SSL_PLUGIN
 /*call check_mail for APOP*/
-int check_apop_mail(mail_details *paccount, const char *cfgdir)
+mtc_error check_apop_mail(mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	enum pop_protocol protocol= APOP_PROTOCOL;
-	return(check_mail(paccount, cfgdir, protocol));
+    mtc_net netinfo;
+	netinfo.authtype= APOP_PROTOCOL;
+	return(check_mail(&netinfo, paccount, &apop_login, pconfig));
 }
 
 /*call check_mail for POP (CRAM-MD5)*/
-int check_crampop_mail(mail_details *paccount, const char *cfgdir)
+mtc_error check_crampop_mail(mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	enum pop_protocol protocol= POPCRAM_PROTOCOL;
-	return(check_mail(paccount, cfgdir, protocol));
+    mtc_net netinfo;
+	netinfo.authtype= POPCRAM_PROTOCOL;
+	return(check_mail(&netinfo, paccount, &crammd5_login, pconfig));
 }
 
 /*call check_mail for POP (SSL/TLS)*/
-int check_popssl_mail(mail_details *paccount, const char *cfgdir)
+mtc_error check_popssl_mail(mtc_account *paccount, const mtc_cfg *pconfig)
 {
-	enum pop_protocol protocol= POPSSL_PROTOCOL;
-	return(check_mail(paccount, cfgdir, protocol));
+    mtc_net netinfo;
+    netinfo.authtype= POPSSL_PROTOCOL;
+	return(check_mail(&netinfo, paccount, &pop_login, pconfig));
 }
-
-
+#endif /*SSL_PLUGIN*/

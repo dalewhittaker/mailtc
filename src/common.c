@@ -20,7 +20,7 @@
 #include "core.h"
 
 /*function to get the date and time*/
-char *get_current_time(void)
+gchar *str_time(void)
 {
 	time_t rawtime;
 	struct tm *timeinfo;
@@ -32,11 +32,11 @@ char *get_current_time(void)
 }
 
 /*run an error dialog reporting error*/
-int run_error_dialog(char *errmsg, ...)
+gboolean err_dlg(gchar *errmsg, ...)
 {
 	GtkWidget *dialog;
 	va_list list;
-	char errstring[200];
+	gchar errstring[200];
 	
 	/*create a va_list and display it as a dialog*/
 	va_start(list, errmsg); 
@@ -47,55 +47,162 @@ int run_error_dialog(char *errmsg, ...)
 	gtk_widget_destroy(dialog);
 	va_end(list);
 	
-	return 1;
+	return TRUE;
 }
 
-static void error_and_log_func(char *errmsg, va_list args)
+static void err_func(gchar *errmsg, va_list args)
 {
-	char *ptimestring;
+	gchar *ptimestring;
 	
 	/*output to stderr and logfile*/
-	vfprintf(stderr, errmsg, args);
+	g_vfprintf(stderr, errmsg, args);
 	fflush(stderr);
 
-	ptimestring= get_current_time();
-	if(ptimestring[strlen(ptimestring)- 1]== '\n')
-		ptimestring[strlen(ptimestring)- 1]= '\0';
+	ptimestring= str_time();
+	g_strchomp(ptimestring);
 	
 	if(config.logfile!= NULL)
 	{
-		fprintf(config.logfile, "%s: ", ptimestring);
-		vfprintf(config.logfile, errmsg, args);
+		g_fprintf(config.logfile, "%s: ", ptimestring);
+		g_vfprintf(config.logfile, errmsg, args);
 	
 		fflush(config.logfile);
 	}
 }
 
 /*function to report error, log it, and then exit*/
-int error_and_log(char *errmsg, ...)
+gboolean err_exit(gchar *errmsg, ...)
 {
 	/*create va_list of arguments*/
 	va_list list;
 	
 	va_start(list, errmsg); 
-	error_and_log_func(errmsg, list);
+	err_func(errmsg, list);
 	va_end(list);
 
 	exit(EXIT_FAILURE);
 
-	return 0; /*shouldnt really ever happen*/
+	return FALSE; /*shouldnt really ever happen*/
 }
 
 /*function to report error and log*/
-int error_and_log_no_exit(char *errmsg, ...)
+gboolean err_noexit(gchar *errmsg, ...)
 {
 	/*create va_list of arguments*/
 	va_list list;
 	
 	va_start(list, errmsg);
-	error_and_log_func(errmsg, list);
+	err_func(errmsg, list);
 	va_end(list);
 	
-	return 1;
+	return TRUE;
+}
+
+/*function to set the colour of the icon*/
+static GdkPixbuf *iconcolour_set(GdkPixbuf *pixbuf, gchar *colourstring)
+{
+	gint width, height, rowstride, n_channels;
+	guchar *pixels, *p;
+	guint r, g, b;
+	gint i= 0, j= 0;
+	gchar shorthex[3];
+	
+	/*copy each RGB value to separate integers for setting the colour later*/
+	/*don't really like using sscanf but i can't find how to do otherwise*/
+	g_strlcpy(shorthex, colourstring, sizeof(shorthex)); 
+	sscanf(shorthex, "%x", &r);
+	g_strlcpy(shorthex, colourstring+ 2, sizeof(shorthex));
+	sscanf(shorthex, "%x", &g);
+	g_strlcpy(shorthex, colourstring+ 4, sizeof(shorthex));
+	sscanf(shorthex, "%x", &b);
+
+	/*check icon details are valid*/
+	n_channels= gdk_pixbuf_get_n_channels(pixbuf);
+	g_assert(gdk_pixbuf_get_colorspace(pixbuf)== GDK_COLORSPACE_RGB);
+	g_assert(gdk_pixbuf_get_bits_per_sample(pixbuf)== 8);
+	g_assert(gdk_pixbuf_get_has_alpha(pixbuf));
+	g_assert(n_channels== 4);
+		
+	/*get width and height of icon*/
+	width= gdk_pixbuf_get_width(pixbuf);
+	height= gdk_pixbuf_get_height(pixbuf);
+
+	/*get rowstride and pixels of icon*/
+	rowstride= gdk_pixbuf_get_rowstride(pixbuf);
+	pixels= gdk_pixbuf_get_pixels(pixbuf);
+		
+	/*for each column of icon*/
+	for(i=0; i< width; i++)
+	{
+		/*for each row of icon*/
+		for(j= 0; j< height; j++)
+		{
+			/*set p to the current pixel value (rgba)*/
+			p= pixels+ i* rowstride+ j* n_channels;
+
+			/*if pixel is white set the rgb for it and set transparency off*/
+			if((p[0]== 0xff)&& (p[1]== 0xff)&& (p[2]== 0xff)&& (p[3]== 0xff))
+			{
+				p[0]= r;
+				p[1]= g;
+				p[2]= b;
+				p[3]= 0xff;
+			}
+		}
+	}
+    return(pixbuf);
+}
+
+/*function to create the pixbuf used for the icon*/
+mtc_icon *pixbuf_create(mtc_icon *picon)
+{
+	GdkPixbuf *unscaled;
+    const guint8 *penvelope;
+    gint iconsize;
+    gchar *pcolour= NULL;
+#ifdef MTC_EGGTRAYICON
+    GdkPixbuf *scaled;
+#endif /*MTC_EGGTRAYICON*/
+
+#ifdef MTC_NOTMINIMAL
+    if(config.isdlg|| config.icon_size!= 16)
+    {
+        penvelope= envelope_large;
+        iconsize= 24;
+    }
+    else
+    {
+        penvelope= envelope_small;
+        iconsize= 16;
+	}
+#else
+    penvelope= envelope_large;
+    iconsize= 24;
+#endif /*MTC_NOTMINIMAL*/
+
+	/*get the pixbuf from the icon file*/
+	unscaled= gdk_pixbuf_new_from_inline(-1, penvelope, FALSE, NULL);
+        
+	if(!unscaled)
+		return(NULL);
+
+#ifdef MTC_EGGTRAYICON
+	/*if it is valid scale it and set the colour*/
+	scaled= gdk_pixbuf_scale_simple(unscaled, iconsize, iconsize, GDK_INTERP_BILINEAR);
+    pcolour= picon->colour;
+	scaled= iconcolour_set(scaled, pcolour+ 1);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(picon->image), scaled);
+	g_object_unref(scaled);
+#else
+	picon->pixbuf= gdk_pixbuf_scale_simple(unscaled, iconsize, iconsize, GDK_INTERP_BILINEAR);
+    pcolour= picon->colour;
+	picon->pixbuf= iconcolour_set(picon->pixbuf, pcolour+ 1);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(picon->image), picon->pixbuf);
+#endif /*MTC_EGGTRAYICON*/
+
+    /*cleanup*/
+	g_object_unref(unscaled);
+
+	return(picon);
 }
 

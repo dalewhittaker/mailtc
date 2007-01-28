@@ -19,74 +19,78 @@
 
 #include "core.h"
 
+enum mtc_mode { MODE_NONE= 0, MODE_NORMAL, MODE_DEBUG, MODE_CFG, MODE_KILL };
 static gint func_ref= 0;
 
 /*function to print mailtc options on command line*/
-static void print_usage_and_exit(void)
+static void return_usage(void)
 {
-	fprintf(stderr, S_MAIN_ERR_PRINT_USAGE, 
-				 PACKAGE, VERSION, PACKAGE, PACKAGE, PACKAGE, PACKAGE, PACKAGE);
+#ifdef MTC_USE_PIDFUNC
+	g_fprintf(stderr, S_MAIN_ERR_PRINT_USAGE, PACKAGE, VERSION, PACKAGE, PACKAGE, PACKAGE, PACKAGE, PACKAGE);
+#else
+	g_fprintf(stderr, S_MAIN_ERR_PRINT_USAGE_NOKILL, PACKAGE, VERSION, PACKAGE, PACKAGE, PACKAGE, PACKAGE);
+#endif /*MTC_USE_PIDFUNC*/	
 	exit(EXIT_FAILURE);
 }
 
 /*function to run the mailtc configuration dialog*/
-static int config_dialog_start(int argc, char* argv[])
+static gint cfgdlg_start()
 {
 	/*initialise gtk and run the dialog*/
 	GtkWidget *dialog= NULL;
-	gtk_init(&argc, &argv);  
-	run_config_dialog(dialog);
+	cfgdlg_run(dialog);
 	gtk_main();
 	
 	return(EXIT_SUCCESS);
 }
 
 /*function to read from the pid file*/
-static int read_pid_file(int action)
+#ifdef MTC_USE_PIDFUNC
+static gboolean pid_read(gint action)
 {
 	FILE *tmppidfile, *pidfile;
-	char pidstring[PORT_LEN];
-	char pidfilename[NAME_MAX], tmppidfilename[NAME_MAX];
-	int retval= 1;
+	gchar pidstring[PORT_LEN];
+	gchar pidfilename[NAME_MAX], tmppidfilename[NAME_MAX];
+	gboolean retval= TRUE;
 	
 	/*get the full paths for the files*/
-	get_account_file(pidfilename, PID_FILE, -1);
-	get_account_file(tmppidfilename, PID_FILE, 0);
+	mtc_file(pidfilename, PID_FILE, -1);
+	mtc_file(tmppidfilename, PID_FILE, 0);
 	
 	/*rename the pidfile to a temp pid file*/
-	if((IS_FILE(pidfilename))&& (rename(pidfilename, tmppidfilename)== -1))
-		error_and_log(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
+	if((IS_FILE(pidfilename))&& (g_rename(pidfilename, tmppidfilename)== -1))
+		err_exit(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
 
 	if(IS_FILE(tmppidfilename))
 	{	
-		int instance_running= 0;
+		gboolean instance_running= FALSE;
 		
 		/*open the pid file and the temp pid file*/
-		if((tmppidfile= fopen(tmppidfilename, "r"))== NULL)
-			error_and_log(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
+		if((tmppidfile= g_fopen(tmppidfilename, "r"))== NULL)
+			err_exit(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
 		
-		if((pidfile= fopen(pidfilename, "w"))== NULL)
-			error_and_log(S_MAIN_ERR_OPEN_PIDFILE_WRITE, pidfilename);
+		if((pidfile= g_fopen(pidfilename, "w"))== NULL)
+			err_exit(S_MAIN_ERR_OPEN_PIDFILE_WRITE, pidfilename);
 		
 		memset(pidstring, '\0', PORT_LEN);
 		
 		/*read each value from temp file and write it to the pid file unless it is the current pid*/
 		while(fgets(pidstring, PORT_LEN, tmppidfile)!= NULL)
 		{
-			pidstring[strlen(pidstring)- 1]= '\0';
+            g_strchomp(pidstring);
 			
 			/*if it is a valid process*/
 			if(kill(atoi(pidstring), 0)== 0)
 			{
-				int currentpid= (atoi(pidstring)== getpid());
+				gint currentpid= (atoi(pidstring)== getpid());
 				switch(action)
 				{
 					/*Load the app, if no other instances are already running*/
 					case PID_APPLOAD:
 						if(!currentpid)
 						{
-							instance_running= 1;
-							fprintf(pidfile, "%s\n", pidstring);
+							instance_running= TRUE;
+							g_fprintf(pidfile, "%s\n", pidstring);
 						}
 					break;
 
@@ -94,15 +98,15 @@ static int read_pid_file(int action)
 					 *(theoretically no other process should be active, but if they are, leave them)*/
 					case PID_APPEXIT:
 						if(!currentpid)
-							fprintf(pidfile, "%s\n", pidstring);
+							g_fprintf(pidfile, "%s\n", pidstring);
 					break;
 					
 					/*Kill all mailtc processes (theoretically should only be max 1 running)*/
 					case PID_APPKILL:
 						if((!currentpid)&& (kill(atoi(pidstring), SIGHUP)!= 0))
 						{
-							error_and_log_no_exit(S_MAIN_ERR_CANNOT_KILL, currentpid);
-							fprintf(pidfile, "%s\n", pidstring);
+							err_noexit(S_MAIN_ERR_CANNOT_KILL, currentpid);
+							g_fprintf(pidfile, "%s\n", pidstring);
 						}
 					break;
 				}
@@ -114,39 +118,136 @@ static int read_pid_file(int action)
 		if(action== PID_APPLOAD)
 		{
 			if(instance_running)
-				retval= 0;
+				retval= FALSE;
 			else
-				fprintf(pidfile, "%d\n", getpid());
+				g_fprintf(pidfile, "%d\n", getpid());
 		}
 		/*close the files and cleanup*/
 		if(fclose(pidfile)== EOF)
-			error_and_log(S_MAIN_ERR_CLOSE_PIDFILE);
+			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
 							
 		if(fclose(tmppidfile)== EOF)
-			error_and_log(S_MAIN_ERR_CLOSE_PIDFILE);
+			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
 			
-		remove(tmppidfilename);
+		g_remove(tmppidfilename);
 			 
 	}
-	
 	return(retval);
+}
+#endif /*MTC_USE_PIDFUNC*/
+
+/*initialise the tray icon widget*/
+static gboolean trayicon_init(void)
+{
+    mtc_trayicon *ptrayicon;
+	
+    ptrayicon= &config.trayicon;
+
+#ifdef MTC_EGGTRAYICON
+    if(ptrayicon->docklet)
+	{
+		g_object_unref(G_OBJECT(ptrayicon->docklet));
+		ptrayicon->docklet= NULL;
+	}
+
+    /*create the trayicon and the event box, and tooltip*/
+    ptrayicon->docklet= egg_tray_icon_new(PACKAGE);
+	ptrayicon->box= gtk_event_box_new();
+	ptrayicon->tooltip= gtk_tooltips_new();
+	
+    g_signal_connect(G_OBJECT(ptrayicon->box), "button-press-event", G_CALLBACK(docklet_clicked), NULL);
+	gtk_container_add(GTK_CONTAINER(ptrayicon->docklet), ptrayicon->box);
+	
+    gtk_widget_hide_all(GTK_WIDGET(ptrayicon->docklet));
+#else
+    ptrayicon->docklet= gtk_status_icon_new();
+    if(gtk_status_icon_get_visible(ptrayicon->docklet))
+        gtk_status_icon_set_visible(ptrayicon->docklet, FALSE);
+
+    /*add left and right click handlers*/
+    g_signal_connect(G_OBJECT(ptrayicon->docklet), "popup-menu", G_CALLBACK(docklet_rclicked), NULL);
+    g_signal_connect(G_OBJECT(ptrayicon->docklet), "activate", G_CALLBACK(docklet_lclicked), NULL);
+
+    ptrayicon->active= ACTIVE_ICON_NONE;
+
+#endif /*MTC_EGGTRAYICON*/
+
+	g_object_ref(G_OBJECT(ptrayicon->docklet));
+	return(TRUE);
+}
+
+/*destroy the tray icon widget*/
+static gboolean trayicon_destroy(void)
+{
+    mtc_trayicon *ptrayicon;
+	
+    ptrayicon= &config.trayicon;
+
+#ifdef MTC_EGGTRAYICON
+	/*destroy the tooltip and box first*/
+	if(ptrayicon->tooltip)
+	{
+		gtk_object_destroy(GTK_OBJECT(ptrayicon->tooltip));
+		ptrayicon->tooltip= NULL;
+	}
+	if(ptrayicon->box)
+	{
+		gtk_widget_destroy(ptrayicon->box);
+		ptrayicon->box= NULL;
+    }
+#endif /*MTC_EGGTRAYICON*/
+
+	/*destroy the widget then unref the docklet*/
+	if(ptrayicon->docklet)
+	{
+#ifdef MTC_EGGTRAYICON
+		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
+#endif /*MTC_EGGTRAYICON*/
+		g_object_unref(G_OBJECT(ptrayicon->docklet));
+		ptrayicon->docklet= NULL;
+	}
+
+    return(TRUE);
 }
 
 /*function called when the app exits*/
 static void atexit_func(void)
 {
+    mtc_icon *picon= NULL;
+    
 	/*remove the source if it was active*/
 	if(func_ref)
 		g_source_remove(func_ref);
 
+#ifdef MTC_EXPERIMENTAL
+    /*destroy the summary dialog if it exists*/
+    if(config.run_summary)
+        sumdlg_destroy();
+#endif
+
+    /*destroy the trayicon widget*/
+    trayicon_destroy();
+
 	/*free the account list*/
 	free_accounts();
 
+    /*free the 'multi' icon*/
+    picon= &config.icon;
+    if(picon->image)
+		g_object_unref(picon->image);
+
+#ifndef MTC_EGGTRAYICON
+    if(picon->pixbuf)
+        g_object_unref(picon->pixbuf);
+#endif /*MTC_EGGTRAYICON*/
+
 	/*unload the plugins and free the plugin list*/
-	unload_plugins();	
+	plg_unload_all();	
 	
 	/*remove the pid from the file*/
-	read_pid_file(PID_APPEXIT);
+#ifdef MTC_USE_PIDFUNC
+	pid_read(PID_APPEXIT);
+#endif /*MTC_USE_PIDFUNC*/
 
 	/*finally, close the log file if it is open*/
 	if((config.logfile!= NULL)&& fclose(config.logfile)== EOF)
@@ -154,88 +255,89 @@ static void atexit_func(void)
 }
 
 /*function to cleanup in case the program is killed*/
-void term_handler(int signal)
+void term_handler(gint signal)
 {
 
 	if(signal== SIGSEGV)
-		error_and_log(S_MAIN_ERR_SEGFAULT, PACKAGE);
+		err_exit(S_MAIN_ERR_SEGFAULT, PACKAGE);
 	else
-		error_and_log(S_MAIN_ERR_APP_KILLED, PACKAGE);
+		err_exit(S_MAIN_ERR_APP_KILLED, PACKAGE);
 }
 
 /*function to write the initial header to the log file when mailtc starts*/
-static int init_files(void)
+static gboolean mtc_init(void)
 {
-	char logfilename[NAME_MAX];
+	gchar logfilename[NAME_MAX];
 	
 	/*initialise stuff*/
 	acclist= NULL;
 	config.logfile= NULL;
 
 	/*clear the structures*/
-	memset(&config, '\0', sizeof(config_details));
+	memset(&config, '\0', sizeof(mtc_cfg));
 	
 	/*get the path for the program*/
-	get_program_dir();
+	mtc_dir();
 
 	/* here we need to create our dir*/
-	if(!IS_DIR(config.base_name))
+	if(!IS_DIR(config.dir))
 	{
-		if(FILE_EXISTS(config.base_name))
+		if(FILE_EXISTS(config.dir))
 		{
-			g_printerr(S_MAIN_ERR_NOT_DIRECTORY, config.base_name, PACKAGE);
+			g_printerr(S_MAIN_ERR_NOT_DIRECTORY, config.dir, PACKAGE);
 			exit(EXIT_FAILURE);
 		}
 		else
-			mkdir(config.base_name, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
+			g_mkdir(config.dir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
 	}
 	/*set the logfilename*/
-	get_account_file(logfilename, LOG_FILE, -1);
+	mtc_file(logfilename, LOG_FILE, -1);
 
 	/*open the logfile for writing*/
-	if((config.logfile= fopen(logfilename, "wt"))== NULL) /*open log file for appending*/
+	if((config.logfile= g_fopen(logfilename, "wt"))== NULL) /*open log file for appending*/
 	{	
 		g_printerr("%s %s\n", S_MAIN_ERR_OPEN_LOGFILE, g_strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 	
 	/*write the log header*/
-	fprintf(config.logfile, "\n*******************************************\n");
-	fprintf(config.logfile, S_MAIN_LOG_STARTED, PACKAGE, get_current_time());
-	fprintf(config.logfile, "*******************************************\n"); 
+	g_fprintf(config.logfile, "\n*******************************************\n");
+	g_fprintf(config.logfile, S_MAIN_LOG_STARTED, PACKAGE, str_time());
+	g_fprintf(config.logfile, "*******************************************\n"); 
 	fflush(config.logfile);
 	
-	/*add the pid to the file and return*/
-	return 1;
+	return TRUE;
 }
 
 /*function to run the warning dialog*/
-static int run_warning_dlg(int argc, char* argv[], char *msg, int startconfig)
+static gint warndlg_run(gchar *msg, gboolean startconfig)
 {
 	/*init gtk to run the dialog*/
 	GtkWidget *dialog;
 	
-	gtk_init(&argc, &argv);
 	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, msg, PACKAGE);
 	gtk_dialog_run(GTK_DIALOG(dialog)); 
 	gtk_widget_destroy(dialog);
 	
 	/*run the config dialog and return*/
-	return((startconfig)? config_dialog_start(argc, argv): 1);
+	return((startconfig)? cfgdlg_start(): EXIT_FAILURE);
 }
 
 /*the main function*/
-int main(int argc, char *argv[])
+gint main(gint argc, gchar *argv[])
 {
 	guint sleeptime;
-	
+	enum mtc_mode runmode= MODE_NONE;
+
 	/*first step is to check our arguments are valid*/
 	if((argc!= 2)&& (argc!= 1))
-		print_usage_and_exit();
+		return_usage();
 
 /*now setup the gettext stuff if needed*/
+#ifdef HAVE_LOCALE_H
+    setlocale (LC_ALL, "");
+#endif /*HAVE_LOCALE_H*/
 #ifdef ENABLE_NLS
-	setlocale (LC_ALL, "");
 	bindtextdomain(GETTEXT_PACKAGE, LOCALE_DIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
@@ -253,74 +355,106 @@ int main(int argc, char *argv[])
 	signal(SIGABRT, term_handler);
 	signal(SIGINT, term_handler);
 	signal(SIGSEGV, term_handler);
-	
-	/*intitialise the stuctures*/
-	init_files();
 
-	/*set debug mode if -d*/
-	config.net_debug= (argc== 1)? 0: 1;
+    /*determine the run mode*/
+    if(argc== 1)
+        runmode= MODE_NORMAL;
+    else if(argc== 2)
+    {
+        if(g_ascii_strcasecmp(argv[1], "-d")== 0)
+            runmode= MODE_DEBUG;
+        else if(g_ascii_strcasecmp(argv[1], "-c")== 0)
+            runmode= MODE_CFG;
+#ifdef MTC_USE_PIDFUNC	
+        else if(g_ascii_strcasecmp(argv[1], "-k")== 0)
+            runmode= MODE_KILL;
+#endif /*MTC_USE_PIDFUNC*/
+    }
+
+    if(runmode== MODE_NONE)
+        return_usage();
+
+	/*intitialise the stuctures*/
+	mtc_init();
+
+#ifdef MTC_USE_PIDFUNC	
+	/*if mailtc -k*/
+	if(runmode== MODE_KILL)
+		return(!pid_read(PID_APPKILL));
+#endif /*MTC_USE_PIDFUNC*/
+
+    /*initialise gtk first*/
+	gtk_init(&argc, &argv);
 	
 	/*check if instance is running*/
-	if((argc== 1)|| ((argc== 2)&&((g_ascii_strcasecmp(argv[1], "-d")== 0)|| g_ascii_strcasecmp(argv[1], "-c")== 0))) 
-	{   
-	    if(!read_pid_file(PID_APPLOAD))
-		{
-			error_and_log_no_exit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
-			return(run_warning_dlg(argc, argv, S_MAIN_INSTANCE_RUNNING, 0));
-		}
-		/*load the network plugins*/
-		else if(!load_plugins())
-		{
-			error_and_log_no_exit(S_MAIN_ERR_LOAD_PLUGINS);
-			return(run_warning_dlg(argc, argv, S_MAIN_LOAD_PLUGINS, 0));
-		}
-	
+#ifdef MTC_USE_PIDFUNC	
+    if(!pid_read(PID_APPLOAD))
+	{
+		err_noexit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
+		return(warndlg_run(S_MAIN_INSTANCE_RUNNING, FALSE));
 	}
+	/*load the network plugins*/
+	else 
+#endif /*MTC_USE_PIDFUNC*/
+    	if(!plg_load_all())
+		{
+			err_noexit(S_MAIN_ERR_LOAD_PLUGINS);
+			return(warndlg_run(S_MAIN_LOAD_PLUGINS, FALSE));
+		}
+
+    /*if mailtc -c*/
+	if(runmode== MODE_CFG)
+	{
+        config.isdlg= TRUE;
+        return(cfgdlg_start());
+    }
 
 	/*if mailtc or mailtc -d*/
-	if((argc== 1) || ((argc== 2)&& (g_ascii_strcasecmp(argv[1], "-d")== 0))) 
+	else if(runmode== MODE_NORMAL|| runmode== MODE_DEBUG)
 	{	
+        gboolean cfgfound= FALSE;
 
-		/*check mail details and run dialog if none found*/
-		read_accounts();
-		if((acclist== NULL)|| !(read_config_file()))
+    	/*set debug mode if -d*/
+	    config.net_debug= (runmode== MODE_DEBUG);
+	    config.isdlg= FALSE;
+
+        /*check mail details and run dialog if none found*/
+	    cfgfound= cfg_read();
+    	read_accounts();
+		if(acclist== NULL|| !cfgfound)
 		{	
-			return(run_warning_dlg(argc, argv, S_MAIN_NO_CONFIG_FOUND, 1));
+			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));
 		}
 		/*code to check that icon is valid (e.g for old mailtc versions*/
 		else
 		{
-			mail_details *pacclist;
-			pacclist= (mail_details *)acclist->data;
-			if(pacclist->icon[0]!= '#')
-				return(run_warning_dlg(argc, argv, S_MAIN_OLD_VERSION_FOUND, 1));
+			mtc_account *pacclist;
+            mtc_icon *picon;
+
+			pacclist= (mtc_account *)acclist->data;
+			picon= &pacclist->icon;
+
+            if(picon->colour[0]!= '#')
+				return(warndlg_run(S_MAIN_OLD_VERSION_FOUND, TRUE));
+
+            /*initialise the tray icon widget*/
+            trayicon_init();
 		}
+	
+        /*MAIN LOOP*/
+	    /*set the time interval for mail checks from the check_delay variable*/
+	    sleeptime= (gint)config.check_delay* 60* 1000;
+
+	    /*call the mail thread for the initial mail check
+	    *(otherwise it will wait a full minute or more before initial check)*/
+	    mail_thread(NULL);
+	
+        /*call the mail thread to check every sleeptime milliseconds*/
+	    func_ref= g_timeout_add(sleeptime, mail_thread, NULL);
+	    gtk_main();
+	    /*g_source_remove(func_ref);*/
+
 	}
-	/*if mailtc -c*/
-	else if((argc== 2)&& g_ascii_strcasecmp(argv[1], "-c")== 0)
-		return(config_dialog_start(argc, argv));
-	/*if mailtc -k*/
-	else if((argc== 2)&& g_ascii_strcasecmp(argv[1], "-k")== 0)
-		return(!read_pid_file(PID_APPKILL));
-	/*invalid option*/
-	else
-		print_usage_and_exit();
-
-	/*MAIN LOOP*/
-	/*initialise gtk stuff for docklet*/
-	gtk_init(&argc, &argv);
-
-	/*set the time interval for mail checks from the check_delay variable*/
-	sleeptime= (int)g_ascii_strtod(config.check_delay, NULL)* 60* 1000;
-
-	/*call the mail thread for the initial mail check
-	 *(otherwise it will wait a full minute or more before initial check)*/
-	mail_thread(NULL);
-	/*call the mail thread to check every sleeptime milliseconds*/
-	func_ref= g_timeout_add(sleeptime, mail_thread, NULL);
-	gtk_main();
-	/*g_source_remove(func_ref);*/
-
 	return(EXIT_SUCCESS);
 
 }

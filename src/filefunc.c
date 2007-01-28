@@ -20,107 +20,173 @@
 #include "core.h"
 
 /*function to get $HOME + program*/
-int get_program_dir(void)
+gboolean mtc_dir(void)
 {
 	gchar *pfile= NULL;
 	
 	/*get the home path*/
 	if((pfile= g_build_filename(g_get_home_dir(), "." PACKAGE, NULL))== NULL)
-		error_and_log(S_FILEFUNC_ERR_GET_HOMEDIR);
+		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
 		
-	g_strlcpy(config.base_name, pfile, NAME_MAX);
+	g_strlcpy(config.dir, pfile, sizeof(config.dir));
 	g_free(pfile);
 
-	return(1);
+	return TRUE;
 }
 
 /*function to get relevant details/password/uidl filename*/
-char *get_account_file(char *fullpath, char *filename, int account)
+gchar *mtc_file(gchar *fullpath, gchar *filename, gint account)
 {
 	if(account>= 0)
-		g_snprintf(fullpath, NAME_MAX, "%s/%s%u", config.base_name, filename, account);
+		g_snprintf(fullpath, NAME_MAX, "%s%c%s%u", config.dir, G_DIR_SEPARATOR, filename, account);
 	else
-		g_snprintf(fullpath, NAME_MAX, "%s/%s", config.base_name, filename);
+		g_snprintf(fullpath, NAME_MAX, "%s%c%s", config.dir, G_DIR_SEPARATOR, filename);
 	return(fullpath);
 }
 
-/* function to get details from config file into struct or if no config file exists ask for details*/
-int read_config_file(void)
+/*generic write a string to file function*/
+static void fwrite_string(FILE *pfile, const gchar *pstring, gchar *perr)
 {
-	char iconsize_string[4], configfilename[NAME_MAX];
-	unsigned int icon_size= 0;
-	char multiple= 0;
+    if((fputs(pstring, pfile)== EOF)|| (fputc('\n', pfile)== EOF))
+        err_exit(perr);
+}
+
+/*generic write an integer to file function*/
+static void fwrite_integer(FILE *pfile, gint pval, gchar *perr)
+{
+	/*char scratch[G_ASCII_DTOSTR_BUF_SIZE];
+	g_ascii_dtostr(scratch, sizeof(scratch), pval);
+    return(fwrite_string(pfile, scratch, gchar *perr));*/
+    
+	if(g_fprintf(pfile, "%d\n", pval)< 0)
+        err_exit(perr);
+}
+
+/*generic read a string from file function*/
+static void fread_string_fail(FILE *pfile, gchar *pstring, gint slen, gchar *perr, const gchar *fname)
+{
+    if(fgets(pstring, slen, pfile)== NULL)
+    {
+        g_remove(fname);
+        err_exit(perr);
+    }
+    else
+        g_strchomp(pstring);
+}
+
+/*generic read a string from file function*/
+static void fread_string(FILE *pfile, gchar *pstring, gint slen, gchar *dflstring)
+{
+    gchar *test= NULL;
+    test= fgets(pstring, slen, pfile);
+
+    if(test== NULL|| pstring== NULL)
+	{
+        if(dflstring== NULL)
+            memset(pstring, 0, slen);
+        else
+            g_strlcpy(pstring, dflstring, slen);
+    }
+    g_strchomp(pstring);
+}
+
+/*generic read integer from file function*/
+static void fread_integer(FILE *pfile, gint *pval, gint dflval)
+{
+    gchar scratch[G_ASCII_DTOSTR_BUF_SIZE];
+
+    if(fgets(scratch, sizeof(scratch), pfile)== NULL)
+        *pval= dflval;
+    else
+        *pval= (gint)g_ascii_strtod(scratch, NULL);
+}
+
+/*generic read integer from file function*/
+static void fread_integer_fail(FILE *pfile, gint *pval, gchar *perr, const gchar *fname)
+{
+    gchar scratch[G_ASCII_DTOSTR_BUF_SIZE];
+
+    if(fgets(scratch, sizeof(scratch), pfile)== NULL)
+    {
+        g_remove(fname);
+        err_exit(perr);
+    }
+    *pval= (gint)g_ascii_strtod(scratch, NULL);
+}
+
+/*creates an icon*/
+static mtc_icon *icon_create(mtc_icon *picon)
+{
+    picon->image= gtk_image_new();
+	picon= pixbuf_create(picon);
+    if(!picon|| !picon->image) 
+		err_exit(S_FILEFUNC_ERR_CREATE_PIXBUF);
+    
+    /*ref count the image, be sure to unref it when we leave*/
+    g_object_ref(picon->image);
+
+    return(picon);
+}
+
+/* function to get details from config file into struct or if no config file exists ask for details*/
+gboolean cfg_read(void)
+{
+	gchar configfilename[NAME_MAX];
 	FILE *pfile;
+    mtc_icon *picon= NULL;
 
 	/*get the full path of the config file*/
-	get_account_file(configfilename, CONFIG_FILE, -1);
+	mtc_file(configfilename, CONFIG_FILE, -1);
 	
 	/*if the file does not exist return*/
 	if(!IS_FILE(configfilename))
-		return 0;
+		return FALSE;
 
 	/*open the config file for reading*/
-	if((pfile= fopen(configfilename, "rt"))== NULL)
-		error_and_log(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
+	if((pfile= g_fopen(configfilename, "rt"))== NULL)
+		err_exit(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
 
-	/*memset(&config, '\0', sizeof(config_details));*/
+    picon= &config.icon;
 	
-	/*get the info from the file*/
-	if(fgets(config.check_delay, DELAY_STRLEN, pfile)== NULL)
-	{
-		remove(configfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_DELAY);
-	}
-	if(fgets(config.mail_program, NAME_MAX, pfile)== NULL)
-	{
-		remove(configfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_MAILAPP);
-	}
-	/*set the default icon size for old versions of mailtc*/
-	if(fgets(iconsize_string, 4, pfile)== NULL)
-		g_strlcpy(iconsize_string, "24", 4);
-	icon_size= atoi(iconsize_string);
-	config.icon_size= icon_size;
-	
-	/*check the multiple value*/
-	if((multiple= fgetc(pfile))== EOF)
-		config.multiple= 0;
+    /*get the info from the file*/
+    fread_integer_fail(pfile, (gint *)&config.check_delay, S_FILEFUNC_ERR_GET_DELAY, configfilename);
+	fread_string_fail(pfile, config.mail_program, sizeof(config.mail_program), S_FILEFUNC_ERR_GET_MAILAPP, configfilename);
+    fread_integer(pfile, (gint *)&config.icon_size, 24);
+    fread_integer(pfile, (gint *)&config.multiple, FALSE);
+	fread_string(pfile, picon->colour, sizeof(config.icon.colour), "#FFFFFF");
+    fread_integer(pfile, &config.err_freq, 1);
+#ifdef MTC_NOTMINIMAL
+    fread_string(pfile, config.nmailcmd, sizeof(config.nmailcmd), NULL);
+#endif /*MTC_NOTMINIMAL*/
 
-	config.multiple= atoi(&multiple);
-	
-	/*we need to move through the carriage return now*/
-	if(fseek(pfile, ftell(pfile)+ 1, SEEK_SET)== -1)
-		error_and_log(S_FILEFUNC_ERR_MOVE_FP);
-	
-	/*Get the multiple icon colour*/
-	if((fgets(config.icon, ICON_LEN, pfile)== NULL)|| (strlen(config.icon)== 1))
-		g_strlcpy(config.icon, "#FFFFFF", ICON_LEN);
-	
-	/*remove any extra carriage returns*/
-	if((config.check_delay[strlen(config.check_delay)-1])== '\n')
-		config.check_delay[strlen(config.check_delay)-1]= '\0';
-	if((config.mail_program[strlen(config.mail_program)-1])== '\n')
-		config.mail_program[strlen(config.mail_program)-1]= '\0';
-	if((config.icon[strlen(config.icon)-1])== '\n')
-		config.icon[strlen(config.icon)-1]= '\0';
-	
-	/*close the config file*/
+#ifdef MTC_EXPERIMENTAL
+    fread_integer(pfile, (gint *)&config.run_summary, FALSE);
+    fread_integer(pfile, (gint *)&config.summary.wpos, WPOS_BOTTOMRIGHT);
+    fread_string(pfile, config.summary.sfont, sizeof(config.summary.sfont), "NULL");
+    if(g_ascii_strncasecmp(config.summary.sfont, "NULL", 4)== 0)
+        memset(config.summary.sfont, 0, MAX_FONTNAME_LEN);
+#endif
+
+    /*create the image*/
+    picon= icon_create(picon);
+
+   	/*close the config file*/
 	if(fclose(pfile)== EOF)
-		error_and_log(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
+		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
 	
-	return 1;
+	return TRUE;
 }
 
 /*function to get an item from an account*/
-mail_details *get_account(unsigned int item)
+mtc_account *get_account(guint item)
 {
 	GSList *pcurrent= acclist;
-	mail_details *pcurrent_data= NULL;
+	mtc_account *pcurrent_data= NULL;
 
 	/*iterate until the id is found*/
 	while(pcurrent!= NULL)
 	{
-		pcurrent_data= (mail_details *)pcurrent->data;
+		pcurrent_data= (mtc_account *)pcurrent->data;
 		if(pcurrent_data->id== item)
 			return(pcurrent_data);
 		pcurrent= g_slist_next(pcurrent);
@@ -132,38 +198,95 @@ mail_details *get_account(unsigned int item)
 GSList *create_account(void)
 {
 	/*allocate memory for new account and add it to the list*/
-	mail_details *pnew= NULL;
-	mail_details *pfirst;
+	mtc_account *pnew= NULL;
+	mtc_account *pfirst;
+    mtc_icon *picon= NULL;
 	
-	pfirst= (acclist== NULL)? NULL: (mail_details *)acclist->data;
+	pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
 
-	pnew= (mail_details *)g_malloc0(sizeof(mail_details));
+	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
 	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
+#ifdef MTC_NOTMINIMAL    
 	pnew->pfilters= NULL;
+#endif /*MTC_NOTMINIMAL*/
+
+    /*create default image*/
+    picon= &pnew->icon;
+	g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon->colour));
+    picon= icon_create(picon);
 
 	return((acclist= g_slist_prepend(acclist, pnew)));
 }
 
+#ifdef MTC_NOTMINIMAL    
+/*Function to free the message list of an account*/
+static void msglist_free(gpointer data, gpointer user_data)
+{
+    msg_struct *pmsg= (msg_struct *)data;
+    user_data= NULL;
+
+    if(pmsg->header)
+    {
+        g_free(pmsg->header);
+        pmsg->header= NULL;
+    }
+    if(pmsg->uid)
+    {
+        g_free(pmsg->uid);
+        pmsg->uid= NULL;
+    }
+    g_free(pmsg);
+    pmsg= NULL;
+}
+#endif /*MTC_NOTMINIMAL*/
+
 /*Function to free an account*/
 static void free_account(gpointer data, gpointer user_data)
 {
-	mail_details *paccount= (mail_details *)data;
+	mtc_account *paccount= (mtc_account *)data;
+    mtc_icon *picon;
 
-	/*first remove the filter struct, then the account*/
+    picon= &paccount->icon;
+
+#ifdef MTC_NOTMINIMAL    
+    GSList *msglist;
+
+    msglist= paccount->msginfo.msglist;
+    
+    /*remove the message list if any*/
+    if(msglist)
+    {
+    	g_slist_foreach(msglist, msglist_free, NULL);
+	    g_slist_free(msglist);
+	    msglist= NULL;
+    }
+
+	/*remove the filter struct, then the account*/
 	if(paccount->pfilters)
 	{
 		g_free(paccount->pfilters);
 		paccount->pfilters= NULL;
 	}
-	g_free(paccount);
+#endif /*MTC_NOTMINIMAL*/
+
+    /*unref the image for our account*/
+   	if(picon->image)
+		g_object_unref(picon->image);
+
+#ifndef MTC_EGGTRAYICON
+    if(picon->pixbuf)
+        g_object_unref(picon->pixbuf);
+#endif /*MTC_EGGTRAYICON*/
+
+    g_free(paccount);
 	paccount= NULL;
 }
 
 /*remove an account from the list*/
-void remove_account(unsigned int item)
+void remove_account(guint item)
 {
 	GSList *pcurrent= NULL;
-	mail_details *pcurrent_data;
+	mtc_account *pcurrent_data;
 	
 	/*get the data to remove*/
 	pcurrent_data= get_account(item);
@@ -179,7 +302,7 @@ void remove_account(unsigned int item)
 	pcurrent= acclist;
 	while(pcurrent!= NULL)
 	{
-		pcurrent_data= (mail_details *)pcurrent->data;
+		pcurrent_data= (mtc_account *)pcurrent->data;
 		if(pcurrent_data->id<= item)
 			break;
 		pcurrent_data->id--;
@@ -200,21 +323,21 @@ void free_accounts(void)
 }
 
 /*Function to convert the old 'protocol' strings to the new plugin names wherever possible*/
-static char *protocol_to_plugin(char *plgstring)
+static gchar *protocol_to_plugin(gchar *plgstring)
 {
 	/*Copy over default plugin names if we can*/
-	mtc_plugin_info *pitem;
+	mtc_plugin *pitem;
 	GSList *pcurrent= plglist;
 	
 	while(pcurrent!= NULL)
 	{
-		pitem= (mtc_plugin_info *)pcurrent->data;
+		pitem= (mtc_plugin *)pcurrent->data;
 		
 		/*if we find an old one, we overwrite it with the equivalent plugin name*/
 		if(g_ascii_strcasecmp(pitem->name, plgstring)== 0)
 		{
-			char *pbasename;
-			pbasename= g_path_get_basename(g_module_name(pitem->handle));
+			gchar *pbasename;
+			pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));
 			g_strlcpy(plgstring, pbasename, PROTOCOL_LEN);
 			g_free(pbasename);
 			return(plgstring);
@@ -225,142 +348,111 @@ static char *protocol_to_plugin(char *plgstring)
 }
 
 /*Function to create/read in a new account*/
-GSList *read_account(FILE *pfile, const char *detailsfilename)
+static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
 {
-	char filterstring[PORT_LEN];
-	mail_details *pnew= NULL;
-	mail_details *pfirst;
+	mtc_account *pnew= NULL;
+	mtc_account *pfirst;
+    mtc_icon *picon;
 	
-	pfirst= (acclist== NULL)? NULL: (mail_details *)acclist->data;
+	pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
 
 	/*allocate mem for new account and copy data to it*/
-	pnew= (mail_details *)g_malloc0(sizeof(mail_details));
+	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
 		
 	/*copy the id (0 if it is first account)*/
 	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
 	
-	/*get the details from the file*/
-	if(fgets(pnew->hostname, LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1, pfile)== NULL)
-	{
-		remove(detailsfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_HOSTNAME, pnew->id);
-	}
-	if(fgets(pnew->port, PORT_LEN, pfile)== NULL)
-	{	
-		remove(detailsfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_PORT, pnew->id);
-	}
-	if(fgets(pnew->username, LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1, pfile)== NULL)
-	{
-		remove(detailsfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_USERNAME, pnew->id);
-	}
-	if(fgets(pnew->icon, ICON_LEN, pfile)== NULL)
-	{
-		remove(detailsfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_ICONTYPE, pnew->id);
-	}
-	/*default to pop protocol for old versions of mailtc*/
-	if(fgets(pnew->plgname, NAME_MAX, pfile)== NULL)
-	{
-		remove(detailsfilename);
-		error_and_log(S_FILEFUNC_ERR_READ_PLUGIN, pnew->id);
-	}
-	/*default to account name for old versions of mailtc*/
-	if(fgets(pnew->accname, NAME_MAX+ 1, pfile)== NULL)
-		g_snprintf(pnew->accname, NAME_MAX, S_FILEFUNC_DEFAULT_ACCNAME, pnew->id+ 1);
-	
-	/*default to 0 for old versions of mailtc*/
-	if(fgets(filterstring, PORT_LEN, pfile)!= NULL)
-		pnew->runfilter= (int)g_strtod(filterstring, NULL);
-	else pnew->runfilter= 0;
-	
+    picon= &pnew->icon;
+
+    /*read in our account info*/
+    fread_string_fail(pfile, pnew->hostname, sizeof(pnew->hostname), S_FILEFUNC_ERR_GET_HOSTNAME, detailsfilename);
+	fread_string_fail(pfile, pnew->port, sizeof(pnew->port), S_FILEFUNC_ERR_GET_PORT, detailsfilename);
+	fread_string_fail(pfile, pnew->username, sizeof(pnew->username), S_FILEFUNC_ERR_GET_USERNAME, detailsfilename);
+	fread_string_fail(pfile, picon->colour, sizeof(pnew->icon), S_FILEFUNC_ERR_GET_ICONTYPE, detailsfilename);
+    fread_string_fail(pfile, pnew->plgname, sizeof(pnew->plgname), S_FILEFUNC_ERR_READ_PLUGIN, detailsfilename);
+	fread_string(pfile, pnew->accname, sizeof(pnew->accname), S_FILEFUNC_DEFAULT_ACCNAME);
+
+#ifdef MTC_NOTMINIMAL
+	fread_integer(pfile, (gint *)&pnew->runfilter, FALSE);
+#endif /*MTC_NOTMINIMAL*/
+
 	/*read in the password*/
-	if(!read_password_from_file(pnew))
-		error_and_log(S_FILEFUNC_ERR_GET_PASSWORD, pnew->id);
+	if(!pw_read(pnew))
+		err_exit(S_FILEFUNC_ERR_GET_PASSWORD, pnew->id);
 	
+#ifdef MTC_NOTMINIMAL
 	pnew->pfilters= NULL;
 			
-	/*if filter flag is set, read in filter details*/
 	/*if(pnew->runfilter)
-	{*/
-	if(!read_filter_info(pnew))
-		pnew->runfilter= 0;
-/*	}*/
-	
-	/*remove any carriage returns*/
-	if((pnew->hostname[strlen(pnew->hostname)- 1])== '\n')
-		pnew->hostname[strlen(pnew->hostname)- 1]= '\0';
-	if((pnew->port[strlen(pnew->port)- 1])== '\n')
-		pnew->port[strlen(pnew->port)- 1]= '\0';
-	if((pnew->username[strlen(pnew->username)- 1])== '\n')
-		pnew->username[strlen(pnew->username)- 1]= '\0';
-	if((pnew->plgname[strlen(pnew->plgname)- 1])== '\n')
-		pnew->plgname[strlen(pnew->plgname)- 1]= '\0';
-	if((pnew->icon[strlen(pnew->icon)- 1])== '\n')
-		pnew->icon[strlen(pnew->icon)- 1]= '\0';
-	if((pnew->accname[strlen(pnew->accname)- 1])== '\n')
-		pnew->accname[strlen(pnew->accname)- 1]= '\0';
+	{*/ if(!filter_read(pnew))
+		    pnew->runfilter= FALSE; /*}*/
+#endif /*MTC_NOTMINIMAL*/
 	
 	/*convert any old protocols to new plugin names*/
 	protocol_to_plugin(pnew->plgname);
 
-	pnew->num_messages= -1;
-	pnew->active= 0;
-	
+#ifdef MTC_NOTMINIMAL
+	pnew->msginfo.num_messages= -1;
+#else
+    pnew->num_messages= -1;
+#endif /*MTC_NOTMINIMAL*/
+
+    /*create the image*/
+    picon= icon_create(picon);
+
 	/*next account points to last account*/
 	return((acclist= g_slist_prepend(acclist, pnew)));
 }
 
 /*Function to read all accounts from the files and add to the list*/
-int read_accounts(void)
+gboolean read_accounts(void)
 {
 	FILE* pfile;
-	char detailsfilename[NAME_MAX];
-	unsigned int i= 0;
+	gchar detailsfilename[NAME_MAX];
+	guint i= 0;
 	
 	/*iterate through each account*/
-	get_account_file(detailsfilename, DETAILS_FILE, i);
+	mtc_file(detailsfilename, DETAILS_FILE, i);
 	while(IS_FILE(detailsfilename))
 	{
 		
 		/*open the details file for reading*/
-		if((pfile= fopen(detailsfilename, "rt"))== NULL)
-			error_and_log(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
+		if((pfile= g_fopen(detailsfilename, "rt"))== NULL)
+			err_exit(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
 
-		acclist= read_account(pfile, detailsfilename);
+		acclist= acc_read(pfile, detailsfilename);
 		
 		/*close the details file*/
 		if(fclose(pfile)== EOF)
-			error_and_log(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
+			err_exit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
 	
-		get_account_file(detailsfilename, DETAILS_FILE, ++i);
+		mtc_file(detailsfilename, DETAILS_FILE, ++i);
 		
 	}
-	return 1;
+	return TRUE;
 }
 
 /*function to read in the password (encrypted or not) from the file*/
-int read_password_from_file(mail_details *paccount)
+gboolean pw_read(mtc_account *paccount)
 {
 
 	FILE* pfile;
-	char passwordfilename[NAME_MAX];
+	gchar passwordfilename[NAME_MAX];
 #ifdef MTC_USE_SSL
-	char encstring[1024];
-	int len= 0;
+	gchar encstring[1024];
+	gint len= 0;
 #endif
 	
 	/*get the full path of the password file*/
-	get_account_file(passwordfilename, PASSWORD_FILE, paccount->id);
+	mtc_file(passwordfilename, PASSWORD_FILE, paccount->id);
 	
 	/*if the password file does not exist return*/
 	if(!IS_FILE(passwordfilename))
-		return 0;
+		return FALSE;
 	
 	/*open the password file for reading*/
-	if((pfile= fopen(passwordfilename, "rb"))== NULL)
-		error_and_log(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
+	if((pfile= g_fopen(passwordfilename, "rb"))== NULL)
+		err_exit(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
 
 /*if OpenSSL is defined read in an encrypted password*/
 #ifdef MTC_USE_SSL
@@ -369,208 +461,203 @@ int read_password_from_file(mail_details *paccount)
 	/*read in the encrypted password and remove the password if there is an error reading it*/
 	if((len= fread(encstring, 1, 1024, pfile))==0)
 	{
-		remove(passwordfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_PW);
+		g_remove(passwordfilename);
+		err_exit(S_FILEFUNC_ERR_GET_PW);
 	}
 	
 	/*decrypt the password*/
-	decrypt_password(encstring, len, paccount->password);
+	pw_decrypt(encstring, len, paccount->password);
 	
 /*otherwise read in clear password*/
 #else
-
 	/*get the password value and remove the file if it cannot be read*/
-	if(fgets(paccount->password, PASSWORD_LEN, pfile)== NULL)
-	{
-		remove(passwordfilename);
-		error_and_log(S_FILEFUNC_ERR_GET_PW);
-	}
-	/*remove the carriage returns*/
-	if((paccount->password[strlen(paccount->password)-1])== '\n')
-		paccount->password[strlen(paccount->password)-1]= '\0';
+	fread_string_fail(pfile, paccount->password, sizeof(paccount->password), S_FILEFUNC_ERR_GET_PW, passwordfilename);
 #endif
 	
 	/*close the password file*/
 	if(fclose(pfile)== EOF)
-		error_and_log(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
+		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
 	
-	return 1;
+	return TRUE;
 }
 
 /*function to write pop config to config file*/
-int write_config_file(void)
+gboolean cfg_write(void)
 {
 	FILE *pfile;
-	char iconsize_string[G_ASCII_DTOSTR_BUF_SIZE];
-	char configfilename[NAME_MAX];
+	gchar configfilename[NAME_MAX];
+    mtc_icon *picon;
+
+    picon= &config.icon;
 
 	/*get the full path of the config file*/
-	get_account_file(configfilename, CONFIG_FILE, -1);
+	mtc_file(configfilename, CONFIG_FILE, -1);
 	
 	/*if the file cannot be accessed or removed report error*/
-	if((IS_FILE(configfilename))&&(remove(configfilename)== -1))
-		error_and_log(S_FILEFUNC_ERR_ATTEMPT_WRITE, configfilename);
+	if((IS_FILE(configfilename))&&(g_remove(configfilename)== -1))
+		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, configfilename);
 	
 	/*open the config file for writing*/
-	if((pfile= fopen(configfilename, "wt"))== NULL)
-		error_and_log(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
+	if((pfile= g_fopen(configfilename, "wt"))== NULL)
+		err_exit(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
 	
 	/*output the config information to the config file*/
-	if(fputs(config.check_delay, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_DELAY);
+	fwrite_integer(pfile, config.check_delay, S_FILEFUNC_ERR_WRITE_DELAY);
+	fwrite_string(pfile, config.mail_program, S_FILEFUNC_ERR_WRITE_MAILAPP);
+#ifndef MTC_NOTMINIMAL
+    /*if it's a minimal build, icon size can only be 24,
+     *for compatibility with config files the size value must be written*/
+    config.icon_size= 24;
+#endif /*MTC_NOTMINIMAL*/
+	fwrite_integer(pfile, config.icon_size, S_FILEFUNC_ERR_WRITE_ICONSIZE);
+    fwrite_string(pfile, (config.multiple)? "1": "0", S_FILEFUNC_ERR_WRITE_MULTIPLE);
+	fwrite_string(pfile, picon->colour, S_FILEFUNC_ERR_WRITE_M_ICON_COLOUR);
+	fwrite_integer(pfile, config.err_freq, S_FILEFUNC_ERR_WRITE_FREQ);
+#ifdef MTC_NOTMINIMAL
+    fwrite_string(pfile, config.nmailcmd, S_FILEFUNC_ERR_WRITE_NMCMD);
+#endif /*MTC_NOTMINIMAL*/
+
+    /*Experimental adding of summary dialog*/
+#ifdef MTC_EXPERIMENTAL
+    fwrite_string(pfile, (config.run_summary)? "1": "0", S_FILEFUNC_ERR_WRITE_SUMMARY);
 	
-	if(fputs(config.mail_program, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_MAILAPP);
-		
-	g_ascii_dtostr(iconsize_string, sizeof(iconsize_string), (gdouble)config.icon_size);
-	if(fputs(iconsize_string, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_ICONSIZE);
-	
-	if(fputs((config.multiple)? "1": "0", pfile)== EOF|| (fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_MULTIPLE);
-	
-	if(fputs(config.icon, pfile)== EOF|| (fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_M_ICON_COLOUR);
-	
+    /*write the summary stuff*/
+    if(config.run_summary)
+    {
+        fwrite_integer(pfile, config.summary.wpos, S_FILEFUNC_ERR_WRITE_SUMMARY_WPOS);
+        fwrite_string(pfile, (config.summary.sfont[0]== 0)? "NULL": config.summary.sfont, S_FILEFUNC_ERR_WRITE_SUMMARY_SFONT);
+    }
+#endif
 	fflush(pfile);
 
 	/*close the config file*/
 	if(fclose(pfile)== EOF)
-		error_and_log_no_exit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
+		err_noexit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
 	
 	/*set the permissions on the file so it can only be read*/
-	if(chmod(configfilename, S_IRUSR)== -1)
-		error_and_log(S_FILEFUNC_ERR_SET_PERM, configfilename);
+	if(g_chmod(configfilename, S_IRUSR)== -1)
+		err_exit(S_FILEFUNC_ERR_SET_PERM, configfilename);
 	
-	return 1;
+	return TRUE;
 }
 
 /*function to write pop details to details file*/
-int write_user_details(mail_details *pcurrent)
+gboolean acc_write(mtc_account *pcurrent)
 {
 	FILE *pfile;
-	char detailsfilename[NAME_MAX];
+	gchar detailsfilename[NAME_MAX];
+    mtc_icon *picon;
+
+    picon= &pcurrent->icon;
 	
 	/*get the full path of the details file*/
-	get_account_file(detailsfilename, DETAILS_FILE, pcurrent->id);
+	mtc_file(detailsfilename, DETAILS_FILE, pcurrent->id);
 	
 	/*if it exists and cannot be removed report error*/
-	if((IS_FILE(detailsfilename))&&(remove(detailsfilename)== -1))
-		error_and_log(S_FILEFUNC_ERR_ATTEMPT_WRITE, detailsfilename);
+	if((IS_FILE(detailsfilename))&&(g_remove(detailsfilename)== -1))
+		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, detailsfilename);
 	
 	/*open the details file for writing*/
-	if((pfile= fopen(detailsfilename, "wt"))== NULL)
-		error_and_log(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
+	if((pfile= g_fopen(detailsfilename, "wt"))== NULL)
+		err_exit(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
 	
 	/*output the details information to the details file*/
-	if((fputs(pcurrent->hostname, pfile)== EOF)||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_HOSTNAME);
-		
-	if(fputs(pcurrent->port, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_PORT);
-		
-	if(fputs(pcurrent->username, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_USERNAME);
-		
-	if(fputs(pcurrent->icon, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_ICONTYPE);
-	
-	if(fputs(pcurrent->plgname, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_PROTOCOL);
-	
-	if(fputs(pcurrent->accname, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_ACCNAME);
-	
-	if(fprintf(pfile, "%u\n", pcurrent->runfilter)< 0)
-		error_and_log(S_FILEFUNC_ERR_WRITE_FILTER);
-	
+	fwrite_string(pfile, pcurrent->hostname, S_FILEFUNC_ERR_WRITE_HOSTNAME);
+	fwrite_string(pfile, pcurrent->port, S_FILEFUNC_ERR_WRITE_PORT);
+	fwrite_string(pfile, pcurrent->username, S_FILEFUNC_ERR_WRITE_USERNAME);
+	fwrite_string(pfile, picon->colour, S_FILEFUNC_ERR_WRITE_ICONTYPE);
+	fwrite_string(pfile, pcurrent->plgname, S_FILEFUNC_ERR_WRITE_PROTOCOL);
+	fwrite_string(pfile, pcurrent->accname, S_FILEFUNC_ERR_WRITE_ACCNAME);
+#ifdef MTC_NOTMINIMAL
+    fwrite_integer(pfile, pcurrent->runfilter, S_FILEFUNC_ERR_WRITE_FILTER);
+#endif /*MTC_NOTMINIMAL*/
+
 	/*write the password to the password file*/
-	write_password_to_file(pcurrent);
+	pw_write(pcurrent);
 		
 	/*close the details file*/
 	if(fclose(pfile)== EOF)
-		error_and_log_no_exit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
+		err_noexit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
 	
 	/*change the permissions so the file can only be read*/
-	if(chmod(detailsfilename, S_IRUSR)== -1)
-		error_and_log(S_FILEFUNC_ERR_SET_PERM, detailsfilename);
+	if(g_chmod(detailsfilename, S_IRUSR)== -1)
+		err_exit(S_FILEFUNC_ERR_SET_PERM, detailsfilename);
 	
-	return 1;
+	return TRUE;
 }
 
 /*function to write the password (encrypted or not) to the file*/
-int write_password_to_file(mail_details *paccount)
+gboolean pw_write(mtc_account *paccount)
 {
 	FILE* pfile;
-	char passwordfilename[NAME_MAX];
+	gchar passwordfilename[NAME_MAX];
 #ifdef MTC_USE_SSL	
-	char encstring[1024];
-	size_t len= 0;
+	gchar encstring[1024];
+	gulong len= 0;
 #endif
 
 	/*get the full path of the password file*/
-	get_account_file(passwordfilename, PASSWORD_FILE, paccount->id);
+	mtc_file(passwordfilename, PASSWORD_FILE, paccount->id);
 	
 	/*if the password exists but cannot be removed report error*/
-	if((IS_FILE(passwordfilename))&&(remove(passwordfilename)== -1))
-		error_and_log(S_FILEFUNC_ERR_ATTEMPT_WRITE, passwordfilename);
+	if((IS_FILE(passwordfilename))&&(g_remove(passwordfilename)== -1))
+		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, passwordfilename);
 	
 	/*open the password file for writing*/
-	if((pfile= fopen(passwordfilename, "wb"))== NULL)
-		error_and_log(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
+	if((pfile= g_fopen(passwordfilename, "wb"))== NULL)
+		err_exit(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
 
 /*if OpenSSL is defined encrypt the password*/
 #ifdef MTC_USE_SSL
 	memset(encstring, '\0', 1024);
-	len= encrypt_password(paccount->password, encstring);
+	len= pw_encrypt(paccount->password, encstring);
 	
 	/*write the encrypted password*/
 	if(fwrite(encstring, 1, len, pfile)< len)
-		error_and_log(S_FILEFUNC_ERR_WRITE_PW);
+		err_exit(S_FILEFUNC_ERR_WRITE_PW);
 
 /*otherwise write a clear password*/
 #else
-	if(fputs(paccount->password, pfile)== EOF||(fputc('\n', pfile)== EOF))
-		error_and_log(S_FILEFUNC_ERR_WRITE_PW);
+    fwrite_string(pfile, paccount->password, S_FILEFUNC_ERR_WRITE_PW);
 #endif
 
 	/*close the password file*/
 	if(fclose(pfile)== EOF)
-		error_and_log(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
+		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
 	
 	/*change the permissions on the file so that it can only be read by user*/
-	if(chmod(passwordfilename, S_IRUSR)== -1)
-		error_and_log(S_FILEFUNC_ERR_SET_PERM, passwordfilename);
+	if(g_chmod(passwordfilename, S_IRUSR)== -1)
+		err_exit(S_FILEFUNC_ERR_SET_PERM, passwordfilename);
 
-	return 1;
+	return TRUE;
 }
 
 /*function to remove a file in ~/.PACKAGE and shift the files so they are in order*/
-int remove_file(char *shortname, int count, int fullcount)
+gboolean rm_mtc_file(gchar *shortname, gint count, gint fullcount)
 {
-	int i= 0;
+	gint i= 0;
 
 	/*allocate memory and get full path of the file to delete*/
-	char full_filename[NAME_MAX];
-	char new_filename[NAME_MAX];
+	gchar full_filename[NAME_MAX];
+	gchar new_filename[NAME_MAX];
 
-	get_account_file(full_filename, shortname, count- 1);
+	mtc_file(full_filename, shortname, count- 1);
 	
 	/*remove the file*/
-	if((IS_FILE(full_filename))&& (remove(full_filename)== -1))
-		error_and_log(S_FILEFUNC_ERR_REMOVE_FILE, full_filename);
+	if((IS_FILE(full_filename))&& (g_remove(full_filename)== -1))
+		err_exit(S_FILEFUNC_ERR_REMOVE_FILE, full_filename);
 
 	/*traverse through each of the files after the removed one*/
 	for(i= count; i< fullcount; i++)
 	{
 		/*get the name of the file and the file before it*/
-		get_account_file(full_filename, shortname, i);
-		get_account_file(new_filename, shortname, i- 1);
+		mtc_file(full_filename, shortname, i);
+		mtc_file(new_filename, shortname, i- 1);
 		
 		/*rename file to file- 1 so that there are no gaps*/
-		if((IS_FILE(full_filename))&& (rename(full_filename, new_filename)== -1))
-			error_and_log(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
+		if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
+			err_exit(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
 	}
-	return 1;
+	return TRUE;
 }
 

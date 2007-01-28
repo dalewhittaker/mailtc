@@ -1,14 +1,38 @@
 NEXT RELEASE:
-1)  Valgrind. Test filters with plugins. Test config dialog with plugins.
-	Test all network stuff (i.e no connection/wrong password etc) for each plugin.
-	Test docklet click stuff.
-	Test all GSList stuff.
-	Test app launching.
-	Test everything basically.
-2) Add the French translation (from Val) package the bugger up, do the usual stuff
 
-RELEASE AFTER
-1) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. Possibly improve filter disabling too.
+1) Compile/test on win32
+    a) Get mingw working and build absolute minimal mailtc, test.
+    b) Get SSL working and test.
+    c) Use Nullsoft scriptable installer as an installer and test.
+2) allow GTK 2.4 and above to be used
+3) possible problem with the icons not loading all the time (reported by Ben)
+
+4) Test with valgrind:
+    valgrind needs to be run as follows:
+
+    G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind --leak-check=full --error-limit=no
+
+    NOTE: currently g_module_open() dlopen() are reporting errors, need to investigate this
+    (e.g write small app that calls dlopen to check whether problem is specific to mailtc)
+
+    a) everything plugin related
+    b) the message list/header adding
+    c) config file reading
+    d) pop stuff
+    e) filter stuff
+    f) localisation stuff
+    g) connection error stuff
+    h) run command on new mail stuff
+    i) IMAP stuff.  NOTE mark as read stuff needs full heavy testing.
+    j) With/without message list disabled
+    k) All stuff relating to the docklet and tooltip
+    l) config dialog ref counting: we really need to check that everything is being alloc'ed/free'd ok.
+    m) docklet stuff; see docklet1 and docklet2 test scripts
+
+WISH LIST TASKS:
+1) Split the config dialog stuff to a separate app (mailtc-config), and keep the rest as mailtc.
+2) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
+3) sumdlg
 
 ------------------------------
 ***TO ADD NEW LANG***

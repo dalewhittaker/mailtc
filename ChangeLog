@@ -374,3 +374,77 @@ Updated the message handling so that the return value from the plugin is used as
 This value MUST be returned from the plugin in order for mailtc to correctly report.
 Also wrote an example plugin that can be used as a template for anyone who wishes to write their own plugin.
 Added load/unload routines to all plugins.
+
+1.2.1:
+Changed a lot of POSIX functions to use the glib equivalents to make more
+portable.  The pid routines are now also only used if POSIX routines are
+defined.
+
+1.2.2:
+Changed the non portable app launching code bit to make it portable.
+
+1.2.3:
+Tidyed up the ugly config file reading/writing code.
+
+1.2.4:
+Totally cleaned and rewrote the POP3 code, and ported it to use glib.
+
+1.2.5:
+Added new method for getting mail information, such as mail headers, and
+ported mail filtering to use it.  This means that all sorts of information is
+now held in the mail list.
+
+1.2.6:
+Added a timeout for connect() so that it doesn't wait forever.
+
+1.2.7:
+New improved icons (thanks goes to gnome-icons as i based they are based on
+them).
+Ported the localisation routines to glib.
+
+1.2.8:
+Massive tidying of the IMAP code (now ~300 less lines with more
+functionality), and general tidying of all other code.
+Made uid of each message in list dynamically allocated rather than static,
+to save space in the case of large message lists.
+
+1.2.9:
+Added option to configure the frequency of connection error reporting.
+General tidying of the config dialog.
+
+1.3.0:
+Added option to run a user defined command when a new mail arrives.
+Tidied up function/struct/enum names.
+
+1.3.1:
+Now stores all POP mails as read upon first ever time mailtc is executed.
+Added --disable-pop and --disable-imap compile options for extra
+configurability.
+Disabled the summary dialog for now as it is broken.
+Fixed number of issues with emails not conforming to the spec.
+
+1.3.2:
+Added --disable-msglist.  This removes the message list for POP, taking away a
+number of features, but makes the build minimal.
+Added table routines to make the dialog widgets easier to add, and less bug
+prone.
+
+1.3.3:
+Vastly improved the docklet loading code.  Previously this created/destroyed
+the image and trayicon widgets everytime the mail status changed.  Now it
+simply creates everyting once, and adds/removes everything when needed.  This
+results in it being faster, and the code being more simplistic to read, and
+less bug prone.
+Changed --disable-msglist to --enable-minimal.  This can be used to build a
+bare bones mailtc.  Modified the existing code so that small icon option is
+now not available with --enable-minimal.
+
+1.3.4:
+Added GtkStatusIcon support.  This is not used by default due to limitations,
+but can be switched on.  GtkStatusIcon will allow mailtc to be compiled on
+win32 in the future.
+
+1.3.5:
+Updated the network routines to also use equivalent winsock routines for win32
+build.
+Fix bug with icon size for accounts.

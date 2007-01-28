@@ -6,7 +6,7 @@ ssl_libraries = -lcrypto -lssl
 ssl_sources = encrypter.c
 endif
 
-mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
+mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
 extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
@@ -16,11 +16,22 @@ extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
 
 mtc_include = $(top_srcdir)/include
 
-if DEBUG
-AM_CFLAGS = $(mtc_cflags) $(extra_cflags) -g -DDEBUG
-else
-AM_CFLAGS = $(mtc_cflags) $(extra_cflags)
+if MTC_ALLFEATURES
+msglist_cflags = -DMTC_NOTMINIMAL
+msglist_sources = filterdlg.c
+msglist_headers = $(mtc_include)/envelope_small.h
 endif
+
+if DEBUG
+debug_cflags = -g -DDEBUG
+endif
+
+if MTC_EGG
+egg_sources = eggtrayicon.c
+egg_headers = $(mtc_include)/eggtrayicon.h
+endif
+
+AM_CFLAGS = $(mtc_cflags) $(extra_cflags) $(msglist_cflags) $(debug_cflags)
 
 #Here we are defining out libraries
 LDADD = @GTK_LIBS@ $(ssl_libraries)
@@ -29,11 +40,23 @@ LDADD = @GTK_LIBS@ $(ssl_libraries)
 INCLUDES = -I$(mtc_include) @GTK_CFLAGS@ 
 	
 #define the various builds
-mailtc_SOURCES = eggtrayicon.c configdlg.c docklet.c \
-	filefunc.c common.c filterdlg.c \
-	plugin.c $(ssl_sources) $(sasl_sources) main.c
+mailtc_SOURCES = configdlg.c \
+	docklet.c \
+	filefunc.c \
+	common.c \
+	plugin.c \
+	$(ssl_sources) \
+	$(msglist_sources) \
+	$(egg_sources) \
+	main.c
 
-noinst_HEADERS = $(mtc_include)/eggtrayicon.h $(mtc_include)/core.h \
-		$(mtc_include)/strings.h $(mtc_include)/envelope_white.h \
-		$(mtc_include)/envelope_small.h $(mtc_include)/plugin.h
+#TODO summary removed for now as it is broken
+#summarydlg.c
 
+noinst_HEADERS = $(mtc_include)/core.h \
+		$(mtc_include)/strings.h \
+		$(mtc_include)/envelope_large.h \
+		$(mtc_include)/plugin.h \
+		$(egg_headers) \
+		$(msglist_headers)
+		

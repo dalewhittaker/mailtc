@@ -26,41 +26,41 @@
 #define PLUGIN_DESC "IMAP4 network plugin with CRAM-MD5 authentication."
 #define DEFAULT_PORT 143
 
+G_MODULE_EXPORT mtc_plugin *init_plugin(void);
+
 /*this is called every n minutes by mailtc to check for new messages*/
-int imapcram_get_messages(void *pdata)
+mtc_error imapcram_get_messages(gpointer pdata)
 {
-	mail_details *paccount= (mail_details *)pdata;
-	return(check_cramimap_mail(paccount, mtc_dir));
+	mtc_account *paccount= (mtc_account *)pdata;
+	return(check_cramimap_mail(paccount, cfg_get()));
 }
 
 /*this is called when the plugin is first loaded. it is here that we set globals passed from the core app*/
-int imapcram_load(const char *cfgdir, void *plog, unsigned int flags)
+mtc_error imapcram_load(gpointer pdata)
 {
 	/*set the network debug flag and log file*/
-	mtc_dir= cfgdir;
-	net_debug= flags& MTC_DEBUG_MODE;
-	plglog= (FILE *)plog;
-	
-	fprintf(plglog, PLUGIN_NAME " plugin loaded\n");
+    cfg_load((mtc_cfg *)pdata);
+
+	g_fprintf(((mtc_cfg  *)pdata)->logfile, PLUGIN_NAME " plugin loaded\n");
 	return(MTC_RETURN_TRUE);
 }
 
 /*this is called when unloading, one use for this is to free memory if needed*/
-int imapcram_unload(void)
+mtc_error imapcram_unload(void)
 {
-	plglog= NULL;
+	cfg_unload();
 	return(MTC_RETURN_TRUE);
 }
 
 /*this is called when the docklet is clicked*/
-int imapcram_clicked(void *pdata)
+mtc_error imapcram_clicked(gpointer pdata)
 {
-	mail_details *paccount= (mail_details *)pdata;
-	return(imap_read_mail(paccount, mtc_dir));
+	mtc_account *paccount= (mtc_account *)pdata;
+	return(imap_read_mail(paccount, cfg_get()));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
-static mtc_plugin_info imapcram_pluginfo =
+static mtc_plugin imapcram_pluginfo =
 {
 	NULL, /*pointer to handle, set to NULL*/
 	VERSION,
@@ -76,8 +76,9 @@ static mtc_plugin_info imapcram_pluginfo =
 };
 
 /*the initialisation function*/
-mtc_plugin_info *init_plugin(void)
+G_MODULE_EXPORT mtc_plugin *init_plugin(void)
 {
 	/*set the plugin pointer passed to point to the struct*/
 	return(&imapcram_pluginfo);
 }
+

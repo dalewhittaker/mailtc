@@ -20,28 +20,25 @@
 #ifndef DW_MAILTC_STRINGS_FILE
 #define DW_MAILTC_STRINGS_FILE
 
-/*define the gettext stuff*/
-/*TODO i don't know exactly how correct this is, although should work on most systems*/
-#ifdef ENABLE_NLS
-
-#include <libintl.h>
+#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#define _(text) gettext(text)
-#define N_(text) text
-#else
+#endif /*HAVE_LOCALE_H*/
 
+/*define the gettext stuff*/
+#ifdef ENABLE_NLS
+#include <glib/gi18n.h>
+#else
 #define _(text) text
 #define N_(text) text
-
 #endif /*ENABLE_NLS*/
-
 
 /***DIALOG STRINGS***/
 
 /*docklet.c strings*/
 #define S_DOCKLET_NEW_MESSAGE _("%s: %d new message%s")
 #define S_DOCKLET_NEW_MESSAGES _("%s: %d new messages%s")
-#define S_DOCKLET_CONNECT_ERR _("There was an error connecting to the following servers:\n\n%s\nPlease check the %s log for the error.\n")
+#define S_DOCKLET_CONNECT_ERR _("There was an error connecting to the following servers:\n\n%s\nPlease check the %s log (%s/%s) for the error.\n")
+#define S_DOCKLET_CONNECT_ERR_MULTI _("%d errors connecting to the following servers:\n\n%s\nPlease check the %s log (%s/%s) for the error.\n")
 
 /*main.c strings*/
 #define S_MAIN_INSTANCE_RUNNING _("An instance of %s is already running.\n")
@@ -76,7 +73,7 @@
 #define S_CONFIGDLG_TAB_ACCOUNTS _("Mail accounts")
 #define S_CONFIGDLG_INTERVAL _("Interval in minutes for mail check: ")
 #define S_CONFIGDLG_SMALLICON _("Use small envelope icon")
-#define S_CONFIGDLG_MAILAPP _("Mail reading program:")
+#define S_CONFIGDLG_MAILAPP _("Mail reading command:")
 #define S_CONFIGDLG_LTAB_ACCOUNT _("Mail Account")
 #define S_CONFIGDLG_LTAB_PROTOCOL _("Protocol")
 #define S_CONFIGDLG_MULTI_TOOLTIP _("Enable this option to display the number of new messages for all accounts, rather than for a single account at a time.\n\
@@ -85,6 +82,14 @@
 #define S_CONFIGDLG_DISPLAY_PLG_INFO _("%s plugin by %s.\n\n%s")
 #define S_CONFIGDLG_PLG_INFO_BUTTON _("Plugin information...")
 #define S_CONFIGDLG_FIND_PLUGIN_MSG _("Cannot find the plugin '%s' used for account '%s'.\n\nYou will need to select and resave a plugin from the list for each account.")
+#define S_CONFIGDLG_ENABLE_SUMMARY  _("Display mail summary")
+#define S_CONFIGDLG_SUMOPTS _("summary options...")
+#define S_CONFIGDLG_SHOW_NET_ERRDLG _("Show network connection error dialog:")
+#define S_CONFIGDLG_SHOW_NEVER _("Never")
+#define S_CONFIGDLG_SHOW_ALWAYS _("Always")
+#define S_CONFIGDLG_SHOW_EVERY _("Every")
+#define S_CONFIGDLG_FAILED_CONNECTIONS _("failed connections")
+#define S_CONFIGDLG_RUN_NEWMAIL_CMD _("Run command when new mail received:")
 
 /*filterdlg.c strings*/
 #define S_FILTERDLG_NO_FILTERS _("You must enter at least one filter string")
@@ -97,6 +102,22 @@
 #define S_FILTERDLG_BUTTON_MATCHANY _("Match any condition")
 #define S_FILTERDLG_BUTTON_CLEAR _("Clear filters")
 #define S_FILTERDLG_LABEL_SELECT _("Select up to %u filters:")
+
+/*summarydlg.c strings*/
+#define S_SUMMARYDLG_OPTS _("Summary options")
+#define S_SUMMARYDLG_WPOS_TL _("Top left")
+#define S_SUMMARYDLG_WPOS_TR _("Top right")
+#define S_SUMMARYDLG_WPOS_BL _("Bottom left")
+#define S_SUMMARYDLG_WPOS_BR _("Bottom right")
+#define S_SUMMARYDLG_WPOS _("Summary dialog window position: ")
+#define S_SUMMARYDLG_FONT _("Summary dialog font: ")
+#define S_SUMMARYDLG_WIN_TITLE _("New mail")
+#define S_SUMMARYDLG_DATE _("Date:\t")
+#define S_SUMMARYDLG_FROM _("From:\t")
+#define S_SUMMARYDLG_TO _("To:\t")
+#define S_SUMMARYDLG_CC _("Cc:\t")
+#define S_SUMMARYDLG_SUBJECT _("Subject:\t")
+#define S_SUMMARYDLG_SUMMARY _("Summary: ")
 
 /***ERROR STRINGS***/
 
@@ -114,6 +135,7 @@
 #define S_DOCKLET_ERR_FIND_PLUGIN _("Error finding plugin %s\n")
 #define S_DOCKLET_ERR_FIND_PLUGIN_MSG _("Cannot find the plugin '%s' used for account '%s'.\n\n\
 You will need to select and resave a plugin from the list for each account.")
+#define S_DOCKLET_ERR_CONNECT _("%s: connection error (%d)\n")
 
 /*encrypter.c strings*/
 #define S_ENCRYPTER_ERR_ENC_PW _("Error encrypting password\n")
@@ -137,18 +159,23 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_FILEFUNC_ERR_WRITE_PW _("Error writing password to file\n")
 #define S_FILEFUNC_ERR_GET_DELAY _("Error retrieving mail checking delay information\n")
 #define S_FILEFUNC_ERR_GET_MAILAPP _("Error retrieving mail reading application information\n")
-#define S_FILEFUNC_ERR_GET_HOSTNAME _("Error retrieving server hostname information for account %d\n")
-#define S_FILEFUNC_ERR_GET_PORT _("Error retrieving server port information for account %d\n")
-#define S_FILEFUNC_ERR_GET_USERNAME _("Error retrieving username for account %d\n")
-#define S_FILEFUNC_ERR_GET_ICONTYPE _("Error retrieving icon type for account %d\n")
-#define S_FILEFUNC_DEFAULT_ACCNAME _("Account %d")
-#define S_FILEFUNC_ERR_GET_FILTER _("Error getting filter details %d\n")
-#define S_FILEFUNC_ERR_GET_PASSWORD _("Error retrieving password for account %d\n")
+#define S_FILEFUNC_ERR_GET_HOSTNAME _("Error retrieving server hostname information for account\n")
+#define S_FILEFUNC_ERR_GET_PORT _("Error retrieving server port information for account\n")
+#define S_FILEFUNC_ERR_GET_USERNAME _("Error retrieving username for account\n")
+#define S_FILEFUNC_ERR_GET_ICONTYPE _("Error retrieving icon type for account\n")
+#define S_FILEFUNC_DEFAULT_ACCNAME _("Account")
+#define S_FILEFUNC_ERR_GET_FILTER _("Error getting filter details\n")
+#define S_FILEFUNC_ERR_GET_PASSWORD _("Error retrieving password for account\n")
 #define S_FILEFUNC_ERR_WRITE_DELAY _("Error writing mail checking delay information to file\n")
 #define S_FILEFUNC_ERR_WRITE_MAILAPP _("Error writing mail reading application to file\n")
 #define S_FILEFUNC_ERR_WRITE_ICONSIZE _("Error writing icon size information to file\n")
 #define S_FILEFUNC_ERR_WRITE_MULTIPLE _("Error writing read multiple information to file\n")
+#define S_FILEFUNC_ERR_WRITE_SUMMARY _("Error writing summary status to file\n")
+#define S_FILEFUNC_ERR_WRITE_SUMMARY_WPOS _("Error writing summary window position to file\n")
+#define S_FILEFUNC_ERR_WRITE_SUMMARY_SFONT _("Error writing summary font to file\n")
 #define S_FILEFUNC_ERR_WRITE_M_ICON_COLOUR _("Error writing multiple icon colour information to file\n")
+#define S_FILEFUNC_ERR_WRITE_FREQ _("Error writing connection error frequency\n")
+#define S_FILEFUNC_ERR_WRITE_NMCMD _("Error writing new mail command\n")
 #define S_FILEFUNC_ERR_WRITE_HOSTNAME _("Error writing server hostname to file\n")
 #define S_FILEFUNC_ERR_WRITE_PORT _("Error writing server port to file\n")
 #define S_FILEFUNC_ERR_WRITE_USERNAME _("Error writing username to file\n")
@@ -160,6 +187,7 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_FILEFUNC_ERR_MOVE_FP _("Error moving file pointer for config file\n")
 #define S_FILEFUNC_ERR_READ_PLUGIN	_("Error reading plugin for account %d\n")
 #define S_FILEFUNC_ERR_GET_HOMEDIR _("Error getting home directory\n")
+#define S_FILEFUNC_ERR_CREATE_PIXBUF _("Error creating icon pixbuf\n")
 
 /*main.c strings*/
 #define S_MAIN_ERR_INSTANCE_RUNNING _("Error: Instance of %s already running\n")
@@ -174,10 +202,16 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_MAIN_ERR_RENAME_PIDFILE _("Error renaming pid file %s to temp pid file %s\n")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
 #define S_MAIN_ERR_NOT_DIRECTORY _("%s exists, but is not a directory, you must remove this before %s can run\n")
+
 #define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 \n\t%s -c (to configure mail details)\
 \n\t%s -d (run in network debug mode)\
 \n\t%s -k (kill all mailtc processes)\n")
+
+#define S_MAIN_ERR_PRINT_USAGE_NOKILL _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
+\n\t%s -c (to configure mail details)\
+\n\t%s -d (run in network debug mode)\n")
+
 #define S_MAIN_ERR_LOAD_PLUGINS ("Error loading network plugins\n")
 
 /*plugin.c strings*/
@@ -188,5 +222,7 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_PLUGIN_ERR_INIT_PLUGIN _("Error initialising plugin %s: %s\n")
 #define S_PLUGIN_ERR_COMPATIBILITY _("Error: plugin %s is not compatible with %s %s\n")
 #define S_PLUGIN_ERR_FIND_PLUGIN _("Error: cannot find plugin %s\n")
+
+
 
 #endif /*DW_MAILTC_STRINGS_FILE*/

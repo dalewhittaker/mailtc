@@ -20,12 +20,12 @@
 #include "core.h"
 
 /*function used to sort the items*/
-static gint compare_plugin_names(gconstpointer a, gconstpointer b)
+static gint plg_compare(gconstpointer a, gconstpointer b)
 {
-	int len1, len2;
+	gint len1, len2;
 	gint result;
-	mtc_plugin_info *pitem1= (mtc_plugin_info *)b;
-	mtc_plugin_info *pitem2= (mtc_plugin_info *)a;
+	mtc_plugin *pitem1= (mtc_plugin *)b;
+	mtc_plugin *pitem2= (mtc_plugin *)a;
 
 	len1= strlen(pitem1->name);
 	len2= strlen(pitem2->name);
@@ -43,23 +43,25 @@ static gint compare_plugin_names(gconstpointer a, gconstpointer b)
 }
 
 /*function to unload a plugin*/
-static void unload_plugin(gpointer data, gpointer user_data)
+static void plg_unload(gpointer data, gpointer user_data)
 {
-	mtc_plugin_info *pitem= (mtc_plugin_info *)data;
+	mtc_plugin *pitem= (mtc_plugin *)data;
+
+    user_data= NULL;
 
 	/*call the unload routine*/
 	(*pitem->unload)();
 	
-	if(!g_module_close(pitem->handle))
-		error_and_log_no_exit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(pitem->handle), g_module_error());
+	if(!g_module_close((GModule *)pitem->handle))
+		err_noexit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name((GModule *)pitem->handle), g_module_error());
 	
 }
 
 /*function to unload the plugins*/
-gboolean unload_plugins(void)
+gboolean plg_unload_all(void)
 {
 	/*now free the list*/
-	g_slist_foreach(plglist, unload_plugin, NULL);
+	g_slist_foreach(plglist, plg_unload, NULL);
 	
 	g_slist_free(plglist);
 	plglist= NULL;
@@ -69,33 +71,33 @@ gboolean unload_plugins(void)
 }
 
 /*load a found network plugin*/
-static gboolean load_plugin(const char *plugin_name)
+static gboolean plg_load(const gchar *plugin_name)
 {
 	GModule *module= NULL;
-	mtc_plugin_info *pitem= NULL;
-	mtc_plugin_info *(*init_plugin)(void);
+	mtc_plugin *pitem= NULL;
+	mtc_plugin *(*init_plugin)(void);
 
 	/*check if the system supports loading modules*/
 	if(!g_module_supported())
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_MODULE_SUPPORT);
+		err_noexit(S_PLUGIN_ERR_MODULE_SUPPORT);
 		return(FALSE);
 	}
 
 	/*open the shared library*/
 	if((module= g_module_open(plugin_name, G_MODULE_BIND_LOCAL/*1*//*0*//*G_MODULE_BIND_LAZY*/))== NULL)
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_OPEN_PLUGIN, plugin_name, g_module_error());
+		err_noexit(S_PLUGIN_ERR_OPEN_PLUGIN, plugin_name, g_module_error());
 		return(TRUE);
 	}
 	
 	/*get the plugin struct from the module*/
 	if(!g_module_symbol(module, "init_plugin", (gpointer)&init_plugin))
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_PLUGIN_POINTER, g_module_error());
+		err_noexit(S_PLUGIN_ERR_PLUGIN_POINTER, g_module_error());
 		/*now close the module*/
 		if(!g_module_close(module))
-			error_and_log_no_exit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(module), g_module_error());
+			err_noexit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(module), g_module_error());
 		
 		return(TRUE);
 	}
@@ -103,65 +105,65 @@ static gboolean load_plugin(const char *plugin_name)
 	/*initialise the plugin*/
 	if((pitem= init_plugin())== NULL)
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_INIT_PLUGIN, g_module_name(module), g_module_error());
+		err_noexit(S_PLUGIN_ERR_INIT_PLUGIN, g_module_name(module), g_module_error());
 		return(TRUE);
 	}
 	pitem->handle= module;
 
 	/*if it is greater than the current mailtc version, report an error*/
-	if(strcmp(VERSION, pitem->compatibility)< 0)
+	if(g_ascii_strcasecmp(VERSION, pitem->compatibility)< 0)
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_COMPATIBILITY, g_module_name(module), PACKAGE, VERSION);
-		unload_plugin(pitem, NULL);
+		err_noexit(S_PLUGIN_ERR_COMPATIBILITY, g_module_name(module), PACKAGE, VERSION);
+		plg_unload(pitem, NULL);
 		return(FALSE);
 	}
 
 	/*add the bugger to the start of the list*/
-	plglist= g_slist_insert_sorted(plglist, (gpointer)pitem, (GCompareFunc)compare_plugin_names);
+	plglist= g_slist_insert_sorted(plglist, (gpointer)pitem, (GCompareFunc)plg_compare);
 
 	/*call the plugin load routine*/
-	(*pitem->load)(config.base_name, config.logfile, (config.net_debug)? MTC_DEBUG_MODE: 0);
+	(*pitem->load)(&config);
 
 	return(TRUE);
 }
 
 /*compare function used by find_plugin*/
-static gint plugin_match(gconstpointer a, gconstpointer b)
+static gint plg_match(gconstpointer a, gconstpointer b)
 {
-	mtc_plugin_info *pitem= (mtc_plugin_info *)a;
+	mtc_plugin *pitem= (mtc_plugin *)a;
 	const gchar *plugin_name= (const gchar *)b;
 	gchar *pbasename;
 	gint retval= 0;
 
-	pbasename= g_path_get_basename(g_module_name(pitem->handle));
+	pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));
 	retval= (g_str_equal(pbasename, plugin_name))? 0: 1;
 	g_free(pbasename);
 	return(retval);
 }
 
 /*function to find a plugin from the list*/
-mtc_plugin_info *find_plugin(const gchar *plugin_name)
+mtc_plugin *plg_find(const gchar *plugin_name)
 {
-	GSList *pfound= g_slist_find_custom(plglist, plugin_name, plugin_match);
+	GSList *pfound= g_slist_find_custom(plglist, plugin_name, plg_match);
 	
 	/*if it returns NULL (i.e not found, we should report an error and then default to first in list*/
 	if(pfound== NULL)
 	{
-		error_and_log_no_exit(S_PLUGIN_ERR_FIND_PLUGIN, plugin_name);
+		err_noexit(S_PLUGIN_ERR_FIND_PLUGIN, plugin_name);
 		return(NULL);
 	}
-	return((mtc_plugin_info *)pfound->data);
+	return((mtc_plugin *)pfound->data);
 }
 
-/*TODO test function to print the plugins*/
+/*test function to print the plugins*/
 /*static gboolean print_plugins(void)
 {
-	mtc_plugin_info *pitem;
+	mtc_plugin *pitem;
 	GSList *pcurrent= plglist;
 	
 	while(pcurrent!= NULL)
 	{
-		pitem= (mtc_plugin_info *)pcurrent->data;
+		pitem= (mtc_plugin *)pcurrent->data;
 		g_print("Plugin file: %s, name: %s\n", g_module_name(pitem->handle), pitem->name);
 		g_print("Plugin port: %d\n", pitem->default_port);
 		pcurrent= g_slist_next(pcurrent);
@@ -170,7 +172,7 @@ mtc_plugin_info *find_plugin(const gchar *plugin_name)
 }*/
 
 /*function to traverse the directory and load any plugins found*/
-gboolean load_plugins(void)
+gboolean plg_load_all(void)
 {
 	GDir *dir;
 	GError *error= NULL;
@@ -183,7 +185,7 @@ gboolean load_plugins(void)
 	/*open the dir for reading*/
 	if(!(dir= g_dir_open(LIBDIR, 0, &error)))
 	{
-		error_and_log_no_exit("%s\n", error->message);
+		err_noexit("%s\n", error->message);
 		return(FALSE);
 	}
 
@@ -194,8 +196,8 @@ gboolean load_plugins(void)
 		path= g_build_filename(LIBDIR, file, NULL);
 		
 		/*currently we only add plugins with a ".so" extension*/
-		if(strcmp(path+ (strlen(path)- 3), ".so")== 0)
-			load_plugin(path);
+		if(g_ascii_strcasecmp(path+ (strlen(path)- 3), ".so")== 0)
+			plg_load(path);
 
 		g_free(path);
 	}

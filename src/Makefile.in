@@ -37,9 +37,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 bin_PROGRAMS = mailtc$(EXEEXT)
 subdir = src
-DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
+DIST_COMMON = $(am__noinst_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in TODO
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -50,12 +51,14 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am__mailtc_SOURCES_DIST = eggtrayicon.c configdlg.c docklet.c \
-	filefunc.c common.c filterdlg.c plugin.c encrypter.c main.c
+am__mailtc_SOURCES_DIST = configdlg.c docklet.c filefunc.c common.c \
+	plugin.c encrypter.c filterdlg.c eggtrayicon.c main.c
 @MTC_SSL_TRUE@am__objects_1 = encrypter.$(OBJEXT)
-am_mailtc_OBJECTS = eggtrayicon.$(OBJEXT) configdlg.$(OBJEXT) \
-	docklet.$(OBJEXT) filefunc.$(OBJEXT) common.$(OBJEXT) \
-	filterdlg.$(OBJEXT) plugin.$(OBJEXT) $(am__objects_1) \
+@MTC_ALLFEATURES_TRUE@am__objects_2 = filterdlg.$(OBJEXT)
+@MTC_EGG_TRUE@am__objects_3 = eggtrayicon.$(OBJEXT)
+am_mailtc_OBJECTS = configdlg.$(OBJEXT) docklet.$(OBJEXT) \
+	filefunc.$(OBJEXT) common.$(OBJEXT) plugin.$(OBJEXT) \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	main.$(OBJEXT)
 mailtc_OBJECTS = $(am_mailtc_OBJECTS)
 mailtc_LDADD = $(LDADD)
@@ -74,6 +77,10 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(mailtc_SOURCES)
 DIST_SOURCES = $(am__mailtc_SOURCES_DIST)
+am__noinst_HEADERS_DIST = $(mtc_include)/core.h \
+	$(mtc_include)/strings.h $(mtc_include)/envelope_large.h \
+	$(mtc_include)/plugin.h $(mtc_include)/eggtrayicon.h \
+	$(mtc_include)/envelope_small.h
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -115,6 +122,7 @@ FFLAGS = @FFLAGS@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
+GREP = @GREP@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
@@ -132,8 +140,16 @@ LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
+MTC_ALLFEATURES_FALSE = @MTC_ALLFEATURES_FALSE@
+MTC_ALLFEATURES_TRUE = @MTC_ALLFEATURES_TRUE@
+MTC_EGG_FALSE = @MTC_EGG_FALSE@
+MTC_EGG_TRUE = @MTC_EGG_TRUE@
+MTC_IMAP_FALSE = @MTC_IMAP_FALSE@
+MTC_IMAP_TRUE = @MTC_IMAP_TRUE@
 MTC_NLS_FALSE = @MTC_NLS_FALSE@
 MTC_NLS_TRUE = @MTC_NLS_TRUE@
+MTC_POP_FALSE = @MTC_POP_FALSE@
+MTC_POP_TRUE = @MTC_POP_TRUE@
 MTC_SSL_FALSE = @MTC_SSL_FALSE@
 MTC_SSL_TRUE = @MTC_SSL_TRUE@
 OBJEXT = @OBJEXT@
@@ -156,12 +172,9 @@ STRIP = @STRIP@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 XGETTEXT = @XGETTEXT@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -178,30 +191,41 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = @docdir@
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
+htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 @MTC_SSL_TRUE@ssl_libraries = -lcrypto -lssl
 @MTC_SSL_TRUE@ssl_sources = encrypter.c
-mtc_cflags = -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
+mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
 extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
@@ -210,8 +234,13 @@ extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
 				-DVERSION=\"$(VERSION)\"
 
 mtc_include = $(top_srcdir)/include
-@DEBUG_FALSE@AM_CFLAGS = $(mtc_cflags) $(extra_cflags)
-@DEBUG_TRUE@AM_CFLAGS = $(mtc_cflags) $(extra_cflags) -g -DDEBUG
+@MTC_ALLFEATURES_TRUE@msglist_cflags = -DMTC_NOTMINIMAL
+@MTC_ALLFEATURES_TRUE@msglist_sources = filterdlg.c
+@MTC_ALLFEATURES_TRUE@msglist_headers = $(mtc_include)/envelope_small.h
+@DEBUG_TRUE@debug_cflags = -g -DDEBUG
+@MTC_EGG_TRUE@egg_sources = eggtrayicon.c
+@MTC_EGG_TRUE@egg_headers = $(mtc_include)/eggtrayicon.h
+AM_CFLAGS = $(mtc_cflags) $(extra_cflags) $(msglist_cflags) $(debug_cflags)
 
 #Here we are defining out libraries
 LDADD = @GTK_LIBS@ $(ssl_libraries)
@@ -219,13 +248,25 @@ LDADD = @GTK_LIBS@ $(ssl_libraries)
 INCLUDES = -I$(mtc_include) @GTK_CFLAGS@ 
 
 #define the various builds
-mailtc_SOURCES = eggtrayicon.c configdlg.c docklet.c \
-	filefunc.c common.c filterdlg.c \
-	plugin.c $(ssl_sources) $(sasl_sources) main.c
+mailtc_SOURCES = configdlg.c \
+	docklet.c \
+	filefunc.c \
+	common.c \
+	plugin.c \
+	$(ssl_sources) \
+	$(msglist_sources) \
+	$(egg_sources) \
+	main.c
 
-noinst_HEADERS = $(mtc_include)/eggtrayicon.h $(mtc_include)/core.h \
-		$(mtc_include)/strings.h $(mtc_include)/envelope_white.h \
-		$(mtc_include)/envelope_small.h $(mtc_include)/plugin.h
+
+#TODO summary removed for now as it is broken
+#summarydlg.c
+noinst_HEADERS = $(mtc_include)/core.h \
+		$(mtc_include)/strings.h \
+		$(mtc_include)/envelope_large.h \
+		$(mtc_include)/plugin.h \
+		$(egg_headers) \
+		$(msglist_headers)
 
 all: all-am
 
