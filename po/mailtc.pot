@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-24 17:58+0000\n"
+"POT-Creation-Date: 2007-02-09 16:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -214,7 +214,7 @@ msgstr ""
 msgid "Plugin information..."
 msgstr ""
 
-#: include/strings.h:84 include/strings.h:130
+#: include/strings.h:84 include/strings.h:136
 #, c-format
 msgid ""
 "Cannot find the plugin '%s' used for account '%s'.\n"
@@ -230,368 +230,405 @@ msgstr ""
 msgid "summary options..."
 msgstr ""
 
-#. filterdlg.c strings
+#: include/strings.h:87
+msgid "Show network connection error dialog:"
+msgstr ""
+
+#: include/strings.h:88
+msgid "Never"
+msgstr ""
+
 #: include/strings.h:89
-msgid "You must enter at least one filter string"
+msgid "Always"
 msgstr ""
 
 #: include/strings.h:90
-msgid "Sender"
+msgid "Every"
 msgstr ""
 
 #: include/strings.h:91
-msgid "Subject"
+msgid "failed connections"
 msgstr ""
 
 #: include/strings.h:92
-msgid "Contains"
+msgid "Run command when new mail received:"
 msgstr ""
 
-#: include/strings.h:93
-msgid "Does not contain"
-msgstr ""
-
-#: include/strings.h:94
-msgid "Mail filters"
-msgstr ""
-
+#. filterdlg.c strings
 #: include/strings.h:95
-msgid "Match all conditions"
+msgid "You must enter at least one filter string"
 msgstr ""
 
 #: include/strings.h:96
-msgid "Match any condition"
+msgid "Sender"
 msgstr ""
 
 #: include/strings.h:97
-msgid "Clear filters"
+msgid "Subject"
 msgstr ""
 
 #: include/strings.h:98
+msgid "Contains"
+msgstr ""
+
+#: include/strings.h:99
+msgid "Does not contain"
+msgstr ""
+
+#: include/strings.h:100
+msgid "Mail filters"
+msgstr ""
+
+#: include/strings.h:101
+msgid "Match all conditions"
+msgstr ""
+
+#: include/strings.h:102
+msgid "Match any condition"
+msgstr ""
+
+#: include/strings.h:103
+msgid "Clear filters"
+msgstr ""
+
+#: include/strings.h:104
 #, c-format
 msgid "Select up to %u filters:"
 msgstr ""
 
 #. summarydlg.c strings
-#: include/strings.h:101
+#: include/strings.h:107
 msgid "Summary options"
 msgstr ""
 
-#: include/strings.h:102
+#: include/strings.h:108
 msgid "Top left"
 msgstr ""
 
-#: include/strings.h:103
+#: include/strings.h:109
 msgid "Top right"
 msgstr ""
 
-#: include/strings.h:104
+#: include/strings.h:110
 msgid "Bottom left"
 msgstr ""
 
-#: include/strings.h:105
+#: include/strings.h:111
 msgid "Bottom right"
 msgstr ""
 
-#: include/strings.h:106
+#: include/strings.h:112
 msgid "Summary dialog window position: "
 msgstr ""
 
-#: include/strings.h:107
+#: include/strings.h:113
 msgid "Summary dialog font: "
 msgstr ""
 
-#: include/strings.h:108
+#: include/strings.h:114
 msgid "New mail"
 msgstr ""
 
-#: include/strings.h:109
+#: include/strings.h:115
 msgid "Date:\t"
 msgstr ""
 
-#: include/strings.h:110
+#: include/strings.h:116
 msgid "From:\t"
 msgstr ""
 
-#: include/strings.h:111
+#: include/strings.h:117
 msgid "To:\t"
 msgstr ""
 
-#: include/strings.h:112
+#: include/strings.h:118
 msgid "Cc:\t"
 msgstr ""
 
-#: include/strings.h:113
+#: include/strings.h:119
 msgid "Subject:\t"
 msgstr ""
 
-#: include/strings.h:114
+#: include/strings.h:120
 msgid "Summary: "
 msgstr ""
 
 #. **ERROR STRINGS**
 #. configdlg.c strings
-#: include/strings.h:119 include/strings.h:121
+#: include/strings.h:125 include/strings.h:127
 msgid "Error getting listbox iterator\n"
 msgstr ""
 
 #. filterdlg.c strings
-#: include/strings.h:120 include/strings.h:140 include/strings.h:177
+#: include/strings.h:126 include/strings.h:147 include/strings.h:186
 #, c-format
 msgid "Error attempting to write to file %s\n"
 msgstr ""
 
-#: include/strings.h:122
+#: include/strings.h:128 include/strings.h:190
 msgid "Error creating icon pixbuf\n"
 msgstr ""
 
-#: include/strings.h:123
+#: include/strings.h:129
 #, c-format
 msgid "Error getting information for account %d\n"
 msgstr ""
 
-#: include/strings.h:124
+#: include/strings.h:130
 msgid "Error: cannot get active plugin from combo box\n"
 msgstr ""
 
-#: include/strings.h:125
+#: include/strings.h:131
 msgid "Error writing plugin information.\n"
 msgstr ""
 
-#: include/strings.h:126
+#: include/strings.h:132
 msgid "Plugin not found"
 msgstr ""
 
 #. docklet.c strings
-#: include/strings.h:129
+#: include/strings.h:135
 #, c-format
 msgid "Error finding plugin %s\n"
 msgstr ""
 
+#: include/strings.h:138
+#, c-format
+msgid "%s: connection error (%d)\n"
+msgstr ""
+
 #. encrypter.c strings
-#: include/strings.h:134
+#: include/strings.h:141
 msgid "Error encrypting password\n"
 msgstr ""
 
-#: include/strings.h:135
+#: include/strings.h:142
 msgid "Error finalising password encryption\n"
 msgstr ""
 
-#: include/strings.h:136
+#: include/strings.h:143
 msgid "Error decrypting password\n"
 msgstr ""
 
-#: include/strings.h:137
+#: include/strings.h:144
 msgid "Error finalising password decryption\n"
 msgstr ""
 
 #. filefunc.c strings
-#: include/strings.h:141 include/strings.h:146
+#: include/strings.h:148 include/strings.h:153
 #, c-format
 msgid "Error opening file %s\n"
 msgstr ""
 
-#: include/strings.h:142
+#: include/strings.h:149
 msgid "Error getting combobox iterator\n"
 msgstr ""
 
-#: include/strings.h:143 include/strings.h:147
+#: include/strings.h:150 include/strings.h:154
 #, c-format
 msgid "Error closing file %s\n"
 msgstr ""
 
-#: include/strings.h:148
+#: include/strings.h:155
 msgid "Error retrieving password\n"
 msgstr ""
 
-#: include/strings.h:149
+#: include/strings.h:156
 #, c-format
 msgid "Error setting permissions on file %s\n"
 msgstr ""
 
-#: include/strings.h:150
+#: include/strings.h:157
 #, c-format
 msgid "Error removing file %s\n"
 msgstr ""
 
-#: include/strings.h:151
+#: include/strings.h:158
 #, c-format
 msgid "Error renaming %s to %s\n"
 msgstr ""
 
-#: include/strings.h:152
+#: include/strings.h:159
 msgid "Error writing password to file\n"
 msgstr ""
 
-#: include/strings.h:153
+#: include/strings.h:160
 msgid "Error retrieving mail checking delay information\n"
 msgstr ""
 
-#: include/strings.h:154
+#: include/strings.h:161
 msgid "Error retrieving mail reading application information\n"
 msgstr ""
 
-#: include/strings.h:155
+#: include/strings.h:162
 msgid "Error retrieving server hostname information for account\n"
 msgstr ""
 
-#: include/strings.h:156
+#: include/strings.h:163
 msgid "Error retrieving server port information for account\n"
 msgstr ""
 
-#: include/strings.h:157
+#: include/strings.h:164
 msgid "Error retrieving username for account\n"
 msgstr ""
 
-#: include/strings.h:158
+#: include/strings.h:165
 msgid "Error retrieving icon type for account\n"
 msgstr ""
 
-#: include/strings.h:159
+#: include/strings.h:166
 msgid "Account"
 msgstr ""
 
-#: include/strings.h:160
+#: include/strings.h:167
 msgid "Error getting filter details\n"
 msgstr ""
 
-#: include/strings.h:161
+#: include/strings.h:168
 msgid "Error retrieving password for account\n"
 msgstr ""
 
-#: include/strings.h:162
+#: include/strings.h:169
 msgid "Error writing mail checking delay information to file\n"
 msgstr ""
 
-#: include/strings.h:163
+#: include/strings.h:170
 msgid "Error writing mail reading application to file\n"
 msgstr ""
 
-#: include/strings.h:164
+#: include/strings.h:171
 msgid "Error writing icon size information to file\n"
 msgstr ""
 
-#: include/strings.h:165
+#: include/strings.h:172
 msgid "Error writing read multiple information to file\n"
 msgstr ""
 
-#: include/strings.h:166
+#: include/strings.h:173
 msgid "Error writing summary status to file\n"
 msgstr ""
 
-#: include/strings.h:167
+#: include/strings.h:174
 msgid "Error writing summary window position to file\n"
 msgstr ""
 
-#: include/strings.h:168
+#: include/strings.h:175
 msgid "Error writing summary font to file\n"
 msgstr ""
 
-#: include/strings.h:169
+#: include/strings.h:176
 msgid "Error writing multiple icon colour information to file\n"
 msgstr ""
 
-#: include/strings.h:170
-msgid "Error writing server hostname to file\n"
-msgstr ""
-
-#: include/strings.h:171
-msgid "Error writing server port to file\n"
-msgstr ""
-
-#: include/strings.h:172
-msgid "Error writing username to file\n"
-msgstr ""
-
-#: include/strings.h:173
-msgid "Error writing icon type to file\n"
-msgstr ""
-
-#: include/strings.h:174
-msgid "Error writing mail protocol to file\n"
-msgstr ""
-
-#: include/strings.h:175
-msgid "Error writing account name to file\n"
-msgstr ""
-
-#: include/strings.h:176
-msgid "Error writing filter status to file\n"
+#: include/strings.h:177
+msgid "Error writing connection error frequency\n"
 msgstr ""
 
 #: include/strings.h:178
-msgid "Error moving file pointer for config file\n"
+msgid "Error writing new mail command\n"
 msgstr ""
 
 #: include/strings.h:179
+msgid "Error writing server hostname to file\n"
+msgstr ""
+
+#: include/strings.h:180
+msgid "Error writing server port to file\n"
+msgstr ""
+
+#: include/strings.h:181
+msgid "Error writing username to file\n"
+msgstr ""
+
+#: include/strings.h:182
+msgid "Error writing icon type to file\n"
+msgstr ""
+
+#: include/strings.h:183
+msgid "Error writing mail protocol to file\n"
+msgstr ""
+
+#: include/strings.h:184
+msgid "Error writing account name to file\n"
+msgstr ""
+
+#: include/strings.h:185
+msgid "Error writing filter status to file\n"
+msgstr ""
+
+#: include/strings.h:187
+msgid "Error moving file pointer for config file\n"
+msgstr ""
+
+#: include/strings.h:188
 #, c-format
 msgid "Error reading plugin for account %d\n"
 msgstr ""
 
-#: include/strings.h:180
+#: include/strings.h:189
 msgid "Error getting home directory\n"
 msgstr ""
 
 #. main.c strings
-#: include/strings.h:183
+#: include/strings.h:193
 #, c-format
 msgid "Error: Instance of %s already running\n"
 msgstr ""
 
-#: include/strings.h:184
+#: include/strings.h:194
 msgid "Error closing log file: "
 msgstr ""
 
-#: include/strings.h:185
+#: include/strings.h:195
 msgid "Error writing header to log file: "
 msgstr ""
 
-#: include/strings.h:186
+#: include/strings.h:196
 #, c-format
 msgid "%s killed.\n"
 msgstr ""
 
-#: include/strings.h:187
+#: include/strings.h:197
 #, c-format
 msgid "%s encountered a segmentation fault.  Please report this bug\n"
 msgstr ""
 
-#: include/strings.h:188
+#: include/strings.h:198
 msgid "Error closing PID file\n"
 msgstr ""
 
-#: include/strings.h:189
+#: include/strings.h:199
 #, c-format
 msgid "Error: cannot kill process: %d\n"
 msgstr ""
 
-#: include/strings.h:190
+#: include/strings.h:200
 #, c-format
 msgid "Error opening pid file %s for writing\n"
 msgstr ""
 
-#: include/strings.h:191
+#: include/strings.h:201
 #, c-format
 msgid "Error reading PID file %s\n"
 msgstr ""
 
-#: include/strings.h:192
+#: include/strings.h:202
 #, c-format
 msgid "Error renaming pid file %s to temp pid file %s\n"
 msgstr ""
 
-#: include/strings.h:193
+#: include/strings.h:203
 #, c-format
 msgid "%s started %s\n"
 msgstr ""
 
-#: include/strings.h:194
+#: include/strings.h:204
 #, c-format
 msgid ""
 "%s exists, but is not a directory, you must remove this before %s can run\n"
 msgstr ""
 
-#: include/strings.h:196
+#: include/strings.h:206
 #, c-format
 msgid ""
 "%s %s (C) 2006 Dale Whittaker\n"
@@ -602,7 +639,7 @@ msgid ""
 "\t%s -k (kill all mailtc processes)\n"
 msgstr ""
 
-#: include/strings.h:201
+#: include/strings.h:211
 #, c-format
 msgid ""
 "%s %s (C) 2006 Dale Whittaker\n"
@@ -613,36 +650,36 @@ msgid ""
 msgstr ""
 
 #. plugin.c strings
-#: include/strings.h:208
+#: include/strings.h:218
 #, c-format
 msgid "Error closing plugin %s: %s"
 msgstr ""
 
-#: include/strings.h:209
+#: include/strings.h:219
 msgid "Error: module loading not supported on this system"
 msgstr ""
 
-#: include/strings.h:210
+#: include/strings.h:220
 #, c-format
 msgid "Error opening plugin %s: %s\n"
 msgstr ""
 
-#: include/strings.h:211
+#: include/strings.h:221
 #, c-format
 msgid "Error getting plugin pointer: %s\n"
 msgstr ""
 
-#: include/strings.h:212
+#: include/strings.h:222
 #, c-format
 msgid "Error initialising plugin %s: %s\n"
 msgstr ""
 
-#: include/strings.h:213
+#: include/strings.h:223
 #, c-format
 msgid "Error: plugin %s is not compatible with %s %s\n"
 msgstr ""
 
-#: include/strings.h:214
+#: include/strings.h:224
 #, c-format
 msgid "Error: cannot find plugin %s\n"
 msgstr ""

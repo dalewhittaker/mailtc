@@ -100,7 +100,7 @@ gchar *mk_cramstr(mtc_account *paccount, gchar *serverdigest, gchar *clientdiges
     memset(keyed, '\0', sizeof(keyed));
 	keyed_len= sizeof(keyed);
 	slen= strlen(serverdigest);
-	tmpbuf= (gchar *)g_malloc0(slen+ 1);
+	tmpbuf= (gchar *)g_malloc0(sizeof(gchar)* (slen+ 1));
 
 	/*stage 1, decode the base64 encoded string from the server*/
 	if(EVP_DecodeBlock((guchar *)tmpbuf, (guchar *)serverdigest, slen)> slen)

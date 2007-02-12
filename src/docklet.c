@@ -205,6 +205,7 @@ static void docklet_remove()
      *we don't need to check if it has children,
      *because this has already been done in mail_thread*/
 #ifdef MTC_EGGTRAYICON
+    g_print("docklet_remove\n");
     gtk_container_remove(GTK_CONTAINER(ptrayicon->box), pimage);
 	gtk_widget_hide_all(GTK_WIDGET(ptrayicon->docklet));
 #else
@@ -221,6 +222,7 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 {
 	mtc_plugin *pitem= NULL;
 
+    g_print("docklet_read\n");
 	/*find the correct pluin to handle the click*/
 	if((pitem= plg_find(paccount->plgname))== NULL)
 	{
@@ -416,6 +418,7 @@ static void docklet_add(mtc_icon *picon)
 	
 	/*add the icon to the container and show it*/
 #ifdef MTC_EGGTRAYICON
+    g_print("docklet_add\n");
     gtk_container_add(GTK_CONTAINER(ptrayicon->box), picon->image);
     gtk_widget_show(GTK_WIDGET(picon->image));
 	gtk_widget_show_all(GTK_WIDGET(ptrayicon->docklet));
@@ -610,8 +613,11 @@ gboolean mail_thread(gpointer data)
             docklet_remove(pdockimage);
         
         /*now add our new one if needed*/
-        if((picon!= NULL&& picon->image!= NULL)&& (picon->image!= pdockimage))
-            docklet_add(picon);
+        if(picon!= NULL&& picon->image!= NULL)
+        {
+            if(picon->image!= pdockimage)
+                docklet_add(picon);
+        }
 
     	/*next, set the text summary for the accounts*/
         if((picon!= NULL)&& (picon->image!= NULL))

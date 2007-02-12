@@ -31,7 +31,7 @@ static mtc_error imap_send(mtc_net *pnetinfo, mtc_account *paccount, gboolean se
     /*calculate length of format string*/
     va_start(list, buf);
     msglen= g_printf_string_upper_bound(buf, list)+ 1;
-    imap_msg= (gchar *)g_malloc0(msglen+ G_ASCII_DTOSTR_BUF_SIZE+ 3);
+    imap_msg= (gchar *)g_malloc0(sizeof(gchar)* (msglen+ G_ASCII_DTOSTR_BUF_SIZE+ 3));
    
     /*add the message id if desired*/
     if(sendmsgid)
@@ -426,7 +426,7 @@ static mtc_error imap_get_uid(gchar *uidstring, gchar *spos, gchar *epos, gchar 
 
     /*create the unique string from the uid and uidvalidity values*/
     memset(uidstring, 0, UIDL_LEN);
-    uid= (gchar *)g_malloc0((eflag- sflag)+ 1);
+    uid= (gchar *)g_malloc0((eflag- sflag)+ sizeof(gchar));
     g_strlcpy(uid, sflag, (eflag- sflag)+ 1);
     g_snprintf(uidstring, UIDL_LEN, "%s-%s\n", uidvalidity, uid);
     g_free(uid);

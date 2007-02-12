@@ -89,7 +89,7 @@ static mtc_error pop_send(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcm
     /*calculate length of format string*/
     va_start(list, buf);
     msglen= g_printf_string_upper_bound(buf, list)+ 1;
-    pop_msg= (gchar *)g_malloc0(msglen);
+    pop_msg= (gchar *)g_malloc0(msglen* sizeof(gchar));
     
     if(g_vsnprintf(pop_msg, msglen, buf, list)>= (gint)msglen)
         retval= MTC_ERR_CONNECT;
@@ -568,6 +568,8 @@ static mtc_error check_mail(mtc_net *pnetinfo, mtc_account *paccount, mtc_error 
 	
     /*some servers don't give us anything to receive, so don't disconnect if we don't get anything*/
 	pnetinfo->pdata= pop_recv(pnetinfo, paccount, "connect", pnetinfo->pdata);
+    if(!pnetinfo->pdata)
+        return(MTC_ERR_CONNECT);
 
 	/*test server capabilities*/
 	if(pop_capa(pnetinfo, paccount)!= MTC_RETURN_TRUE)

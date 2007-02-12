@@ -210,7 +210,7 @@ static mtc_error pwprint(const gchar *sendstring)
 	guint slen;
 			
 	slen= strlen(sendstring);
-	pwstring= (gchar *)g_malloc0(slen+ 1);
+	pwstring= (gchar *)g_malloc0(sizeof(gchar)* (slen+ 1));
 			
 	/*we replace all the password chars with * if it is a password*/
 	g_strlcpy(pwstring, sendstring, slen+ 1);

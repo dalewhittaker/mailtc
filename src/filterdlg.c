@@ -233,7 +233,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	gchar *label= NULL;
 		
 	/*create the label*/
-	label= (gchar *)g_malloc0(strlen(S_FILTERDLG_LABEL_SELECT) + 5);
+	label= (gchar *)g_malloc0(sizeof(gchar)* (strlen(S_FILTERDLG_LABEL_SELECT)+ 5));
 	g_snprintf(label, strlen(S_FILTERDLG_LABEL_SELECT)+ 4, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
 	filter_label= gtk_label_new(label);
 	g_free(label);

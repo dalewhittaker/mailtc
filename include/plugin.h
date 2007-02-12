@@ -4,13 +4,13 @@
 /*headers required for the various structs
  *would be nicer if the plugin file did not require these,
  *but, ho hum*/
+#include <glib/gprintf.h> /*also includes stdio.h*/
 #include <glib.h>
 #include <gtk/gtkmain.h>
 #include <gtk/gtktooltips.h>
-#include <glib/gprintf.h> /*also includes stdio.h*/
 
 /*test GtkStatusIcon stuff by undeffing here*/
-/*#undef MTC_EGGTRAYICON*/
+#undef MTC_EGGTRAYICON
 
 #ifdef MTC_EGGTRAYICON
 #include "eggtrayicon.h"

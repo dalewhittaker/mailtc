@@ -5,7 +5,8 @@ NEXT RELEASE:
     b) Get SSL working and test.
     c) Use Nullsoft scriptable installer as an installer and test.
 2) allow GTK 2.4 and above to be used
-3) possible problem with the icons not loading all the time (reported by Ben)
+3) Problem with the icons not loading all the time (reported by Ben)
+    a) current method does not work on fluxbox, fix it.
 
 4) Test with valgrind:
     valgrind needs to be run as follows:
