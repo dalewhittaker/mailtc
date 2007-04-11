@@ -6,11 +6,12 @@
  *but, ho hum*/
 #include <glib/gprintf.h> /*also includes stdio.h*/
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <gtk/gtkmain.h>
 #include <gtk/gtktooltips.h>
 
 /*test GtkStatusIcon stuff by undeffing here*/
-#undef MTC_EGGTRAYICON
+/*#undef MTC_EGGTRAYICON*/
 
 #ifdef MTC_EGGTRAYICON
 #include "eggtrayicon.h"
@@ -51,15 +52,19 @@
 #define MAX_FONTNAME_LEN NAME_MAX
 
 /*define some file routines*/
-/*these routines are not actually used, but could be if GTK 2.4 compatibility is required*/
+/*these routines are for compatibility with old versions of glib/GTK*/
 /*2.6*/
-#define MTC_FOPEN(f, m) ((GLIB_CHECK_VERSION(2, 6, 0))? g_fopen(f, m): fopen(f, m))
-#define MTC_MKDIR(f, m) ((GLIB_CHECK_VERSION(2, 6, 0))? g_mkdir(f, m): mkdir(f, m))
-#define MTC_REMOVE(f) ((GLIB_CHECK_VERSION(2, 6, 0))? g_remove(f): remove(f))
-#define MTC_RENAME(f, n) ((GLIB_CHECK_VERSION(2, 6, 0))? g_rename(f, n): rename(f, n))
+#if(!(GLIB_CHECK_VERSION(2, 6, 0)))
+#define g_fopen(f, m): (fopen((f), (m)))
+#define g_mkdir(f, m): (mkdir((f), (m)))
+#define g_remove(f): (remove((f)))
+#define g_rename(f, n): (rename((f), (n)))
+#endif
 
 /*2.8*/
-#define MTC_CHMOD ((GLIB_CHECK_VERSION(2, 8, 0))? g_chmod(f, m): chmod(f, m))
+#if(!(GLIB_CHECK_VERSION(2, 8, 0)))
+#define g_chmod(f, m) (chmod((f), (m)))
+#endif
 
 /*enable experimental/broken code. NOTE do not enable this unless you want things to be broken*/
 #undef MTC_EXPERIMENTAL

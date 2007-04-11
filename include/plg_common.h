@@ -44,7 +44,6 @@
 #include <winsock2.h>
 #endif /*_WIN32*/
 
-#include <glib/gstdio.h>
 #include <gmodule.h> /*interface to dynamic linking loader*/
 
 /*The main plugin header and the header containing all the plugin strings*/

@@ -34,7 +34,6 @@
 #endif /*_POSIX_SOURCE*/
 
 #include <gmodule.h> /*would be nice to know the exact headers to include here*/
-#include <glib/gstdio.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkeventbox.h>
