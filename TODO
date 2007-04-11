@@ -19,11 +19,6 @@ NEXT RELEASE:
         ii) docklet test 2
     d) do final make 2>op to see if there are any issues.
 
-    e) VA_LIST ISSUE:
-        i) test imap_send on 32 and 64 bit
-        ii) test pop_send on 32 bit
-        iii) test all other on 32 bit
-
 4) Test with valgrind:
     valgrind needs to be run as follows:
 
