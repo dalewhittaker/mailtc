@@ -144,21 +144,12 @@ static gboolean trayicon_init(void)
     ptrayicon= &config.trayicon;
 
 #ifdef MTC_EGGTRAYICON
-    if(ptrayicon->docklet)
-	{
-		g_object_unref(G_OBJECT(ptrayicon->docklet));
-		ptrayicon->docklet= NULL;
-	}
-
-    /*create the trayicon and the event box, and tooltip*/
-    ptrayicon->docklet= egg_tray_icon_new(PACKAGE);
+    /*create the trayicon event box, and tooltip*/
 	ptrayicon->box= gtk_event_box_new();
-	ptrayicon->tooltip= gtk_tooltips_new();
+	g_object_ref(G_OBJECT(ptrayicon->box));
+    ptrayicon->tooltip= gtk_tooltips_new();
 	
     g_signal_connect(G_OBJECT(ptrayicon->box), "button-press-event", G_CALLBACK(docklet_clicked), NULL);
-	gtk_container_add(GTK_CONTAINER(ptrayicon->docklet), ptrayicon->box);
-	
-    gtk_widget_hide_all(GTK_WIDGET(ptrayicon->docklet));
 #else
     ptrayicon->docklet= gtk_status_icon_new();
     if(gtk_status_icon_get_visible(ptrayicon->docklet))
@@ -171,8 +162,6 @@ static gboolean trayicon_init(void)
     ptrayicon->active= ACTIVE_ICON_NONE;
 
 #endif /*MTC_EGGTRAYICON*/
-
-	g_object_ref(G_OBJECT(ptrayicon->docklet));
 	return(TRUE);
 }
 
@@ -192,7 +181,8 @@ static gboolean trayicon_destroy(void)
 	}
 	if(ptrayicon->box)
 	{
-		gtk_widget_destroy(ptrayicon->box);
+		g_object_unref(G_OBJECT(ptrayicon->box));
+		gtk_widget_destroy(GTK_WIDGET(ptrayicon->box));
 		ptrayicon->box= NULL;
     }
 #endif /*MTC_EGGTRAYICON*/
@@ -200,10 +190,10 @@ static gboolean trayicon_destroy(void)
 	/*destroy the widget then unref the docklet*/
 	if(ptrayicon->docklet)
 	{
+		g_object_unref(G_OBJECT(ptrayicon->docklet));
 #ifdef MTC_EGGTRAYICON
 		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
 #endif /*MTC_EGGTRAYICON*/
-		g_object_unref(G_OBJECT(ptrayicon->docklet));
 		ptrayicon->docklet= NULL;
 	}
 
@@ -234,11 +224,11 @@ static void atexit_func(void)
     /*free the 'multi' icon*/
     picon= &config.icon;
     if(picon->image)
-		g_object_unref(picon->image);
+		g_object_unref(G_OBJECT(picon->image));
 
 #ifndef MTC_EGGTRAYICON
     if(picon->pixbuf)
-        g_object_unref(picon->pixbuf);
+        g_object_unref(G_OBJECT(picon->pixbuf));
 #endif /*MTC_EGGTRAYICON*/
 
 	/*unload the plugins and free the plugin list*/

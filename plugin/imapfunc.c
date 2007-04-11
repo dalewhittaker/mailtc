@@ -31,6 +31,7 @@ static mtc_error imap_send(mtc_net *pnetinfo, mtc_account *paccount, gboolean se
     /*calculate length of format string*/
     va_start(list, buf);
     msglen= g_printf_string_upper_bound(buf, list)+ 1;
+    va_end(list);
     imap_msg= (gchar *)g_malloc0(sizeof(gchar)* (msglen+ G_ASCII_DTOSTR_BUF_SIZE+ 3));
    
     /*add the message id if desired*/
@@ -41,13 +42,14 @@ static mtc_error imap_send(mtc_net *pnetinfo, mtc_account *paccount, gboolean se
     }
 
     /*then add the message*/
+    va_start(list, buf);
     if(g_vsnprintf(imap_msg+ idlen, msglen, buf, list)>= (gint)msglen)
         retval= MTC_ERR_CONNECT;
     else
         retval= net_send(pnetinfo, imap_msg, (g_ascii_strncasecmp("LOGIN ", imap_msg+ idlen, 6)== 0));
     
-    g_free(imap_msg);
     va_end(list);
+    g_free(imap_msg);
     if(retval!= MTC_RETURN_TRUE)
     {
         plg_err(S_IMAPFUNC_ERR_SEND, errcmd, paccount->hostname);

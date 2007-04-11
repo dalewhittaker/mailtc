@@ -977,7 +977,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
   		pcurrent= g_slist_next(pcurrent);
 	}
-  	g_object_unref(store);
+  	g_object_unref(G_OBJECT(store));
   
 	/*setup the listbox buttons here and the functions called when clicked*/
 	edit_button= gtk_button_new_from_stock(GTK_STOCK_PROPERTIES);

@@ -123,7 +123,7 @@ static mtc_icon *icon_create(mtc_icon *picon)
 		err_exit(S_FILEFUNC_ERR_CREATE_PIXBUF);
     
     /*ref count the image, be sure to unref it when we leave*/
-    g_object_ref(picon->image);
+    g_object_ref(G_OBJECT(picon->image));
 
     return(picon);
 }
@@ -138,15 +138,20 @@ gboolean cfg_read(void)
 	/*get the full path of the config file*/
 	mtc_file(configfilename, CONFIG_FILE, -1);
 	
-	/*if the file does not exist return*/
+    picon= &config.icon;
+	
+    /*if the file does not exist create default icon and return*/
 	if(!IS_FILE(configfilename))
-		return FALSE;
+	{
+        
+        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon)->colour);
+        picon= icon_create(picon);
+        return FALSE;
+    }
 
 	/*open the config file for reading*/
 	if((pfile= g_fopen(configfilename, "rt"))== NULL)
 		err_exit(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
-
-    picon= &config.icon;
 	
     /*get the info from the file*/
     fread_integer_fail(pfile, (gint *)&config.check_delay, S_FILEFUNC_ERR_GET_DELAY, configfilename);
@@ -271,11 +276,11 @@ static void free_account(gpointer data, gpointer user_data)
 
     /*unref the image for our account*/
    	if(picon->image)
-		g_object_unref(picon->image);
+		g_object_unref(G_OBJECT(picon->image));
 
 #ifndef MTC_EGGTRAYICON
     if(picon->pixbuf)
-        g_object_unref(picon->pixbuf);
+        g_object_unref(G_OBJECT(picon->pixbuf));
 #endif /*MTC_EGGTRAYICON*/
 
     g_free(paccount);

@@ -50,14 +50,18 @@ gboolean err_dlg(gchar *errmsg, ...)
 	return TRUE;
 }
 
-static void err_func(gchar *errmsg, va_list args)
+/*output to stderr*/
+static void err_stderr(gchar *errmsg, va_list args)
+{
+	g_vfprintf(stderr, errmsg, args);
+	fflush(stderr);
+}
+
+/*output to logfile*/
+static void err_log(gchar *errmsg, va_list args)
 {
 	gchar *ptimestring;
 	
-	/*output to stderr and logfile*/
-	g_vfprintf(stderr, errmsg, args);
-	fflush(stderr);
-
 	ptimestring= str_time();
 	g_strchomp(ptimestring);
 	
@@ -77,7 +81,14 @@ gboolean err_exit(gchar *errmsg, ...)
 	va_list list;
 	
 	va_start(list, errmsg); 
-	err_func(errmsg, list);
+	err_stderr(errmsg, list);
+	va_end(list);
+
+    /*NOTE 64-bit crashes unless va_list is reset
+     *which is why this is not cleaner than this
+     *someday this will be tidyed*/
+    va_start(list, errmsg); 
+	err_log(errmsg, list);
 	va_end(list);
 
 	exit(EXIT_FAILURE);
@@ -91,10 +102,17 @@ gboolean err_noexit(gchar *errmsg, ...)
 	/*create va_list of arguments*/
 	va_list list;
 	
-	va_start(list, errmsg);
-	err_func(errmsg, list);
+	va_start(list, errmsg); 
+	err_stderr(errmsg, list);
 	va_end(list);
-	
+
+    /*NOTE 64-bit crashes unless va_list is reset
+     *which is why this is not cleaner than this
+     *someday this will be tidyed*/
+    va_start(list, errmsg); 
+	err_log(errmsg, list);
+	va_end(list);
+
 	return TRUE;
 }
 
@@ -192,7 +210,7 @@ mtc_icon *pixbuf_create(mtc_icon *picon)
     pcolour= picon->colour;
 	scaled= iconcolour_set(scaled, pcolour+ 1);
 	gtk_image_set_from_pixbuf(GTK_IMAGE(picon->image), scaled);
-	g_object_unref(scaled);
+	g_object_unref(G_OBJECT(scaled));
 #else
 	picon->pixbuf= gdk_pixbuf_scale_simple(unscaled, iconsize, iconsize, GDK_INTERP_BILINEAR);
     pcolour= picon->colour;
@@ -201,7 +219,7 @@ mtc_icon *pixbuf_create(mtc_icon *picon)
 #endif /*MTC_EGGTRAYICON*/
 
     /*cleanup*/
-	g_object_unref(unscaled);
+	g_object_unref(G_OBJECT(unscaled));
 
 	return(picon);
 }

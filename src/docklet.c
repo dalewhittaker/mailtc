@@ -205,9 +205,17 @@ static void docklet_remove()
      *we don't need to check if it has children,
      *because this has already been done in mail_thread*/
 #ifdef MTC_EGGTRAYICON
-    g_print("docklet_remove\n");
+    gtk_container_remove(GTK_CONTAINER(ptrayicon->docklet), ptrayicon->box);
+    
+    /*destroy the widget then unref the docklet*/
+	if(ptrayicon->docklet)
+	{
+		g_object_unref(G_OBJECT(ptrayicon->docklet));
+		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
+		ptrayicon->docklet= NULL;
+	}
+
     gtk_container_remove(GTK_CONTAINER(ptrayicon->box), pimage);
-	gtk_widget_hide_all(GTK_WIDGET(ptrayicon->docklet));
 #else
     if(gtk_status_icon_get_visible(ptrayicon->docklet))
         gtk_status_icon_set_visible(ptrayicon->docklet, FALSE);
@@ -222,7 +230,6 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 {
 	mtc_plugin *pitem= NULL;
 
-    g_print("docklet_read\n");
 	/*find the correct pluin to handle the click*/
 	if((pitem= plg_find(paccount->plgname))== NULL)
 	{
@@ -395,7 +402,7 @@ static void docklet_tooltip()
 	
 	/*set the text*/
 #ifdef MTC_EGGTRAYICON
-    if(tipstring->str)
+   if(tipstring->str)
 	    gtk_tooltips_set_tip(GTK_TOOLTIPS(ptrayicon->tooltip), ptrayicon->box, tipstring->str, NULL);
 	
     g_string_free(tipstring, TRUE);
@@ -418,8 +425,15 @@ static void docklet_add(mtc_icon *picon)
 	
 	/*add the icon to the container and show it*/
 #ifdef MTC_EGGTRAYICON
-    g_print("docklet_add\n");
+   /*add the image to the event box*/
     gtk_container_add(GTK_CONTAINER(ptrayicon->box), picon->image);
+    
+    /*create the docklet and add the event box to it*/
+    ptrayicon->docklet= egg_tray_icon_new(PACKAGE);
+	/*ref the box, as it will decrease ref count when removed*/
+	gtk_container_add(GTK_CONTAINER(ptrayicon->docklet), ptrayicon->box);
+	g_object_ref(G_OBJECT(ptrayicon->docklet));
+	
     gtk_widget_show(GTK_WIDGET(picon->image));
 	gtk_widget_show_all(GTK_WIDGET(ptrayicon->docklet));
 #else

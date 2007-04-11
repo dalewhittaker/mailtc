@@ -4,9 +4,25 @@ NEXT RELEASE:
     a) Get mingw working and build absolute minimal mailtc, test.
     b) Get SSL working and test.
     c) Use Nullsoft scriptable installer as an installer and test.
-2) allow GTK 2.4 and above to be used
-3) Problem with the icons not loading all the time (reported by Ben)
-    a) current method does not work on fluxbox, fix it.
+
+2) Test latest fixes (with valgrind):
+    a) STUPID FUCKING REF COUNTS!!!
+        i) get it working with small test in ~/code/systray
+        ii) get it working with full app.
+        iii) make sure if the panel dies, and is then brought back, mailtc get's brought back too.
+
+    b) test with icon test script on openbox
+        i) docklet test 1
+        ii) docklet test 2
+    c) test with icon test script on fluxbox
+        i) docklet test 1
+        ii) docklet test 2
+    d) do final make 2>op to see if there are any issues.
+
+    e) VA_LIST ISSUE:
+        i) test imap_send on 32 and 64 bit
+        ii) test pop_send on 32 bit
+        iii) test all other on 32 bit
 
 4) Test with valgrind:
     valgrind needs to be run as follows:

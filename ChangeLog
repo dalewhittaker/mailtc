@@ -448,3 +448,8 @@ win32 in the future.
 Updated the network routines to also use equivalent winsock routines for win32
 build.
 Fix bug with icon size for accounts.
+Fix ref count issue.
+Fix icon issue on fluxbox.
+Add compatibility macros for GTK 2.4.
+Fix issue with default icon not being created with clean install.
+Fix issues with va_lists on some platforms.

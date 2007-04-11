@@ -87,17 +87,22 @@ static mtc_error pop_send(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcm
     va_list list;
     
     /*calculate length of format string*/
+    /*IMPORTANT. more than one operation with the list seems to crash it on 64-bit
+     *so va_start, va_end encloses every list operation*/
     va_start(list, buf);
     msglen= g_printf_string_upper_bound(buf, list)+ 1;
-    pop_msg= (gchar *)g_malloc0(msglen* sizeof(gchar));
+    va_end(list);
     
+    pop_msg= (gchar *)g_malloc0(msglen);
+    
+    va_start(list, buf);
     if(g_vsnprintf(pop_msg, msglen, buf, list)>= (gint)msglen)
         retval= MTC_ERR_CONNECT;
     else
         retval= net_send(pnetinfo, pop_msg, (g_ascii_strncasecmp("PASS ", pop_msg, 5)== 0));
+    va_end(list);
     
     g_free(pop_msg);
-    va_end(list);
     if(retval!= MTC_RETURN_TRUE)
     {
         plg_err(S_POPFUNC_ERR_SEND, errcmd, paccount->hostname);

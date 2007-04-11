@@ -63,14 +63,18 @@ gint plg_err(gchar *errmsg, ...)
 {
 	/*create va_list of arguments*/
 	va_list list;
-	va_start(list, errmsg);
 	
 	/*output to stderr and logfile*/
+	va_start(list, errmsg);
 	g_vfprintf(stderr, errmsg, list);
-	print_time();
-	g_vfprintf(pcfg->logfile, errmsg, list);
-	
 	va_end(list);
+	print_time();
+	
+    /*NOTE va_list must be reset, otherwise it crashes some systems*/
+    va_start(list, errmsg);
+	g_vfprintf(pcfg->logfile, errmsg, list);
+	va_end(list);
+	
 	fflush(stderr);
 	fflush(pcfg->logfile);
 	

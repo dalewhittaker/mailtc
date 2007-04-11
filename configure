@@ -1963,7 +1963,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=mailtc
-VERSION=1.3.4
+VERSION=1.3.5
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -21152,7 +21152,7 @@ _ACEOF
 
     fi
   fi
-     USE_NLS=yes
+         USE_NLS=yes
 
 
     gt_cv_have_gettext=no
