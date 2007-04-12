@@ -52,7 +52,9 @@ static gboolean pid_read(gint action)
 	gchar pidstring[PORT_LEN];
 	gchar pidfilename[NAME_MAX], tmppidfilename[NAME_MAX];
 	gboolean retval= TRUE;
-	
+	gboolean instance_running= FALSE;
+	int pid= 0;
+
 	/*get the full paths for the files*/
 	mtc_file(pidfilename, PID_FILE, -1);
 	mtc_file(tmppidfilename, PID_FILE, 0);
@@ -61,58 +63,69 @@ static gboolean pid_read(gint action)
 	if((IS_FILE(pidfilename))&& (g_rename(pidfilename, tmppidfilename)== -1))
 		err_exit(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
 
-	if(IS_FILE(tmppidfilename))
-	{	
-		gboolean instance_running= FALSE;
-		
-		/*open the pid file and the temp pid file*/
-		if((tmppidfile= g_fopen(tmppidfilename, "r"))== NULL)
-			err_exit(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
-		
+    /*get the current pid*/
+    pid= getpid();
+
+	
 		if((pidfile= g_fopen(pidfilename, "w"))== NULL)
 			err_exit(S_MAIN_ERR_OPEN_PIDFILE_WRITE, pidfilename);
+	
+        if(IS_FILE(tmppidfilename))
+	    {	
 		
-		memset(pidstring, '\0', PORT_LEN);
+		    /*open the pid file and the temp pid file*/
+		    if((tmppidfile= g_fopen(tmppidfilename, "r"))== NULL)
+			    err_exit(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
 		
-		/*read each value from temp file and write it to the pid file unless it is the current pid*/
-		while(fgets(pidstring, PORT_LEN, tmppidfile)!= NULL)
-		{
-            g_strchomp(pidstring);
+		    memset(pidstring, '\0', PORT_LEN);
+		
+		    /*read each value from temp file and write it to the pid file unless it is the current pid*/
+		    while(fgets(pidstring, PORT_LEN, tmppidfile)!= NULL)
+		    {
+                g_strchomp(pidstring);
 			
-			/*if it is a valid process*/
-			if(kill(atoi(pidstring), 0)== 0)
-			{
-				gint currentpid= (atoi(pidstring)== getpid());
-				switch(action)
-				{
-					/*Load the app, if no other instances are already running*/
-					case PID_APPLOAD:
-						if(!currentpid)
-						{
-							instance_running= TRUE;
-							g_fprintf(pidfile, "%s\n", pidstring);
-						}
-					break;
+			    /*if it is a valid process*/
+			    if(kill(atoi(pidstring), 0)== 0)
+			    {
+				    gint currentpid;
+                
+                    currentpid= (atoi(pidstring)== pid);
+				    switch(action)
+				    {
+					    /*Load the app, if no other instances are already running*/
+					    case PID_APPLOAD:
+						    if(!currentpid)
+						    {
+							    instance_running= TRUE;
+							    g_fprintf(pidfile, "%s\n", pidstring);
+						    }
+					    break;
 
-					/*Exit the app, output any other running processes to pidfile
-					 *(theoretically no other process should be active, but if they are, leave them)*/
-					case PID_APPEXIT:
-						if(!currentpid)
-							g_fprintf(pidfile, "%s\n", pidstring);
-					break;
+					    /*Exit the app, output any other running processes to pidfile
+					    *(theoretically no other process should be active, but if they are, leave them)*/
+					    case PID_APPEXIT:
+						    if(!currentpid)
+							    g_fprintf(pidfile, "%s\n", pidstring);
+					    break;
 					
-					/*Kill all mailtc processes (theoretically should only be max 1 running)*/
-					case PID_APPKILL:
-						if((!currentpid)&& (kill(atoi(pidstring), SIGHUP)!= 0))
-						{
-							err_noexit(S_MAIN_ERR_CANNOT_KILL, currentpid);
-							g_fprintf(pidfile, "%s\n", pidstring);
-						}
-					break;
-				}
-			}
-		}
+					    /*Kill all mailtc processes (theoretically should only be max 1 running)*/
+					    case PID_APPKILL:
+						    if((!currentpid)&& (kill(atoi(pidstring), SIGHUP)!= 0))
+						    {
+							    err_noexit(S_MAIN_ERR_CANNOT_KILL, currentpid);
+							    g_fprintf(pidfile, "%s\n", pidstring);
+						    }
+					    break;
+				    }
+			    }
+		    }
+	
+            if(fclose(tmppidfile)== EOF)
+			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
+			
+		    g_remove(tmppidfilename);
 		
+	    }
 		/*check flag and run dialog to say instance is already running, and exit*/
 		/*otherwise add the new process*/
 		if(action== PID_APPLOAD)
@@ -120,18 +133,13 @@ static gboolean pid_read(gint action)
 			if(instance_running)
 				retval= FALSE;
 			else
-				g_fprintf(pidfile, "%d\n", getpid());
+				g_fprintf(pidfile, "%d\n", pid);
 		}
-		/*close the files and cleanup*/
+		
+        /*close the files and cleanup*/
 		if(fclose(pidfile)== EOF)
 			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
-							
-		if(fclose(tmppidfile)== EOF)
-			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
-			
-		g_remove(tmppidfilename);
-			 
-	}
+							 
 	return(retval);
 }
 #endif /*MTC_USE_PIDFUNC*/
