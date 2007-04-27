@@ -182,17 +182,18 @@ static gboolean trayicon_destroy(void)
 
 #ifdef MTC_EGGTRAYICON
 	/*destroy the tooltip and box first*/
-	if(ptrayicon->tooltip)
-	{
-		gtk_object_destroy(GTK_OBJECT(ptrayicon->tooltip));
-		ptrayicon->tooltip= NULL;
-	}
 	if(ptrayicon->box)
 	{
 		g_object_unref(G_OBJECT(ptrayicon->box));
 		gtk_widget_destroy(GTK_WIDGET(ptrayicon->box));
 		ptrayicon->box= NULL;
     }
+    /*NOTE important that the tooltip is destroyed after the box*/
+    if(ptrayicon->tooltip)
+	{
+		gtk_object_destroy(GTK_OBJECT(ptrayicon->tooltip));
+		ptrayicon->tooltip= NULL;
+	}
 #endif /*MTC_EGGTRAYICON*/
 
 	/*destroy the widget then unref the docklet*/

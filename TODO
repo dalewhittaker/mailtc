@@ -6,11 +6,7 @@ NEXT RELEASE:
     c) Use Nullsoft scriptable installer as an installer and test.
 
 2) Test latest fixes (with valgrind):
-    a) STUPID FUCKING REF COUNTS!!!
-        i) get it working with small test in ~/code/systray
-        ii) get it working with full app.
-        iii) make sure if the panel dies, and is then brought back, mailtc get's brought back too.
-
+    a) make sure if the panel dies, and is then brought back, mailtc get's brought back too.
     b) test with icon test script on openbox
         i) docklet test 1
         ii) docklet test 2
