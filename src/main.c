@@ -201,6 +201,8 @@ static gboolean trayicon_destroy(void)
 	{
 		g_object_unref(G_OBJECT(ptrayicon->docklet));
 #ifdef MTC_EGGTRAYICON
+        /*always disconnect prior to destroying the widget*/
+        g_signal_handlers_disconnect_by_func(G_OBJECT(ptrayicon->docklet), G_CALLBACK(docklet_destroyed), NULL);
 		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
 #endif /*MTC_EGGTRAYICON*/
 		ptrayicon->docklet= NULL;

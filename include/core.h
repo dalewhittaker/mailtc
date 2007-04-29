@@ -151,6 +151,7 @@ gint rm_mtc_file(gchar *shortname, gint count, gint fullcount);
 gboolean mail_thread(gpointer data);
 #ifdef MTC_EGGTRAYICON
 void docklet_clicked(GtkWidget *button, GdkEventButton *event);
+void docklet_destroyed(GtkWidget *widget, gpointer data);
 #else
 void docklet_rclicked(GtkStatusIcon *status_icon, guint button, guint activate_time, gpointer user_data);
 void docklet_lclicked(GtkStatusIcon *status_icon, gpointer user_data);

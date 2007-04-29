@@ -454,3 +454,4 @@ Add compatibility macros for GTK 2.4.
 Fix issue with default icon not being created with clean install.
 Fix issues with va_lists on some platforms.
 Fix pid code on clean install.
+Add code to detect if panel dies, and reload the icon.

@@ -6,16 +6,15 @@ NEXT RELEASE:
     c) Use Nullsoft scriptable installer as an installer and test.
 
 2) Test latest fixes (with valgrind):
-    a) make sure if the panel dies, and is then brought back, mailtc get's brought back too.
-    b) test with icon test script on openbox
+    a) test with icon test script on openbox
         i) docklet test 1
         ii) docklet test 2
-    c) test with icon test script on fluxbox
+    b) test with icon test script on fluxbox
         i) docklet test 1
         ii) docklet test 2
-    d) do final make 2>op to see if there are any issues.
+    c) do final make 2>op to see if there are any issues.
 
-4) Test with valgrind:
+3) Test with valgrind:
     valgrind needs to be run as follows:
 
     G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind --leak-check=full --error-limit=no
@@ -40,7 +39,6 @@ NEXT RELEASE:
 WISH LIST TASKS:
 1) Split the config dialog stuff to a separate app (mailtc-config), and keep the rest as mailtc.
 2) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
-3) sumdlg
 
 ------------------------------
 ***TO ADD NEW LANG***

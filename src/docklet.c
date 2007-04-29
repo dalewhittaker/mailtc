@@ -211,6 +211,7 @@ static void docklet_remove()
 	if(ptrayicon->docklet)
 	{
 		g_object_unref(G_OBJECT(ptrayicon->docklet));
+        g_signal_handlers_disconnect_by_func(G_OBJECT(ptrayicon->docklet), G_CALLBACK(docklet_destroyed), NULL);
 		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
 		ptrayicon->docklet= NULL;
 	}
@@ -430,7 +431,11 @@ static void docklet_add(mtc_icon *picon)
     
     /*create the docklet and add the event box to it*/
     ptrayicon->docklet= egg_tray_icon_new(PACKAGE);
-	/*ref the box, as it will decrease ref count when removed*/
+    
+    /*add the destroy callback to reload icon in case the panel dies*/
+    g_signal_connect(G_OBJECT(ptrayicon->docklet), "destroy", G_CALLBACK(docklet_destroyed), NULL);
+	
+    /*ref the box, as it will decrease ref count when removed*/
 	gtk_container_add(GTK_CONTAINER(ptrayicon->docklet), ptrayicon->box);
 	g_object_ref(G_OBJECT(ptrayicon->docklet));
 	
@@ -500,6 +505,24 @@ static gint docklet_status(void)
     return((plast_data== NULL)? ACTIVE_ICON_NONE: (gint)plast_data->id);
 #endif /*MTC_EGGTRAYICON*/
 }
+
+/*callback function that is called if the panel dies*/
+#ifdef MTC_EGGTRAYICON
+void docklet_destroyed(GtkWidget *widget, gpointer data)
+{
+    GtkWidget *pdockimage= NULL;
+    mtc_icon *picon= NULL;
+    
+    picon= docklet_status();
+    
+    /*The icon must be removed and then re-added*/
+    pdockimage= docklet_icon();
+    if(pdockimage!= NULL)
+        docklet_remove(pdockimage);
+ 
+    docklet_add(picon);
+}
+#endif /*MTC_EGGTRAYICON*/
 
 /*the main thread that is called to check the various mail accounts*/
 gboolean mail_thread(gpointer data)
