@@ -5,16 +5,7 @@ NEXT RELEASE:
     b) Get SSL working and test.
     c) Use Nullsoft scriptable installer as an installer and test.
 
-2) Test latest fixes (with valgrind):
-    a) test with icon test script on openbox
-        i) docklet test 1
-        ii) docklet test 2
-    b) test with icon test script on fluxbox
-        i) docklet test 1
-        ii) docklet test 2
-    c) do final make 2>op to see if there are any issues.
-
-3) Test with valgrind:
+2) Test with valgrind:
     valgrind needs to be run as follows:
 
     G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind --leak-check=full --error-limit=no
@@ -39,6 +30,7 @@ NEXT RELEASE:
 WISH LIST TASKS:
 1) Split the config dialog stuff to a separate app (mailtc-config), and keep the rest as mailtc.
 2) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
+3) Threading, allowing reading (click) when checking new mail (big job).
 
 ------------------------------
 ***TO ADD NEW LANG***
