@@ -20,10 +20,7 @@
 /*TODO bugger, now i need to verify this*/
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
 #include <openssl/bio.h>
-#include <openssl/buffer.h>
 #include "encrypter.h"
 
 #define ENCRYPTION_KEY "mailtc password encryption key"
@@ -31,8 +28,9 @@
 static guchar iv[]= {1, 2, 3, 4, 5, 6, 7, 8}; /*string to hold the encryption key*/
 
 /*function to encrypt the password before it gets written to the password file*/
-gulong pw_encrypt(gchar *decstring, gchar *encstring)
+gchar *pw_encrypt(gchar *decstring)
 {
+	gchar tmpstring[1024];
 	gint encrypted_len, tmplen;
 	
 	/*initialise cipher content*/
@@ -43,9 +41,9 @@ gulong pw_encrypt(gchar *decstring, gchar *encstring)
 	EVP_EncryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 
 	/*encrypt the data and the final padding*/
-	if(!EVP_EncryptUpdate(&ctx, (guchar *)encstring, &encrypted_len, (guchar *)decstring, strlen(decstring)))
+	if(!EVP_EncryptUpdate(&ctx, (guchar *)tmpstring, &encrypted_len, (guchar *)decstring, strlen(decstring)))
 		err_exit(S_ENCRYPTER_ERR_ENC_PW);
-	if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(encstring+ encrypted_len), &tmplen))
+	if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(tmpstring+ encrypted_len), &tmplen))
 		err_exit(S_ENCRYPTER_ERR_ENC_PW_FINAL);
 	
 	/*set length equal to encrypted string plus encrypted padding*/
@@ -54,14 +52,19 @@ gulong pw_encrypt(gchar *decstring, gchar *encstring)
 	/*cleanup and return length*/
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
-    return encrypted_len;
-	
+    /*Now base64 the string for the output file*/
+    return(g_base64_encode((guchar *)tmpstring, encrypted_len));
 }
 
 /*function to decrypt the password before it gets used*/
-gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring)
+gboolean pw_decrypt(gchar *encstring, gchar *decstring)
 {
 	gint outlen, tmplen;
+    guchar *tmpstring= NULL;
+    gsize len= 0;
+
+    /*decode the base64 string*/
+    tmpstring= g_base64_decode(encstring, &len);
 
 	/*initialise cipher content*/
 	EVP_CIPHER_CTX ctx;
@@ -71,17 +74,19 @@ gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring)
 	EVP_DecryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 	
 	/*Decrypt the data and the final padding at the end*/
-	if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, (guchar *)encstring, enclen))
+	if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, tmpstring, (gint)len))
 		err_exit(S_ENCRYPTER_ERR_DEC_PW);
 	if(!EVP_DecryptFinal_ex(&ctx, (guchar *)(decstring+ outlen), &tmplen))
 		err_exit(S_ENCRYPTER_ERR_DEC_PW_FINAL);
 	
+    /*free the temp buffer*/
+    g_free(tmpstring);
+
 	/*set the length and cleanup*/
 	outlen+= tmplen;
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	
 	decstring[outlen]= '\0';
-	
 	return TRUE;
 }
 

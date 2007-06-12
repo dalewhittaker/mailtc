@@ -23,7 +23,7 @@
 #include "common.h"
 
 /*encrypter.c functions*/
-gulong pw_encrypt(gchar *decstring, gchar *encstring);
-gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring);
+gchar *pw_encrypt(gchar *decstring);
+gboolean pw_decrypt(gchar *encstring, gchar *decstring);
 
 #endif /*DW_MAILTC_ENCRYPTER*/

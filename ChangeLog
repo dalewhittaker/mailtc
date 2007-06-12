@@ -455,3 +455,7 @@ Fix issue with default icon not being created with clean install.
 Fix issues with va_lists on some platforms.
 Fix pid code on clean install.
 Add code to detect if panel dies, and reload the icon.
+
+1.3.6:
+Much needed cleanup of header files.
+password is now base64 encoded for future xml config.

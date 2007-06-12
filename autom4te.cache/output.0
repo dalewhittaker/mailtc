@@ -878,6 +878,7 @@ GTK_CFLAGS
 GTK_LIBS
 USE_NLS
 MSGFMT
+MSGFMT_OPTS
 GMSGFMT
 XGETTEXT
 CATALOGS
@@ -1963,7 +1964,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=mailtc
-VERSION=1.3.5
+VERSION=1.3.6
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -22107,6 +22108,35 @@ _ACEOF
 fi
 done
 
+	  MSGFMT_OPTS=
+	  { echo "$as_me:$LINENO: checking if msgfmt accepts -c" >&5
+echo $ECHO_N "checking if msgfmt accepts -c... $ECHO_C" >&6; }
+	  cat >conftest.foo <<_ACEOF
+
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: test 1.0\n"
+"PO-Revision-Date: 2007-02-15 12:01+0100\n"
+"Last-Translator: test <foo@bar.xx>\n"
+"Language-Team: C <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+_ACEOF
+if { (echo "$as_me:$LINENO: msgfmt -c -o /dev/null conftest.foo") >&5
+  (msgfmt -c -o /dev/null conftest.foo) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  MSGFMT_OPTS=-c; { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+else { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+echo "$as_me: failed input was:" >&5
+sed 's/^/| /' conftest.foo >&5
+fi
+	  
 	  # Extract the first word of "gmsgfmt", so it can be a program name with args.
 set dummy gmsgfmt; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -23611,6 +23641,7 @@ GTK_CFLAGS!$GTK_CFLAGS$ac_delim
 GTK_LIBS!$GTK_LIBS$ac_delim
 USE_NLS!$USE_NLS$ac_delim
 MSGFMT!$MSGFMT$ac_delim
+MSGFMT_OPTS!$MSGFMT_OPTS$ac_delim
 GMSGFMT!$GMSGFMT$ac_delim
 XGETTEXT!$XGETTEXT$ac_delim
 CATALOGS!$CATALOGS$ac_delim
@@ -23641,7 +23672,7 @@ LIB@&t@OBJS!$LIB@&t@OBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 42; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 43; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

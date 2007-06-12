@@ -63,6 +63,8 @@ gboolean err_dlg(GtkMessageType type, gchar *errmsg, ...)
 	gtk_widget_destroy(dialog);
 	va_end(list);
 	
+    g_free(err_string);
+
 	return TRUE;
 }
 

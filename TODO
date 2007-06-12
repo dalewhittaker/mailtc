@@ -1,10 +1,15 @@
 NEXT RELEASE:
 
 1) new stuff
-    a) modify password so it is base64 encoded
+    a) read/write password to account* files
     b) modify conf dir to ~/.config/mailtc
-    a) Implement new xml config
-    b) Revamped config (see also wish list task 1).
+    c) Implement new xml config
+        i) config file
+        ii) account* files
+        iii) filter* files
+
+    d) Revamped config (see also wish list task 1).
+    e) Ben wants To: field added to filter stuff
 
 2) Compile/test on win32
     a) Get mingw working and build absolute minimal mailtc, test.

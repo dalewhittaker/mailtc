@@ -25,16 +25,19 @@
 #include "encrypter.h"
 #endif /*MTC_USE_SSL*/
 
+#define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
+
 /*function to get $HOME + program*/
 gboolean mtc_dir(void)
 {
 	gchar *pfile= NULL;
-	
+    
 	/*get the home path*/
 	if((pfile= g_build_filename(g_get_home_dir(), "." PACKAGE, NULL))== NULL)
 		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
 		
 	g_strlcpy(config.dir, pfile, sizeof(config.dir));
+
 	g_free(pfile);
 
 	return TRUE;
@@ -437,8 +440,7 @@ gboolean pw_read(mtc_account *paccount)
 	FILE* pfile;
 	gchar passwordfilename[NAME_MAX];
 #ifdef MTC_USE_SSL
-	gchar encstring[1024];
-	gint len= 0;
+	gchar encstring[BASE64_PASSWORD_LEN];
 #endif
 	
 	/*get the full path of the password file*/
@@ -454,18 +456,19 @@ gboolean pw_read(mtc_account *paccount)
 
 /*if OpenSSL is defined read in an encrypted password*/
 #ifdef MTC_USE_SSL
-	memset(encstring, '\0', 1024);
+	memset(encstring, '\0', BASE64_PASSWORD_LEN);
 	
 	/*read in the encrypted password and remove the password if there is an error reading it*/
-	if((len= fread(encstring, 1, 1024, pfile))==0)
+    fread_string(pfile, encstring, sizeof(encstring), NULL);
+	if(encstring[0]== 0)
 	{
 		g_remove(passwordfilename);
 		err_exit(S_FILEFUNC_ERR_GET_PW);
 	}
 	
 	/*decrypt the password*/
-	pw_decrypt(encstring, len, paccount->password);
-	
+	pw_decrypt(encstring, paccount->password);
+
 /*otherwise read in clear password*/
 #else
 	/*get the password value and remove the file if it cannot be read*/
@@ -589,9 +592,8 @@ gboolean pw_write(mtc_account *paccount)
 {
 	FILE* pfile;
 	gchar passwordfilename[NAME_MAX];
-#ifdef MTC_USE_SSL	
-	gchar encstring[1024];
-	gulong len= 0;
+#ifdef MTC_USE_SSL
+    gchar *encstring= NULL;
 #endif
 
 	/*get the full path of the password file*/
@@ -607,13 +609,12 @@ gboolean pw_write(mtc_account *paccount)
 
 /*if OpenSSL is defined encrypt the password*/
 #ifdef MTC_USE_SSL
-	memset(encstring, '\0', 1024);
-	len= pw_encrypt(paccount->password, encstring);
+	encstring= pw_encrypt(paccount->password);
 	
 	/*write the encrypted password*/
-	if(fwrite(encstring, 1, len, pfile)< len)
-		err_exit(S_FILEFUNC_ERR_WRITE_PW);
+    fwrite_string(pfile, encstring, S_FILEFUNC_ERR_WRITE_PW);
 
+    g_free(encstring);
 /*otherwise write a clear password*/
 #else
     fwrite_string(pfile, paccount->password, S_FILEFUNC_ERR_WRITE_PW);

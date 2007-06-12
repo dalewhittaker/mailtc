@@ -196,6 +196,7 @@ static gboolean acc_save(int profile)
 	GSList *pcurrent= NULL;
 	mtc_account *pcurrent_data= NULL;
 	mtc_plugin *pitem= NULL;
+    gchar *pbasename= NULL;
 
 	if((pcurrent_data= get_account(profile))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, profile);
@@ -245,8 +246,9 @@ static gboolean acc_save(int profile)
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 
-	/*g_strlcpy(pcurrent_data->plgname, g_path_get_basename(g_module_name((GModule *)pitem->handle)), sizeof(pcurrent_data->plgname));*/
-	g_strlcpy(pcurrent_data->plgname, plg_name(pitem), sizeof(pcurrent_data->plgname));
+    pbasename= plg_name(pitem);
+	g_strlcpy(pcurrent_data->plgname, pbasename, sizeof(pcurrent_data->plgname));
+    g_free(pbasename);
 
 #ifdef MTC_NOTMINIMAL
 	/*get the filter setting*/
