@@ -52,12 +52,12 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__mailtc_SOURCES_DIST = configdlg.c docklet.c filefunc.c common.c \
-	plugin.c encrypter.c filterdlg.c eggtrayicon.c main.c
+	plugfunc.c encrypter.c filterdlg.c eggtrayicon.c main.c
 @MTC_SSL_TRUE@am__objects_1 = encrypter.$(OBJEXT)
 @MTC_ALLFEATURES_TRUE@am__objects_2 = filterdlg.$(OBJEXT)
 @MTC_EGG_TRUE@am__objects_3 = eggtrayicon.$(OBJEXT)
 am_mailtc_OBJECTS = configdlg.$(OBJEXT) docklet.$(OBJEXT) \
-	filefunc.$(OBJEXT) common.$(OBJEXT) plugin.$(OBJEXT) \
+	filefunc.$(OBJEXT) common.$(OBJEXT) plugfunc.$(OBJEXT) \
 	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	main.$(OBJEXT)
 mailtc_OBJECTS = $(am_mailtc_OBJECTS)
@@ -77,10 +77,13 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(mailtc_SOURCES)
 DIST_SOURCES = $(am__mailtc_SOURCES_DIST)
-am__noinst_HEADERS_DIST = $(mtc_include)/core.h \
+am__noinst_HEADERS_DIST = $(mtc_include)/common.h \
+	$(mtc_include)/configdlg.h $(mtc_include)/docklet.h \
+	$(mtc_include)/filefunc.h $(mtc_include)/plugfunc.h \
 	$(mtc_include)/strings.h $(mtc_include)/envelope_large.h \
-	$(mtc_include)/plugin.h $(mtc_include)/eggtrayicon.h \
-	$(mtc_include)/envelope_small.h
+	$(mtc_include)/plugin.h $(mtc_include)/encrypter.h \
+	$(mtc_include)/eggtrayicon.h $(mtc_include)/envelope_small.h \
+	$(mtc_include)/filterdlg.h
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -223,8 +226,10 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
+mtc_include = $(top_srcdir)/include
 @MTC_SSL_TRUE@ssl_libraries = -lcrypto -lssl
 @MTC_SSL_TRUE@ssl_sources = encrypter.c
+@MTC_SSL_TRUE@ssl_headers = $(mtc_include)/encrypter.h
 mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
@@ -233,10 +238,11 @@ extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
 				-DPACKAGE=\"$(PACKAGE)\" \
 				-DVERSION=\"$(VERSION)\"
 
-mtc_include = $(top_srcdir)/include
 @MTC_ALLFEATURES_TRUE@msglist_cflags = -DMTC_NOTMINIMAL
 @MTC_ALLFEATURES_TRUE@msglist_sources = filterdlg.c
-@MTC_ALLFEATURES_TRUE@msglist_headers = $(mtc_include)/envelope_small.h
+@MTC_ALLFEATURES_TRUE@msglist_headers = $(mtc_include)/envelope_small.h \
+@MTC_ALLFEATURES_TRUE@				$(mtc_include)/filterdlg.h
+
 @DEBUG_TRUE@debug_cflags = -g -DDEBUG
 @MTC_EGG_TRUE@egg_sources = eggtrayicon.c
 @MTC_EGG_TRUE@egg_headers = $(mtc_include)/eggtrayicon.h
@@ -252,7 +258,7 @@ mailtc_SOURCES = configdlg.c \
 	docklet.c \
 	filefunc.c \
 	common.c \
-	plugin.c \
+	plugfunc.c \
 	$(ssl_sources) \
 	$(msglist_sources) \
 	$(egg_sources) \
@@ -261,10 +267,16 @@ mailtc_SOURCES = configdlg.c \
 
 #TODO summary removed for now as it is broken
 #summarydlg.c
-noinst_HEADERS = $(mtc_include)/core.h \
+#summarydlg.h
+noinst_HEADERS = $(mtc_include)/common.h \
+		$(mtc_include)/configdlg.h \
+		$(mtc_include)/docklet.h \
+		$(mtc_include)/filefunc.h \
+		$(mtc_include)/plugfunc.h \
 		$(mtc_include)/strings.h \
 		$(mtc_include)/envelope_large.h \
 		$(mtc_include)/plugin.h \
+		$(ssl_headers) \
 		$(egg_headers) \
 		$(msglist_headers)
 
@@ -347,7 +359,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filefunc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filterdlg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plugin.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/plugfunc.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

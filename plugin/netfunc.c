@@ -17,7 +17,22 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "plg_common.h"
+#include "netfunc.h"
+#include <stdlib.h>
+
+/*win32 defines SOCKET_ERROR for setsockopt()/getsockopt()*/
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR -1
+#endif /*SOCKET_ERROR*/
+
+/*win32 defines INVALID_SOCKET for socket()*/
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif /*INVALID_SOCKET*/
+
+#define NET_TIMEOUT 5
+#define CONNECT_TIMEOUT 30
+#define IS_SSL_AUTH(auth) ((auth)== POPSSL_PROTOCOL|| (auth)== IMAPSSL_PROTOCOL)
 
 #ifdef SSL_PLUGIN
 /*initialise SSL connection*/

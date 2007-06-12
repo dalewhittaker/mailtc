@@ -18,7 +18,7 @@
  */
 
 /*The POP3 plugin*/
-#include "plg_common.h"
+#include "popfunc.h"
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "POP"

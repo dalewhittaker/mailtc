@@ -17,7 +17,34 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "plg_common.h"
+#include "netfunc.h"
+#include "imapfunc.h"
+
+#ifdef MTC_NOTMINIMAL
+#include "msg.h"
+#endif /*MTC_NOTMINIMAL*/
+
+/*define the various imap responses, note they can either be tagged or untagged
+ *both are required.  Rather than define an id for each, use a macro to use higher word for tagged*/
+#define MAX_RESPONSE_STRING 20
+#define TAGGED_RESPONSE(response) ((response)<< 8)
+typedef enum _imap_response
+{ 
+    IMAP_OK= 1,
+    IMAP_BAD= 2,
+    IMAP_NO= 4,
+    IMAP_BYE= 8,
+    IMAP_PREAUTH= 16,
+    IMAP_CAPABILITY= 32,
+    IMAP_MAXRESPONSE
+} imap_response;
+
+/*used to contain response strings*/
+typedef struct _imap_response_list
+{
+    guint id;
+    gchar *str;
+} imap_response_list;
 
 /*function to send a message to the pop3 server*/
 static mtc_error imap_send(mtc_net *pnetinfo, mtc_account *paccount, gboolean sendmsgid, gchar *errcmd, gchar *buf, ...)

@@ -17,7 +17,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include "filefunc.h"
+#include "plugfunc.h"
+#include "filterdlg.h"
+
+#ifdef MTC_USE_SSL
+#include "encrypter.h"
+#endif /*MTC_USE_SSL*/
 
 /*function to get $HOME + program*/
 gboolean mtc_dir(void)
@@ -112,20 +118,6 @@ static void fread_integer_fail(FILE *pfile, gint *pval, gchar *perr, const gchar
         err_exit(perr);
     }
     *pval= (gint)g_ascii_strtod(scratch, NULL);
-}
-
-/*creates an icon*/
-static mtc_icon *icon_create(mtc_icon *picon)
-{
-    picon->image= gtk_image_new();
-	picon= pixbuf_create(picon);
-    if(!picon|| !picon->image) 
-		err_exit(S_FILEFUNC_ERR_CREATE_PIXBUF);
-    
-    /*ref count the image, be sure to unref it when we leave*/
-    g_object_ref(G_OBJECT(picon->image));
-
-    return(picon);
 }
 
 /* function to get details from config file into struct or if no config file exists ask for details*/
@@ -342,7 +334,8 @@ static gchar *protocol_to_plugin(gchar *plgstring)
 		if(g_ascii_strcasecmp(pitem->name, plgstring)== 0)
 		{
 			gchar *pbasename;
-			pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));
+			/*pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));*/
+            pbasename= plg_name(pitem);
 			g_strlcpy(plgstring, pbasename, PROTOCOL_LEN);
 			g_free(pbasename);
 			return(plgstring);

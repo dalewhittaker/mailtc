@@ -16,7 +16,17 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
-#include "core.h"
+
+/*TODO bugger, now i need to verify this*/
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include "encrypter.h"
+
+#define ENCRYPTION_KEY "mailtc password encryption key"
 
 static guchar iv[]= {1, 2, 3, 4, 5, 6, 7, 8}; /*string to hold the encryption key*/
 
@@ -29,7 +39,7 @@ gulong pw_encrypt(gchar *decstring, gchar *encstring)
 	EVP_CIPHER_CTX ctx;
 	EVP_CIPHER_CTX_init(&ctx); 
 
-	/*set up cipher context with cipher type (base64)*/
+	/*set up cipher context with cipher type (blowfish ofb)*/
 	EVP_EncryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 
 	/*encrypt the data and the final padding*/
@@ -43,7 +53,8 @@ gulong pw_encrypt(gchar *decstring, gchar *encstring)
 
 	/*cleanup and return length*/
 	EVP_CIPHER_CTX_cleanup(&ctx);
-	return encrypted_len;
+
+    return encrypted_len;
 	
 }
 
@@ -56,7 +67,7 @@ gboolean pw_decrypt(gchar *encstring, gint enclen, gchar *decstring)
 	EVP_CIPHER_CTX ctx;
 	EVP_CIPHER_CTX_init(&ctx);
 
-	/*set up cipher context with cipher type (base64)*/
+	/*set up cipher context with cipher type (blowfish ofb)*/
 	EVP_DecryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 	
 	/*Decrypt the data and the final padding at the end*/

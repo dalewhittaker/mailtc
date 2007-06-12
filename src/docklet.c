@@ -17,7 +17,14 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <stdlib.h> /*exit*/
+#include "docklet.h"
+#include "filefunc.h"
+#include "plugfunc.h"
+
+/*used to define when to report connection errors*/
+#define CONNECT_ERR_NEVER -1
+#define CONNECT_ERR_ALWAYS 0
 
 static gboolean lock= FALSE; /*lock variable used so that only one account can be checked at a time*/
 
@@ -175,7 +182,7 @@ static gboolean run_cmd(gchar *mailapp)
 	if(!g_spawn_async(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &spawn_error))
 	{
 		err_noexit("%s\n", spawn_error->message);
-		err_dlg(spawn_error->message);
+		err_dlg(GTK_MESSAGE_WARNING, spawn_error->message);
 		if(spawn_error) g_error_free(spawn_error);
 		retval= FALSE;
 	}
@@ -234,7 +241,7 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 	/*find the correct pluin to handle the click*/
 	if((pitem= plg_find(paccount->plgname))== NULL)
 	{
-		err_dlg(S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->accname);
+		err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->accname);
 		err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
 		
 		/*this should not happen for single mode; if it is active, it should exist*/
@@ -567,7 +574,7 @@ gboolean mail_thread(gpointer data)
 			if((pitem= plg_find(pcurrent_data->plgname))== NULL)
 			{
 				err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, pcurrent_data->plgname);
-				err_dlg(S_DOCKLET_ERR_FIND_PLUGIN_MSG,
+				err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG,
 					pcurrent_data->plgname, pcurrent_data->accname);
 
 				/*now go to the next account*/
@@ -632,7 +639,7 @@ gboolean mail_thread(gpointer data)
 		
 		/*report if checking an account failed*/
 		if(errflag)
-            err_dlg(S_DOCKLET_CONNECT_ERR, err_msg->str, PACKAGE, config.dir, LOG_FILE);
+            err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_CONNECT_ERR, err_msg->str, PACKAGE, config.dir, LOG_FILE);
         
         /*free the string if need be*/
         if(err_msg!= NULL)

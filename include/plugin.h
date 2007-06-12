@@ -12,6 +12,9 @@
 
 /*test GtkStatusIcon stuff by undeffing here*/
 /*#undef MTC_EGGTRAYICON*/
+#ifdef _POSIX_SOURCE
+#include <limits.h> /*NAME_MAX etc*/
+#endif /*_POSIX_SOURCE*/
 
 #ifdef MTC_EGGTRAYICON
 #include "eggtrayicon.h"
@@ -188,7 +191,7 @@ typedef enum _msg_flags
     MSG_OLD= 0,
     MSG_NEW= 1,
     MSG_ADDED= 2,
-    MSG_FILTERED= 4,
+    MSG_FILTERED= 4
 
 } msg_flags;
 

@@ -18,7 +18,7 @@
  */
 
 /*The IMAP SSL/TLS plugin*/
-#include "plg_common.h"
+#include "imapfunc.h"
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "IMAP (SSL/TLS)"

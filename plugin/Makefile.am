@@ -8,6 +8,7 @@ includedir = $(top_srcdir)/include
 if MTC_ALLFEATURES
 msglist_cflags = -DMTC_NOTMINIMAL
 msglist_src = msg.c
+msglist_headers = $(includedir)/msg.h
 endif
 
 #define the common source files
@@ -17,6 +18,7 @@ common_src = plg_common.c netfunc.c $(msglist_src)
 if MTC_POP
 pop_src = $(common_src) popfunc.c
 pop_libfiles = mtc_pop.la
+pop_headers = $(includedir)/popfunc.h
 if MTC_SSL
 pop_ssl_libfiles = \
 	mtc_apop.la \
@@ -29,6 +31,7 @@ endif
 if MTC_IMAP
 imap_src = $(common_src) imapfunc.c
 imap_libfiles =	mtc_imap.la
+imap_headers = $(includedir)/imapfunc.h
 if MTC_SSL
 imap_ssl_libfiles = \
 	mtc_imapcram.la \
@@ -117,5 +120,8 @@ endif
 noinst_HEADERS = \
 	$(includedir)/plugin.h \
 	$(includedir)/plg_strings.h \
-	$(includedir)/plg_common.h
-
+	$(includedir)/plg_common.h \
+	$(includedir)/netfunc.h \
+	$(pop_headers) \
+	$(imap_headers) \
+	$(msglist_headers)

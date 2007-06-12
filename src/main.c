@@ -17,7 +17,27 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <stdlib.h> /*exit, atoi*/
+#include <signal.h> /*signal stuff*/
+#include <gtk/gtkeventbox.h>
+
+/*The pid stuff is UNIX only*/
+#ifdef _POSIX_SOURCE
+#include <unistd.h> /*for getpid*/
+#include <sys/types.h> /*for kill*/
+#define MTC_USE_PIDFUNC
+#endif /*_POSIX_SOURCE*/
+
+#include "common.h"
+#include "docklet.h"
+#include "configdlg.h"
+#include "filefunc.h"
+#include "plugfunc.h"
+
+/*values used for the PID routine*/
+#define PID_APPLOAD 1
+#define PID_APPEXIT 2
+#define PID_APPKILL 4
 
 enum mtc_mode { MODE_NONE= 0, MODE_NORMAL, MODE_DEBUG, MODE_CFG, MODE_KILL };
 static gint func_ref= 0;
@@ -313,12 +333,8 @@ static gboolean mtc_init(void)
 /*function to run the warning dialog*/
 static gint warndlg_run(gchar *msg, gboolean startconfig)
 {
-	/*init gtk to run the dialog*/
-	GtkWidget *dialog;
-	
-	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, msg, PACKAGE);
-	gtk_dialog_run(GTK_DIALOG(dialog)); 
-	gtk_widget_destroy(dialog);
+	/*run the dialog*/
+    err_dlg(GTK_MESSAGE_WARNING, msg, PACKAGE);
 	
 	/*run the config dialog and return*/
 	return((startconfig)? cfgdlg_start(): EXIT_FAILURE);

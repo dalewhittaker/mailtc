@@ -17,7 +17,30 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <gtk/gtktreeselection.h>
+#include <gtk/gtktreeview.h>
+#include <gtk/gtkvbox.h>
+#include <gtk/gtklabel.h>
+#include <gtk/gtkbutton.h>
+#include <gtk/gtkcombobox.h>
+#include <gtk/gtktable.h>
+#include <gtk/gtkhbox.h>
+#include <gtk/gtkstock.h>
+#include <gtk/gtkscrolledwindow.h>
+#include <gtk/gtkcheckbutton.h>
+#include <gtk/gtknotebook.h>
+#include <gtk/gtkcellrenderer.h>
+#include <gtk/gtkcellrenderertext.h>
+#include <gtk/gtkspinbutton.h>
+#include <gtk/gtkcolorsel.h>
+#include <gtk/gtkcolorseldialog.h>
+
+#include "configdlg.h"
+#include "filefunc.h"
+#include "filterdlg.h"
+#include "plugfunc.h"
+
+enum { ACCOUNT_COLUMN= 0, PROTOCOL_COLUMN, N_COLUMNS };
 
 /*A helper struct to make added to tables easier*/
 typedef struct _dlgtable
@@ -168,7 +191,6 @@ static gboolean acc_save(int profile)
 {
 	gboolean retval= FALSE;
     gint empty= 0;
-	GtkWidget *msgdlg;
 	gchar msg[10];
 	GtkTreeIter iter;
 	GSList *pcurrent= NULL;
@@ -208,9 +230,7 @@ static gboolean acc_save(int profile)
 	/*if there were any empty values tell user to enter it*/
 	if(empty)
 	{
-		msgdlg= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, S_CONFIGDLG_DETAILS_INCOMPLETE, msg);
-		gtk_dialog_run(GTK_DIALOG(msgdlg));
-		gtk_widget_destroy(msgdlg);
+        err_dlg(GTK_MESSAGE_ERROR, S_CONFIGDLG_DETAILS_INCOMPLETE, msg);
 		return FALSE;
 	}
 
@@ -225,7 +245,8 @@ static gboolean acc_save(int profile)
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 
-	g_strlcpy(pcurrent_data->plgname, g_path_get_basename(g_module_name((GModule *)pitem->handle)), sizeof(pcurrent_data->plgname));
+	/*g_strlcpy(pcurrent_data->plgname, g_path_get_basename(g_module_name((GModule *)pitem->handle)), sizeof(pcurrent_data->plgname));*/
+	g_strlcpy(pcurrent_data->plgname, plg_name(pitem), sizeof(pcurrent_data->plgname));
 
 #ifdef MTC_NOTMINIMAL
 	/*get the filter setting*/
@@ -255,7 +276,7 @@ static gboolean acc_save(int profile)
 
 		/*find the plugin and update the list*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
 
 		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
   		pcurrent= g_slist_next(pcurrent);
@@ -299,9 +320,7 @@ static gboolean cfg_save(void)
 static void close_button_pressed(void)
 {
 	/*display message to tell user to run mailtc, then dialog destroy widget*/
-	GtkWidget *msgdlg= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, S_CONFIGDLG_READYTORUN, PACKAGE);
-	gtk_dialog_run(GTK_DIALOG(msgdlg));
-	gtk_widget_destroy(msgdlg);
+    err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_READYTORUN, PACKAGE);
 	gtk_main_quit();
 }
 
@@ -489,17 +508,14 @@ static void config_iconcolour_button_pressed(GtkWidget *widget, gpointer user_da
 static void plginfo_button_pressed(GtkWidget *widget)
 {
 	mtc_plugin *pitem= NULL;
-	GtkWidget *dialog= NULL;
 
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
 	/*set the port to the default port for the specified plugin*/
-	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, 
-			S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
+    err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
+
 }
 
 /*signal called when multi checkbox is pressed*/
@@ -888,7 +904,6 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
     /*setup summary stuff*/
 	summary_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_ENABLE_SUMMARY);
   	g_signal_connect(G_OBJECT(summary_checkbox), "clicked", G_CALLBACK(summary_checkbox_pressed), NULL);
-	/*summary_button= gtk_font_button_new();*/
     summary_button= gtk_button_new_with_label(S_CONFIGDLG_SUMOPTS);
 	gtk_widget_set_sensitive(GTK_WIDGET(summary_button), FALSE);
   	g_signal_connect(G_OBJECT(summary_button), "clicked", G_CALLBACK(summary_button_pressed), NULL);
@@ -971,7 +986,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 		/*find the plugin and add it to the listbox*/
 		/*Message box here if we cannot find the plugin*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
 		
 		/*add to the list, if we cannot find it, report that it is not found*/
 		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);

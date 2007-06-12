@@ -17,7 +17,16 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <stdlib.h> /*exit*/
+#include <time.h> /*asctime etc.c*/
+#include <gtk/gtkimage.h>
+
+#include "common.h"
+#include "envelope_large.h"
+
+#ifdef MTC_NOTMINIMAL
+#include "envelope_small.h"
+#endif /*MTC_NOTMINIMAL*/
 
 /*function to get the date and time*/
 gchar *str_time(void)
@@ -32,16 +41,23 @@ gchar *str_time(void)
 }
 
 /*run an error dialog reporting error*/
-gboolean err_dlg(gchar *errmsg, ...)
+gboolean err_dlg(GtkMessageType type, gchar *errmsg, ...)
 {
 	GtkWidget *dialog;
 	va_list list;
-	gchar errstring[200];
+    gsize msglen= 0;
+    gchar *err_string= NULL;
+
+    va_start(list, errmsg);
+    msglen= g_printf_string_upper_bound(errmsg, list)+ 1;
+    va_end(list);
+
+    err_string= (gchar *)g_malloc0(msglen);
 	
 	/*create a va_list and display it as a dialog*/
-	va_start(list, errmsg); 
-	g_vsnprintf(errstring, 200, errmsg, list);
-	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, errstring);
+    va_start(list, errmsg); 
+	g_vsnprintf(err_string, msglen, errmsg, list);
+	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, err_string);
 	
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
@@ -224,3 +240,16 @@ mtc_icon *pixbuf_create(mtc_icon *picon)
 	return(picon);
 }
 
+/*creates an icon*/
+mtc_icon *icon_create(mtc_icon *picon)
+{
+    picon->image= gtk_image_new();
+	picon= pixbuf_create(picon);
+    if(!picon|| !picon->image) 
+		err_exit(S_FILEFUNC_ERR_CREATE_PIXBUF);
+    
+    /*ref count the image, be sure to unref it when we leave*/
+    g_object_ref(G_OBJECT(picon->image));
+
+    return(picon);
+}

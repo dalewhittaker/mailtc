@@ -41,7 +41,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 subdir = plugin
-DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
+DIST_COMMON = $(am__noinst_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in TODO
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -181,6 +181,10 @@ DIST_SOURCES = $(am__mtc_apop_la_SOURCES_DIST) \
 	$(am__mtc_pop_la_SOURCES_DIST) \
 	$(am__mtc_popcram_la_SOURCES_DIST) \
 	$(am__mtc_popssl_la_SOURCES_DIST)
+am__noinst_HEADERS_DIST = $(includedir)/plugin.h \
+	$(includedir)/plg_strings.h $(includedir)/plg_common.h \
+	$(includedir)/netfunc.h $(includedir)/popfunc.h \
+	$(includedir)/imapfunc.h $(includedir)/msg.h
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -330,6 +334,7 @@ plugindir = "$(libdir)/mailtc"
 #define the message list stuff
 @MTC_ALLFEATURES_TRUE@msglist_cflags = -DMTC_NOTMINIMAL
 @MTC_ALLFEATURES_TRUE@msglist_src = msg.c
+@MTC_ALLFEATURES_TRUE@msglist_headers = $(includedir)/msg.h
 
 #define the common source files
 common_src = plg_common.c netfunc.c $(msglist_src)
@@ -337,6 +342,7 @@ common_src = plg_common.c netfunc.c $(msglist_src)
 #define the POP3 stuff
 @MTC_POP_TRUE@pop_src = $(common_src) popfunc.c
 @MTC_POP_TRUE@pop_libfiles = mtc_pop.la
+@MTC_POP_TRUE@pop_headers = $(includedir)/popfunc.h
 @MTC_POP_TRUE@@MTC_SSL_TRUE@pop_ssl_libfiles = \
 @MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_apop.la \
 @MTC_POP_TRUE@@MTC_SSL_TRUE@	mtc_popcram.la \
@@ -346,6 +352,7 @@ common_src = plg_common.c netfunc.c $(msglist_src)
 #define the IMAP4 stuff
 @MTC_IMAP_TRUE@imap_src = $(common_src) imapfunc.c
 @MTC_IMAP_TRUE@imap_libfiles = mtc_imap.la
+@MTC_IMAP_TRUE@imap_headers = $(includedir)/imapfunc.h
 @MTC_IMAP_TRUE@@MTC_SSL_TRUE@imap_ssl_libfiles = \
 @MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapcram.la \
 @MTC_IMAP_TRUE@@MTC_SSL_TRUE@	mtc_imapssl.la
@@ -414,7 +421,11 @@ common_libraries = @GTK_LIBS@
 noinst_HEADERS = \
 	$(includedir)/plugin.h \
 	$(includedir)/plg_strings.h \
-	$(includedir)/plg_common.h
+	$(includedir)/plg_common.h \
+	$(includedir)/netfunc.h \
+	$(pop_headers) \
+	$(imap_headers) \
+	$(msglist_headers)
 
 all: all-am
 

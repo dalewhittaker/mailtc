@@ -17,7 +17,14 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "plg_common.h"
+#include "netfunc.h"
+#include "popfunc.h"
+
+#ifdef MTC_NOTMINIMAL
+#include "msg.h"
+#endif /*MTC_NOTMINIMAL*/
+
+#define DIGEST_LEN 32
 
 /* function to receive a message from the pop3 server */
 static GString *pop_recvfunc(mtc_net *pnetinfo, GString *msg, gchar *endstring, gboolean getheader)

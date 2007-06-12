@@ -17,6 +17,11 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifdef SSL_PLUGIN
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#endif
+
 /*common functions that the default plugins use*/
 #include "plg_common.h"
 

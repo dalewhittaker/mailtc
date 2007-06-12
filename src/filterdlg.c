@@ -17,7 +17,22 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <gtk/gtktreeselection.h>
+#include <gtk/gtktreeview.h>
+#include <gtk/gtkstock.h>
+#include <gtk/gtkvbox.h>
+#include <gtk/gtklabel.h>
+#include <gtk/gtkbutton.h>
+#include <gtk/gtkcombobox.h>
+#include <gtk/gtktable.h>
+#include <gtk/gtkradiobutton.h>
+
+#include "filefunc.h"
+#include "filterdlg.h"
+
+/*TODO don't like lengths, fix it*/
+#define FILTERSTRING_LEN 100
+#define MAX_FILTER_EXP 5 
 
 #define SFILTER_AND "<AND>"
 #define SFILTER_OR "<OR>"
@@ -49,7 +64,7 @@ static gboolean filter_write(mtc_account *paccount)
 	}
 
 	if(!valid)
-		return(!err_dlg(S_FILTERDLG_NO_FILTERS));
+		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
 	
 	/*get the full path of the filter file*/
 	memset(outfilename, '\0', NAME_MAX);
