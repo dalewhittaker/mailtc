@@ -298,7 +298,7 @@ static gboolean mtc_init(void)
 	memset(&config, '\0', sizeof(mtc_cfg));
 	
 	/*get the path for the program*/
-	mtc_dir();
+	/*mtc_dir();*/
 
 	/* here we need to create our dir*/
 	if(!IS_DIR(config.dir))
@@ -345,6 +345,11 @@ gint main(gint argc, gchar *argv[])
 {
 	guint sleeptime;
 	enum mtc_mode runmode= MODE_NONE;
+
+    /*get the path for the program*/
+	/*this needs to be done first
+     *as the PID routines use the path*/
+    mtc_dir();
 
 	/*first step is to check our arguments are valid*/
 	if((argc!= 2)&& (argc!= 1))
