@@ -17,7 +17,14 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "core.h"
+#include <gmodule.h>
+#include "plugfunc.h"
+
+/*this is mainly for testing purposes*/
+/*#undef LIBDIR*/
+#ifndef LIBDIR
+#define LIBDIR "../plugin/.libs"
+#endif
 
 /*function used to sort the items*/
 static gint plg_compare(gconstpointer a, gconstpointer b)
@@ -127,6 +134,12 @@ static gboolean plg_load(const gchar *plugin_name)
 	return(TRUE);
 }
 
+/*get the plugin name from the plugin*/
+gchar *plg_name(mtc_plugin *pplugin)
+{
+    return(g_path_get_basename(g_module_name((GModule *)pplugin->handle)));
+}
+
 /*compare function used by find_plugin*/
 static gint plg_match(gconstpointer a, gconstpointer b)
 {
@@ -135,8 +148,9 @@ static gint plg_match(gconstpointer a, gconstpointer b)
 	gchar *pbasename;
 	gint retval= 0;
 
-	pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));
-	retval= (g_str_equal(pbasename, plugin_name))? 0: 1;
+	/*pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));*/
+	pbasename= plg_name(pitem);
+    retval= (g_str_equal(pbasename, plugin_name))? 0: 1;
 	g_free(pbasename);
 	return(retval);
 }
