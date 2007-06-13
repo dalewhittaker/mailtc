@@ -460,3 +460,4 @@ Add code to detect if panel dies, and reload the icon.
 Much needed cleanup of header files.
 Password is now base64 encoded for future xml config.
 Read/write password from account files instead of separate password files.
+Move conf dir to $HOME/.config/mailtc

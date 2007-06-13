@@ -1,8 +1,7 @@
 NEXT RELEASE:
 
 1) new stuff
-    a) fix problem with calling mtc_dir at start of main, this cannot be done as err_exit will not work by that point
-    b) Implement new xml config
+    a) Implement new xml config
         i) config file
         ii) account* files
         iii) filter* files

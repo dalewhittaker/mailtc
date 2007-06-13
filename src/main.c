@@ -265,14 +265,19 @@ static void atexit_func(void)
 	/*unload the plugins and free the plugin list*/
 	plg_unload_all();	
 	
-	/*remove the pid from the file*/
+	/*finally, close the log file if it is open*/
+	if(config.logfile!= NULL)
+    {
+    
+        /*remove the pid from the file*/
+        /*called here if logfile is NULL we cannot read the pidfile*/
 #ifdef MTC_USE_PIDFUNC
-	pid_read(PID_APPEXIT);
+	    pid_read(PID_APPEXIT);
 #endif /*MTC_USE_PIDFUNC*/
 
-	/*finally, close the log file if it is open*/
-	if((config.logfile!= NULL)&& fclose(config.logfile)== EOF)
-		g_printerr("%s %s\n", S_MAIN_ERR_CLOSE_LOGFILE, g_strerror(errno));
+        if(fclose(config.logfile)== EOF)
+		    g_printerr("%s %s\n", S_MAIN_ERR_CLOSE_LOGFILE, g_strerror(errno));
+    }
 }
 
 /*function to cleanup in case the program is killed*/
@@ -300,19 +305,6 @@ static gboolean mtc_init(void)
 	/*get the path for the program*/
 	mtc_dir();
 
-	/* here we need to create our dir*/
-    /*TODO this needs to be improved
-     *basically parse the string and test each dir*/
-/*	if(!IS_DIR(config.dir))
-	{
-		if(FILE_EXISTS(config.dir))
-		{
-			g_printerr(S_MAIN_ERR_NOT_DIRECTORY, config.dir, PACKAGE);
-			exit(EXIT_FAILURE);
-		}
-		else
-			g_mkdir(config.dir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-	}*/
 	/*set the logfilename*/
 	mtc_file(logfilename, LOG_FILE, -1);
 
