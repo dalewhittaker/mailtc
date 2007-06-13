@@ -17,6 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h> /*exit*/
 #include "filefunc.h"
 #include "plugfunc.h"
 #include "filterdlg.h"
@@ -27,18 +28,51 @@
 
 #define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
 
-/*function to get $HOME + program*/
+/*wrapper to create a directory*/
+static void mk_dir(gchar *pfile)
+{
+    if(!IS_DIR(pfile))
+	{
+		if(FILE_EXISTS(pfile))
+		{
+			g_printerr(S_FILEFUNC_ERR_NOT_DIRECTORY, pfile, PACKAGE);
+			exit(EXIT_FAILURE);
+		}
+		else
+		{
+            if(g_mkdir(pfile, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)== -1)
+		    {
+                g_printerr("%s %s: %s\n", S_FILEFUNC_ERR_MKDIR, pfile, g_strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+	}
+}
+
+/*function to get $HOME/.config + program*/
 gboolean mtc_dir(void)
 {
-	gchar *pfile= NULL;
-    
-	/*get the home path*/
-	if((pfile= g_build_filename(g_get_home_dir(), "." PACKAGE, NULL))== NULL)
-		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
-		
-	g_strlcpy(config.dir, pfile, sizeof(config.dir));
+	gchar *pcfg= NULL;
+    gchar *pmtc= NULL;
 
-	g_free(pfile);
+	/*first create the .config dir*/
+	if((pcfg= g_build_filename(g_get_home_dir(), ".config", NULL))== NULL)
+		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
+	
+    /*create the dir if it doesn't exist*/
+    mk_dir(pcfg);
+
+    /*second, create the .config/mailtc dir*/
+    if((pmtc= g_build_filename(pcfg, "mailtc", NULL))== NULL)
+		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
+	
+    /*create the dir if it doesn't exist*/
+    mk_dir(pmtc);
+	
+	g_strlcpy(config.dir, pmtc, sizeof(config.dir));
+	
+    g_free(pmtc);
+	g_free(pcfg);
 
 	return TRUE;
 }

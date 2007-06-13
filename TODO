@@ -1,15 +1,14 @@
 NEXT RELEASE:
 
 1) new stuff
-    a) read/write password to account* files
-    b) modify conf dir to ~/.config/mailtc
-    c) Implement new xml config
+    a) fix problem with calling mtc_dir at start of main, this cannot be done as err_exit will not work by that point
+    b) Implement new xml config
         i) config file
         ii) account* files
         iii) filter* files
 
-    d) Revamped config (see also wish list task 1).
-    e) Ben wants To: field added to filter stuff
+    c) Revamped config (see also wish list task 1).
+    d) Ben wants To: field added to filter stuff
 
 2) Compile/test on win32
     a) Get mingw working and build absolute minimal mailtc, test.

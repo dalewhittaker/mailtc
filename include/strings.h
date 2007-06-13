@@ -188,6 +188,8 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_FILEFUNC_ERR_READ_PLUGIN	_("Error reading plugin for account %d\n")
 #define S_FILEFUNC_ERR_GET_HOMEDIR _("Error getting home directory\n")
 #define S_FILEFUNC_ERR_CREATE_PIXBUF _("Error creating icon pixbuf\n")
+#define S_FILEFUNC_ERR_NOT_DIRECTORY _("%s exists, but is not a directory, you must remove this before %s can run\n")
+#define S_FILEFUNC_ERR_MKDIR _("Error creating directory\n")
 
 /*main.c strings*/
 #define S_MAIN_ERR_INSTANCE_RUNNING _("Error: Instance of %s already running\n")
@@ -201,7 +203,6 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_MAIN_ERR_OPEN_PIDFILE_READ _("Error reading PID file %s\n")
 #define S_MAIN_ERR_RENAME_PIDFILE _("Error renaming pid file %s to temp pid file %s\n")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
-#define S_MAIN_ERR_NOT_DIRECTORY _("%s exists, but is not a directory, you must remove this before %s can run\n")
 
 #define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 \n\t%s -c (to configure mail details)\

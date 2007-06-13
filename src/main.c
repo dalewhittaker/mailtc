@@ -301,7 +301,9 @@ static gboolean mtc_init(void)
 	mtc_dir();
 
 	/* here we need to create our dir*/
-	if(!IS_DIR(config.dir))
+    /*TODO this needs to be improved
+     *basically parse the string and test each dir*/
+/*	if(!IS_DIR(config.dir))
 	{
 		if(FILE_EXISTS(config.dir))
 		{
@@ -310,7 +312,7 @@ static gboolean mtc_init(void)
 		}
 		else
 			g_mkdir(config.dir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH);
-	}
+	}*/
 	/*set the logfilename*/
 	mtc_file(logfilename, LOG_FILE, -1);
 
