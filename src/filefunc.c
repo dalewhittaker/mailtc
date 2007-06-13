@@ -348,6 +348,35 @@ static gchar *protocol_to_plugin(gchar *plgstring)
 	return(plgstring);
 }
 
+/*function to read in the password (encrypted or not) from the file*/
+static gboolean pw_read(FILE *pfile, mtc_account *paccount)
+{
+
+#ifdef MTC_USE_SSL
+	gchar encstring[BASE64_PASSWORD_LEN];
+#endif
+	
+/*if OpenSSL is defined read in an encrypted password*/
+#ifdef MTC_USE_SSL
+	memset(encstring, '\0', BASE64_PASSWORD_LEN);
+	
+	/*read in the encrypted password and remove the password if there is an error reading it*/
+    fread_string(pfile, encstring, sizeof(encstring), NULL);
+	if(encstring[0]== 0)
+		err_exit(S_FILEFUNC_ERR_GET_PW);
+	
+	/*decrypt the password*/
+	pw_decrypt(encstring, paccount->password);
+
+/*otherwise read in clear password*/
+#else
+	/*get the password value and remove the file if it cannot be read*/
+	fread_string_fail(pfile, paccount->password, sizeof(paccount->password), S_FILEFUNC_ERR_GET_PW, passwordfilename);
+#endif
+	
+	return TRUE;
+}
+
 /*Function to create/read in a new account*/
 static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
 {
@@ -369,6 +398,11 @@ static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
     fread_string_fail(pfile, pnew->hostname, sizeof(pnew->hostname), S_FILEFUNC_ERR_GET_HOSTNAME, detailsfilename);
 	fread_string_fail(pfile, pnew->port, sizeof(pnew->port), S_FILEFUNC_ERR_GET_PORT, detailsfilename);
 	fread_string_fail(pfile, pnew->username, sizeof(pnew->username), S_FILEFUNC_ERR_GET_USERNAME, detailsfilename);
+
+    /*read in the password*/
+	if(!pw_read(pfile, pnew))
+		err_exit(S_FILEFUNC_ERR_GET_PASSWORD, pnew->id);
+	
 	fread_string_fail(pfile, picon->colour, sizeof(pnew->icon), S_FILEFUNC_ERR_GET_ICONTYPE, detailsfilename);
     fread_string_fail(pfile, pnew->plgname, sizeof(pnew->plgname), S_FILEFUNC_ERR_READ_PLUGIN, detailsfilename);
 	fread_string(pfile, pnew->accname, sizeof(pnew->accname), S_FILEFUNC_DEFAULT_ACCNAME);
@@ -377,10 +411,6 @@ static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
 	fread_integer(pfile, (gint *)&pnew->runfilter, FALSE);
 #endif /*MTC_NOTMINIMAL*/
 
-	/*read in the password*/
-	if(!pw_read(pnew))
-		err_exit(S_FILEFUNC_ERR_GET_PASSWORD, pnew->id);
-	
 #ifdef MTC_NOTMINIMAL
 	pnew->pfilters= NULL;
 			
@@ -430,55 +460,6 @@ gboolean read_accounts(void)
 		mtc_file(detailsfilename, DETAILS_FILE, ++i);
 		
 	}
-	return TRUE;
-}
-
-/*function to read in the password (encrypted or not) from the file*/
-gboolean pw_read(mtc_account *paccount)
-{
-
-	FILE* pfile;
-	gchar passwordfilename[NAME_MAX];
-#ifdef MTC_USE_SSL
-	gchar encstring[BASE64_PASSWORD_LEN];
-#endif
-	
-	/*get the full path of the password file*/
-	mtc_file(passwordfilename, PASSWORD_FILE, paccount->id);
-	
-	/*if the password file does not exist return*/
-	if(!IS_FILE(passwordfilename))
-		return FALSE;
-	
-	/*open the password file for reading*/
-	if((pfile= g_fopen(passwordfilename, "rb"))== NULL)
-		err_exit(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
-
-/*if OpenSSL is defined read in an encrypted password*/
-#ifdef MTC_USE_SSL
-	memset(encstring, '\0', BASE64_PASSWORD_LEN);
-	
-	/*read in the encrypted password and remove the password if there is an error reading it*/
-    fread_string(pfile, encstring, sizeof(encstring), NULL);
-	if(encstring[0]== 0)
-	{
-		g_remove(passwordfilename);
-		err_exit(S_FILEFUNC_ERR_GET_PW);
-	}
-	
-	/*decrypt the password*/
-	pw_decrypt(encstring, paccount->password);
-
-/*otherwise read in clear password*/
-#else
-	/*get the password value and remove the file if it cannot be read*/
-	fread_string_fail(pfile, paccount->password, sizeof(paccount->password), S_FILEFUNC_ERR_GET_PW, passwordfilename);
-#endif
-	
-	/*close the password file*/
-	if(fclose(pfile)== EOF)
-		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
-	
 	return TRUE;
 }
 
@@ -542,6 +523,25 @@ gboolean cfg_write(void)
 	return TRUE;
 }
 
+/*function to write the password (encrypted or not) to the file*/
+static gboolean pw_write(FILE *pfile, gchar *password)
+{
+#ifdef MTC_USE_SSL
+    gchar *encstring= NULL;
+#endif
+
+/*if OpenSSL is defined encrypt the password*/
+#ifdef MTC_USE_SSL
+	encstring= pw_encrypt(password);
+    fwrite_string(pfile, encstring, S_FILEFUNC_ERR_WRITE_PW);
+    g_free(encstring);
+/*otherwise write a clear password*/
+#else
+    fwrite_string(pfile, password, S_FILEFUNC_ERR_WRITE_PW);
+#endif
+	return TRUE;
+}
+
 /*function to write pop details to details file*/
 gboolean acc_write(mtc_account *pcurrent)
 {
@@ -566,6 +566,10 @@ gboolean acc_write(mtc_account *pcurrent)
 	fwrite_string(pfile, pcurrent->hostname, S_FILEFUNC_ERR_WRITE_HOSTNAME);
 	fwrite_string(pfile, pcurrent->port, S_FILEFUNC_ERR_WRITE_PORT);
 	fwrite_string(pfile, pcurrent->username, S_FILEFUNC_ERR_WRITE_USERNAME);
+
+    /*write the password to the password file*/
+	pw_write(pfile, pcurrent->password);
+
 	fwrite_string(pfile, picon->colour, S_FILEFUNC_ERR_WRITE_ICONTYPE);
 	fwrite_string(pfile, pcurrent->plgname, S_FILEFUNC_ERR_WRITE_PROTOCOL);
 	fwrite_string(pfile, pcurrent->accname, S_FILEFUNC_ERR_WRITE_ACCNAME);
@@ -573,9 +577,6 @@ gboolean acc_write(mtc_account *pcurrent)
     fwrite_integer(pfile, pcurrent->runfilter, S_FILEFUNC_ERR_WRITE_FILTER);
 #endif /*MTC_NOTMINIMAL*/
 
-	/*write the password to the password file*/
-	pw_write(pcurrent);
-		
 	/*close the details file*/
 	if(fclose(pfile)== EOF)
 		err_noexit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
@@ -584,50 +585,6 @@ gboolean acc_write(mtc_account *pcurrent)
 	if(g_chmod(detailsfilename, S_IRUSR)== -1)
 		err_exit(S_FILEFUNC_ERR_SET_PERM, detailsfilename);
 	
-	return TRUE;
-}
-
-/*function to write the password (encrypted or not) to the file*/
-gboolean pw_write(mtc_account *paccount)
-{
-	FILE* pfile;
-	gchar passwordfilename[NAME_MAX];
-#ifdef MTC_USE_SSL
-    gchar *encstring= NULL;
-#endif
-
-	/*get the full path of the password file*/
-	mtc_file(passwordfilename, PASSWORD_FILE, paccount->id);
-	
-	/*if the password exists but cannot be removed report error*/
-	if((IS_FILE(passwordfilename))&&(g_remove(passwordfilename)== -1))
-		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, passwordfilename);
-	
-	/*open the password file for writing*/
-	if((pfile= g_fopen(passwordfilename, "wb"))== NULL)
-		err_exit(S_FILEFUNC_ERR_OPEN_FILE, passwordfilename);
-
-/*if OpenSSL is defined encrypt the password*/
-#ifdef MTC_USE_SSL
-	encstring= pw_encrypt(paccount->password);
-	
-	/*write the encrypted password*/
-    fwrite_string(pfile, encstring, S_FILEFUNC_ERR_WRITE_PW);
-
-    g_free(encstring);
-/*otherwise write a clear password*/
-#else
-    fwrite_string(pfile, paccount->password, S_FILEFUNC_ERR_WRITE_PW);
-#endif
-
-	/*close the password file*/
-	if(fclose(pfile)== EOF)
-		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, passwordfilename);
-	
-	/*change the permissions on the file so that it can only be read by user*/
-	if(g_chmod(passwordfilename, S_IRUSR)== -1)
-		err_exit(S_FILEFUNC_ERR_SET_PERM, passwordfilename);
-
 	return TRUE;
 }
 

@@ -298,7 +298,7 @@ static gboolean mtc_init(void)
 	memset(&config, '\0', sizeof(mtc_cfg));
 	
 	/*get the path for the program*/
-	/*mtc_dir();*/
+	mtc_dir();
 
 	/* here we need to create our dir*/
 	if(!IS_DIR(config.dir))

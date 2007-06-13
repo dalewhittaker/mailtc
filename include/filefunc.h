@@ -52,8 +52,6 @@ gboolean read_accounts(void);
 gboolean cfg_read(void);
 gboolean acc_write(mtc_account *pcurrent);
 gboolean cfg_write(void);
-gboolean pw_read(mtc_account *paccount);
-gboolean pw_write(mtc_account *paccount);
 gchar *mtc_file(gchar *fullpath, gchar *filename, gint account);
 gint rm_mtc_file(gchar *shortname, gint count, gint fullcount);
 
