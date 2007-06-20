@@ -26,6 +26,13 @@
 #define LIBDIR "../plugin/.libs"
 #endif
 
+/*define the shared library filename extension*/
+#ifdef _POSIX_SOURCE
+#define LIBEXT ".so"
+#else
+#define LIBEXT ".dll"
+#endif /*_POSIX_SOURCE*/
+
 /*function used to sort the items*/
 static gint plg_compare(gconstpointer a, gconstpointer b)
 {
@@ -210,7 +217,7 @@ gboolean plg_load_all(void)
 		path= g_build_filename(LIBDIR, file, NULL);
 		
 		/*currently we only add plugins with a ".so" extension*/
-		if(g_ascii_strcasecmp(path+ (strlen(path)- 3), ".so")== 0)
+		if(g_ascii_strcasecmp(path+ (strlen(path)- strlen(LIBEXT)), LIBEXT)== 0)
 			plg_load(path);
 
 		g_free(path);

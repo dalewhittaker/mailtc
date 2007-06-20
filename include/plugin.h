@@ -34,7 +34,6 @@
 #define NAME_MAX 255
 #endif
 
-#define PORT_LEN 20
 #define PASSWORD_LEN 32
 #define PROTOCOL_LEN NAME_MAX
 #define ICON_LEN 10
@@ -249,7 +248,7 @@ typedef struct _mtc_account
 {
 	gchar accname[NAME_MAX+ 1];
 	gchar hostname[LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1];
-	gchar port[PORT_LEN];
+	gint port;
 	gchar username[LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1];
 	gchar password[PASSWORD_LEN];
 	gchar plgname[PROTOCOL_LEN+ 1];

@@ -69,7 +69,7 @@ static gint cfgdlg_start()
 static gboolean pid_read(gint action)
 {
 	FILE *tmppidfile, *pidfile;
-	gchar pidstring[PORT_LEN];
+	gchar pidstring[G_ASCII_DTOSTR_BUF_SIZE];
 	gchar pidfilename[NAME_MAX], tmppidfilename[NAME_MAX];
 	gboolean retval= TRUE;
 	gboolean instance_running= FALSE;
@@ -97,10 +97,10 @@ static gboolean pid_read(gint action)
 		    if((tmppidfile= g_fopen(tmppidfilename, "r"))== NULL)
 			    err_exit(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
 		
-		    memset(pidstring, '\0', PORT_LEN);
+		    memset(pidstring, '\0', G_ASCII_DTOSTR_BUF_SIZE);
 		
 		    /*read each value from temp file and write it to the pid file unless it is the current pid*/
-		    while(fgets(pidstring, PORT_LEN, tmppidfile)!= NULL)
+		    while(fgets(pidstring, G_ASCII_DTOSTR_BUF_SIZE, tmppidfile)!= NULL)
 		    {
                 g_strchomp(pidstring);
 			

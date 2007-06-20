@@ -18,6 +18,10 @@
  */
 
 #include <stdlib.h> /*exit*/
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 #include "filefunc.h"
 #include "plugfunc.h"
 #include "filterdlg.h"
@@ -87,24 +91,6 @@ gchar *mtc_file(gchar *fullpath, gchar *filename, gint account)
 	return(fullpath);
 }
 
-/*generic write a string to file function*/
-static void fwrite_string(FILE *pfile, const gchar *pstring, gchar *perr)
-{
-    if((fputs(pstring, pfile)== EOF)|| (fputc('\n', pfile)== EOF))
-        err_exit(perr);
-}
-
-/*generic write an integer to file function*/
-static void fwrite_integer(FILE *pfile, gint pval, gchar *perr)
-{
-	/*char scratch[G_ASCII_DTOSTR_BUF_SIZE];
-	g_ascii_dtostr(scratch, sizeof(scratch), pval);
-    return(fwrite_string(pfile, scratch, gchar *perr));*/
-    
-	if(g_fprintf(pfile, "%d\n", pval)< 0)
-        err_exit(perr);
-}
-
 /*generic read a string from file function*/
 static void fread_string_fail(FILE *pfile, gchar *pstring, gint slen, gchar *perr, const gchar *fname)
 {
@@ -155,6 +141,198 @@ static void fread_integer_fail(FILE *pfile, gint *pval, gchar *perr, const gchar
         err_exit(perr);
     }
     *pval= (gint)g_ascii_strtod(scratch, NULL);
+}
+
+/*libxml initialisation*/
+static void xml_init(void)
+{
+    /*initialise the library and check for ABI mismatch*/
+    LIBXML_TEST_VERSION
+
+    xmlIndentTreeOutput= 1;
+}
+
+/*cleanup libxml*/
+static void xml_cleanup(void)
+{
+    /*cleanup library*/
+    xmlCleanupParser();
+
+    /*debug memory for regression tests*/
+    xmlMemoryDump();
+}
+
+/*function to get individual element*/
+/*TODO this needs loads of work*/
+static gboolean get_node_str(xmlXPathContextPtr xpctx, const gchar *spath)
+{
+    int nodenr= 0;
+    gboolean retval= TRUE;
+    xmlXPathObjectPtr xpobj;
+    xmlChar *path;
+
+    path= BAD_CAST spath;
+
+    /*get the list, if any*/
+    xpobj= xmlXPathEvalExpression(path, xpctx);
+    if(xpobj== NULL)
+    {
+        err_noexit("Error: unable to evaluate xpath expression \"%s\"\n", spath);
+        return FALSE;
+    }
+
+    /*verify that there is only 1 node found*/
+    nodenr= xpobj->nodesetval->nodeNr;
+
+    /*TODO this will all probably change*/
+    if(nodenr== 1)
+    {
+        xmlNodePtr node= NULL;
+        xmlChar *pcontent= NULL;
+
+        /*Ok we got a single node, now get the content*/
+        node= xpobj->nodesetval->nodeTab[0];
+
+        pcontent= xmlNodeGetContent(node);
+        if(pcontent!= NULL)
+        {
+            /*TODO now, here it will either be converted to an int or just copied to a string*/
+            g_print("%s = %s\n", spath, pcontent);
+            xmlFree(pcontent);
+        }
+        /*TODO sort if there is no value (i.e either error or copy a default)*/
+    }
+    else
+    {
+        /*if it is greater than 1, error, as there cannot be duplicates
+        if it is less then there is no value*/
+        if(nodenr> 1)
+        {
+            err_noexit("Error: duplicate elements found for expression \"%s\"\n", spath);
+            retval= FALSE;
+        }
+        /*TODO sort if there is no value (i.e either error or copy a default)*/
+    }
+
+    /*free the object*/
+    xmlXPathFreeObject(xpobj);
+
+    return(retval);
+}
+
+/*function to get the required elements from the document*/
+static gboolean cfg_elements(xmlDocPtr doc)
+{
+    xmlNodePtr node= NULL;
+    xmlXPathContextPtr xpctx;
+    gboolean retval= TRUE;
+
+    /*get the root element and check it is named 'config'*/
+    node= xmlDocGetRootElement(doc);
+    if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST "config")))
+    {
+        err_noexit("Error getting config root element\n");
+        return FALSE;
+    }
+
+    /* Create xpath evaluation context */
+    xpctx= xmlXPathNewContext(doc);
+    if(xpctx== NULL)
+    {
+        err_noexit("Error: unable to create new XPath context\n");
+        retval= FALSE;
+    }
+    else
+    {
+        /*get all of the values
+         *TODO this will most likely be changing somehow*/
+        if(!get_node_str(xpctx, "/config/read_command")||
+           !get_node_str(xpctx, "/config/interval")||
+           !get_node_str(xpctx, "/config/error_frequency")||
+           !get_node_str(xpctx, "/config/icon_size")||
+           !get_node_str(xpctx, "/config/icon_colour")||
+           !get_node_str(xpctx, "/config/newmail_command"))
+        {
+            retval= FALSE;
+        }
+        else
+        {
+            /*TODO continue and get the account stuff*/
+        }
+    }
+    /*free the xpath evaluation context*/
+    xmlXPathFreeContext(xpctx);
+
+    return(retval);
+}
+
+/*function to parse the config file*/
+static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
+{
+    xmlDocPtr doc; /* the resulting document tree */
+    gboolean retval= TRUE;
+
+    /* parse the file*/
+    doc= xmlCtxtReadFile(ctxt, filename, NULL, 0);
+    if(doc== NULL)
+    {
+        err_noexit("Failed to parse %s\n", filename);
+        return FALSE;
+    }
+
+    /*if file is valid, get the elements*/
+    if(ctxt->valid== 0)
+    {
+        err_noexit("Failed to validate %s\n", filename);
+        retval= FALSE;
+    }
+    else
+        retval= cfg_elements(doc);
+    
+    xmlFreeDoc(doc);
+    return(retval);;
+}
+
+/*TODO this will eventually become the config reading function*/
+gboolean xml_cfg_read(void)
+{
+	gchar configfilename[NAME_MAX];
+    mtc_icon *picon= NULL;
+    gboolean retval= TRUE;
+    xmlParserCtxtPtr ctxt= NULL;
+    
+   	/*get the full path of the config file*/
+	mtc_file(configfilename, CFG_FILE, -1);
+	
+    picon= &config.icon;
+	
+    /*if the file does not exist create default icon and return*/
+	/*TODO icon really needs to be looked at in detail*/
+    if(!IS_FILE(configfilename))
+	{
+        
+        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon)->colour);
+        picon= icon_create(picon);
+        return FALSE;
+    }
+
+    /*initialise libxml*/
+    xml_init();
+    
+    /* create a parser context */
+    ctxt= xmlNewParserCtxt();
+    if(ctxt== NULL)
+        err_exit("Failed to allocate parser context\n");
+ 
+    /*now do some parsing*/
+    retval= cfg_parse(ctxt, configfilename);
+
+    /*freeup and cleanup libxml*/
+    xmlFreeParserCtxt(ctxt);
+    xml_cleanup();
+
+    /*TODO errdlg out here if retval is false*/
+    return TRUE;
 }
 
 /* function to get details from config file into struct or if no config file exists ask for details*/
@@ -208,6 +386,8 @@ gboolean cfg_read(void)
 	if(fclose(pfile)== EOF)
 		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
 	
+    /*temporary to test*/
+    xml_cfg_read();
 	return TRUE;
 }
 
@@ -430,7 +610,7 @@ static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
 
     /*read in our account info*/
     fread_string_fail(pfile, pnew->hostname, sizeof(pnew->hostname), S_FILEFUNC_ERR_GET_HOSTNAME, detailsfilename);
-	fread_string_fail(pfile, pnew->port, sizeof(pnew->port), S_FILEFUNC_ERR_GET_PORT, detailsfilename);
+    fread_integer_fail(pfile, &pnew->port, S_FILEFUNC_ERR_GET_PORT, detailsfilename);
 	fread_string_fail(pfile, pnew->username, sizeof(pnew->username), S_FILEFUNC_ERR_GET_USERNAME, detailsfilename);
 
     /*read in the password*/
@@ -497,129 +677,172 @@ gboolean read_accounts(void)
 	return TRUE;
 }
 
-/*function to write pop config to config file*/
-gboolean cfg_write(void)
+/*add a node of type string*/
+static xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
 {
-	FILE *pfile;
-	gchar configfilename[NAME_MAX];
-    mtc_icon *picon;
+    xmlChar *pname;
+    xmlChar *pcontent;
 
-    picon= &config.icon;
+    /*don't add anything if there is no value*/
+    if(name== NULL|| content== NULL|| *content== 0)
+        return(NULL);
 
-	/*get the full path of the config file*/
-	mtc_file(configfilename, CONFIG_FILE, -1);
-	
-	/*if the file cannot be accessed or removed report error*/
-	if((IS_FILE(configfilename))&&(g_remove(configfilename)== -1))
-		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, configfilename);
-	
-	/*open the config file for writing*/
-	if((pfile= g_fopen(configfilename, "wt"))== NULL)
-		err_exit(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
-	
-	/*output the config information to the config file*/
-	fwrite_integer(pfile, config.check_delay, S_FILEFUNC_ERR_WRITE_DELAY);
-	fwrite_string(pfile, config.mail_program, S_FILEFUNC_ERR_WRITE_MAILAPP);
-#ifndef MTC_NOTMINIMAL
-    /*if it's a minimal build, icon size can only be 24,
-     *for compatibility with config files the size value must be written*/
-    config.icon_size= 24;
-#endif /*MTC_NOTMINIMAL*/
-	fwrite_integer(pfile, config.icon_size, S_FILEFUNC_ERR_WRITE_ICONSIZE);
-    fwrite_string(pfile, (config.multiple)? "1": "0", S_FILEFUNC_ERR_WRITE_MULTIPLE);
-	fwrite_string(pfile, picon->colour, S_FILEFUNC_ERR_WRITE_M_ICON_COLOUR);
-	fwrite_integer(pfile, config.err_freq, S_FILEFUNC_ERR_WRITE_FREQ);
-#ifdef MTC_NOTMINIMAL
-    fwrite_string(pfile, config.nmailcmd, S_FILEFUNC_ERR_WRITE_NMCMD);
-#endif /*MTC_NOTMINIMAL*/
+    pname= BAD_CAST name;
+    pcontent= BAD_CAST content;
 
-    /*Experimental adding of summary dialog*/
-#ifdef MTC_EXPERIMENTAL
-    fwrite_string(pfile, (config.run_summary)? "1": "0", S_FILEFUNC_ERR_WRITE_SUMMARY);
-	
-    /*write the summary stuff*/
-    if(config.run_summary)
-    {
-        fwrite_integer(pfile, config.summary.wpos, S_FILEFUNC_ERR_WRITE_SUMMARY_WPOS);
-        fwrite_string(pfile, (config.summary.sfont[0]== 0)? "NULL": config.summary.sfont, S_FILEFUNC_ERR_WRITE_SUMMARY_SFONT);
-    }
-#endif
-	fflush(pfile);
-
-	/*close the config file*/
-	if(fclose(pfile)== EOF)
-		err_noexit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
-	
-	/*set the permissions on the file so it can only be read*/
-	if(g_chmod(configfilename, S_IRUSR)== -1)
-		err_exit(S_FILEFUNC_ERR_SET_PERM, configfilename);
-	
-	return TRUE;
+    /*now add the string*/
+    return(xmlNewChild(parent, NULL, pname, pcontent));
 }
 
-/*function to write the password (encrypted or not) to the file*/
-static gboolean pw_write(FILE *pfile, gchar *password)
+/*add a node of type integer*/
+static xmlNodePtr put_node_int(xmlNodePtr parent, const gchar *name, const double content)
 {
+    xmlNodePtr node;
+    xmlChar *pstring;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL)
+        return(NULL);
+
+    /*add the string*/
+    pstring= xmlXPathCastNumberToString(content);
+    node= put_node_str(parent, name, (const gchar *)pstring);
+
+    /*now free the string*/
+    xmlFree(pstring);
+
+    return(node);
+}
+
+/*add an empty node*/
+static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
+{
+    xmlChar *pname;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL)
+        return(NULL);
+
+    pname= BAD_CAST name;
+    
+    /*now add the string*/
+    return(xmlNewChild(parent, NULL, pname, NULL));
+}
+
+/*write password to xml config file*/
+static void pw_xml_write(xmlNodePtr acc_node, gchar *password)
+{
+
 #ifdef MTC_USE_SSL
     gchar *encstring= NULL;
-#endif
+    xmlNodePtr pw_node= NULL;
 
 /*if OpenSSL is defined encrypt the password*/
-#ifdef MTC_USE_SSL
 	encstring= pw_encrypt(password);
-    fwrite_string(pfile, encstring, S_FILEFUNC_ERR_WRITE_PW);
+    pw_node= put_node_str(acc_node, "password", encstring);
+    xmlNewProp(pw_node, BAD_CAST "type", BAD_CAST "base64Binary");
     g_free(encstring);
 /*otherwise write a clear password*/
 #else
-    fwrite_string(pfile, password, S_FILEFUNC_ERR_WRITE_PW);
+    put_node_str(acc_node, "password", password);
 #endif
-	return TRUE;
+
 }
 
-/*function to write pop details to details file*/
-gboolean acc_write(mtc_account *pcurrent)
+/*TODO final version will write to same file as config*/
+static void acc_xml_write(xmlNodePtr root_node)
 {
-	FILE *pfile;
-	gchar detailsfilename[NAME_MAX];
+    xmlNodePtr accs_node= NULL;
+    xmlNodePtr acc_node= NULL;
+ 
+	GSList *pcurrent= NULL;
+    mtc_account *paccount;
     mtc_icon *picon;
 
-    picon= &pcurrent->icon;
-	
-	/*get the full path of the details file*/
-	mtc_file(detailsfilename, DETAILS_FILE, pcurrent->id);
-	
-	/*if it exists and cannot be removed report error*/
-	if((IS_FILE(detailsfilename))&&(g_remove(detailsfilename)== -1))
-		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, detailsfilename);
-	
-	/*open the details file for writing*/
-	if((pfile= g_fopen(detailsfilename, "wt"))== NULL)
-		err_exit(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
-	
-	/*output the details information to the details file*/
-	fwrite_string(pfile, pcurrent->hostname, S_FILEFUNC_ERR_WRITE_HOSTNAME);
-	fwrite_string(pfile, pcurrent->port, S_FILEFUNC_ERR_WRITE_PORT);
-	fwrite_string(pfile, pcurrent->username, S_FILEFUNC_ERR_WRITE_USERNAME);
+    accs_node= put_node_empty(root_node, "accounts");
+ 
+    /*iterate through the accounts and write*/
+	pcurrent= acclist;
+	while(pcurrent!= NULL)
+	{
+		paccount= (mtc_account *)pcurrent->data;
+        picon= &paccount->icon;
+		
+        acc_node= put_node_empty(accs_node, "account");
+        put_node_str(acc_node, "name", paccount->accname);
+        put_node_str(acc_node, "plugin", paccount->plgname);
+        put_node_str(acc_node, "server", paccount->hostname);
+        put_node_int(acc_node, "port", paccount->port);
+        put_node_str(acc_node, "username", paccount->username);
+        put_node_str(acc_node, "icon_colour", picon->colour);
+    
+        /*now write the password out*/
+        pw_xml_write(acc_node, paccount->password);
 
-    /*write the password to the password file*/
-	pw_write(pfile, pcurrent->password);
+        /*move to next item in the list*/
+		pcurrent= g_slist_next(pcurrent);
+	}
+}
 
-	fwrite_string(pfile, picon->colour, S_FILEFUNC_ERR_WRITE_ICONTYPE);
-	fwrite_string(pfile, pcurrent->plgname, S_FILEFUNC_ERR_WRITE_PROTOCOL);
-	fwrite_string(pfile, pcurrent->accname, S_FILEFUNC_ERR_WRITE_ACCNAME);
-#ifdef MTC_NOTMINIMAL
-    fwrite_integer(pfile, pcurrent->runfilter, S_FILEFUNC_ERR_WRITE_FILTER);
-#endif /*MTC_NOTMINIMAL*/
 
-	/*close the details file*/
-	if(fclose(pfile)== EOF)
-		err_noexit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
+/*write the configuration to an xml file*/
+gboolean cfg_write(void)
+{
+    xmlDocPtr doc= NULL;
+    xmlNodePtr root_node= NULL;
+	gchar cfgfilename[NAME_MAX];
+    mtc_icon *picon;
+    gboolean exists;
+
+    picon= &config.icon;
+    
+    /*get the full path of the config file*/
+	mtc_file(cfgfilename, CFG_FILE, -1);
 	
-	/*change the permissions so the file can only be read*/
-	if(g_chmod(detailsfilename, S_IRUSR)== -1)
-		err_exit(S_FILEFUNC_ERR_SET_PERM, detailsfilename);
+    exists= IS_FILE(cfgfilename);
+    
+    /*set the permissions on the file so it can only be read*/
+	if(exists&& (g_chmod(cfgfilename, S_IRUSR| S_IWUSR)== -1))
+		err_exit(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
 	
-	return TRUE;
+    /*if the file cannot be accessed or removed report error*/
+	if(exists&& (g_remove(cfgfilename)== -1))
+		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, cfgfilename);
+	
+    /*initialise libxml*/
+    xml_init();
+    
+    /*create a new document and node, and set as root node*/
+    doc= xmlNewDoc(BAD_CAST "1.0");
+    root_node= xmlNewNode(NULL, BAD_CAST "config");
+    xmlDocSetRootElement(doc, root_node);
+
+    /*create new node, and "attach" as child of root node*/
+    /*TODO some of these will not be there if MTC_NOT_MINIMAL is not defined*/
+    put_node_str(root_node, "read_command", config.mail_program);
+    put_node_int(root_node, "interval", config.check_delay);
+    put_node_int(root_node, "error_frequency", config.err_freq);
+    put_node_int(root_node, "icon_size", config.icon_size);
+    put_node_str(root_node, "icon_colour", picon->colour);
+    put_node_str(root_node, "newmail_command", config.nmailcmd);
+ 
+    /*write out each account*/
+    acc_xml_write(root_node);
+    
+    /*save the created XML*/
+    xmlSaveFormatFileEnc(cfgfilename, doc, "UTF-8", 1);
+    
+    /* free up the resulting document */
+    xmlFreeDoc(doc);
+    
+    /*cleanup xml*/
+    xml_cleanup();
+
+    /*set the permissions on the file so it can only be read*/
+	if(g_chmod(cfgfilename, S_IRUSR)== -1)
+		err_exit(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
+	
+    return(TRUE);
 }
 
 /*function to remove a file in ~/.PACKAGE and shift the files so they are in order*/

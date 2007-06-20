@@ -29,11 +29,11 @@
 /*various files that are used*/
 #define DETAILS_FILE "details"
 #define CONFIG_FILE "config"
+#define CFG_FILE "config.xml"
 #define FILTER_FILE "filter"
 #define UIDL_FILE "uidlfile"
 #define LOG_FILE "log"
 #define PID_FILE ".pidfile"
-#define PASSWORD_FILE "encpwd"
 
 #define MAX_FONTNAME_LEN NAME_MAX
 
@@ -50,7 +50,6 @@ void free_accounts(void);
 GSList *create_account(void);
 gboolean read_accounts(void);
 gboolean cfg_read(void);
-gboolean acc_write(mtc_account *pcurrent);
 gboolean cfg_write(void);
 gchar *mtc_file(gchar *fullpath, gchar *filename, gint account);
 gint rm_mtc_file(gchar *shortname, gint count, gint fullcount);

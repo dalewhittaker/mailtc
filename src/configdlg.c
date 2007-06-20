@@ -238,7 +238,7 @@ static gboolean acc_save(int profile)
 	/*copy the mail details to the structure*/
 	g_strlcpy(pcurrent_data->accname, gtk_entry_get_text(GTK_ENTRY(accname_entry)), sizeof(pcurrent_data->accname));
 	g_strlcpy(pcurrent_data->hostname, gtk_entry_get_text(GTK_ENTRY(hostname_entry)), sizeof(pcurrent_data->hostname));
-	g_strlcpy(pcurrent_data->port, gtk_entry_get_text(GTK_ENTRY(port_entry)), sizeof(pcurrent_data->port));
+    pcurrent_data->port= (gint)g_ascii_strtod(gtk_entry_get_text(GTK_ENTRY(port_entry)), NULL);
 	g_strlcpy(pcurrent_data->username, gtk_entry_get_text(GTK_ENTRY(username_entry)), sizeof(pcurrent_data->username));
 	g_strlcpy(pcurrent_data->password, gtk_entry_get_text(GTK_ENTRY(password_entry)), sizeof(pcurrent_data->password));
 	
@@ -256,7 +256,7 @@ static gboolean acc_save(int profile)
 #endif /*MTC_NOTMINIMAL*/
 
 	/*write the details to the file*/
-	retval= acc_write(pcurrent_data);
+	retval= cfg_write();
 	
 	/*try to get the listbox iterator and add a row if there is no iterator*/
 	if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) 
@@ -413,14 +413,16 @@ static void remove_button_pressed(void)
 		/*get the full count of rows*/
 		gtk_tree_model_foreach(model, count_rows, &fullcount);
 		
-		/*remove the details and password file*/
-		rm_mtc_file(DETAILS_FILE, count, fullcount);
-		rm_mtc_file(PASSWORD_FILE, count, fullcount);
-		rm_mtc_file(UIDL_FILE, count, fullcount);
-		rm_mtc_file(FILTER_FILE, count, fullcount);
-		
 		/*Remove the account files/linked list*/
 		remove_account(count- 1); 
+	
+        /*re-write the config*/
+        cfg_write();
+
+        /*remove the UIDL file*/
+		rm_mtc_file(UIDL_FILE, count, fullcount);
+		/*rm_mtc_file(DETAILS_FILE, count, fullcount);
+		rm_mtc_file(FILTER_FILE, count, fullcount);*/
 		
 		/*remove from listbox*/
 		gtk_list_store_remove(GTK_LIST_STORE(model), &iter1);
@@ -636,6 +638,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	GtkWidget *accname_label, *hostname_label, *port_label, *username_label, *password_label, *protocol_label, *icon_label;
 	dlgtable main_table;
     GtkWidget *v_box_details;
+	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
 	gint result= 0;
     gboolean saved= FALSE;
 	mtc_account *pcurrent= NULL;
@@ -656,7 +659,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	/*setup the port info*/
 	port_entry= gtk_entry_new();
 	port_label= gtk_label_new(S_CONFIGDLG_DETAILS_PORT);
-	gtk_entry_set_max_length(GTK_ENTRY(port_entry), PORT_LEN);
+	gtk_entry_set_max_length(GTK_ENTRY(port_entry), G_ASCII_DTOSTR_BUF_SIZE);
 	g_signal_connect(G_OBJECT(port_entry), "insert_text", G_CALLBACK(insert_text_handler), (gpointer)port_entry);
 	
 	/*setup the username info*/
@@ -715,7 +718,8 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	
 	    gtk_entry_set_text(GTK_ENTRY(accname_entry), pcurrent->accname);
 		gtk_entry_set_text(GTK_ENTRY(hostname_entry), pcurrent->hostname);
-		gtk_entry_set_text(GTK_ENTRY(port_entry), pcurrent->port);
+	    g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
+		gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
 		gtk_entry_set_text(GTK_ENTRY(username_entry), pcurrent->username);
 		gtk_entry_set_text(GTK_ENTRY(password_entry), pcurrent->password);
 

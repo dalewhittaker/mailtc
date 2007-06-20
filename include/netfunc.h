@@ -19,13 +19,15 @@
 #ifndef DW_MAILTC_NETFUNC
 #define DW_MAILTC_NETFUNC
 
-/*for windows most of the stuff seems to be done with winsock2.h*/
-#ifdef _WIN32
-#include <winsock2.h>
-#endif /*_WIN32*/
-
 /*TODO*/
 #include "plg_common.h"
+
+/*OpenSSL libs for SSL/TLS*/
+#ifdef SSL_PLUGIN
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif
 
 /*for *nix there are a number of network headers*/
 #ifdef _POSIX_SOURCE
@@ -35,14 +37,14 @@
 #include <netdb.h> /*network stuff*/
 #include <netinet/in.h> /*net structs*/
 #include <sys/socket.h> /*connect(), send(), recv() etc*/
+typedef gint SOCKET;
 #endif /*_POSIX_SOURCE*/
 
-/*OpenSSL libs for SSL/TLS*/
-#ifdef SSL_PLUGIN
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
+/*for windows most of the stuff seems to be done with winsock2.h*/
+#ifdef _WIN32
+#include <winsock2.h>
+typedef gint socklen_t;
+#endif /*_WIN32*/
 
 /*define the various protocols for the default plugins*/
 typedef enum _auth_protocol
@@ -60,13 +62,7 @@ typedef enum _auth_protocol
 /*used for connection to mail server*/
 typedef struct _mtc_net
 {
-#ifdef _WIN32
     SOCKET sockfd;
-#else
-    gint sockfd;
-#endif /*_WIN32*/
-
-    /*maybe should change to a protocol enum*/
     auth_protocol authtype;
     GString *pdata;
 

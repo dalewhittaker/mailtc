@@ -47,6 +47,8 @@ AM_CONDITIONAL(DEBUG, test x$debug = xyes)
 
 dnl Checks for libraries.
 AM_PATH_GTK_2_0(2.8.0,,AC_MSG_ERROR([mailtc needs GTK+ 2.8 or higher]))
+dnl next line needs fixing
+dnl AM_PATH_XML2(2.6.27,,AC_MSG_ERROR([mailtc needs libxml2 2.6.27 or higher]))
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(limits.h unistd.h netdb.h sys/types.h netinet/in.h sys/socket.h sys/stat.h sys/select.h glib.h)
@@ -143,6 +145,7 @@ Configuration for $PACKAGE $VERSION:
  Compiler/Linker .................. : $CC
  GTK+ version ..................... : `pkg-config --modversion gtk+-2.0`
  Glib version ..................... : `pkg-config --modversion glib-2.0`
+ libxml2 version .................. : `pkg-config --modversion libxml-2.0`
  NLS/gettext ...................... : $USE_NLS
  SSL .............................. : $ssl
  POP .............................. : $pop
