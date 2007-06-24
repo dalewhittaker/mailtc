@@ -436,7 +436,7 @@ gint main(gint argc, gchar *argv[])
 
         /*check mail details and run dialog if none found*/
 	    cfgfound= cfg_read();
-    	read_accounts();
+    	/*read_accounts();*/
 		if(acclist== NULL|| !cfgfound)
 		{	
 			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));

@@ -981,7 +981,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(treescroll), GTK_SHADOW_IN);
 
 	/*add the accounts to the list*/
-	read_accounts();
+	/*read_accounts();*/
 	pcurrent= acclist;
 
 	while(pcurrent!= NULL)

@@ -91,56 +91,29 @@ gchar *mtc_file(gchar *fullpath, gchar *filename, gint account)
 	return(fullpath);
 }
 
-/*generic read a string from file function*/
-static void fread_string_fail(FILE *pfile, gchar *pstring, gint slen, gchar *perr, const gchar *fname)
+/*Function to convert the old 'protocol' strings to the new plugin names wherever possible*/
+static gchar *protocol_to_plugin(gchar *plgstring)
 {
-    if(fgets(pstring, slen, pfile)== NULL)
-    {
-        g_remove(fname);
-        err_exit(perr);
-    }
-    else
-        g_strchomp(pstring);
-}
-
-/*generic read a string from file function*/
-static void fread_string(FILE *pfile, gchar *pstring, gint slen, gchar *dflstring)
-{
-    gchar *test= NULL;
-    test= fgets(pstring, slen, pfile);
-
-    if(test== NULL|| pstring== NULL)
+	/*Copy over default plugin names if we can*/
+	mtc_plugin *pitem;
+	GSList *pcurrent= plglist;
+	
+	while(pcurrent!= NULL)
 	{
-        if(dflstring== NULL)
-            memset(pstring, 0, slen);
-        else
-            g_strlcpy(pstring, dflstring, slen);
-    }
-    g_strchomp(pstring);
-}
-
-/*generic read integer from file function*/
-static void fread_integer(FILE *pfile, gint *pval, gint dflval)
-{
-    gchar scratch[G_ASCII_DTOSTR_BUF_SIZE];
-
-    if(fgets(scratch, sizeof(scratch), pfile)== NULL)
-        *pval= dflval;
-    else
-        *pval= (gint)g_ascii_strtod(scratch, NULL);
-}
-
-/*generic read integer from file function*/
-static void fread_integer_fail(FILE *pfile, gint *pval, gchar *perr, const gchar *fname)
-{
-    gchar scratch[G_ASCII_DTOSTR_BUF_SIZE];
-
-    if(fgets(scratch, sizeof(scratch), pfile)== NULL)
-    {
-        g_remove(fname);
-        err_exit(perr);
-    }
-    *pval= (gint)g_ascii_strtod(scratch, NULL);
+		pitem= (mtc_plugin *)pcurrent->data;
+		
+		/*if we find an old one, we overwrite it with the equivalent plugin name*/
+		if(g_ascii_strcasecmp(pitem->name, plgstring)== 0)
+		{
+			gchar *pbasename;
+            pbasename= plg_name(pitem);
+			g_strlcpy(plgstring, pbasename, PROTOCOL_LEN);
+			g_free(pbasename);
+			return(plgstring);
+		}
+		pcurrent= g_slist_next(pcurrent);
+	}
+	return(plgstring);
 }
 
 /*libxml initialisation*/
@@ -162,69 +135,161 @@ static void xml_cleanup(void)
     xmlMemoryDump();
 }
 
-/*function to get individual element*/
-/*TODO this needs loads of work*/
-static gboolean get_node_str(xmlXPathContextPtr xpctx, const gchar *spath)
+/*function to read in the password (encrypted or not) from the file*/
+/*TODO final one will check the attributes to see if it should be decrypted or not*/
+static gboolean pw_copy(mtc_account *paccount, gchar *pwstring)
 {
-    int nodenr= 0;
-    gboolean retval= TRUE;
-    xmlXPathObjectPtr xpobj;
-    xmlChar *path;
+/*if OpenSSL is defined read in an encrypted password*/
+#ifdef MTC_USE_SSL
+	/*decrypt the password*/
+    return(pw_decrypt(pwstring, paccount->password));
 
-    path= BAD_CAST spath;
+/*otherwise read in clear password*/
+#else
+    g_strlcpy(paccount->password, (gchar *)content, sizeof(paccount->password));
+	return TRUE;
+#endif
+	
+}
 
-    /*get the list, if any*/
-    xpobj= xmlXPathEvalExpression(path, xpctx);
-    if(xpobj== NULL)
+/*function to copy the config values*/
+static gboolean acc_copy_element(mtc_account *paccount, xmlNodePtr node, xmlChar *content)
+{
+    /*TODO  BIIIIIIIIIIIIIGGGGGGGGGGGGGG tidy.*/
+    /*TODO this will require duplicate checks still*/
+    if(xmlStrEqual(node->name, BAD_CAST "name"))
+        g_strlcpy(paccount->accname, (gchar *)content, sizeof(paccount->accname));
+    else if(xmlStrEqual(node->name, BAD_CAST "plugin"))
+        g_strlcpy(paccount->plgname, (gchar *)content, sizeof(paccount->plgname));
+    else if(xmlStrEqual(node->name, BAD_CAST "server"))
+        g_strlcpy(paccount->hostname, (gchar *)content, sizeof(paccount->hostname));
+    else if(xmlStrEqual(node->name, BAD_CAST "port"))
+        paccount->port= (gint)xmlXPathCastStringToNumber(content);
+    else if(xmlStrEqual(node->name, BAD_CAST "username"))
+        g_strlcpy(paccount->username, (gchar *)content, sizeof(paccount->username));
+    /*TODO icon_colour needs much reviewing*/
+    else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
+        g_strlcpy(paccount->icon.colour, (gchar *)content, sizeof(paccount->icon.colour));
+
+    /*TODO password needs a hell of a lot of work*/
+    else if(xmlStrEqual(node->name, BAD_CAST "password"))
+        pw_copy(paccount, (gchar *)content);
+
+    return TRUE;
+}
+
+/*function to read an account*/
+static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
+{
+    xmlChar *pcontent= NULL;
+    xmlNodePtr child= NULL;
+    mtc_account *pnew= NULL;
+	mtc_account *pfirst;
+    mtc_icon *picon;
+	
+	pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
+
+	/*allocate mem for new account and copy data to it*/
+	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
+		
+	/*copy the id (0 if it is first account)*/
+	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
+	
+    picon= &pnew->icon;
+
+    child= node->children;
+    while(child!= NULL)
     {
-        err_noexit("Error: unable to evaluate xpath expression \"%s\"\n", spath);
-        return FALSE;
-    }
-
-    /*verify that there is only 1 node found*/
-    nodenr= xpobj->nodesetval->nodeNr;
-
-    /*TODO this will all probably change*/
-    if(nodenr== 1)
-    {
-        xmlNodePtr node= NULL;
-        xmlChar *pcontent= NULL;
-
-        /*Ok we got a single node, now get the content*/
-        node= xpobj->nodesetval->nodeTab[0];
-
-        pcontent= xmlNodeGetContent(node);
-        if(pcontent!= NULL)
+                            
+        /*TODO sort duplicates too*/
+        /*TODO If there are duplicates (or any other error) then the account will need to be freed and simply the account list returned*/
+        if((child->type== XML_ELEMENT_NODE)&&
+            (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
         {
-            /*TODO now, here it will either be converted to an int or just copied to a string*/
-            g_print("%s = %s\n", spath, pcontent);
+            pcontent= xmlNodeListGetString(doc, child->children, 1);
+            acc_copy_element(pnew, child, pcontent);        
             xmlFree(pcontent);
         }
-        /*TODO sort if there is no value (i.e either error or copy a default)*/
+        child= child->next;
     }
-    else
+
+#ifdef MTC_NOTMINIMAL
+    /*TODO needs reviewing*/
+	pnew->pfilters= NULL;
+			
+	/*if(pnew->runfilter)
+	{*/ if(!filter_read(pnew))
+		    pnew->runfilter= FALSE; /*}*/
+#endif /*MTC_NOTMINIMAL*/
+	
+	/*convert any old protocols to new plugin names*/
+	protocol_to_plugin(pnew->plgname);
+
+#ifdef MTC_NOTMINIMAL
+	pnew->msginfo.num_messages= -1;
+#else
+    pnew->num_messages= -1;
+#endif /*MTC_NOTMINIMAL*/
+
+    /*create the image*/
+    picon= icon_create(picon);
+
+	/*next account points to last account*/
+	return((acclist= g_slist_prepend(acclist, pnew)));
+}
+
+/*function to get the accounts*/
+static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
+{
+    xmlNodePtr node= NULL;
+                
+    /*Now get all the accounts*/
+    node= parent->children;
+    while(node!= NULL)
     {
-        /*if it is greater than 1, error, as there cannot be duplicates
-        if it is less then there is no value*/
-        if(nodenr> 1)
-        {
-            err_noexit("Error: duplicate elements found for expression \"%s\"\n", spath);
-            retval= FALSE;
-        }
-        /*TODO sort if there is no value (i.e either error or copy a default)*/
+                    
+        /*account found, now get the values from it*/
+        if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
+		    acclist= acc_read(doc, node);
+            
+        node= node->next;
     }
+    return TRUE;
+}
 
-    /*free the object*/
-    xmlXPathFreeObject(xpobj);
-
-    return(retval);
+/*function to copy the config values*/
+static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
+{
+    /*TODO  BIIIIIIIIIIIIIGGGGGGGGGGGGGG tidy.*/
+    /*TODO this will require duplicate checks still*/
+    if(xmlStrEqual(node->name, BAD_CAST "read_command"))
+        g_strlcpy(config.mail_program, (gchar *)content, sizeof(config.mail_program));
+    else if(xmlStrEqual(node->name, BAD_CAST "interval"))
+        config.check_delay= (gint)xmlXPathCastStringToNumber(content);
+    else if(xmlStrEqual(node->name, BAD_CAST "icon_size"))
+        config.icon_size= (gint)xmlXPathCastStringToNumber(content);
+    
+    /*TODO icon_colour needs much reviewing, and 'multiple' value needs removing*/
+    else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
+    {
+        g_strlcpy(config.icon.colour, (gchar *)content, sizeof(config.icon.colour));
+        /*TODO something definitely needs doing here*/
+        config.multiple= TRUE;
+    }
+    else if(xmlStrEqual(node->name, BAD_CAST "error_frequency"))
+        config.err_freq= (gint)xmlXPathCastStringToNumber(content);
+    else if(xmlStrEqual(node->name, BAD_CAST "newmail_command"))
+        g_strlcpy(config.nmailcmd, (gchar *)content, sizeof(config.nmailcmd));
+    
+    return TRUE;
 }
 
 /*function to get the required elements from the document*/
 static gboolean cfg_elements(xmlDocPtr doc)
 {
     xmlNodePtr node= NULL;
-    xmlXPathContextPtr xpctx;
+    xmlNodePtr child= NULL;
+    xmlChar *pcontent= NULL;
     gboolean retval= TRUE;
 
     /*get the root element and check it is named 'config'*/
@@ -234,35 +299,27 @@ static gboolean cfg_elements(xmlDocPtr doc)
         err_noexit("Error getting config root element\n");
         return FALSE;
     }
-
-    /* Create xpath evaluation context */
-    xpctx= xmlXPathNewContext(doc);
-    if(xpctx== NULL)
+         
+    /*get the config elements*/
+    child= node->children;;
+    while(child!= NULL)
     {
-        err_noexit("Error: unable to create new XPath context\n");
-        retval= FALSE;
-    }
-    else
-    {
-        /*get all of the values
-         *TODO this will most likely be changing somehow*/
-        if(!get_node_str(xpctx, "/config/read_command")||
-           !get_node_str(xpctx, "/config/interval")||
-           !get_node_str(xpctx, "/config/error_frequency")||
-           !get_node_str(xpctx, "/config/icon_size")||
-           !get_node_str(xpctx, "/config/icon_colour")||
-           !get_node_str(xpctx, "/config/newmail_command"))
+            
+        /*if it is a string value, print it*/
+        if((child->type== XML_ELEMENT_NODE)&& (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
         {
-            retval= FALSE;
+            /*now copy the values*/
+            pcontent= xmlNodeListGetString(doc, child->children, 1);
+            
+            cfg_copy_element(child, pcontent);    
+            xmlFree(pcontent);
         }
-        else
-        {
-            /*TODO continue and get the account stuff*/
-        }
-    }
-    /*free the xpath evaluation context*/
-    xmlXPathFreeContext(xpctx);
+        /*TODO duplicate checks here*/
+        else if((xmlStrEqual(child->name, BAD_CAST "accounts")))
+                retval= read_accounts(doc, child);
 
+        child= child->next;
+    }
     return(retval);
 }
 
@@ -294,7 +351,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
 }
 
 /*TODO this will eventually become the config reading function*/
-gboolean xml_cfg_read(void)
+gboolean cfg_read(void)
 {
 	gchar configfilename[NAME_MAX];
     mtc_icon *picon= NULL;
@@ -331,64 +388,11 @@ gboolean xml_cfg_read(void)
     xmlFreeParserCtxt(ctxt);
     xml_cleanup();
 
-    /*TODO errdlg out here if retval is false*/
-    return TRUE;
-}
-
-/* function to get details from config file into struct or if no config file exists ask for details*/
-gboolean cfg_read(void)
-{
-	gchar configfilename[NAME_MAX];
-	FILE *pfile;
-    mtc_icon *picon= NULL;
-
-	/*get the full path of the config file*/
-	mtc_file(configfilename, CONFIG_FILE, -1);
-	
-    picon= &config.icon;
-	
-    /*if the file does not exist create default icon and return*/
-	if(!IS_FILE(configfilename))
-	{
-        
-        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon)->colour);
-        picon= icon_create(picon);
-        return FALSE;
-    }
-
-	/*open the config file for reading*/
-	if((pfile= g_fopen(configfilename, "rt"))== NULL)
-		err_exit(S_FILEFUNC_ERR_OPEN_FILE, configfilename);
-	
-    /*get the info from the file*/
-    fread_integer_fail(pfile, (gint *)&config.check_delay, S_FILEFUNC_ERR_GET_DELAY, configfilename);
-	fread_string_fail(pfile, config.mail_program, sizeof(config.mail_program), S_FILEFUNC_ERR_GET_MAILAPP, configfilename);
-    fread_integer(pfile, (gint *)&config.icon_size, 24);
-    fread_integer(pfile, (gint *)&config.multiple, FALSE);
-	fread_string(pfile, picon->colour, sizeof(config.icon.colour), "#FFFFFF");
-    fread_integer(pfile, &config.err_freq, 1);
-#ifdef MTC_NOTMINIMAL
-    fread_string(pfile, config.nmailcmd, sizeof(config.nmailcmd), NULL);
-#endif /*MTC_NOTMINIMAL*/
-
-#ifdef MTC_EXPERIMENTAL
-    fread_integer(pfile, (gint *)&config.run_summary, FALSE);
-    fread_integer(pfile, (gint *)&config.summary.wpos, WPOS_BOTTOMRIGHT);
-    fread_string(pfile, config.summary.sfont, sizeof(config.summary.sfont), "NULL");
-    if(g_ascii_strncasecmp(config.summary.sfont, "NULL", 4)== 0)
-        memset(config.summary.sfont, 0, MAX_FONTNAME_LEN);
-#endif
-
     /*create the image*/
     picon= icon_create(picon);
 
-   	/*close the config file*/
-	if(fclose(pfile)== EOF)
-		err_exit(S_FILEFUNC_ERR_CLOSE_FILE, configfilename);
-	
-    /*temporary to test*/
-    xml_cfg_read();
-	return TRUE;
+    /*TODO errdlg out here if retval is false*/
+    return(retval);
 }
 
 /*function to get an item from an account*/
@@ -536,147 +540,6 @@ void free_accounts(void)
 
 }
 
-/*Function to convert the old 'protocol' strings to the new plugin names wherever possible*/
-static gchar *protocol_to_plugin(gchar *plgstring)
-{
-	/*Copy over default plugin names if we can*/
-	mtc_plugin *pitem;
-	GSList *pcurrent= plglist;
-	
-	while(pcurrent!= NULL)
-	{
-		pitem= (mtc_plugin *)pcurrent->data;
-		
-		/*if we find an old one, we overwrite it with the equivalent plugin name*/
-		if(g_ascii_strcasecmp(pitem->name, plgstring)== 0)
-		{
-			gchar *pbasename;
-			/*pbasename= g_path_get_basename(g_module_name((GModule *)pitem->handle));*/
-            pbasename= plg_name(pitem);
-			g_strlcpy(plgstring, pbasename, PROTOCOL_LEN);
-			g_free(pbasename);
-			return(plgstring);
-		}
-		pcurrent= g_slist_next(pcurrent);
-	}
-	return(plgstring);
-}
-
-/*function to read in the password (encrypted or not) from the file*/
-static gboolean pw_read(FILE *pfile, mtc_account *paccount)
-{
-
-#ifdef MTC_USE_SSL
-	gchar encstring[BASE64_PASSWORD_LEN];
-#endif
-	
-/*if OpenSSL is defined read in an encrypted password*/
-#ifdef MTC_USE_SSL
-	memset(encstring, '\0', BASE64_PASSWORD_LEN);
-	
-	/*read in the encrypted password and remove the password if there is an error reading it*/
-    fread_string(pfile, encstring, sizeof(encstring), NULL);
-	if(encstring[0]== 0)
-		err_exit(S_FILEFUNC_ERR_GET_PW);
-	
-	/*decrypt the password*/
-	pw_decrypt(encstring, paccount->password);
-
-/*otherwise read in clear password*/
-#else
-	/*get the password value and remove the file if it cannot be read*/
-	fread_string_fail(pfile, paccount->password, sizeof(paccount->password), S_FILEFUNC_ERR_GET_PW, passwordfilename);
-#endif
-	
-	return TRUE;
-}
-
-/*Function to create/read in a new account*/
-static GSList *acc_read(FILE *pfile, const gchar *detailsfilename)
-{
-	mtc_account *pnew= NULL;
-	mtc_account *pfirst;
-    mtc_icon *picon;
-	
-	pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
-
-	/*allocate mem for new account and copy data to it*/
-	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
-		
-	/*copy the id (0 if it is first account)*/
-	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
-	
-    picon= &pnew->icon;
-
-    /*read in our account info*/
-    fread_string_fail(pfile, pnew->hostname, sizeof(pnew->hostname), S_FILEFUNC_ERR_GET_HOSTNAME, detailsfilename);
-    fread_integer_fail(pfile, &pnew->port, S_FILEFUNC_ERR_GET_PORT, detailsfilename);
-	fread_string_fail(pfile, pnew->username, sizeof(pnew->username), S_FILEFUNC_ERR_GET_USERNAME, detailsfilename);
-
-    /*read in the password*/
-	if(!pw_read(pfile, pnew))
-		err_exit(S_FILEFUNC_ERR_GET_PASSWORD, pnew->id);
-	
-	fread_string_fail(pfile, picon->colour, sizeof(pnew->icon), S_FILEFUNC_ERR_GET_ICONTYPE, detailsfilename);
-    fread_string_fail(pfile, pnew->plgname, sizeof(pnew->plgname), S_FILEFUNC_ERR_READ_PLUGIN, detailsfilename);
-	fread_string(pfile, pnew->accname, sizeof(pnew->accname), S_FILEFUNC_DEFAULT_ACCNAME);
-
-#ifdef MTC_NOTMINIMAL
-	fread_integer(pfile, (gint *)&pnew->runfilter, FALSE);
-#endif /*MTC_NOTMINIMAL*/
-
-#ifdef MTC_NOTMINIMAL
-	pnew->pfilters= NULL;
-			
-	/*if(pnew->runfilter)
-	{*/ if(!filter_read(pnew))
-		    pnew->runfilter= FALSE; /*}*/
-#endif /*MTC_NOTMINIMAL*/
-	
-	/*convert any old protocols to new plugin names*/
-	protocol_to_plugin(pnew->plgname);
-
-#ifdef MTC_NOTMINIMAL
-	pnew->msginfo.num_messages= -1;
-#else
-    pnew->num_messages= -1;
-#endif /*MTC_NOTMINIMAL*/
-
-    /*create the image*/
-    picon= icon_create(picon);
-
-	/*next account points to last account*/
-	return((acclist= g_slist_prepend(acclist, pnew)));
-}
-
-/*Function to read all accounts from the files and add to the list*/
-gboolean read_accounts(void)
-{
-	FILE* pfile;
-	gchar detailsfilename[NAME_MAX];
-	guint i= 0;
-	
-	/*iterate through each account*/
-	mtc_file(detailsfilename, DETAILS_FILE, i);
-	while(IS_FILE(detailsfilename))
-	{
-		
-		/*open the details file for reading*/
-		if((pfile= g_fopen(detailsfilename, "rt"))== NULL)
-			err_exit(S_FILEFUNC_ERR_OPEN_FILE, detailsfilename);
-
-		acclist= acc_read(pfile, detailsfilename);
-		
-		/*close the details file*/
-		if(fclose(pfile)== EOF)
-			err_exit(S_FILEFUNC_ERR_CLOSE_FILE, detailsfilename);
-	
-		mtc_file(detailsfilename, DETAILS_FILE, ++i);
-		
-	}
-	return TRUE;
-}
-
 /*add a node of type string*/
 static xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
 {
@@ -730,7 +593,7 @@ static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
 }
 
 /*write password to xml config file*/
-static void pw_xml_write(xmlNodePtr acc_node, gchar *password)
+static gboolean pw_write(xmlNodePtr acc_node, gchar *password)
 {
 
 #ifdef MTC_USE_SSL
@@ -739,6 +602,9 @@ static void pw_xml_write(xmlNodePtr acc_node, gchar *password)
 
 /*if OpenSSL is defined encrypt the password*/
 	encstring= pw_encrypt(password);
+    if(encstring== NULL)
+        return FALSE;
+    
     pw_node= put_node_str(acc_node, "password", encstring);
     xmlNewProp(pw_node, BAD_CAST "type", BAD_CAST "base64Binary");
     g_free(encstring);
@@ -746,11 +612,11 @@ static void pw_xml_write(xmlNodePtr acc_node, gchar *password)
 #else
     put_node_str(acc_node, "password", password);
 #endif
-
+    return TRUE;
 }
 
 /*TODO final version will write to same file as config*/
-static void acc_xml_write(xmlNodePtr root_node)
+static gboolean acc_write(xmlNodePtr root_node)
 {
     xmlNodePtr accs_node= NULL;
     xmlNodePtr acc_node= NULL;
@@ -777,11 +643,13 @@ static void acc_xml_write(xmlNodePtr root_node)
         put_node_str(acc_node, "icon_colour", picon->colour);
     
         /*now write the password out*/
-        pw_xml_write(acc_node, paccount->password);
+        if(!pw_write(acc_node, paccount->password))
+            return FALSE;
 
         /*move to next item in the list*/
 		pcurrent= g_slist_next(pcurrent);
 	}
+    return TRUE;
 }
 
 
@@ -793,6 +661,7 @@ gboolean cfg_write(void)
 	gchar cfgfilename[NAME_MAX];
     mtc_icon *picon;
     gboolean exists;
+    gboolean retval= TRUE;
 
     picon= &config.icon;
     
@@ -827,7 +696,8 @@ gboolean cfg_write(void)
     put_node_str(root_node, "newmail_command", config.nmailcmd);
  
     /*write out each account*/
-    acc_xml_write(root_node);
+    if(!acc_write(root_node))
+        retval= FALSE;
     
     /*save the created XML*/
     xmlSaveFormatFileEnc(cfgfilename, doc, "UTF-8", 1);
@@ -842,7 +712,7 @@ gboolean cfg_write(void)
 	if(g_chmod(cfgfilename, S_IRUSR)== -1)
 		err_exit(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
 	
-    return(TRUE);
+    return(retval);
 }
 
 /*function to remove a file in ~/.PACKAGE and shift the files so they are in order*/

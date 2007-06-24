@@ -48,7 +48,6 @@ mtc_account *get_account(guint item);
 void remove_account(guint item);
 void free_accounts(void);
 GSList *create_account(void);
-gboolean read_accounts(void);
 gboolean cfg_read(void);
 gboolean cfg_write(void);
 gchar *mtc_file(gchar *fullpath, gchar *filename, gint account);

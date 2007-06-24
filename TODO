@@ -2,22 +2,21 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        i) get reading of config working for
-            a) config
-            b) accounts
-        ii) remove existing read
-        iv) cleanup
-        v) make sure that uidlfiles are all in correct order compared to account list
-        vi) add filter stuf
-        vii) get libmxl to compile with autoconf/automake
-        viii) possibly add schema to validate types
-
-    c) Revamped config (see also wish list task 1).
-    d) Ben wants To: field added to filter stuff
+        i) sort out config.multiple and the config icon stuff
+        ii) sort out the account password stuff
+        iii) sort out if MINIMAL config option is selected.
+        iv) check for duplicates
+        v) pass default values is not found in config, otherwise fail
+        vi) any additional cleanup (see TODO's in filefunc.c)
+        vi) make sure that uidlfiles are all in correct order compared to account list
+        vii) re-write filter stuff to go with the xml config
+            a) Ben wants To: and Cc: fields added to filter stuff
+        viii) get libmxl to compile with autoconf/automake
+        ix) testing, including if certain config/account info is not found that needs to be there.
 
 2) Compile/test on win32
-    a) Get mingw working and build absolute minimal mailtc, test.
-    b) Get SSL working and test.
+    a) After xml stuff is done, get it all to compile on win32
+    b) Test it all works, port any stuff back if needed
     c) Use Nullsoft scriptable installer as an installer and test.
 
 2) Test with valgrind:

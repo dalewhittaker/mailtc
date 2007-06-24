@@ -32,6 +32,7 @@ gchar *pw_encrypt(gchar *decstring)
 {
 	gchar tmpstring[1024];
 	gint encrypted_len, tmplen;
+    gboolean success= TRUE;
 	
 	/*initialise cipher content*/
 	EVP_CIPHER_CTX ctx;
@@ -42,10 +43,15 @@ gchar *pw_encrypt(gchar *decstring)
 
 	/*encrypt the data and the final padding*/
 	if(!EVP_EncryptUpdate(&ctx, (guchar *)tmpstring, &encrypted_len, (guchar *)decstring, strlen(decstring)))
-		err_exit(S_ENCRYPTER_ERR_ENC_PW);
-	if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(tmpstring+ encrypted_len), &tmplen))
-		err_exit(S_ENCRYPTER_ERR_ENC_PW_FINAL);
-	
+	{
+        err_noexit(S_ENCRYPTER_ERR_ENC_PW);
+	    success= FALSE;
+    }
+    else if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(tmpstring+ encrypted_len), &tmplen))
+	{
+        err_noexit(S_ENCRYPTER_ERR_ENC_PW_FINAL);
+	    success= FALSE;
+    }
 	/*set length equal to encrypted string plus encrypted padding*/
 	encrypted_len+= tmplen; 
 
@@ -53,7 +59,7 @@ gchar *pw_encrypt(gchar *decstring)
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
     /*Now base64 the string for the output file*/
-    return(g_base64_encode((guchar *)tmpstring, encrypted_len));
+    return((success)? g_base64_encode((guchar *)tmpstring, encrypted_len): NULL);
 }
 
 /*function to decrypt the password before it gets used*/
@@ -62,6 +68,7 @@ gboolean pw_decrypt(gchar *encstring, gchar *decstring)
 	gint outlen, tmplen;
     guchar *tmpstring= NULL;
     gsize len= 0;
+    gboolean retval= TRUE;
 
     /*decode the base64 string*/
     tmpstring= g_base64_decode(encstring, &len);
@@ -74,11 +81,16 @@ gboolean pw_decrypt(gchar *encstring, gchar *decstring)
 	EVP_DecryptInit_ex(&ctx, EVP_bf_ofb(), NULL, (guchar *)ENCRYPTION_KEY, iv); 
 	
 	/*Decrypt the data and the final padding at the end*/
-	if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, tmpstring, (gint)len))
-		err_exit(S_ENCRYPTER_ERR_DEC_PW);
-	if(!EVP_DecryptFinal_ex(&ctx, (guchar *)(decstring+ outlen), &tmplen))
-		err_exit(S_ENCRYPTER_ERR_DEC_PW_FINAL);
-	
+    if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, tmpstring, (gint)len))
+	{
+        err_noexit(S_ENCRYPTER_ERR_DEC_PW);
+	    retval= FALSE;
+    }
+    else if(!EVP_DecryptFinal_ex(&ctx, (guchar *)(decstring+ outlen), &tmplen))
+	{
+        err_noexit(S_ENCRYPTER_ERR_DEC_PW_FINAL);
+	    retval= FALSE;
+    }
     /*free the temp buffer*/
     g_free(tmpstring);
 
@@ -87,6 +99,6 @@ gboolean pw_decrypt(gchar *encstring, gchar *decstring)
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	
 	decstring[outlen]= '\0';
-	return TRUE;
+	return(retval);
 }
 
