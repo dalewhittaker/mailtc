@@ -126,8 +126,8 @@ GETTEXT_PACKAGE = mailtc
 GMOFILES = 
 GMSGFMT = /usr/bin/gmsgfmt
 GREP = /bin/grep
-GTK_CFLAGS = -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include  
-GTK_LIBS = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0  
+GTK_CFLAGS = -D_REENTRANT -DPNG_NO_MMX_CODE -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/directfb -I/usr/include/libpng12 -I/usr/include/libxml2  
+GTK_LIBS = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0 -lxml2  
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
@@ -136,10 +136,7 @@ INSTOBJEXT = .mo
 INTLLIBS = 
 LDFLAGS = 
 LIBOBJS = 
-#$(sasl_libraries)
-
-#TODO not sure about this
-LIBS = $(xml_libraries)
+LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool --silent
 LN_S = ln -s
 LTLIBOBJS = 
@@ -173,6 +170,7 @@ POSUB = po
 PO_IN_DATADIR_FALSE = 
 PO_IN_DATADIR_TRUE = 
 RANLIB = ranlib
+SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
@@ -234,8 +232,6 @@ mtc_include = $(top_srcdir)/include
 ssl_libraries = -lcrypto -lssl
 ssl_sources = encrypter.c
 ssl_headers = $(mtc_include)/encrypter.h
-xml_cflags = `xml2-config --cflags`
-xml_libraries = `xml2-config --libs`
 mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
@@ -252,11 +248,19 @@ msglist_headers = $(mtc_include)/envelope_small.h \
 debug_cflags = -g -DDEBUG
 egg_sources = eggtrayicon.c
 egg_headers = $(mtc_include)/eggtrayicon.h
-AM_CFLAGS = $(mtc_cflags) $(extra_cflags) $(msglist_cflags) $(debug_cflags) $(xml_cflags)
+AM_CFLAGS = $(mtc_cflags) \
+			$(extra_cflags) \
+			$(msglist_cflags) \
+			$(debug_cflags)
+
 
 #Here we are defining out libraries
-LDADD = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0   $(ssl_libraries)
-INCLUDES = -I$(mtc_include) -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include   
+LDADD = -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgmodule-2.0 -ldl -lglib-2.0 -lxml2   \
+		$(ssl_libraries)
+
+
+#$(sasl_libraries)
+INCLUDES = -I$(mtc_include) -D_REENTRANT -DPNG_NO_MMX_CODE -I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/directfb -I/usr/include/libpng12 -I/usr/include/libxml2  
 
 #define the various builds
 mailtc_SOURCES = configdlg.c \

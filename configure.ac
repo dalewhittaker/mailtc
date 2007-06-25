@@ -46,9 +46,15 @@ AC_MSG_RESULT($debug)
 AM_CONDITIONAL(DEBUG, test x$debug = xyes)
 
 dnl Checks for libraries.
-AM_PATH_GTK_2_0(2.8.0,,AC_MSG_ERROR([mailtc needs GTK+ 2.8 or higher]))
+dnl AM_PATH_GTK_2_0(2.8.0,,AC_MSG_ERROR([mailtc needs GTK+ 2.8 or higher]))
 dnl next line needs fixing
 dnl AM_PATH_XML2(2.6.27,,AC_MSG_ERROR([mailtc needs libxml2 2.6.27 or higher]))
+dnl PKG_CHECK_MODULES([LIBXML2], [libxml-2.0 >= 2.6.0])
+dnl AC_SUBST(LIBXML_CFLAGS)
+dnl AC_SUBST(LIBXML_LIBS)
+PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.10.0  libxml-2.0 >= 2.4.0)
+AC_SUBST(GTK_LIBS)
+AC_SUBST(GTK_CFLAGS)
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(limits.h unistd.h netdb.h sys/types.h netinet/in.h sys/socket.h sys/stat.h sys/select.h glib.h)

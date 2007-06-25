@@ -10,8 +10,7 @@ NEXT RELEASE:
         vi) make sure that uidlfiles are all in correct order compared to account list
         vii) re-write filter stuff to go with the xml config
             a) Ben wants To: and Cc: fields added to filter stuff
-        viii) get libmxl to compile with autoconf/automake
-        ix) testing, including if certain config/account info is not found that needs to be there.
+        viii) testing, including if certain config/account info is not found that needs to be there.
 
 2) Compile/test on win32
     a) After xml stuff is done, get it all to compile on win32

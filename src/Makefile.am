@@ -9,9 +9,6 @@ ssl_sources = encrypter.c
 ssl_headers = $(mtc_include)/encrypter.h
 endif
 
-xml_cflags = `xml2-config --cflags`
-xml_libraries = `xml2-config --libs`
-
 mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
@@ -36,16 +33,18 @@ egg_sources = eggtrayicon.c
 egg_headers = $(mtc_include)/eggtrayicon.h
 endif
 
-AM_CFLAGS = $(mtc_cflags) $(extra_cflags) $(msglist_cflags) $(debug_cflags) $(xml_cflags)
+AM_CFLAGS = $(mtc_cflags) \
+			$(extra_cflags) \
+			$(msglist_cflags) \
+			$(debug_cflags)
 
 #Here we are defining out libraries
-LDADD = @GTK_LIBS@ $(ssl_libraries)
+LDADD = @GTK_LIBS@ \
+		$(ssl_libraries)
+
 #$(sasl_libraries)
 
-#TODO not sure about this
-LIBS = $(xml_libraries)
-
-INCLUDES = -I$(mtc_include) @GTK_CFLAGS@ 
+INCLUDES = -I$(mtc_include) @GTK_CFLAGS@
 	
 #define the various builds
 mailtc_SOURCES = configdlg.c \
