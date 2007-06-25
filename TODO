@@ -2,12 +2,11 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        i) sort out config.multiple and the config icon stuff
-        ii) sort out the account password stuff
-        iii) sort out if MINIMAL config option is selected.
-        iv) check for duplicates
-        v) pass default values is not found in config, otherwise fail
-        vi) any additional cleanup (see TODO's in filefunc.c)
+        i) sort out the account password stuff
+        ii) sort out if MINIMAL config option is selected.
+        iii) check for duplicates
+        iv) pass default values is not found in config, otherwise fail
+        v) any additional cleanup (see TODO's in filefunc.c)
         vi) make sure that uidlfiles are all in correct order compared to account list
         vii) re-write filter stuff to go with the xml config
             a) Ben wants To: and Cc: fields added to filter stuff

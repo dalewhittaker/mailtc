@@ -266,16 +266,12 @@ static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
         g_strlcpy(config.mail_program, (gchar *)content, sizeof(config.mail_program));
     else if(xmlStrEqual(node->name, BAD_CAST "interval"))
         config.check_delay= (gint)xmlXPathCastStringToNumber(content);
+    else if(xmlStrEqual(node->name, BAD_CAST "multiple_icon"))
+        config.multiple= (xmlStrcasecmp(content, BAD_CAST "true")== 0)? TRUE: FALSE;
     else if(xmlStrEqual(node->name, BAD_CAST "icon_size"))
         config.icon_size= (gint)xmlXPathCastStringToNumber(content);
-    
-    /*TODO icon_colour needs much reviewing, and 'multiple' value needs removing*/
     else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
-    {
         g_strlcpy(config.icon.colour, (gchar *)content, sizeof(config.icon.colour));
-        /*TODO something definitely needs doing here*/
-        config.multiple= TRUE;
-    }
     else if(xmlStrEqual(node->name, BAD_CAST "error_frequency"))
         config.err_freq= (gint)xmlXPathCastStringToNumber(content);
     else if(xmlStrEqual(node->name, BAD_CAST "newmail_command"))
@@ -577,6 +573,26 @@ static xmlNodePtr put_node_int(xmlNodePtr parent, const gchar *name, const doubl
     return(node);
 }
 
+/*add a node of type integer*/
+static xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
+{
+    xmlNodePtr node;
+    xmlChar *pstring;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL)
+        return(NULL);
+
+    /*add the string*/
+    pstring= xmlXPathCastBooleanToString(content);
+    node= put_node_str(parent, name, (const gchar *)pstring);
+
+    /*now free the string*/
+    xmlFree(pstring);
+
+    return(node);
+}
+
 /*add an empty node*/
 static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
 {
@@ -691,6 +707,7 @@ gboolean cfg_write(void)
     put_node_str(root_node, "read_command", config.mail_program);
     put_node_int(root_node, "interval", config.check_delay);
     put_node_int(root_node, "error_frequency", config.err_freq);
+    put_node_bool(root_node, "multiple_icon", config.multiple);
     put_node_int(root_node, "icon_size", config.icon_size);
     put_node_str(root_node, "icon_colour", picon->colour);
     put_node_str(root_node, "newmail_command", config.nmailcmd);
