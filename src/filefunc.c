@@ -333,10 +333,14 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
     gboolean retval= TRUE;
 
     /* parse the file*/
-    doc= xmlCtxtReadFile(ctxt, filename, NULL, 0);
+    doc= xmlCtxtReadFile(ctxt, filename, NULL,
+            XML_PARSE_NOWARNING| XML_PARSE_NOERROR| XML_PARSE_PEDANTIC);
     if(doc== NULL)
     {
-        err_noexit("Failed to parse %s\n", filename);
+        xmlErrorPtr perror;
+
+        perror= xmlCtxtGetLastError(ctxt);
+        err_noexit("Failed to parse %s: %s\n", filename, perror->message);
         return FALSE;
     }
 
