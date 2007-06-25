@@ -136,19 +136,24 @@ static void xml_cleanup(void)
 }
 
 /*function to read in the password (encrypted or not) from the file*/
-/*TODO final one will check the attributes to see if it should be decrypted or not*/
-static gboolean pw_copy(mtc_account *paccount, gchar *pwstring)
+static gboolean pw_copy(mtc_account *paccount, gchar *pwstring, gboolean encrypted)
 {
 /*if OpenSSL is defined read in an encrypted password*/
 #ifdef MTC_USE_SSL
-	/*decrypt the password*/
-    return(pw_decrypt(pwstring, paccount->password));
-
+    if(encrypted)
+	{
+        /*decrypt the password*/
+        return(pw_decrypt(pwstring, paccount->password));
+    }
+    else
+    {
+#endif /*MTC_USE_SSL*/
 /*otherwise read in clear password*/
-#else
-    g_strlcpy(paccount->password, (gchar *)content, sizeof(paccount->password));
-	return TRUE;
-#endif
+        g_strlcpy(paccount->password, pwstring, sizeof(paccount->password));
+	    return TRUE;
+#ifdef MTC_USE_SSL
+    }
+#endif /*MTC_USE_SSL*/
 	
 }
 
@@ -171,9 +176,11 @@ static gboolean acc_copy_element(mtc_account *paccount, xmlNodePtr node, xmlChar
     else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
         g_strlcpy(paccount->icon.colour, (gchar *)content, sizeof(paccount->icon.colour));
 
-    /*TODO password needs a hell of a lot of work*/
+    /*TODO can't have both password and enc_password*/
+    else if(xmlStrEqual(node->name, BAD_CAST "enc_password"))
+        pw_copy(paccount, (gchar *)content, TRUE);
     else if(xmlStrEqual(node->name, BAD_CAST "password"))
-        pw_copy(paccount, (gchar *)content);
+        pw_copy(paccount, (gchar *)content, FALSE);
 
     return TRUE;
 }
@@ -621,8 +628,7 @@ static gboolean pw_write(xmlNodePtr acc_node, gchar *password)
     if(encstring== NULL)
         return FALSE;
     
-    pw_node= put_node_str(acc_node, "password", encstring);
-    xmlNewProp(pw_node, BAD_CAST "type", BAD_CAST "base64Binary");
+    pw_node= put_node_str(acc_node, "enc_password", encstring);
     g_free(encstring);
 /*otherwise write a clear password*/
 #else
@@ -631,7 +637,7 @@ static gboolean pw_write(xmlNodePtr acc_node, gchar *password)
     return TRUE;
 }
 
-/*TODO final version will write to same file as config*/
+/*write the accounts to the config file*/
 static gboolean acc_write(xmlNodePtr root_node)
 {
     xmlNodePtr accs_node= NULL;

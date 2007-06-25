@@ -2,15 +2,14 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        i) sort out the account password stuff
-        ii) sort out if MINIMAL config option is selected.
-        iii) check for duplicates
-        iv) pass default values is not found in config, otherwise fail
-        v) any additional cleanup (see TODO's in filefunc.c)
-        vi) make sure that uidlfiles are all in correct order compared to account list
-        vii) re-write filter stuff to go with the xml config
+        i) sort out if MINIMAL config option is selected.
+        ii) check for duplicates
+        iii) pass default values is not found in config, otherwise fail
+        iv) any additional cleanup (see TODO's in filefunc.c)
+        v) make sure that uidlfiles are all in correct order compared to account list
+        vi) re-write filter stuff to go with the xml config
             a) Ben wants To: and Cc: fields added to filter stuff
-        viii) testing, including if certain config/account info is not found that needs to be there.
+        vii) testing, including if certain config/account info is not found that needs to be there.
 
 2) Compile/test on win32
     a) After xml stuff is done, get it all to compile on win32
