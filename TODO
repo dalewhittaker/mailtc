@@ -2,14 +2,19 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        i) check for duplicates
-        ii) pass default values is not found in config, otherwise fail
-        iii) any additional cleanup (see TODO's in filefunc.c)
-        
-        iv) make sure that uidlfiles are all in correct order compared to account list
-        v) re-write filter stuff to go with the xml config
-            a) Ben wants To: and Cc: fields added to filter stuff
-        vi) testing (with valgrind), including if certain config/account info is not found that needs to be there.
+        config:
+            i) copy default values or fail
+        accounts:
+            i) tidy up as with config
+            ii) check for duplicates
+            iii) copy default values of fail
+        general:
+            i) sort out error if cfg_read returns FALSE
+            ii) any additional cleanup (see TODO's in filefunc.c)
+            iii) make sure that uidlfiles are all in correct order compared to account list
+            iv) re-write filter stuff to go with the xml config
+                a) Ben wants To: and Cc: fields added to filter stuff
+            v) testing (with valgrind), including if certain config/account info is not found that needs to be there.
 
 2) Compile/test on win32
     a) After xml stuff is done, get it all to compile on win32

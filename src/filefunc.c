@@ -281,7 +281,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        err_noexit("Error: duplicate element %s", element->name);
+        err_noexit("Error: duplicate element %s\n", element->name);
         retval= TRUE;
     }
     element->found++;
@@ -356,25 +356,8 @@ static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
 }
 
 /*function to copy the config values*/
-static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
+static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
 {
-    elist *pelement;
-    elist elements[]=
-    {
-        { "read_command",    XPATH_STRING,  config.mail_program, sizeof(config.mail_program), 0 },
-        { "interval",        XPATH_NUMBER,  &config.check_delay, sizeof(config.check_delay),  0 },
-        { "multiple_icon",   XPATH_BOOLEAN, &config.multiple,    sizeof(config.multiple),     0 },
-        { "icon_size",       XPATH_NUMBER,  &config.icon_size,   sizeof(config.icon_size),    0 },
-        { "icon_colour",     XPATH_STRING,  config.icon.colour,  sizeof(config.icon.colour),  0 },
-        { "error_frequency", XPATH_NUMBER,  &config.err_freq,    sizeof(config.err_freq),     0 },
-#ifdef MTC_NOTMINIMAL
-        { "newmail_command", XPATH_STRING,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
-#endif /*MTC_NOTMINIMAL*/
-        { NULL, 0, NULL, 0, 0 },
-    };
-
-    pelement= elements;
-
     /*check the element with each value in the list, and run the appropriate function*/
     while(pelement->name!= NULL)
     {
@@ -399,6 +382,19 @@ static gboolean cfg_elements(xmlDocPtr doc)
     xmlNodePtr child= NULL;
     xmlChar *pcontent= NULL;
     gboolean retval= TRUE;
+    elist elements[]=
+    {
+        { "read_command",    XPATH_STRING,  config.mail_program, sizeof(config.mail_program), 0 },
+        { "interval",        XPATH_NUMBER,  &config.check_delay, sizeof(config.check_delay),  0 },
+        { "multiple_icon",   XPATH_BOOLEAN, &config.multiple,    sizeof(config.multiple),     0 },
+        { "icon_size",       XPATH_NUMBER,  &config.icon_size,   sizeof(config.icon_size),    0 },
+        { "icon_colour",     XPATH_STRING,  config.icon.colour,  sizeof(config.icon.colour),  0 },
+        { "error_frequency", XPATH_NUMBER,  &config.err_freq,    sizeof(config.err_freq),     0 },
+#ifdef MTC_NOTMINIMAL
+        { "newmail_command", XPATH_STRING,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
+#endif /*MTC_NOTMINIMAL*/
+        { NULL, 0, NULL, 0, 0 },
+    };
 
     /*get the root element and check it is named 'config'*/
     node= xmlDocGetRootElement(doc);
@@ -419,8 +415,12 @@ static gboolean cfg_elements(xmlDocPtr doc)
             /*now copy the values*/
             pcontent= xmlNodeListGetString(doc, child->children, 1);
             
-            cfg_copy_element(child, pcontent);    
+            retval= cfg_copy_element(child, elements, pcontent);    
             xmlFree(pcontent);
+
+            /*if it returned an error break out*/
+            if(retval== FALSE)
+                break;
         }
         /*TODO duplicate checks here*/
         else if((xmlStrEqual(child->name, BAD_CAST "accounts")))
