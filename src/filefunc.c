@@ -274,31 +274,62 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
     return TRUE;
 }
 
+/*wrapper to report if there is a duplicate*/
+static gboolean isduplicate(elist *element)
+{
+    gboolean retval= FALSE;
+
+    if(element->found> 0)
+    {
+        err_noexit("Error: duplicate element %s", element->name);
+        retval= TRUE;
+    }
+    element->found++;
+
+    return(retval);
+}
+
 /*copy a string element*/
-static gboolean get_node_str(gchar *dest, const xmlChar *src, gint len)
+static gboolean get_node_str(elist *element, const xmlChar *src)
 {
     const gchar *psrc;
+    gchar *pdest;
 
+    if(isduplicate(element))
+        return FALSE;
+    
+    pdest= (gchar *)element->value;
     psrc= (const gchar *)src;
 
-    /*TODO and we also check the dups etc*/
-    g_strlcpy(dest, psrc, len);
+    g_strlcpy(pdest, psrc, element->length);
     return TRUE;
 }
 
 /*copy an int element*/
-static gboolean get_node_int(gint *dest, const xmlChar *src)
+static gboolean get_node_int(elist *element, const xmlChar *src)
 {
-    /*TODO dups etc*/
-    *dest= (gint)xmlXPathCastStringToNumber(src);
+    gint *pdest;
+
+    if(isduplicate(element))
+        return FALSE;
+
+    pdest= (gint *)element->value;
+
+    *pdest= (gint)xmlXPathCastStringToNumber(src);
     return TRUE;
 }
 
 /*copy a boolean element*/
-static gboolean get_node_bool(gboolean *dest, const xmlChar *src)
+static gboolean get_node_bool(elist *element, const xmlChar *src)
 {
-    /*TODO dups etc*/
-    *dest= (xmlStrcasecmp(src, BAD_CAST "true")== 0)? TRUE: FALSE;
+    gboolean *pdest;
+
+    if(isduplicate(element))
+        return FALSE;
+
+    pdest= (gboolean *)element->value;
+
+    *pdest= (xmlStrcasecmp(src, BAD_CAST "true")== 0)? TRUE: FALSE;
     return TRUE;
 }
 
@@ -311,13 +342,13 @@ static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
     switch(pelement->type)
     {
         case XPATH_STRING:
-            retval= get_node_str(pelement->value, content, pelement->length);
+            retval= get_node_str(pelement, content);
         break;
         case XPATH_NUMBER:
-            retval= get_node_int(pelement->value, content);
+            retval= get_node_int(pelement, content);
         break;
         case XPATH_BOOLEAN:
-            retval= get_node_bool(pelement->value, content);
+            retval= get_node_bool(pelement, content);
         break;
         default: ;
     }
@@ -349,10 +380,12 @@ static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
     {
         if(xmlStrEqual(node->name, BAD_CAST pelement->name))
         {
-            /*do the copying.
-             *TODO will need some kind of error check for dups, or other failings...*/
-            cfg_copy_func(pelement, content);
-           break;
+            /*do the copying, returning if duplicate found*/
+            if(!cfg_copy_func(pelement, content))
+                return FALSE;
+
+            /*break out if found*/
+            break;
         }
         pelement++;
     }
@@ -785,7 +818,6 @@ gboolean cfg_write(void)
     xmlDocSetRootElement(doc, root_node);
 
     /*create new node, and "attach" as child of root node*/
-    /*TODO some of these will not be there if MTC_NOT_MINIMAL is not defined*/
     put_node_str(root_node, "read_command", config.mail_program);
     put_node_int(root_node, "interval", config.check_delay);
     put_node_int(root_node, "error_frequency", config.err_freq);
