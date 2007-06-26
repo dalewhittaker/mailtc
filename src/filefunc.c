@@ -281,8 +281,10 @@ static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
         g_strlcpy(config.icon.colour, (gchar *)content, sizeof(config.icon.colour));
     else if(xmlStrEqual(node->name, BAD_CAST "error_frequency"))
         config.err_freq= (gint)xmlXPathCastStringToNumber(content);
+#ifdef MTC_NOTMINIMAL
     else if(xmlStrEqual(node->name, BAD_CAST "newmail_command"))
         g_strlcpy(config.nmailcmd, (gchar *)content, sizeof(config.nmailcmd));
+#endif /*MTC_NOTMINIMAL*/
     
     return TRUE;
 }
@@ -720,7 +722,9 @@ gboolean cfg_write(void)
     put_node_bool(root_node, "multiple_icon", config.multiple);
     put_node_int(root_node, "icon_size", config.icon_size);
     put_node_str(root_node, "icon_colour", picon->colour);
+#ifdef MTC_NOTMINIMAL
     put_node_str(root_node, "newmail_command", config.nmailcmd);
+#endif /*MTC_NOTMINIMAL*/
  
     /*write out each account*/
     if(!acc_write(root_node))
