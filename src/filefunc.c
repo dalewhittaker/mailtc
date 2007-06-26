@@ -32,6 +32,16 @@
 
 #define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
 
+/*structure used when reading in the xml config elements*/
+typedef struct _elist
+{
+    gchar *name; /*the element name*/
+    gint type; /*type used for copying*/
+    void *value; /*the config value*/
+    gint length; /*length in bytes of config value*/
+    gboolean found; /*used to track duplicates, or not found at all*/
+} elist;
+
 /*wrapper to create a directory*/
 static void mk_dir(gchar *pfile)
 {
@@ -264,28 +274,88 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
     return TRUE;
 }
 
+/*copy a string element*/
+static gboolean get_node_str(gchar *dest, const xmlChar *src, gint len)
+{
+    const gchar *psrc;
+
+    psrc= (const gchar *)src;
+
+    /*TODO and we also check the dups etc*/
+    g_strlcpy(dest, psrc, len);
+    return TRUE;
+}
+
+/*copy an int element*/
+static gboolean get_node_int(gint *dest, const xmlChar *src)
+{
+    /*TODO dups etc*/
+    *dest= (gint)xmlXPathCastStringToNumber(src);
+    return TRUE;
+}
+
+/*copy a boolean element*/
+static gboolean get_node_bool(gboolean *dest, const xmlChar *src)
+{
+    /*TODO dups etc*/
+    *dest= (xmlStrcasecmp(src, BAD_CAST "true")== 0)? TRUE: FALSE;
+    return TRUE;
+}
+
+/*the generic copy function, this will call the specific copy functions*/
+static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
+{
+    gboolean retval= TRUE;
+
+    /*determine the copy function to call*/
+    switch(pelement->type)
+    {
+        case XPATH_STRING:
+            retval= get_node_str(pelement->value, content, pelement->length);
+        break;
+        case XPATH_NUMBER:
+            retval= get_node_int(pelement->value, content);
+        break;
+        case XPATH_BOOLEAN:
+            retval= get_node_bool(pelement->value, content);
+        break;
+        default: ;
+    }
+    return(retval);
+}
+
 /*function to copy the config values*/
 static gboolean cfg_copy_element(xmlNodePtr node, xmlChar *content)
 {
-    /*TODO  BIIIIIIIIIIIIIGGGGGGGGGGGGGG tidy.*/
-    /*TODO this will require duplicate checks still*/
-    if(xmlStrEqual(node->name, BAD_CAST "read_command"))
-        g_strlcpy(config.mail_program, (gchar *)content, sizeof(config.mail_program));
-    else if(xmlStrEqual(node->name, BAD_CAST "interval"))
-        config.check_delay= (gint)xmlXPathCastStringToNumber(content);
-    else if(xmlStrEqual(node->name, BAD_CAST "multiple_icon"))
-        config.multiple= (xmlStrcasecmp(content, BAD_CAST "true")== 0)? TRUE: FALSE;
-    else if(xmlStrEqual(node->name, BAD_CAST "icon_size"))
-        config.icon_size= (gint)xmlXPathCastStringToNumber(content);
-    else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
-        g_strlcpy(config.icon.colour, (gchar *)content, sizeof(config.icon.colour));
-    else if(xmlStrEqual(node->name, BAD_CAST "error_frequency"))
-        config.err_freq= (gint)xmlXPathCastStringToNumber(content);
+    elist *pelement;
+    elist elements[]=
+    {
+        { "read_command",    XPATH_STRING,  config.mail_program, sizeof(config.mail_program), 0 },
+        { "interval",        XPATH_NUMBER,  &config.check_delay, sizeof(config.check_delay),  0 },
+        { "multiple_icon",   XPATH_BOOLEAN, &config.multiple,    sizeof(config.multiple),     0 },
+        { "icon_size",       XPATH_NUMBER,  &config.icon_size,   sizeof(config.icon_size),    0 },
+        { "icon_colour",     XPATH_STRING,  config.icon.colour,  sizeof(config.icon.colour),  0 },
+        { "error_frequency", XPATH_NUMBER,  &config.err_freq,    sizeof(config.err_freq),     0 },
 #ifdef MTC_NOTMINIMAL
-    else if(xmlStrEqual(node->name, BAD_CAST "newmail_command"))
-        g_strlcpy(config.nmailcmd, (gchar *)content, sizeof(config.nmailcmd));
+        { "newmail_command", XPATH_STRING,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
 #endif /*MTC_NOTMINIMAL*/
-    
+        { NULL, 0, NULL, 0, 0 },
+    };
+
+    pelement= elements;
+
+    /*check the element with each value in the list, and run the appropriate function*/
+    while(pelement->name!= NULL)
+    {
+        if(xmlStrEqual(node->name, BAD_CAST pelement->name))
+        {
+            /*do the copying.
+             *TODO will need some kind of error check for dups, or other failings...*/
+            cfg_copy_func(pelement, content);
+           break;
+        }
+        pelement++;
+    }
     return TRUE;
 }
 

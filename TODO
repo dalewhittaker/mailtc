@@ -2,7 +2,7 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        i) check for duplicates (schema?)
+        i) check for duplicates
         ii) pass default values is not found in config, otherwise fail
         iii) any additional cleanup (see TODO's in filefunc.c)
         
