@@ -293,8 +293,8 @@ static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *cont
 static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
 {
     mtc_account *pnew= NULL;
-	mtc_account *pfirst;
-    mtc_icon *picon;
+	mtc_account *pfirst= NULL;
+    mtc_icon *picon= NULL;
 
     pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
 
@@ -311,6 +311,7 @@ static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
         xmlChar *pcontent= NULL;
         xmlNodePtr child= NULL;
         gboolean retval= TRUE;
+        
         elist elements[]=
         {
             { "name",         EL_STR,  pnew->accname,     sizeof(pnew->accname),     0 },
@@ -323,6 +324,9 @@ static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
             { "password",     EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
             { NULL, EL_NULL, NULL, 0, 0 },
         };
+
+        /*copy default values that are not required in config*/
+        g_snprintf(pnew->accname, sizeof(pnew->accname), "Account %d", pnew->id+ 1);
 
         child= node->children;
         while(child!= NULL)
@@ -338,14 +342,42 @@ static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
 
                 /*if it returned an error free the account then return*/
                 if(retval== FALSE)
-                {
-                    g_free(pnew);
-                    pnew= NULL;
-                    return FALSE;
-                }
+                    break;
             }
             child= child->next;
         }
+
+        /*now check for missing elements*/
+        if(retval== TRUE)
+        {
+            elist *pelement;
+
+            /*another hack, as the account name should not be checked.  this should really be revisted at some point*/
+            pelement= &elements[1];
+            while(pelement->name!= NULL)
+            {
+                /*this is admittedly a dirty hack, as the password element is an exception
+                 *either enc_password or password will have a 'found' of 0, so check the value*/
+                if((!pelement->found&& (pelement->type!= EL_PW))||
+                    ((pelement->type== EL_PW)&& (pnew->password[0]== 0)))
+                {
+                    err_noexit("Error: '%s' element not found for account %d\n", pelement->name, pnew->id);           
+                    retval= FALSE;
+                }
+                pelement++;
+            }
+        }
+
+        /*free if there were any errors*/
+        if(retval== FALSE)
+        {
+            g_free(pnew);
+            pnew= NULL;
+
+            /*simply return the existing pointer to list*/
+            return(acclist);
+        }
+   
     }
 
 #ifdef MTC_NOTMINIMAL
@@ -379,7 +411,8 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
     xmlNodePtr node= NULL;
                 
     /*Now get all the accounts*/
-    node= parent->children;
+    /*NOTE accounts are read backwards, this avoids them getting swapped when written.*/
+    node= parent->last;
     while(node!= NULL)
     {
                     
@@ -387,7 +420,7 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
         if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
 		    acclist= acc_read(doc, node);
             
-        node= node->next;
+        node= node->prev;
     }
     return TRUE;
 }
@@ -412,6 +445,12 @@ static gboolean cfg_elements(xmlDocPtr doc)
 #endif /*MTC_NOTMINIMAL*/
         { NULL, EL_NULL, NULL, 0, 0 },
     };
+
+    /*copy some default values in case they are not present in the config*/
+    g_strlcpy(config.icon.colour, "#FFFFFF", sizeof(config.icon.colour));
+    config.check_delay= 1;
+    config.icon_size= 24;
+    config.err_freq= 1;
 
     /*get the root element and check it is named 'config'*/
     node= xmlDocGetRootElement(doc);
@@ -479,7 +518,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
     return(retval);;
 }
 
-/*TODO this will eventually become the config reading function*/
+/*read in the configuration from the config file*/
 gboolean cfg_read(void)
 {
 	gchar configfilename[NAME_MAX];
@@ -496,11 +535,10 @@ gboolean cfg_read(void)
     if(!IS_FILE(configfilename))
 	{
         
-        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon)->colour);
+        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon->colour));
         picon= icon_create(picon);
         return FALSE;
     }
-
     /*initialise libxml*/
     xml_init();
     
