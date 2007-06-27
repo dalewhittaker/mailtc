@@ -2,19 +2,16 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-        config:
             i) copy default values or fail
-        accounts:
-            i) tidy up as with config
-            ii) check for duplicates
-            iii) copy default values of fail
-        general:
-            i) sort out error if cfg_read returns FALSE
-            ii) any additional cleanup (see TODO's in filefunc.c)
-            iii) make sure that uidlfiles are all in correct order compared to account list
-            iv) re-write filter stuff to go with the xml config
+            ii) sort out error if cfg_read returns FALSE
+            iii) any additional cleanup (see TODO's in filefunc.c)
+            iv) make sure that uidlfiles are all in correct order compared to account list
+            v) re-write filter stuff to go with the xml config
                 a) Ben wants To: and Cc: fields added to filter stuff
-            v) testing (with valgrind), including if certain config/account info is not found that needs to be there.
+            vi) testing (with valgrind), including if certain config/account info is not found that needs to be there.
+    b) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
+    c) proxy server option?
+    d) new dialog icons, and tidy dialog positions
 
 2) Compile/test on win32
     a) After xml stuff is done, get it all to compile on win32

@@ -32,11 +32,13 @@
 
 #define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
 
+typedef enum _eltype { EL_NULL= 0, EL_STR, EL_INT, EL_BOOL, EL_PW } eltype;
+
 /*structure used when reading in the xml config elements*/
 typedef struct _elist
 {
     gchar *name; /*the element name*/
-    gint type; /*type used for copying*/
+    eltype type; /*type used for copying*/
     void *value; /*the config value*/
     gint length; /*length in bytes of config value*/
     gboolean found; /*used to track duplicates, or not found at all*/
@@ -145,135 +147,6 @@ static void xml_cleanup(void)
     xmlMemoryDump();
 }
 
-/*function to read in the password (encrypted or not) from the file*/
-static gboolean pw_copy(mtc_account *paccount, gchar *pwstring, gboolean encrypted)
-{
-/*if OpenSSL is defined read in an encrypted password*/
-#ifdef MTC_USE_SSL
-    if(encrypted)
-	{
-        /*decrypt the password*/
-        return(pw_decrypt(pwstring, paccount->password));
-    }
-    else
-    {
-#endif /*MTC_USE_SSL*/
-/*otherwise read in clear password*/
-        g_strlcpy(paccount->password, pwstring, sizeof(paccount->password));
-	    return TRUE;
-#ifdef MTC_USE_SSL
-    }
-#endif /*MTC_USE_SSL*/
-	
-}
-
-/*function to copy the config values*/
-static gboolean acc_copy_element(mtc_account *paccount, xmlNodePtr node, xmlChar *content)
-{
-    /*TODO  BIIIIIIIIIIIIIGGGGGGGGGGGGGG tidy.*/
-    /*TODO this will require duplicate checks still*/
-    if(xmlStrEqual(node->name, BAD_CAST "name"))
-        g_strlcpy(paccount->accname, (gchar *)content, sizeof(paccount->accname));
-    else if(xmlStrEqual(node->name, BAD_CAST "plugin"))
-        g_strlcpy(paccount->plgname, (gchar *)content, sizeof(paccount->plgname));
-    else if(xmlStrEqual(node->name, BAD_CAST "server"))
-        g_strlcpy(paccount->hostname, (gchar *)content, sizeof(paccount->hostname));
-    else if(xmlStrEqual(node->name, BAD_CAST "port"))
-        paccount->port= (gint)xmlXPathCastStringToNumber(content);
-    else if(xmlStrEqual(node->name, BAD_CAST "username"))
-        g_strlcpy(paccount->username, (gchar *)content, sizeof(paccount->username));
-    /*TODO icon_colour needs much reviewing*/
-    else if(xmlStrEqual(node->name, BAD_CAST "icon_colour"))
-        g_strlcpy(paccount->icon.colour, (gchar *)content, sizeof(paccount->icon.colour));
-
-    /*TODO can't have both password and enc_password*/
-    else if(xmlStrEqual(node->name, BAD_CAST "enc_password"))
-        pw_copy(paccount, (gchar *)content, TRUE);
-    else if(xmlStrEqual(node->name, BAD_CAST "password"))
-        pw_copy(paccount, (gchar *)content, FALSE);
-
-    return TRUE;
-}
-
-/*function to read an account*/
-static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
-{
-    xmlChar *pcontent= NULL;
-    xmlNodePtr child= NULL;
-    mtc_account *pnew= NULL;
-	mtc_account *pfirst;
-    mtc_icon *picon;
-	
-	pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
-
-	/*allocate mem for new account and copy data to it*/
-	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
-		
-	/*copy the id (0 if it is first account)*/
-	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
-	
-    picon= &pnew->icon;
-
-    child= node->children;
-    while(child!= NULL)
-    {
-                            
-        /*TODO sort duplicates too*/
-        /*TODO If there are duplicates (or any other error) then the account will need to be freed and simply the account list returned*/
-        if((child->type== XML_ELEMENT_NODE)&&
-            (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
-        {
-            pcontent= xmlNodeListGetString(doc, child->children, 1);
-            acc_copy_element(pnew, child, pcontent);        
-            xmlFree(pcontent);
-        }
-        child= child->next;
-    }
-
-#ifdef MTC_NOTMINIMAL
-    /*TODO needs reviewing*/
-	pnew->pfilters= NULL;
-			
-	/*if(pnew->runfilter)
-	{*/ if(!filter_read(pnew))
-		    pnew->runfilter= FALSE; /*}*/
-#endif /*MTC_NOTMINIMAL*/
-	
-	/*convert any old protocols to new plugin names*/
-	protocol_to_plugin(pnew->plgname);
-
-#ifdef MTC_NOTMINIMAL
-	pnew->msginfo.num_messages= -1;
-#else
-    pnew->num_messages= -1;
-#endif /*MTC_NOTMINIMAL*/
-
-    /*create the image*/
-    picon= icon_create(picon);
-
-	/*next account points to last account*/
-	return((acclist= g_slist_prepend(acclist, pnew)));
-}
-
-/*function to get the accounts*/
-static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
-{
-    xmlNodePtr node= NULL;
-                
-    /*Now get all the accounts*/
-    node= parent->children;
-    while(node!= NULL)
-    {
-                    
-        /*account found, now get the values from it*/
-        if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
-		    acclist= acc_read(doc, node);
-            
-        node= node->next;
-    }
-    return TRUE;
-}
-
 /*wrapper to report if there is a duplicate*/
 static gboolean isduplicate(elist *element)
 {
@@ -281,7 +154,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        err_noexit("Error: duplicate element %s\n", element->name);
+        err_noexit("Error: duplicate element '%s'\n", element->name);
         retval= TRUE;
     }
     element->found++;
@@ -333,6 +206,44 @@ static gboolean get_node_bool(elist *element, const xmlChar *src)
     return TRUE;
 }
 
+/*function to read in the password (encrypted or not) from the file*/
+static gboolean pw_read(elist *element, xmlChar *src)
+{
+    gchar *pdest;
+    gchar *psrc;
+
+    if(isduplicate(element))
+        return FALSE;
+
+    pdest= (gchar *)element->value;
+    psrc= (gchar *)src;
+    
+    /*there are two possible password elements, the encrypted and non-encrypted form
+     *check if both are present and it is invalid, so error*/
+    if(*pdest!= 0)
+    {
+        err_noexit("Error: encrypted and unencrypted password elements found.\n");
+        return FALSE;
+    }
+
+/*if OpenSSL is defined read in an encrypted password*/
+#ifdef MTC_USE_SSL
+    if(g_ascii_strcasecmp(element->name, "enc_password")== 0)
+	{
+        /*decrypt the password*/
+        return(pw_decrypt(psrc, pdest));
+    }
+    else
+    {
+#endif /*MTC_USE_SSL*/
+/*otherwise read in clear password*/
+        g_strlcpy(pdest, psrc, sizeof(pdest));
+	    return TRUE;
+#ifdef MTC_USE_SSL
+    }
+#endif /*MTC_USE_SSL*/
+}
+
 /*the generic copy function, this will call the specific copy functions*/
 static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
 {
@@ -341,14 +252,17 @@ static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
     /*determine the copy function to call*/
     switch(pelement->type)
     {
-        case XPATH_STRING:
+        case EL_STR:
             retval= get_node_str(pelement, content);
         break;
-        case XPATH_NUMBER:
+        case EL_INT:
             retval= get_node_int(pelement, content);
         break;
-        case XPATH_BOOLEAN:
+        case EL_BOOL:
             retval= get_node_bool(pelement, content);
+        break;
+        case EL_PW:
+            retval= pw_read(pelement, content);
         break;
         default: ;
     }
@@ -375,6 +289,109 @@ static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *cont
     return TRUE;
 }
 
+/*function to read an account*/
+static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
+{
+    mtc_account *pnew= NULL;
+	mtc_account *pfirst;
+    mtc_icon *picon;
+
+    pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
+
+	/*allocate mem for new account and copy data to it*/
+	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
+    
+	/*copy the id (0 if it is first account)*/
+	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
+	
+    picon= &pnew->icon;
+
+    /*yeah, putting in brackets here aint great*/
+    {
+        xmlChar *pcontent= NULL;
+        xmlNodePtr child= NULL;
+        gboolean retval= TRUE;
+        elist elements[]=
+        {
+            { "name",         EL_STR,  pnew->accname,     sizeof(pnew->accname),     0 },
+            { "plugin",       EL_STR,  pnew->plgname,     sizeof(pnew->plgname),     0 },
+            { "server",       EL_STR,  pnew->hostname,    sizeof(pnew->hostname),    0 },
+            { "port",         EL_INT,  &pnew->port,       sizeof(pnew->port),        0 },
+            { "username",     EL_STR,  pnew->username,    sizeof(pnew->username),    0 },
+            { "icon_colour",  EL_STR,  pnew->icon.colour, sizeof(pnew->icon.colour), 0 },
+            { "enc_password", EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
+            { "password",     EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
+            { NULL, EL_NULL, NULL, 0, 0 },
+        };
+
+        child= node->children;
+        while(child!= NULL)
+        {
+                
+            /*if found, copy the account elements*/
+            if((child->type== XML_ELEMENT_NODE)&&
+                (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
+            {
+                pcontent= xmlNodeListGetString(doc, child->children, 1);
+                retval= cfg_copy_element(child, elements, pcontent);    
+                xmlFree(pcontent);
+
+                /*if it returned an error free the account then return*/
+                if(retval== FALSE)
+                {
+                    g_free(pnew);
+                    pnew= NULL;
+                    return FALSE;
+                }
+            }
+            child= child->next;
+        }
+    }
+
+#ifdef MTC_NOTMINIMAL
+    /*TODO needs reviewing*/
+	pnew->pfilters= NULL;
+			
+	/*if(pnew->runfilter)
+	{*/ if(!filter_read(pnew))
+		    pnew->runfilter= FALSE; /*}*/
+#endif /*MTC_NOTMINIMAL*/
+	
+	/*convert any old protocols to new plugin names*/
+	protocol_to_plugin(pnew->plgname);
+
+#ifdef MTC_NOTMINIMAL
+	pnew->msginfo.num_messages= -1;
+#else
+    pnew->num_messages= -1;
+#endif /*MTC_NOTMINIMAL*/
+
+    /*create the image*/
+    picon= icon_create(picon);
+
+	/*next account points to last account*/
+	return((acclist= g_slist_prepend(acclist, pnew)));
+}
+
+/*function to get the accounts*/
+static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
+{
+    xmlNodePtr node= NULL;
+                
+    /*Now get all the accounts*/
+    node= parent->children;
+    while(node!= NULL)
+    {
+                    
+        /*account found, now get the values from it*/
+        if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
+		    acclist= acc_read(doc, node);
+            
+        node= node->next;
+    }
+    return TRUE;
+}
+
 /*function to get the required elements from the document*/
 static gboolean cfg_elements(xmlDocPtr doc)
 {
@@ -384,16 +401,16 @@ static gboolean cfg_elements(xmlDocPtr doc)
     gboolean retval= TRUE;
     elist elements[]=
     {
-        { "read_command",    XPATH_STRING,  config.mail_program, sizeof(config.mail_program), 0 },
-        { "interval",        XPATH_NUMBER,  &config.check_delay, sizeof(config.check_delay),  0 },
-        { "multiple_icon",   XPATH_BOOLEAN, &config.multiple,    sizeof(config.multiple),     0 },
-        { "icon_size",       XPATH_NUMBER,  &config.icon_size,   sizeof(config.icon_size),    0 },
-        { "icon_colour",     XPATH_STRING,  config.icon.colour,  sizeof(config.icon.colour),  0 },
-        { "error_frequency", XPATH_NUMBER,  &config.err_freq,    sizeof(config.err_freq),     0 },
+        { "read_command",    EL_STR,  config.mail_program, sizeof(config.mail_program), 0 },
+        { "interval",        EL_INT,  &config.check_delay, sizeof(config.check_delay),  0 },
+        { "multiple_icon",   EL_BOOL, &config.multiple,    sizeof(config.multiple),     0 },
+        { "icon_size",       EL_INT,  &config.icon_size,   sizeof(config.icon_size),    0 },
+        { "icon_colour",     EL_STR,  config.icon.colour,  sizeof(config.icon.colour),  0 },
+        { "error_frequency", EL_INT,  &config.err_freq,    sizeof(config.err_freq),     0 },
 #ifdef MTC_NOTMINIMAL
-        { "newmail_command", XPATH_STRING,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
+        { "newmail_command", EL_STR,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
 #endif /*MTC_NOTMINIMAL*/
-        { NULL, 0, NULL, 0, 0 },
+        { NULL, EL_NULL, NULL, 0, 0 },
     };
 
     /*get the root element and check it is named 'config'*/
@@ -422,9 +439,9 @@ static gboolean cfg_elements(xmlDocPtr doc)
             if(retval== FALSE)
                 break;
         }
-        /*TODO duplicate checks here*/
+        /*if the accounts are found, read them in*/
         else if((xmlStrEqual(child->name, BAD_CAST "accounts")))
-                retval= read_accounts(doc, child);
+            retval= read_accounts(doc, child);
 
         child= child->next;
     }
@@ -476,7 +493,6 @@ gboolean cfg_read(void)
     picon= &config.icon;
 	
     /*if the file does not exist create default icon and return*/
-	/*TODO icon really needs to be looked at in detail*/
     if(!IS_FILE(configfilename))
 	{
         
