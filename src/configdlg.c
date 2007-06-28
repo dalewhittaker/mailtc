@@ -936,7 +936,10 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 #endif /*MTC_NOTMINIMAL*/
 
 	/*set the config details*/
-	cfg_read();
+    /*TODO moved to main.c*/
+	/*if(!cfg_read())
+        err_dlg(GTK_MESSAGE_WARNING, "Error reading config");*/
+
 	gtk_widget_set_sensitive(GTK_WIDGET(picon->image), FALSE);
 	gtk_entry_set_text(GTK_ENTRY(mailprog_entry), config.mail_program);
 

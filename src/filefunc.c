@@ -290,7 +290,7 @@ static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *cont
 }
 
 /*function to read an account*/
-static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
+static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 {
     mtc_account *pnew= NULL;
 	mtc_account *pfirst= NULL;
@@ -375,7 +375,8 @@ static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
             pnew= NULL;
 
             /*simply return the existing pointer to list*/
-            return(acclist);
+            /*return(NULL);*/
+            return FALSE;
         }
    
     }
@@ -402,13 +403,16 @@ static GSList *acc_read(xmlDocPtr doc, xmlNodePtr node)
     picon= icon_create(picon);
 
 	/*next account points to last account*/
-	return((acclist= g_slist_prepend(acclist, pnew)));
+	acclist= g_slist_prepend(acclist, pnew);
+    return TRUE;
+	/*return((acclist= g_slist_prepend(acclist, pnew)));*/
 }
 
 /*function to get the accounts*/
 static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
 {
     xmlNodePtr node= NULL;
+    gboolean retval= TRUE;
                 
     /*Now get all the accounts*/
     /*NOTE accounts are read backwards, this avoids them getting swapped when written.*/
@@ -418,11 +422,13 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
                     
         /*account found, now get the values from it*/
         if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
-		    acclist= acc_read(doc, node);
-            
+		{
+            retval= acc_read(doc, node);
+            /*acclist= acc_read(doc, node);*/
+        }
         node= node->prev;
     }
-    return TRUE;
+    return(retval);
 }
 
 /*function to get the required elements from the document*/
@@ -545,8 +551,11 @@ gboolean cfg_read(void)
     /* create a parser context */
     ctxt= xmlNewParserCtxt();
     if(ctxt== NULL)
-        err_exit("Failed to allocate parser context\n");
- 
+    {
+        err_noexit("Failed to allocate parser context\n");
+        xml_cleanup();
+        return FALSE;
+    }
     /*now do some parsing*/
     retval= cfg_parse(ctxt, configfilename);
 
@@ -557,7 +566,6 @@ gboolean cfg_read(void)
     /*create the image*/
     picon= icon_create(picon);
 
-    /*TODO errdlg out here if retval is false*/
     return(retval);
 }
 

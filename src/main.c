@@ -33,6 +33,7 @@
 #include "configdlg.h"
 #include "filefunc.h"
 #include "plugfunc.h"
+#include "envelope_small.h"
 
 /*values used for the PID routine*/
 #define PID_APPLOAD 1
@@ -62,6 +63,22 @@ static gint cfgdlg_start()
 	gtk_main();
 	
 	return(EXIT_SUCCESS);
+}
+
+/*set default icon.  TODO this may need to somehow be unreffed*/
+static gboolean set_app_icon(void)
+{
+    GdkPixbuf *unscaled;
+    GdkPixbuf *scaled;
+    unscaled= gdk_pixbuf_new_from_inline(-1, envelope_small, FALSE, NULL);
+    if(!unscaled)
+        return FALSE;
+
+    scaled= gdk_pixbuf_scale_simple(unscaled, 16, 16, GDK_INTERP_BILINEAR);
+    gtk_window_set_default_icon(scaled);
+	g_object_unref(G_OBJECT(scaled));
+	g_object_unref(G_OBJECT(unscaled));
+    return TRUE;
 }
 
 /*function to read from the pid file*/
@@ -402,6 +419,10 @@ gint main(gint argc, gchar *argv[])
     /*initialise gtk first*/
 	gtk_init(&argc, &argv);
 	
+    /*set the default icon*/
+    if(!set_app_icon())
+        return(1);
+
 	/*check if instance is running*/
 #ifdef MTC_USE_PIDFUNC	
     if(!pid_read(PID_APPLOAD))
@@ -421,7 +442,15 @@ gint main(gint argc, gchar *argv[])
     /*if mailtc -c*/
 	if(runmode== MODE_CFG)
 	{
+        gboolean cfgfound= FALSE;
         config.isdlg= TRUE;
+	    
+        cfgfound= cfg_read();
+        /*TODO requires better erroring than this*/
+		if(acclist== NULL|| !cfgfound)
+		{	
+			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));
+		}
         return(cfgdlg_start());
     }
 

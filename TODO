@@ -3,6 +3,11 @@ NEXT RELEASE:
 1) new stuff
     a) Implement new xml config
             i) sort out error if cfg_read returns FALSE
+                a) general fatal error XML_ERR_FAIL
+                b) file doesn't exist XML_ERR_NOCONFIG (check xmlCtxtReadFile error)
+                c) error with the xml data XML_ERR_INVALID
+                d) no error XML_NOERR
+                e) duplicates should probably flag error and continue to read, rather than instantly error
             ii) make sure that uidlfiles are all in correct order compared to account list
             iii) re-write filter stuff to go with the xml config
                 a) Ben wants To: and Cc: fields added to filter stuff
@@ -13,8 +18,7 @@ NEXT RELEASE:
     a) After xml stuff is done, get it all to compile on win32
     b) Test it all works, port any stuff back if needed
     c) Use Nullsoft scriptable installer as an installer and test.
-    d) Make it consistent, e.g new dialog icons, and tidy dialog positions
-    e) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
+    d) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
 
 2) Test with valgrind:
     valgrind needs to be run as follows:

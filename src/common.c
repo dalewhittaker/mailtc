@@ -59,6 +59,9 @@ gboolean err_dlg(GtkMessageType type, gchar *errmsg, ...)
 	g_vsnprintf(err_string, msglen, errmsg, list);
 	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, err_string);
 	
+    /*set the title*/
+    gtk_window_set_title(GTK_WINDOW(dialog), PACKAGE);
+
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
 	va_end(list);
