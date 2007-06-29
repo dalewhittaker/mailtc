@@ -154,7 +154,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        err_noexit("Error: duplicate element '%s'\n", element->name);
+        err_dlg(GTK_MESSAGE_WARNING, "Error: duplicate element '%s'\n", element->name);
         retval= TRUE;
     }
     element->found++;
@@ -168,10 +168,14 @@ static gboolean get_node_str(elist *element, const xmlChar *src)
     const gchar *psrc;
     gchar *pdest;
 
-    if(isduplicate(element))
-        return FALSE;
-    
     pdest= (gchar *)element->value;
+    if(isduplicate(element))
+    {
+        /*wipe the value if it is a duplicate*/
+        memset(pdest, '\0', element->length);
+        return FALSE;
+    }
+
     psrc= (const gchar *)src;
 
     g_strlcpy(pdest, psrc, element->length);
@@ -222,7 +226,9 @@ static gboolean pw_read(elist *element, xmlChar *src)
      *check if both are present and it is invalid, so error*/
     if(*pdest!= 0)
     {
-        err_noexit("Error: encrypted and unencrypted password elements found.\n");
+        err_dlg(GTK_MESSAGE_WARNING, "Error: encrypted and unencrypted password elements found.\n");
+        /*wipe the value*/
+        memset(pdest, '\0', element->length);
         return FALSE;
     }
 
@@ -295,6 +301,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
     mtc_account *pnew= NULL;
 	mtc_account *pfirst= NULL;
     mtc_icon *picon= NULL;
+    gboolean retval= TRUE;
 
     pfirst= (acclist== NULL)? NULL: (mtc_account *)acclist->data;
 
@@ -310,7 +317,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
     {
         xmlChar *pcontent= NULL;
         xmlNodePtr child= NULL;
-        gboolean retval= TRUE;
+        elist *pelement;
         
         elist elements[]=
         {
@@ -337,48 +344,34 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
                 (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
             {
                 pcontent= xmlNodeListGetString(doc, child->children, 1);
-                retval= cfg_copy_element(child, elements, pcontent);    
+        
+                /*TODO need to keep track here of return value*/
+                if(cfg_copy_element(child, elements, pcontent)== FALSE)
+                    retval= FALSE;
+
                 xmlFree(pcontent);
 
-                /*if it returned an error free the account then return*/
-                if(retval== FALSE)
-                    break;
             }
             child= child->next;
         }
 
         /*now check for missing elements*/
-        if(retval== TRUE)
-        {
-            elist *pelement;
 
-            /*another hack, as the account name should not be checked.  this should really be revisted at some point*/
-            pelement= &elements[1];
-            while(pelement->name!= NULL)
+        /*another hack, as the account name should not be checked.  this should really be revisted at some point*/
+        pelement= &elements[1];
+        while(pelement->name!= NULL)
+        {
+            /*this is admittedly a dirty hack, as the password element is an exception
+             *either enc_password or password will have a 'found' of 0, so check the value*/
+            if((!pelement->found&& (pelement->type!= EL_PW))||
+                ((pelement->type== EL_PW)&& (pnew->password[0]== 0)))
             {
-                /*this is admittedly a dirty hack, as the password element is an exception
-                 *either enc_password or password will have a 'found' of 0, so check the value*/
-                if((!pelement->found&& (pelement->type!= EL_PW))||
-                    ((pelement->type== EL_PW)&& (pnew->password[0]== 0)))
-                {
-                    err_noexit("Error: '%s' element not found for account %d\n", pelement->name, pnew->id);           
-                    retval= FALSE;
-                }
-                pelement++;
+                err_dlg(GTK_MESSAGE_WARNING, "Error: '%s' element not found for account %d.\n", pelement->name, pnew->id);           
+                retval= FALSE;
             }
+            pelement++;
         }
 
-        /*free if there were any errors*/
-        if(retval== FALSE)
-        {
-            g_free(pnew);
-            pnew= NULL;
-
-            /*simply return the existing pointer to list*/
-            /*return(NULL);*/
-            return FALSE;
-        }
-   
     }
 
 #ifdef MTC_NOTMINIMAL
@@ -404,8 +397,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
 	/*next account points to last account*/
 	acclist= g_slist_prepend(acclist, pnew);
-    return TRUE;
-	/*return((acclist= g_slist_prepend(acclist, pnew)));*/
+    return(retval);
 }
 
 /*function to get the accounts*/
@@ -422,10 +414,8 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
                     
         /*account found, now get the values from it*/
         if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
-		{
             retval= acc_read(doc, node);
-            /*acclist= acc_read(doc, node);*/
-        }
+        
         node= node->prev;
     }
     return(retval);
@@ -462,7 +452,7 @@ static gboolean cfg_elements(xmlDocPtr doc)
     node= xmlDocGetRootElement(doc);
     if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST "config")))
     {
-        err_noexit("Error getting config root element\n");
+        err_dlg(GTK_MESSAGE_WARNING, "Error getting config root element.\nPlease re-enter your configuration.");
         return FALSE;
     }
          
@@ -472,7 +462,8 @@ static gboolean cfg_elements(xmlDocPtr doc)
     {
             
         /*if it is a string value, print it*/
-        if((child->type== XML_ELEMENT_NODE)&& (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
+        if((child->type== XML_ELEMENT_NODE)&& (child->children!= NULL)&& 
+            (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
         {
             /*now copy the values*/
             pcontent= xmlNodeListGetString(doc, child->children, 1);
@@ -507,14 +498,14 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
         xmlErrorPtr perror;
 
         perror= xmlCtxtGetLastError(ctxt);
-        err_noexit("Failed to parse %s: %s\n", filename, perror->message);
+        err_dlg(GTK_MESSAGE_WARNING, "Error parsing config file %s: %s\n\nYou will need to either fix this or re-enter your configuration.", filename, perror->message);
         return FALSE;
     }
 
     /*if file is valid, get the elements*/
     if(ctxt->valid== 0)
     {
-        err_noexit("Failed to validate %s\n", filename);
+        err_dlg(GTK_MESSAGE_WARNING, "Failed to validate %s.", filename);
         retval= FALSE;
     }
     else
@@ -543,6 +534,7 @@ gboolean cfg_read(void)
         
         g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon->colour));
         picon= icon_create(picon);
+        err_dlg(GTK_MESSAGE_WARNING, S_MAIN_NO_CONFIG_FOUND);
         return FALSE;
     }
     /*initialise libxml*/
@@ -552,9 +544,10 @@ gboolean cfg_read(void)
     ctxt= xmlNewParserCtxt();
     if(ctxt== NULL)
     {
-        err_noexit("Failed to allocate parser context\n");
+        /*this is a fatal error, so exit*/
         xml_cleanup();
-        return FALSE;
+        err_dlg(GTK_MESSAGE_ERROR, "Failed to allocate parser context\n");
+	    exit(EXIT_FAILURE);
     }
     /*now do some parsing*/
     retval= cfg_parse(ctxt, configfilename);
@@ -818,11 +811,13 @@ static gboolean acc_write(xmlNodePtr root_node)
     mtc_account *paccount;
     mtc_icon *picon;
 
-    accs_node= put_node_empty(root_node, "accounts");
- 
-    /*iterate through the accounts and write*/
 	pcurrent= acclist;
-	while(pcurrent!= NULL)
+    
+    if(pcurrent!= NULL)
+        accs_node= put_node_empty(root_node, "accounts");
+	
+    /*iterate through the accounts and write*/
+    while(pcurrent!= NULL)
 	{
 		paccount= (mtc_account *)pcurrent->data;
         picon= &paccount->icon;

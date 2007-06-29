@@ -447,29 +447,32 @@ gint main(gint argc, gchar *argv[])
 	    
         cfgfound= cfg_read();
         /*TODO requires better erroring than this*/
-		if(acclist== NULL|| !cfgfound)
+		/*if(acclist== NULL|| !cfgfound)
 		{	
 			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));
-		}
+		}*/
         return(cfgdlg_start());
     }
 
 	/*if mailtc or mailtc -d*/
 	else if(runmode== MODE_NORMAL|| runmode== MODE_DEBUG)
 	{	
-        gboolean cfgfound= FALSE;
+        gboolean cfgok= FALSE;
 
     	/*set debug mode if -d*/
 	    config.net_debug= (runmode== MODE_DEBUG);
 	    config.isdlg= FALSE;
 
         /*check mail details and run dialog if none found*/
-	    cfgfound= cfg_read();
-    	/*read_accounts();*/
-		if(acclist== NULL|| !cfgfound)
-		{	
-			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));
-		}
+	    cfgok= cfg_read();
+
+        /*warn if no accounts found*/
+        if(acclist== NULL&& cfgok)
+            err_dlg(GTK_MESSAGE_WARNING, "No accounts found.\nPlease enter a mail account");
+
+        /*run the config dialog if any config needed*/
+		if(acclist== NULL|| !cfgok)
+	        return(cfgdlg_start());
 		/*code to check that icon is valid (e.g for old mailtc versions*/
 		else
 		{
