@@ -499,6 +499,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
 
         perror= xmlCtxtGetLastError(ctxt);
         err_dlg(GTK_MESSAGE_WARNING, "Error parsing config file %s: %s\n\nYou will need to either fix this or re-enter your configuration.", filename, perror->message);
+        xmlCtxtResetLastError(ctxt);
         return FALSE;
     }
 
@@ -890,7 +891,15 @@ gboolean cfg_write(void)
         retval= FALSE;
     
     /*save the created XML*/
-    xmlSaveFormatFileEnc(cfgfilename, doc, "UTF-8", 1);
+    if(xmlSaveFormatFileEnc(cfgfilename, doc, "UTF-8", 1)== -1)
+    {
+        xmlErrorPtr perror;
+
+        perror= xmlGetLastError();
+        err_dlg(GTK_MESSAGE_ERROR, "Error writing config file: %s\n", perror->message);
+        xmlResetLastError();
+        retval= FALSE;
+    }
     
     /* free up the resulting document */
     xmlFreeDoc(doc);
