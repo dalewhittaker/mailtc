@@ -420,9 +420,8 @@ static void remove_button_pressed(void)
         cfg_write();
 
         /*remove the UIDL file*/
-		rm_mtc_file(UIDL_FILE, count, fullcount);
-		/*rm_mtc_file(DETAILS_FILE, count, fullcount);
-		rm_mtc_file(FILTER_FILE, count, fullcount);*/
+		/*TODO this should really be in a plugin!*/
+        rm_mtc_file(UIDL_FILE, count, fullcount);
 		
 		/*remove from listbox*/
 		gtk_list_store_remove(GTK_LIST_STORE(model), &iter1);
@@ -934,11 +933,6 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 	gtk_misc_set_alignment(GTK_MISC(nmailcmd_label), 0, 0.5);
 	gtk_entry_set_max_length(GTK_ENTRY(nmailcmd_entry), NAME_MAX+ 1);
 #endif /*MTC_NOTMINIMAL*/
-
-	/*set the config details*/
-    /*TODO moved to main.c*/
-	/*if(!cfg_read())
-        err_dlg(GTK_MESSAGE_WARNING, "Error reading config");*/
 
 	gtk_widget_set_sensitive(GTK_WIDGET(picon->image), FALSE);
 	gtk_entry_set_text(GTK_ENTRY(mailprog_entry), config.mail_program);

@@ -928,7 +928,7 @@ gboolean rm_mtc_file(gchar *shortname, gint count, gint fullcount)
 		mtc_file(new_filename, shortname, i- 1);
 		
 		/*rename file to file- 1 so that there are no gaps*/
-		if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
+    	if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
 			err_exit(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
 	}
 	return TRUE;

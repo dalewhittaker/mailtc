@@ -3,10 +3,9 @@ NEXT RELEASE:
 1) new stuff
     a) Implement new xml config
             i) make sure that all error checks are made when writing config info
-            ii) make sure that uidlfiles are all in correct order compared to account list
-            iii) re-write filter stuff to go with the xml config
+            ii) re-write filter stuff to go with the xml config
                 a) Ben wants To: and Cc: fields added to filter stuff
-            iv) final cleanup/testing (with valgrind)
+            iii) final cleanup/testing (with valgrind)
     c) proxy server option?
 
 2) Compile/test on win32
