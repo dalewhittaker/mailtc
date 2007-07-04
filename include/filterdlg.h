@@ -20,10 +20,13 @@
 #ifndef DW_MAILTC_FILTERDLG
 #define DW_MAILTC_FILTERDLG
 
+#include <libxml/tree.h>
+
 #include "common.h"
 
 /*filterdlg.c functions*/
 gboolean filterdlg_run(mtc_account *paccount);
-gboolean filter_read(mtc_account *paccount);
+gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
+gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount);
 
 #endif /*DW_MAILTC_FILTERDLG*/

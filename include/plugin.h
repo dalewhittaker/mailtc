@@ -121,8 +121,8 @@ typedef struct _mtc_trayicon
 /*structure to hold mailtc configuration details*/
 typedef struct _mtc_cfg
 {
-	guint check_delay;
-	gchar mail_program[NAME_MAX+ 1];
+	guint interval;
+	gchar read_command[NAME_MAX+ 1];
 	guint icon_size;
 	gboolean multiple;
 	gboolean net_debug;
@@ -176,11 +176,11 @@ typedef enum _mtc_error
 
 typedef enum _hfield
 { 
-    HEADER_DATE= 0,
-    HEADER_FROM,
+    HEADER_FROM= 0,
+    HEADER_SUBJECT,
     HEADER_TO,
     HEADER_CC,
-    HEADER_SUBJECT,
+    HEADER_DATE,
     N_HFIELDS
 
 } hfield;
@@ -195,12 +195,12 @@ typedef enum _msg_flags
 } msg_flags;
 
 /*structure used to hold the filter details if used*/
-typedef struct mtc_filter
+typedef struct mtc_filters
 {
+    gboolean enabled;
 	gboolean matchall;
 	gboolean contains[MAX_FILTER_EXP];
-    /*This could be extended, currently it only searches subject or sender*/
-	gboolean subject[MAX_FILTER_EXP]; 
+    hfield field[MAX_FILTER_EXP];
 	gchar search_string[MAX_FILTER_EXP][FILTERSTRING_LEN+ 1];
 	
 } mtc_filter;
@@ -246,8 +246,8 @@ typedef struct _msg_info
 /*structure to hold mail account details*/
 typedef struct _mtc_account
 {
-	gchar accname[NAME_MAX+ 1];
-	gchar hostname[LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1];
+	gchar name[NAME_MAX+ 1];
+	gchar server[LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1];
 	gint port;
 	gchar username[LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1];
 	gchar password[PASSWORD_LEN];
@@ -262,7 +262,6 @@ typedef struct _mtc_account
     msg_info msginfo;
     
     /*filter stuff*/
-    gboolean runfilter;
 	mtc_filter *pfilters;
 #else
     gint num_messages;

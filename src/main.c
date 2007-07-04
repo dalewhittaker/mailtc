@@ -490,8 +490,8 @@ gint main(gint argc, gchar *argv[])
 		}
 	
         /*MAIN LOOP*/
-	    /*set the time interval for mail checks from the check_delay variable*/
-	    sleeptime= (gint)config.check_delay* 60* 1000;
+	    /*set the time interval for mail checks from the interval variable*/
+	    sleeptime= (gint)config.interval* 60* 1000;
 
 	    /*call the mail thread for the initial mail check
 	    *(otherwise it will wait a full minute or more before initial check)*/

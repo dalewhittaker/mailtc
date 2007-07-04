@@ -195,13 +195,9 @@ msg_header *msglist_header(msg_header *hstruct, GString *phstring)
 static gboolean msglist_filter(msg_header *pheader, mtc_filter *pfilter)
 {
     gint i= 0, found= 0;
-    gchar *field;
+    gchar *field= NULL;
 
-    /*get the field we wish to search*/
-    if(pheader)
-        field= (pfilter->subject[i])? pheader->psubject: pheader->pfrom;
-        
-    if(pheader== NULL|| pfilter== NULL|| field== NULL)
+   if(pheader== NULL|| pfilter== NULL)
         return FALSE;
     
     for(i= 0; i< MAX_FILTER_EXP; i++)
@@ -209,6 +205,32 @@ static gboolean msglist_filter(msg_header *pheader, mtc_filter *pfilter)
         if(g_ascii_strcasecmp(pfilter->search_string[i], "")== 0)
             break;
         
+        /*get the field we wish to search*/
+        if(pheader)
+        {
+            /*field= (pfilter->subject[i])? pheader->psubject: pheader->pfrom;*/
+            switch(pfilter->field[i])
+            {
+                case HEADER_FROM:
+                    field= pheader->pfrom;
+                break;
+                case HEADER_TO:
+                    field= pheader->pto;
+                break;
+                case HEADER_CC:
+                    field= pheader->pcc;
+                break;
+                case HEADER_SUBJECT:
+                    field= pheader->psubject;
+                break;
+                default:
+                    return FALSE;
+            }
+        }
+        
+        if(field== NULL)
+            return FALSE;
+
         /*search the subject or from for a match*/
         if(strstr(field, pfilter->search_string[i])!= NULL)
         {

@@ -139,10 +139,10 @@ mtc_error net_connect(mtc_net *pnetinfo, mtc_account *paccount)
     }
 #endif /*_WIN32*/
 
-    /*get the ip from the hostname*/
-	if((he= gethostbyname(paccount->hostname))== NULL)
+    /*get the ip from the server*/
+	if((he= gethostbyname(paccount->server))== NULL)
 	{
-		plg_err(S_NETFUNC_ERR_IP, paccount->hostname);
+		plg_err(S_NETFUNC_ERR_IP, paccount->server);
 		return(sock_err());
 	}
 		
@@ -181,7 +181,7 @@ mtc_error net_connect(mtc_net *pnetinfo, mtc_account *paccount)
 	/*try to connect only if doconnect is true (for non SSL)*/
 	if(connect(pnetinfo->sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr))== SOCKET_ERROR)
 	{
-		plg_err(S_NETFUNC_ERR_CONNECT, paccount->hostname);
+		plg_err(S_NETFUNC_ERR_CONNECT, paccount->server);
         sock_close(pnetinfo);
         return(MTC_ERR_CONNECT);
 	}

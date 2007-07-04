@@ -57,8 +57,8 @@ typedef struct _dlgtable
 } dlgtable;
 
 /*widget variables used for most functions*/
-static GtkWidget *accname_entry,
-    *hostname_entry,
+static GtkWidget *name_entry,
+    *server_entry,
     *port_entry,
     *username_entry,
     *password_entry,
@@ -217,12 +217,12 @@ static gboolean acc_save(int profile)
 		g_strlcpy(msg, S_CONFIGDLG_PORT, 10);
 		empty++;
 	}
-	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(hostname_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(server_entry)), "")== 0)
 	{
 		g_strlcpy(msg, S_CONFIGDLG_HOSTNAME, 10);
 		empty++;
 	}
-	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(accname_entry)), "")== 0)
+	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(name_entry)), "")== 0)
 	{
 		g_strlcpy(msg, S_CONFIGDLG_ACCNAME, 10);
 		empty++;
@@ -236,8 +236,8 @@ static gboolean acc_save(int profile)
 	}
 
 	/*copy the mail details to the structure*/
-	g_strlcpy(pcurrent_data->accname, gtk_entry_get_text(GTK_ENTRY(accname_entry)), sizeof(pcurrent_data->accname));
-	g_strlcpy(pcurrent_data->hostname, gtk_entry_get_text(GTK_ENTRY(hostname_entry)), sizeof(pcurrent_data->hostname));
+	g_strlcpy(pcurrent_data->name, gtk_entry_get_text(GTK_ENTRY(name_entry)), sizeof(pcurrent_data->name));
+	g_strlcpy(pcurrent_data->server, gtk_entry_get_text(GTK_ENTRY(server_entry)), sizeof(pcurrent_data->server));
     pcurrent_data->port= (gint)g_ascii_strtod(gtk_entry_get_text(GTK_ENTRY(port_entry)), NULL);
 	g_strlcpy(pcurrent_data->username, gtk_entry_get_text(GTK_ENTRY(username_entry)), sizeof(pcurrent_data->username));
 	g_strlcpy(pcurrent_data->password, gtk_entry_get_text(GTK_ENTRY(password_entry)), sizeof(pcurrent_data->password));
@@ -252,7 +252,8 @@ static gboolean acc_save(int profile)
 
 #ifdef MTC_NOTMINIMAL
 	/*get the filter setting*/
-	pcurrent_data->runfilter= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox));
+    if(pcurrent_data->pfilters!= NULL)
+	    pcurrent_data->pfilters->enabled= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox));
 #endif /*MTC_NOTMINIMAL*/
 
 	/*write the details to the file*/
@@ -278,9 +279,9 @@ static gboolean acc_save(int profile)
 
 		/*find the plugin and update the list*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
 
-		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
+		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->name, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
   		pcurrent= g_slist_next(pcurrent);
 	}
 
@@ -301,8 +302,8 @@ static gboolean cfg_save(void)
 	config.icon_size= ((gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(iconsize_checkbox))== TRUE)? 16: 24); 
 #endif /*MTC_NOTMINIMAL*/
 	config.multiple= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(multi_accounts_checkbox)); 
-	config.check_delay= (guint)gtk_spin_button_get_value(GTK_SPIN_BUTTON(delay_spin)); 
-	g_strlcpy(config.mail_program, gtk_entry_get_text(GTK_ENTRY(mailprog_entry)), sizeof(config.mail_program));
+	config.interval= (guint)gtk_spin_button_get_value(GTK_SPIN_BUTTON(delay_spin)); 
+	g_strlcpy(config.read_command, gtk_entry_get_text(GTK_ENTRY(mailprog_entry)), sizeof(config.read_command));
 #ifdef MTC_EXPERIMENTAL
     config.run_summary= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(summary_checkbox)); 
 #endif
@@ -634,7 +635,7 @@ static gboolean set_combo_text(GtkTreeModel *model, GtkTreePath *path, GtkTreeIt
 gboolean accdlg_run(gint profile, gint newaccount)
 {
 	GtkWidget *dialog, *iconcolour_button, *plginfo_button;
-	GtkWidget *accname_label, *hostname_label, *port_label, *username_label, *password_label, *protocol_label, *icon_label;
+	GtkWidget *name_label, *server_label, *port_label, *username_label, *password_label, *protocol_label, *icon_label;
 	dlgtable main_table;
     GtkWidget *v_box_details;
 	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
@@ -644,16 +645,17 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	GSList *plgcurrent= plglist;
 	mtc_plugin *pitem= NULL;
 	mtc_icon *picon= NULL;
+    mtc_filter *pfilter= NULL;
 
 	/*setup the account name info*/
-	accname_entry= gtk_entry_new();
-	accname_label= gtk_label_new(S_CONFIGDLG_DETAILS_ACNAME);
-  	gtk_entry_set_max_length(GTK_ENTRY(accname_entry), NAME_MAX+ 1);
+	name_entry= gtk_entry_new();
+	name_label= gtk_label_new(S_CONFIGDLG_DETAILS_ACNAME);
+  	gtk_entry_set_max_length(GTK_ENTRY(name_entry), NAME_MAX+ 1);
 	
-	/*setup the hostname info*/
-	hostname_entry= gtk_entry_new();
-	hostname_label= gtk_label_new(S_CONFIGDLG_DETAILS_SERVER);
-  	gtk_entry_set_max_length(GTK_ENTRY(hostname_entry), LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1);
+	/*setup the server info*/
+	server_entry= gtk_entry_new();
+	server_label= gtk_label_new(S_CONFIGDLG_DETAILS_SERVER);
+  	gtk_entry_set_max_length(GTK_ENTRY(server_entry), LOGIN_NAME_MAX+ HOST_NAME_MAX+ 1);
 	
 	/*setup the port info*/
 	port_entry= gtk_entry_new();
@@ -715,8 +717,8 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		/*set the inital combo stuff (must be done after account read, but before port change)*/
 		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo));
 	
-	    gtk_entry_set_text(GTK_ENTRY(accname_entry), pcurrent->accname);
-		gtk_entry_set_text(GTK_ENTRY(hostname_entry), pcurrent->hostname);
+	    gtk_entry_set_text(GTK_ENTRY(name_entry), pcurrent->name);
+		gtk_entry_set_text(GTK_ENTRY(server_entry), pcurrent->server);
 	    g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
 		gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
 		gtk_entry_set_text(GTK_ENTRY(username_entry), pcurrent->username);
@@ -736,7 +738,8 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		/*gtk_tree_model_foreach(model, set_combo_text, pcurrent->plgname);*/
 
 #ifdef MTC_NOTMINIMAL
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), pcurrent->runfilter);
+        pfilter= pcurrent->pfilters;
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
 #endif /*MTC_NOTMINIMAL*/	
     }
 	/*set the default pop port if details could not be read*/
@@ -760,10 +763,10 @@ gboolean accdlg_run(gint profile, gint newaccount)
 
 	gtk_table_set_col_spacings(GTK_TABLE(main_table.widget), 10);
 	gtk_table_set_row_spacings(GTK_TABLE(main_table.widget), 10);
-    tbl_addcol_new(&main_table, accname_label, 0, 1, 0, 0);
-    tbl_addcol(&main_table, accname_entry, 1, 1, 0, 0);
-    tbl_addcol_new(&main_table, hostname_label, 0, 1, 0, 0);
-    tbl_addcol(&main_table, hostname_entry, 1, 1, 0, 0);
+    tbl_addcol_new(&main_table, name_label, 0, 1, 0, 0);
+    tbl_addcol(&main_table, name_entry, 1, 1, 0, 0);
+    tbl_addcol_new(&main_table, server_label, 0, 1, 0, 0);
+    tbl_addcol(&main_table, server_entry, 1, 1, 0, 0);
 	tbl_addcol_new(&main_table, port_label, 0, 1, 0, 0);
     tbl_addcol(&main_table, port_entry, 1, 1, 0, 0);
 	tbl_addcol_new(&main_table, username_label, 0, 1, 0, 0);
@@ -810,20 +813,9 @@ gboolean accdlg_run(gint profile, gint newaccount)
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
 			{
-				/*we need to check if a filter file was created and remove it if it was*/
+				/*we also must remove the account from the linked list*/
 				if(newaccount)
-				{
-					gchar filterfile[NAME_MAX+ 1];
-					memset(filterfile, '\0', sizeof(filterfile));
-
-					mtc_file(filterfile, FILTER_FILE, profile);
-
-					if((IS_FILE(filterfile))&& (g_remove(filterfile)== -1))
-						err_exit(S_CONFIGDLG_ERR_REMOVE_FILE, filterfile);
-				
-					/*we also must remove the account from the linked list*/
 					remove_account(profile);
-				}
 			}
 			default:
 				saved= TRUE;
@@ -935,13 +927,13 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 #endif /*MTC_NOTMINIMAL*/
 
 	gtk_widget_set_sensitive(GTK_WIDGET(picon->image), FALSE);
-	gtk_entry_set_text(GTK_ENTRY(mailprog_entry), config.mail_program);
+	gtk_entry_set_text(GTK_ENTRY(mailprog_entry), config.read_command);
 
 #ifdef MTC_NOTMINIMAL
 	gtk_entry_set_text(GTK_ENTRY(nmailcmd_entry), config.nmailcmd);
 #endif /*MTC_NOTMINIMAL*/
     
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(delay_spin), (gdouble)config.check_delay);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(delay_spin), (gdouble)config.interval);
 #ifdef MTC_NOTMINIMAL
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(iconsize_checkbox), (config.icon_size<= 16)? TRUE: FALSE);
 #endif /*MTC_NOTMINIMAL*/
@@ -989,10 +981,10 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 		/*find the plugin and add it to the listbox*/
 		/*Message box here if we cannot find the plugin*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->accname);
+			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
 		
 		/*add to the list, if we cannot find it, report that it is not found*/
-		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->accname, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
+		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->name, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
   		pcurrent= g_slist_next(pcurrent);
 	}
   	g_object_unref(G_OBJECT(store));

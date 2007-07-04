@@ -19,7 +19,6 @@
 
 #include <stdlib.h> /*exit*/
 #include <libxml/parser.h>
-#include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include "filefunc.h"
@@ -30,19 +29,29 @@
 #include "encrypter.h"
 #endif /*MTC_USE_SSL*/
 
+/*define the various element names*/
+#define ELEMENT_CONFIG         "config"
+#define ELEMENT_READCOMMAND    "read_command"
+#define ELEMENT_INTERVAL       "interval"
+#define ELEMENT_ERRORFREQUENCY "error_frequency"
+#define ELEMENT_MULTIPLEICON   "multiple_icon"
+#define ELEMENT_ICONSIZE       "icon_size"
+#define ELEMENT_ICONCOLOUR     "icon_colour"
+#define ELEMENT_NEWMAILCOMMAND "newmail_command"
+#define ELEMENT_ACCOUNTS       "accounts"
+#define ELEMENT_ACCOUNT        "account"
+#define ELEMENT_NAME           "name"
+#define ELEMENT_PLUGINNAME     "plugin_name"
+#define ELEMENT_SERVER         "server"
+#define ELEMENT_PORT           "port"
+#define ELEMENT_USERNAME       "username"
+#define ELEMENT_ENCPASSWORD    "enc_password"
+#define ELEMENT_PASSWORD       "password"
+
+/*define the config file encoding*/
+#define CFGFILE_ENCODING "UTF-8"
+
 #define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
-
-typedef enum _eltype { EL_NULL= 0, EL_STR, EL_INT, EL_BOOL, EL_PW } eltype;
-
-/*structure used when reading in the xml config elements*/
-typedef struct _elist
-{
-    gchar *name; /*the element name*/
-    eltype type; /*type used for copying*/
-    void *value; /*the config value*/
-    gint length; /*length in bytes of config value*/
-    gboolean found; /*used to track duplicates, or not found at all*/
-} elist;
 
 /*wrapper to create a directory*/
 static void mk_dir(gchar *pfile)
@@ -79,7 +88,7 @@ gboolean mtc_dir(void)
     mk_dir(pcfg);
 
     /*second, create the .config/mailtc dir*/
-    if((pmtc= g_build_filename(pcfg, "mailtc", NULL))== NULL)
+    if((pmtc= g_build_filename(pcfg, PACKAGE, NULL))== NULL)
 		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
 	
     /*create the dir if it doesn't exist*/
@@ -234,7 +243,7 @@ static gboolean pw_read(elist *element, xmlChar *src)
 
 /*if OpenSSL is defined read in an encrypted password*/
 #ifdef MTC_USE_SSL
-    if(g_ascii_strcasecmp(element->name, "enc_password")== 0)
+    if(g_ascii_strcasecmp(element->name, ELEMENT_ENCPASSWORD)== 0)
 	{
         /*decrypt the password*/
         return(pw_decrypt(psrc, pdest));
@@ -276,7 +285,7 @@ static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
 }
 
 /*function to copy the config values*/
-static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
+gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
 {
     /*check the element with each value in the list, and run the appropriate function*/
     while(pelement->name!= NULL)
@@ -313,6 +322,10 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 	
     picon= &pnew->icon;
 
+#ifdef MTC_NOTMINIMAL
+	pnew->pfilters= NULL;
+#endif /*MTC_NOTMINIMAL*/
+
     /*yeah, putting in brackets here aint great*/
     {
         xmlChar *pcontent= NULL;
@@ -321,36 +334,38 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
         
         elist elements[]=
         {
-            { "name",         EL_STR,  pnew->accname,     sizeof(pnew->accname),     0 },
-            { "plugin",       EL_STR,  pnew->plgname,     sizeof(pnew->plgname),     0 },
-            { "server",       EL_STR,  pnew->hostname,    sizeof(pnew->hostname),    0 },
-            { "port",         EL_INT,  &pnew->port,       sizeof(pnew->port),        0 },
-            { "username",     EL_STR,  pnew->username,    sizeof(pnew->username),    0 },
-            { "icon_colour",  EL_STR,  pnew->icon.colour, sizeof(pnew->icon.colour), 0 },
-            { "enc_password", EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
-            { "password",     EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
+            { ELEMENT_NAME,         EL_STR,  pnew->name,     sizeof(pnew->name),     0 },
+            { ELEMENT_PLUGINNAME,   EL_STR,  pnew->plgname,     sizeof(pnew->plgname),     0 },
+            { ELEMENT_SERVER,       EL_STR,  pnew->server,      sizeof(pnew->server),      0 },
+            { ELEMENT_PORT,         EL_INT,  &pnew->port,       sizeof(pnew->port),        0 },
+            { ELEMENT_USERNAME,     EL_STR,  pnew->username,    sizeof(pnew->username),    0 },
+            { ELEMENT_ICONCOLOUR,   EL_STR,  pnew->icon.colour, sizeof(pnew->icon.colour), 0 },
+            { ELEMENT_ENCPASSWORD,  EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
+            { ELEMENT_PASSWORD,     EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
             { NULL, EL_NULL, NULL, 0, 0 },
         };
 
         /*copy default values that are not required in config*/
-        g_snprintf(pnew->accname, sizeof(pnew->accname), "Account %d", pnew->id+ 1);
+        g_snprintf(pnew->name, sizeof(pnew->name), "Account %d", pnew->id+ 1);
 
         child= node->children;
         while(child!= NULL)
         {
-                
             /*if found, copy the account elements*/
-            if((child->type== XML_ELEMENT_NODE)&&
+            if((child->type== XML_ELEMENT_NODE)&& (child->children!= NULL)&&
                 (child->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(child->children))
             {
                 pcontent= xmlNodeListGetString(doc, child->children, 1);
         
-                /*TODO need to keep track here of return value*/
                 if(cfg_copy_element(child, elements, pcontent)== FALSE)
                     retval= FALSE;
 
                 xmlFree(pcontent);
-
+            }
+            else
+            {    /*read in any filters*/
+                if(read_filters(doc, child, pnew)== FALSE)
+                    retval= FALSE;
             }
             child= child->next;
         }
@@ -376,11 +391,11 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
 #ifdef MTC_NOTMINIMAL
     /*TODO needs reviewing*/
-	pnew->pfilters= NULL;
-			
-	/*if(pnew->runfilter)
-	{*/ if(!filter_read(pnew))
-		    pnew->runfilter= FALSE; /*}*/
+/*	pnew->pfilters= NULL;
+*/		
+    /*TODO will probably change*/
+/*	if(!filter_read(pnew))
+	    pnew->runfilter= FALSE;*/
 #endif /*MTC_NOTMINIMAL*/
 	
 	/*convert any old protocols to new plugin names*/
@@ -413,7 +428,7 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
     {
                     
         /*account found, now get the values from it*/
-        if((xmlStrEqual(node->name, BAD_CAST "account"))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
+        if((xmlStrEqual(node->name, BAD_CAST ELEMENT_ACCOUNT))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
             retval= acc_read(doc, node);
         
         node= node->prev;
@@ -430,27 +445,27 @@ static gboolean cfg_elements(xmlDocPtr doc)
     gboolean retval= TRUE;
     elist elements[]=
     {
-        { "read_command",    EL_STR,  config.mail_program, sizeof(config.mail_program), 0 },
-        { "interval",        EL_INT,  &config.check_delay, sizeof(config.check_delay),  0 },
-        { "multiple_icon",   EL_BOOL, &config.multiple,    sizeof(config.multiple),     0 },
-        { "icon_size",       EL_INT,  &config.icon_size,   sizeof(config.icon_size),    0 },
-        { "icon_colour",     EL_STR,  config.icon.colour,  sizeof(config.icon.colour),  0 },
-        { "error_frequency", EL_INT,  &config.err_freq,    sizeof(config.err_freq),     0 },
+        { ELEMENT_READCOMMAND,    EL_STR,  config.read_command, sizeof(config.read_command), 0 },
+        { ELEMENT_INTERVAL,       EL_INT,  &config.interval,    sizeof(config.interval),     0 },
+        { ELEMENT_MULTIPLEICON,   EL_BOOL, &config.multiple,    sizeof(config.multiple),     0 },
+        { ELEMENT_ICONSIZE,       EL_INT,  &config.icon_size,   sizeof(config.icon_size),    0 },
+        { ELEMENT_ICONCOLOUR,     EL_STR,  config.icon.colour,  sizeof(config.icon.colour),  0 },
+        { ELEMENT_ERRORFREQUENCY, EL_INT,  &config.err_freq,    sizeof(config.err_freq),     0 },
 #ifdef MTC_NOTMINIMAL
-        { "newmail_command", EL_STR,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
+        { ELEMENT_NEWMAILCOMMAND, EL_STR,  config.nmailcmd,     sizeof(config.nmailcmd),     0 },
 #endif /*MTC_NOTMINIMAL*/
         { NULL, EL_NULL, NULL, 0, 0 },
     };
 
     /*copy some default values in case they are not present in the config*/
     g_strlcpy(config.icon.colour, "#FFFFFF", sizeof(config.icon.colour));
-    config.check_delay= 1;
+    config.interval= 1;
     config.icon_size= 24;
     config.err_freq= 1;
 
     /*get the root element and check it is named 'config'*/
     node= xmlDocGetRootElement(doc);
-    if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST "config")))
+    if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST ELEMENT_CONFIG)))
     {
         err_dlg(GTK_MESSAGE_WARNING, "Error getting config root element.\nPlease re-enter your configuration.");
         return FALSE;
@@ -476,7 +491,7 @@ static gboolean cfg_elements(xmlDocPtr doc)
                 break;
         }
         /*if the accounts are found, read them in*/
-        else if((xmlStrEqual(child->name, BAD_CAST "accounts")))
+        else if(xmlIsBlankNode(child->children)&& (xmlStrEqual(child->name, BAD_CAST ELEMENT_ACCOUNTS)))
             retval= read_accounts(doc, child);
 
         child= child->next;
@@ -709,7 +724,7 @@ void free_accounts(void)
 }
 
 /*add a node of type string*/
-static xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
+xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
 {
     xmlChar *pname;
     xmlChar *pcontent;
@@ -746,7 +761,7 @@ static xmlNodePtr put_node_int(xmlNodePtr parent, const gchar *name, const doubl
 }
 
 /*add a node of type integer*/
-static xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
+xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
 {
     xmlNodePtr node;
     xmlChar *pstring;
@@ -766,7 +781,7 @@ static xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboo
 }
 
 /*add an empty node*/
-static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
+xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
 {
     xmlChar *pname;
 
@@ -793,11 +808,11 @@ static gboolean pw_write(xmlNodePtr acc_node, gchar *password)
     if(encstring== NULL)
         return FALSE;
     
-    pw_node= put_node_str(acc_node, "enc_password", encstring);
+    pw_node= put_node_str(acc_node, ELEMENT_ENCPASSWORD, encstring);
     g_free(encstring);
 /*otherwise write a clear password*/
 #else
-    put_node_str(acc_node, "password", password);
+    put_node_str(acc_node, ELEMENT_PASSWORD, password);
 #endif
     return TRUE;
 }
@@ -815,7 +830,7 @@ static gboolean acc_write(xmlNodePtr root_node)
 	pcurrent= acclist;
     
     if(pcurrent!= NULL)
-        accs_node= put_node_empty(root_node, "accounts");
+        accs_node= put_node_empty(root_node, ELEMENT_ACCOUNTS);
 	
     /*iterate through the accounts and write*/
     while(pcurrent!= NULL)
@@ -823,16 +838,20 @@ static gboolean acc_write(xmlNodePtr root_node)
 		paccount= (mtc_account *)pcurrent->data;
         picon= &paccount->icon;
 		
-        acc_node= put_node_empty(accs_node, "account");
-        put_node_str(acc_node, "name", paccount->accname);
-        put_node_str(acc_node, "plugin", paccount->plgname);
-        put_node_str(acc_node, "server", paccount->hostname);
-        put_node_int(acc_node, "port", paccount->port);
-        put_node_str(acc_node, "username", paccount->username);
-        put_node_str(acc_node, "icon_colour", picon->colour);
+        acc_node= put_node_empty(accs_node, ELEMENT_ACCOUNT);
+        put_node_str(acc_node, ELEMENT_NAME, paccount->name);
+        put_node_str(acc_node, ELEMENT_PLUGINNAME, paccount->plgname);
+        put_node_str(acc_node, ELEMENT_SERVER, paccount->server);
+        put_node_int(acc_node, ELEMENT_PORT, paccount->port);
+        put_node_str(acc_node, ELEMENT_USERNAME, paccount->username);
+        put_node_str(acc_node, ELEMENT_ICONCOLOUR, picon->colour);
     
         /*now write the password out*/
         if(!pw_write(acc_node, paccount->password))
+            return FALSE;
+        
+        /*and then also the filter, if there is one*/
+        if(!filter_write(acc_node, paccount))
             return FALSE;
 
         /*move to next item in the list*/
@@ -872,18 +891,18 @@ gboolean cfg_write(void)
     
     /*create a new document and node, and set as root node*/
     doc= xmlNewDoc(BAD_CAST "1.0");
-    root_node= xmlNewNode(NULL, BAD_CAST "config");
+    root_node= xmlNewNode(NULL, BAD_CAST ELEMENT_CONFIG);
     xmlDocSetRootElement(doc, root_node);
 
     /*create new node, and "attach" as child of root node*/
-    put_node_str(root_node, "read_command", config.mail_program);
-    put_node_int(root_node, "interval", config.check_delay);
-    put_node_int(root_node, "error_frequency", config.err_freq);
-    put_node_bool(root_node, "multiple_icon", config.multiple);
-    put_node_int(root_node, "icon_size", config.icon_size);
-    put_node_str(root_node, "icon_colour", picon->colour);
+    put_node_str(root_node, ELEMENT_READCOMMAND, config.read_command);
+    put_node_int(root_node, ELEMENT_INTERVAL, config.interval);
+    put_node_int(root_node, ELEMENT_ERRORFREQUENCY, config.err_freq);
+    put_node_bool(root_node, ELEMENT_MULTIPLEICON, config.multiple);
+    put_node_int(root_node, ELEMENT_ICONSIZE, config.icon_size);
+    put_node_str(root_node, ELEMENT_ICONCOLOUR, picon->colour);
 #ifdef MTC_NOTMINIMAL
-    put_node_str(root_node, "newmail_command", config.nmailcmd);
+    put_node_str(root_node, ELEMENT_NEWMAILCOMMAND, config.nmailcmd);
 #endif /*MTC_NOTMINIMAL*/
  
     /*write out each account*/
@@ -891,7 +910,7 @@ gboolean cfg_write(void)
         retval= FALSE;
     
     /*save the created XML*/
-    if(xmlSaveFormatFileEnc(cfgfilename, doc, "UTF-8", 1)== -1)
+    if(xmlSaveFormatFileEnc(cfgfilename, doc, CFGFILE_ENCODING, 1)== -1)
     {
         xmlErrorPtr perror;
 

@@ -241,7 +241,7 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 	/*find the correct pluin to handle the click*/
 	if((pitem= plg_find(paccount->plgname))== NULL)
 	{
-		err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->accname);
+		err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->name);
 		err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
 		
 		/*this should not happen for single mode; if it is active, it should exist*/
@@ -273,9 +273,9 @@ static void docklet_click_handler(gboolean leftclick)
     /*run mailapp if left double click*/
 	if(leftclick) 
 #ifdef MTC_NOTMINIMAL
-		if(*config.mail_program && !run_cmd(config.mail_program, FALSE))
+		if(*config.read_command&& !run_cmd(config.read_command, FALSE))
 #else
-		if(*config.mail_program && !run_cmd(config.mail_program))
+		if(*config.read_command&& !run_cmd(config.read_command))
 #endif /*MTC_NOTMINIMAL*/
 				return;
 
@@ -396,7 +396,7 @@ static void docklet_tooltip()
                 
         	    /*if there are messages add it to summary*/
 			    g_snprintf(tmpstring, sizeof(tmpstring), (nmsgs> 1)? S_DOCKLET_NEW_MESSAGES: S_DOCKLET_NEW_MESSAGE,
-				    pcurrent_data->accname, nmsgs, (first)? "": "\n");
+				    pcurrent_data->name, nmsgs, (first)? "": "\n");
 			
 			    /*insert at the start (to match list order)*/
 			    tipstring= g_string_prepend(tipstring, tmpstring);
@@ -575,7 +575,7 @@ gboolean mail_thread(gpointer data)
 			{
 				err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, pcurrent_data->plgname);
 				err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG,
-					pcurrent_data->plgname, pcurrent_data->accname);
+					pcurrent_data->plgname, pcurrent_data->name);
 
 				/*now go to the next account*/
 				pcurrent= g_slist_next(pcurrent);
@@ -598,7 +598,7 @@ gboolean mail_thread(gpointer data)
 			{
                 /*new connection error, so increment*/
                 pcurrent_data->cerr++;
-                err_noexit(S_DOCKLET_ERR_CONNECT, pcurrent_data->hostname, pcurrent_data->cerr);
+                err_noexit(S_DOCKLET_ERR_CONNECT, pcurrent_data->server, pcurrent_data->cerr);
                 
                 if(err_msg== NULL)
 					err_msg= g_string_new(NULL);
@@ -607,7 +607,7 @@ gboolean mail_thread(gpointer data)
                 if((config.err_freq!= 0)&& (config.err_freq== 1|| config.err_freq<= pcurrent_data->cerr))
                 {
                     err_msg= g_string_prepend(err_msg, "\n");
-				    err_msg= g_string_prepend(err_msg, pcurrent_data->hostname);
+				    err_msg= g_string_prepend(err_msg, pcurrent_data->server);
                     pcurrent_data->cerr= 0;
 				    errflag++;
                 }

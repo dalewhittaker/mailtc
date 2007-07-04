@@ -26,19 +26,20 @@
 #include <gtk/gtkcombobox.h>
 #include <gtk/gtktable.h>
 #include <gtk/gtkradiobutton.h>
-
 #include "filefunc.h"
 #include "filterdlg.h"
+
+/*define the filter element names that are used*/
+#define ELEMENT_FILTERS  "filters"
+#define ELEMENT_FILTER   "filter"
+#define ELEMENT_MATCHALL "match_all"
+#define ELEMENT_CONTAINS "contains"
+#define ELEMENT_FIELD    "field"
+#define ELEMENT_VALUE    "value"
 
 /*TODO don't like lengths, fix it*/
 #define FILTERSTRING_LEN 100
 #define MAX_FILTER_EXP 5 
-
-#define SFILTER_AND "<AND>"
-#define SFILTER_OR "<OR>"
-#define SFILTER_NOT "<NOT>"
-#define SFILTER_SENDER "<SENDER>"
-#define SFILTER_SUBJECT "<SUBJECT>"
 
 /*widget variables used for most functions*/
 static GtkWidget *filter_combo1[MAX_FILTER_EXP];
@@ -47,17 +48,31 @@ static GtkWidget *filter_entry[MAX_FILTER_EXP];
 static GtkWidget *filter_radio[2];
 static GtkWidget *clear_button;
 
-/*function to write the filter information to the file*/
-static gboolean filter_write(mtc_account *paccount)
+/*a static list of the filter fields.
+ *NOTE this must be the same order as the hfield enum
+ *otherwise it won't work.  Add new ones as needed*/
+ static gchar ffield[4][10]=
+ {
+    "From",
+    "Subject",
+    "To",
+    "Cc"
+ } ;
+
+/*function to store the filter struct*/
+static gboolean filter_save(mtc_account *paccount)
 {
-
-	FILE *outfile;
-	gchar outfilename[NAME_MAX];
+    gint valid= 0;
 	gint i= 0;
-	gint valid= 0;
-
+    gint j;
+    mtc_filter *pfilter= NULL;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	gchar *str= NULL;
+	
 	/*first check if we have values*/
-	for(i= 0; i< MAX_FILTER_EXP; i++)
+	/*TODO will eventually be a list*/
+    for(i= 0; i< MAX_FILTER_EXP; i++)
 	{
 		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 			++valid;
@@ -66,164 +81,207 @@ static gboolean filter_write(mtc_account *paccount)
 	if(!valid)
 		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
 	
-	/*get the full path of the filter file*/
-	memset(outfilename, '\0', NAME_MAX);
-	mtc_file(outfilename, FILTER_FILE, paccount->id);
-
-	/*first check if file can be written to*/
-	if((IS_FILE(outfilename))&& (g_remove(outfilename)== -1))
-		err_exit(S_FILTERDLG_ERR_REMOVE_FILE, outfilename);
-	
-	/*open the file*/
-	if((outfile= g_fopen(outfilename, "wt"))== NULL)
-		err_exit(S_FILTERDLG_ERR_OPEN_FILE, outfilename);
-	
-	/*output whether to match all or match any*/
-	g_fprintf(outfile, (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0])))? SFILTER_AND"\n": SFILTER_OR"\n");
-			
-	/*for each filter entry*/
+    /*allocate new filter if it doesn't already exist*/
+    if(paccount->pfilters== NULL)
+        paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
+    
+    pfilter= paccount->pfilters;
+    
+    /*enable the filter*/
+    pfilter->enabled= TRUE;
+ 
+    /*Get the matchall field*/
+    pfilter->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0]))? TRUE: FALSE;
+ 
+    /*for each filter entry*/
+    /*TODO will eventually be a list*/
 	for(i= 0; i< MAX_FILTER_EXP; i++)
 	{
 		/*test if the entry is empty*/
 		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 		{
-			GtkTreeModel *model1, *model2;
-			GtkTreeIter iter1, iter2;
-			gchar *str1= NULL, *str2= NULL;
-		
 			/*get the active combo value for contains/does not contain and output*/
-			model2= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo2[i]));
-			if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo2[i]), &iter2))
-				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
-			gtk_tree_model_get(model2, &iter2, 0, &str2, -1);
+			model= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo2[i]));
 			
-			if(g_ascii_strcasecmp(str2, S_FILTERDLG_COMBO_CONTAINS)!= 0) g_fprintf(outfile, SFILTER_NOT);
-			g_free(str2);
-			
-			/*get the active combo value for sender/subject and output*/
-			model1= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo1[i]));
-			if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo1[i]), &iter1))
+            /*TODO not err_exit*/
+            if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo2[i]), &iter))
 				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
-			gtk_tree_model_get(model1, &iter1, 0, &str1, -1);
-			g_fprintf(outfile, (g_ascii_strcasecmp(str1, S_FILTERDLG_COMBO_SENDER)== 0)? SFILTER_SENDER: SFILTER_SUBJECT);
-			g_free(str1);
+			gtk_tree_model_get(model, &iter, 0, &str, -1);
+			
+            /*set the contains for each*/
+			pfilter->contains[i]= (g_ascii_strcasecmp(str, S_FILTERDLG_COMBO_CONTAINS)== 0)? TRUE: FALSE;
+            g_free(str);
+			
+            /*get the active field*/
+            j= gtk_combo_box_get_active(GTK_COMBO_BOX(filter_combo1[i]));
+            /*TODO not err_exit*/
+            if(j== -1)
+                err_exit(S_FILTERDLG_ERR_COMBO_ITER);
+		    pfilter->field[i]= j;
 			
 			/*output the filter search string*/
-			g_fprintf(outfile, "%s\n", gtk_entry_get_text(GTK_ENTRY(filter_entry[i])));
+            g_strlcpy(pfilter->search_string[i], gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), sizeof(pfilter->search_string[i]));
 		}
-	}
-
-	/*close the file*/
-	if(fclose(outfile)== EOF)
-		err_exit(S_FILTERDLG_ERR_CLOSE_FILE, outfilename);
-
-	/*now we must read the filter info back in!*/
-	/*TODO this should never happen, but probably a better thing to do is error*/
-	if(!filter_read(paccount))
-		paccount->runfilter= FALSE;
-	
-	return TRUE;
+	}   
+    return TRUE;
 }
 
-/*function to read the filter information in*/
-gboolean filter_read(mtc_account *paccount)
+/*TODO write out the filter struct*/
+gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
 {
-	FILE *infile;
-	gchar infilename[NAME_MAX];
-	gchar line[FILTERSTRING_LEN+ 15]; /*strlen("<NOT>")+ strlen("<SUBJECT>")+ 1;*/
-	gchar *pstring= NULL;
-	gint i= 0;
-	gboolean retval= 0;
-	mtc_filter *pfilter;
-    guint notlen, subjlen, senderlen;
+    mtc_filter *pfilter;
+    xmlNodePtr filters_node= NULL;
 
-    notlen= strlen(SFILTER_NOT);
-    subjlen= strlen(SFILTER_SUBJECT);
-    senderlen= strlen(SFILTER_SENDER);
+    pfilter= paccount->pfilters;
 
-	/*get the full path of the filter file*/
-	memset(infilename, '\0', NAME_MAX);
-	mtc_file(infilename, FILTER_FILE, paccount->id);
+    /*write the filters out*/
+    if((pfilter!= NULL)&& pfilter->enabled)
+    {
+        /*TODO eventually this will check if there is a list
+         *only if there is 'filters' gets written*/
+        {
+            xmlNodePtr filter_node= NULL;
+            gint i;
 
-	/*first test if there is an existing file*/
-	if(!IS_FILE(infilename))
-		return FALSE;
-	
-	/*open the file for reading and clear the struct*/
-	if((infile= g_fopen(infilename, "rt"))== NULL)
-		err_exit(S_FILTERDLG_ERR_OPEN_FILE, infilename);
-	
-	/*allocate memory for the filter struct*/
-	paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
-	pfilter= paccount->pfilters;
-	
-	/*set default to contains and sender*/
-	for(i= 0; i< MAX_FILTER_EXP; ++i)
-	{
-		pfilter->contains[i]= TRUE;
-		pfilter->subject[i]= FALSE;
-	}
-	i= 0;
-	
-	/*get the first line (match all or any)*/
-	fgets(line, sizeof(line), infile);
-	if(g_ascii_strncasecmp(line, SFILTER_AND, strlen(SFILTER_AND))== 0)
-		pfilter->matchall= TRUE;
-	if(g_ascii_strncasecmp(line, SFILTER_OR, strlen(SFILTER_OR))== 0)
-		pfilter->matchall= FALSE;
-	else
-		pfilter->matchall= TRUE;
-	
-	/*for each subsequent line*/
-	while(!feof(infile)&& (i< MAX_FILTER_EXP))
-	{
-		/*clear the line and set the pointer to it*/
-		pstring= line;
-		memset(line, '\0', sizeof(line));
-		
-		/*get contains/not contains*/
-		fgets(line, sizeof(line), infile);
-		if(g_ascii_strncasecmp(pstring, SFILTER_NOT, notlen)== 0)
-		{
-			pfilter->contains[i]= FALSE;
-			pstring+= notlen;
-		}
-			
-		/*get subject/sender*/
-		if(g_ascii_strncasecmp(pstring, SFILTER_SUBJECT, subjlen)== 0)
-		{
-			pfilter->subject[i]= TRUE;
-			pstring+= subjlen;
-		}
-		else if(g_ascii_strncasecmp(pstring, SFILTER_SENDER, senderlen)== 0)
-		{
-			pfilter->subject[i]= FALSE;
-			pstring+= senderlen;
-		}
-		
-		/*get the filter search string*/
-		if(strlen(pstring) > 1)
-		{	
-			g_strlcpy(pfilter->search_string[i], pstring, FILTERSTRING_LEN);
-			if(pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]== '\n')
-				pfilter->search_string[i][strlen(pfilter->search_string[i]) -1]= '\0';
-			retval= TRUE;
-		}
+            filters_node= put_node_empty(acc_node, ELEMENT_FILTERS);
+            put_node_bool(filters_node, ELEMENT_MATCHALL, pfilter->matchall);
 
-		++i;
-	}
+            /*Now write each of the filters*/
+            for(i= 0; i< MAX_FILTER_EXP; i++)
+            {
+                /*only write if there is a string there*/
+		        if(pfilter->search_string[i][0]!= 0)
+                {
+                    filter_node= put_node_empty(filters_node, ELEMENT_FILTER);
+                
+                    put_node_bool(filter_node, ELEMENT_CONTAINS, pfilter->contains[i]);
+                    put_node_str(filter_node, ELEMENT_VALUE, pfilter->search_string[i]);
+                    
+                    if(pfilter->field[i]< (sizeof(ffield)/ sizeof(ffield[0])))
+                        put_node_str(filter_node, ELEMENT_FIELD, ffield[pfilter->field[i]]);
+                }
+            }
+        }
+    }
+    return TRUE;
+}
 
-	/*close the file*/
-	if(fclose(infile)== EOF)
-		err_exit(S_FILTERDLG_ERR_CLOSE_FILE, infilename);
+/*TODO needs a load of work*/
+static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount, gint index)
+{
 
-	return(retval);
+    mtc_filter *pfilter;
+    gchar tmpfield[FILTERSTRING_LEN];
+
+    pfilter= paccount->pfilters;
+    memset(tmpfield, '\0', sizeof(tmpfield));
+    
+    /*brackets here, bad*/
+    {
+        xmlChar *pcontent= NULL;
+        elist elements[]=
+        {
+            { ELEMENT_CONTAINS, EL_BOOL, &pfilter->contains[index],     sizeof(pfilter->contains[index]),        0 },
+            { ELEMENT_FIELD,    EL_STR,  tmpfield,                      sizeof(tmpfield),                        0 },
+            { ELEMENT_VALUE,    EL_STR,  pfilter->search_string[index], sizeof(pfilter->search_string[index]),   0 },
+            {  NULL,            EL_NULL, NULL, 0, 0 },
+        };
+
+
+        /*TODO enable the filter if search_string ('value') found*/
+        
+        /*ok, now get each of the filters fields*/
+        while(node!= NULL)
+        {
+            /*if it is a string value, print it*/
+            if((node->type== XML_ELEMENT_NODE)&& (node->children!= NULL)&& 
+                (node->children->type== XML_TEXT_NODE)&& !xmlIsBlankNode(node->children))
+            {
+                 /*now copy the values*/
+                pcontent= xmlNodeListGetString(doc, node->children, 1);
+            
+                /*TODO error check*/
+                /*retval=*/ cfg_copy_element(node, elements, pcontent);    
+                xmlFree(pcontent);
+
+                /*if it returned an error break out*/
+                /*if(retval== FALSE)
+                    break;*/
+            }
+            node= node->next;
+        }
+        /*get the correct field*/
+        if(tmpfield[0]!= 0)
+        {    
+            guint i;
+            for(i= 0; i< (sizeof(ffield)/ sizeof(ffield[0])); i++)
+                if(g_ascii_strcasecmp(ffield[i], tmpfield)== 0)
+                    pfilter->field[index]= i;
+         }
+
+         /*enable the filters if there is a string to search*/
+         if(pfilter->search_string[index][0]!= 0)
+            pfilter->enabled= TRUE;
+    }
+    return TRUE;
+}
+
+/*function to read in any filter info from the config file*/
+gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
+{
+    gboolean retval= TRUE;
+
+    /*check if there are any filters defined*/
+    if(xmlIsBlankNode(node->children)&& (xmlStrEqual(node->name, BAD_CAST ELEMENT_FILTERS)))
+    {
+        xmlNodePtr child= NULL;
+        xmlChar *pcontent= NULL;
+        mtc_filter *pfilter= NULL;
+
+        /*TODO this will change as evenutally it will be a list*/
+        gint i= 0;
+
+        /*allocate for the filters TODO will eventually be a list*/
+        paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
+
+        /*intially do not enable the filter*/
+        pfilter= paccount->pfilters;
+        pfilter->enabled= FALSE;
+ 
+        child= node->children;
+ 
+        /*get each filter child element and read it*/
+        while((child!= NULL)&& (i< 5))
+        {
+
+            /*filter found, now get the values from it*/
+            if((xmlStrEqual(child->name, BAD_CAST ELEMENT_FILTER))&& (child->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(child->children))
+                retval= filter_read(doc, child->children, paccount, i++);
+            
+            /*TODO needs to be tidied*/
+            else if((xmlStrEqual(child->name, BAD_CAST ELEMENT_MATCHALL))&&
+                    (child->type== XML_ELEMENT_NODE)&&
+                    (child->children!= NULL)&&
+                    (!xmlIsBlankNode(child->children))&&
+                    (child->children->type== XML_TEXT_NODE))
+            {
+                pcontent= xmlNodeListGetString(doc, child->children, 1);
+
+                pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
+                xmlFree(pcontent);
+
+            }
+            child= child->next;
+        }
+    }
+    return(retval);
 }
 
 /*button to clear the filter entries*/
 static void clear_button_pressed(void)
 {
-	gint i= 0;	
+	gint i= 0;
+    /*TODO will be a list eventually*/
 	for(i= 0; i< MAX_FILTER_EXP; ++i)
 	{
 		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
@@ -242,6 +300,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	GtkWidget *filter_label;
 	GtkWidget *main_table, *v_box_filter;
 	gint i= -1;
+    guint j;
 	gint result= 0;
     gboolean saved= FALSE;
 	mtc_filter *pfilter= paccount->pfilters;
@@ -257,14 +316,15 @@ gboolean filterdlg_run(mtc_account *paccount)
 	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, 0, 1);
 	
 	/*create n number of widgets*/
+    /*TODO will be a list eventually*/
 	while(i++ < (MAX_FILTER_EXP- 1))
 	{
-	
-		/*create the sender/subject combo*/
+		/*create the fields combo*/
 		filter_combo1[i]= gtk_combo_box_new_text();
-		gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo1[i]), S_FILTERDLG_COMBO_SENDER);
-		gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo1[i]), S_FILTERDLG_COMBO_SUBJECT);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
+        for(j= 0; j< (sizeof(ffield)/ sizeof(ffield[0])); j++)
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo1[i]), ffield[j]);
+		
+    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
 
 		/*create the contains/does not contain combo*/
 		filter_combo2[i]= gtk_combo_box_new_text();
@@ -284,10 +344,10 @@ gboolean filterdlg_run(mtc_account *paccount)
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_combo2[i], 1, 2, i+ 1, i+ 2);
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_entry[i], 2, 3, i+ 1, i+ 2);
 		
-		if(paccount->pfilters)
+		if(paccount->pfilters/*&& paccount->pfilters->enabled*/)
 		{
-			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->subject[i]);
-			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains[i]);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->field[i]);
+	    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains[i]);
 			gtk_entry_set_text(GTK_ENTRY(filter_entry[i]), pfilter->search_string[i]);
 		}
 	}
@@ -301,7 +361,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	if(paccount->pfilters)
 	{
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), pfilter->matchall);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), pfilter->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), !pfilter->matchall);
 	}
 	
 	gtk_table_attach(GTK_TABLE(main_table), clear_button, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
@@ -326,9 +386,9 @@ gboolean filterdlg_run(mtc_account *paccount)
 		result= gtk_dialog_run(GTK_DIALOG(dialog)); 
 		switch(result)
 		{
-			/*if OK get the value of saved to check if details are saved correctly*/
-			case GTK_RESPONSE_ACCEPT:
-				saved= filter_write(paccount);
+			/*if OK save the filters to the struct*/
+            case GTK_RESPONSE_ACCEPT:
+				saved= filter_save(paccount);
 			break;
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
@@ -341,5 +401,4 @@ gboolean filterdlg_run(mtc_account *paccount)
 	
 	return TRUE;
 }
-
 

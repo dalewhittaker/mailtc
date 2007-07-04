@@ -112,7 +112,7 @@ static mtc_error pop_send(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcm
     g_free(pop_msg);
     if(retval!= MTC_RETURN_TRUE)
     {
-        plg_err(S_POPFUNC_ERR_SEND, errcmd, paccount->hostname);
+        plg_err(S_POPFUNC_ERR_SEND, errcmd, paccount->server);
         net_disconnect(pnetinfo);
     }
     return(retval);
@@ -133,7 +133,7 @@ static GString *pop_recv(mtc_net *pnetinfo, mtc_account *paccount, gchar *errcmd
 {
 	if(!(buf= pop_recvfunc(pnetinfo, buf, "\r\n", FALSE)))
 	{
-        plg_err(S_POPFUNC_ERR_RECV, errcmd, paccount->hostname);
+        plg_err(S_POPFUNC_ERR_RECV, errcmd, paccount->server);
 	    pop_close(pnetinfo, paccount);
         return(NULL);
     }
@@ -152,7 +152,7 @@ static GString *pop_recv_header(mtc_net *pnetinfo, mtc_account *paccount, gint m
 {
     if(!(buf= pop_recvfunc(pnetinfo, buf, "\r\n\r\n.\r\n", TRUE)))
     {
-        plg_err(S_POPFUNC_ERR_RECV_HEADER, msgid, paccount->hostname);
+        plg_err(S_POPFUNC_ERR_RECV_HEADER, msgid, paccount->server);
 	    pop_close(pnetinfo, paccount);
         return(NULL);
     }
@@ -506,9 +506,9 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
 #ifdef MTC_NOTMINIMAL
 
 #ifdef MTC_EXPERIMENTAL
-	                if(paccount->runfilter|| pconfig->run_summary)
+	                if(((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)|| pconfig->run_summary)
 #else
-	                if(paccount->runfilter)
+	                if((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)
 #endif /*MTC_EXPERIMENTAL*/
                     {
                         if((buf= pop_get_header(pnetinfo, paccount, buf, i))== NULL)

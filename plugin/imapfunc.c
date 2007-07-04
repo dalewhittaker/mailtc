@@ -79,7 +79,7 @@ static mtc_error imap_send(mtc_net *pnetinfo, mtc_account *paccount, gboolean se
     g_free(imap_msg);
     if(retval!= MTC_RETURN_TRUE)
     {
-        plg_err(S_IMAPFUNC_ERR_SEND, errcmd, paccount->hostname);
+        plg_err(S_IMAPFUNC_ERR_SEND, errcmd, paccount->server);
         net_disconnect(pnetinfo);
     }
     return(retval);
@@ -229,7 +229,7 @@ static mtc_error imap_login(mtc_net *pnetinfo, mtc_account *paccount)
 	if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1, 
         TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, TAGGED_RESPONSE(IMAP_OK))))
 	{	
-		plg_err(S_IMAPFUNC_ERR_SEND_LOGIN, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_LOGIN, paccount->server);
         imap_close(pnetinfo, paccount);
 		return(MTC_ERR_CONNECT);
 	}
@@ -250,7 +250,7 @@ static mtc_error imap_logout(mtc_net *pnetinfo, mtc_account *paccount)
     if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1, 
         TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, IMAP_BYE| TAGGED_RESPONSE(IMAP_OK))))
 	{
-		plg_err(S_IMAPFUNC_ERR_SEND_LOGOUT, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_LOGOUT, paccount->server);
         imap_close(pnetinfo, paccount);
 		return(MTC_ERR_CONNECT);
 	}
@@ -311,7 +311,7 @@ static mtc_error crammd5_login(mtc_net *pnetinfo, mtc_account *paccount)
 	/*receive back from server to check username was sent ok*/
 	if(!(buf= imap_recv_crammd5(pnetinfo, buf)))
 	{
-		plg_err(S_IMAPFUNC_ERR_SEND_AUTHENTICATE, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_AUTHENTICATE, paccount->server);
         imap_close(pnetinfo, paccount);
 		return(MTC_ERR_CONNECT);
 	}
@@ -339,7 +339,7 @@ static mtc_error crammd5_login(mtc_net *pnetinfo, mtc_account *paccount)
     if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1, 
         TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, TAGGED_RESPONSE(IMAP_OK))))
 	{	
-		plg_err(S_IMAPFUNC_ERR_SEND_CRAM_MD5, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_CRAM_MD5, paccount->server);
         imap_close(pnetinfo, paccount);
 		return(MTC_ERR_CONNECT);
 	}
@@ -396,7 +396,7 @@ static GString *imap_select_inbox(mtc_net *pnetinfo, mtc_account *paccount, GStr
     if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1,
         TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, TAGGED_RESPONSE(IMAP_OK)))) 
 	{
-		plg_err(S_IMAPFUNC_ERR_SEND_SELECT, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_SELECT, paccount->server);
         imap_close(pnetinfo, paccount);
 	}
     
@@ -534,9 +534,9 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
 
             /*get/add the message header if we need to*/
 #ifdef MTC_EXPERIMENTAL
-	        if(paccount->runfilter|| pconfig->run_summary)
+	        if(((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)|| pconfig->run_summary)
 #else
-	        if(paccount->runfilter)
+	        if((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)
 #endif /*MTC_EXPERIMENTAL*/
             {
                if((header= imap_get_header(pnetinfo, paccount, header, uidstring))== NULL)
@@ -619,7 +619,7 @@ static mtc_error imap_mark_read(mtc_net *pnetinfo, mtc_account *paccount, const 
         if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1,
             TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, TAGGED_RESPONSE(IMAP_OK)))) 
 	    {
-			plg_err(S_IMAPFUNC_ERR_SEND_STORE, paccount->hostname);
+			plg_err(S_IMAPFUNC_ERR_SEND_STORE, paccount->server);
             imap_close(pnetinfo, paccount);
 			fclose(infile);
             return(MTC_ERR_CONNECT);
@@ -668,7 +668,7 @@ static mtc_error imap_get_msgs(mtc_net *pnetinfo, mtc_account *paccount, const m
     if(!(buf= imap_recv(pnetinfo, buf, pnetinfo->msgid- 1,
         TAGGED_RESPONSE(IMAP_OK)| TAGGED_RESPONSE(IMAP_BAD)| TAGGED_RESPONSE(IMAP_NO)| IMAP_BYE, TAGGED_RESPONSE(IMAP_OK)))) 
 	{
-		plg_err(S_IMAPFUNC_ERR_SEND_SELECT, paccount->hostname);
+		plg_err(S_IMAPFUNC_ERR_SEND_SELECT, paccount->server);
         imap_close(pnetinfo, paccount);
 	    g_string_free(uidvalidity, TRUE);
         return(MTC_ERR_CONNECT);
