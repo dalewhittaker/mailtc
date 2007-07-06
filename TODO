@@ -2,15 +2,11 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-            i) re-write filter stuff to go with the xml config
-                a) duplicates, missing elements etc
-                b) improve read/write filter stuff and tidy
-                c) test all the filtering of mails, including Cc: and To:
-                d) convert to a GSList
-            ii) tidy of xml stuff
-                a) re-write write routines similar to read, i.e have a elist array.  This will allow elements to be defined once in a single place
-            iii) final cleanup/testing (with valgrind)
-    b) proxy server option?
+            i) test all the filtering of mails, including Cc: and To:
+                a) test 'match all' and 'match any'
+            ii) convert filter stuff to a GSList, then allow the dialog to add/remove filters
+            iii) write migrate script, and test
+            iv) final cleanup/testing (with valgrind)
 
 2) Compile/test on win32
     a) After xml stuff is done, get it all to compile on win32
@@ -44,11 +40,5 @@ NEXT RELEASE:
 WISH LIST TASKS:
 1) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
 2) Threading, allowing reading (click) when checking new mail (big job).
+3) proxy server option?
 
-------------------------------
-***TO ADD NEW LANG***
-use msginit -l <lang> in po dir to create po file
-translate the po file
-add the lang to ALL_LINGUAS in configure.ac
-aclocal;autoconf;automake
-./configure;make etc

@@ -228,11 +228,8 @@ static gboolean msglist_filter(msg_header *pheader, mtc_filter *pfilter)
             }
         }
         
-        if(field== NULL)
-            return FALSE;
-
         /*search the subject or from for a match*/
-        if(strstr(field, pfilter->search_string[i])!= NULL)
+        if((field!= NULL)&& strstr(field, pfilter->search_string[i])!= NULL)
         {
             if(pfilter->contains[i])
                 found++;

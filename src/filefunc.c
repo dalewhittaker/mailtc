@@ -429,7 +429,8 @@ static gboolean read_accounts(xmlDocPtr doc, xmlNodePtr parent)
                     
         /*account found, now get the values from it*/
         if((xmlStrEqual(node->name, BAD_CAST ELEMENT_ACCOUNT))&& (node->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(node->children))
-            retval= acc_read(doc, node);
+            if(acc_read(doc, node)== FALSE)
+                retval= FALSE;
         
         node= node->prev;
     }
@@ -483,16 +484,16 @@ static gboolean cfg_elements(xmlDocPtr doc)
             /*now copy the values*/
             pcontent= xmlNodeListGetString(doc, child->children, 1);
             
-            retval= cfg_copy_element(child, elements, pcontent);    
+            if(cfg_copy_element(child, elements, pcontent)== FALSE)
+                retval= FALSE;
+
             xmlFree(pcontent);
 
-            /*if it returned an error break out*/
-            if(retval== FALSE)
-                break;
         }
         /*if the accounts are found, read them in*/
         else if(xmlIsBlankNode(child->children)&& (xmlStrEqual(child->name, BAD_CAST ELEMENT_ACCOUNTS)))
-            retval= read_accounts(doc, child);
+            if(read_accounts(doc, child)== FALSE)
+                retval= FALSE;
 
         child= child->next;
     }
@@ -808,6 +809,7 @@ static gboolean pw_write(xmlNodePtr acc_node, gchar *password)
     if(encstring== NULL)
         return FALSE;
     
+    /*TODO would be nice to use a common elist here*/
     pw_node= put_node_str(acc_node, ELEMENT_ENCPASSWORD, encstring);
     g_free(encstring);
 /*otherwise write a clear password*/
@@ -838,6 +840,7 @@ static gboolean acc_write(xmlNodePtr root_node)
 		paccount= (mtc_account *)pcurrent->data;
         picon= &paccount->icon;
 		
+        /*TODO would be nice to use a common elist here*/
         acc_node= put_node_empty(accs_node, ELEMENT_ACCOUNT);
         put_node_str(acc_node, ELEMENT_NAME, paccount->name);
         put_node_str(acc_node, ELEMENT_PLUGINNAME, paccount->plgname);
@@ -895,6 +898,7 @@ gboolean cfg_write(void)
     xmlDocSetRootElement(doc, root_node);
 
     /*create new node, and "attach" as child of root node*/
+    /*TODO would be nice to use a common elist here*/
     put_node_str(root_node, ELEMENT_READCOMMAND, config.read_command);
     put_node_int(root_node, ELEMENT_INTERVAL, config.interval);
     put_node_int(root_node, ELEMENT_ERRORFREQUENCY, config.err_freq);

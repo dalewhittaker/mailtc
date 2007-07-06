@@ -149,16 +149,22 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             /*Now write each of the filters*/
             for(i= 0; i< MAX_FILTER_EXP; i++)
             {
+                /*check there is a valid field value*/    
+                if(pfilter->field[i]>= (sizeof(ffield)/ sizeof(ffield[0])))
+                {
+                    err_dlg(GTK_MESSAGE_WARNING, "Error: invalid 'field' element %d\n", pfilter->field[0]);
+                    return FALSE;
+                }
+
                 /*only write if there is a string there*/
-		        if(pfilter->search_string[i][0]!= 0)
+		        /*TODO would really like to use an elements struct in some way*/
+                if(pfilter->search_string[i][0]!= 0)
                 {
                     filter_node= put_node_empty(filters_node, ELEMENT_FILTER);
                 
                     put_node_bool(filter_node, ELEMENT_CONTAINS, pfilter->contains[i]);
                     put_node_str(filter_node, ELEMENT_VALUE, pfilter->search_string[i]);
-                    
-                    if(pfilter->field[i]< (sizeof(ffield)/ sizeof(ffield[0])))
-                        put_node_str(filter_node, ELEMENT_FIELD, ffield[pfilter->field[i]]);
+                    put_node_str(filter_node, ELEMENT_FIELD, ffield[pfilter->field[i]]);
                 }
             }
         }
@@ -166,12 +172,13 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
     return TRUE;
 }
 
-/*TODO needs a load of work*/
+/*function to read in a filter*/
 static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount, gint index)
 {
 
     mtc_filter *pfilter;
     gchar tmpfield[FILTERSTRING_LEN];
+        gboolean retval= TRUE;
 
     pfilter= paccount->pfilters;
     memset(tmpfield, '\0', sizeof(tmpfield));
@@ -179,6 +186,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
     /*brackets here, bad*/
     {
         xmlChar *pcontent= NULL;
+        elist *pelement= NULL;
         elist elements[]=
         {
             { ELEMENT_CONTAINS, EL_BOOL, &pfilter->contains[index],     sizeof(pfilter->contains[index]),        0 },
@@ -187,9 +195,6 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
             {  NULL,            EL_NULL, NULL, 0, 0 },
         };
 
-
-        /*TODO enable the filter if search_string ('value') found*/
-        
         /*ok, now get each of the filters fields*/
         while(node!= NULL)
         {
@@ -200,13 +205,10 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
                  /*now copy the values*/
                 pcontent= xmlNodeListGetString(doc, node->children, 1);
             
-                /*TODO error check*/
-                /*retval=*/ cfg_copy_element(node, elements, pcontent);    
-                xmlFree(pcontent);
+                if(cfg_copy_element(node, elements, pcontent)== FALSE)
+                    retval= FALSE;
 
-                /*if it returned an error break out*/
-                /*if(retval== FALSE)
-                    break;*/
+                xmlFree(pcontent);
             }
             node= node->next;
         }
@@ -219,11 +221,23 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
                     pfilter->field[index]= i;
          }
 
-         /*enable the filters if there is a string to search*/
-         if(pfilter->search_string[index][0]!= 0)
+        /*search for missing elements*/
+        pelement= &elements[0];
+        while(pelement->name!= NULL)
+        {
+            if(!pelement->found)
+            {
+                err_dlg(GTK_MESSAGE_WARNING, "Error: '%s' element not found for filter %d.\n", pelement->name, paccount->id);           
+                retval= FALSE;
+            }
+            pelement++;
+        }
+
+        /*enable the filters if there is a string to search*/
+        if(pfilter->search_string[index][0]!= 0)
             pfilter->enabled= TRUE;
     }
-    return TRUE;
+    return(retval);
 }
 
 /*function to read in any filter info from the config file*/
@@ -240,6 +254,7 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 
         /*TODO this will change as evenutally it will be a list*/
         gint i= 0;
+        gboolean match_found= FALSE;
 
         /*allocate for the filters TODO will eventually be a list*/
         paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
@@ -256,9 +271,11 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 
             /*filter found, now get the values from it*/
             if((xmlStrEqual(child->name, BAD_CAST ELEMENT_FILTER))&& (child->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(child->children))
-                retval= filter_read(doc, child->children, paccount, i++);
-            
-            /*TODO needs to be tidied*/
+            {
+                if(filter_read(doc, child->children, paccount, i++)== FALSE)
+                    retval= FALSE;
+            }
+            /*otherwise, if it is match all, treat it*/
             else if((xmlStrEqual(child->name, BAD_CAST ELEMENT_MATCHALL))&&
                     (child->type== XML_ELEMENT_NODE)&&
                     (child->children!= NULL)&&
@@ -268,6 +285,10 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
                 pcontent= xmlNodeListGetString(doc, child->children, 1);
 
                 pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
+                if(match_found)
+                    err_dlg(GTK_MESSAGE_WARNING, "Error: duplicate element '%s'\n", BAD_CAST child->name);
+                
+                match_found= TRUE;
                 xmlFree(pcontent);
 
             }
