@@ -53,6 +53,12 @@
 
 #define BASE64_PASSWORD_LEN (PASSWORD_LEN* 4/ 3+ 6)
 
+#ifdef _POSIX_SOURCE
+#define MKDIR_MODE (S_IRWXU| S_IRWXG| S_IROTH| S_IXOTH)
+#else
+#define MKDIR_MODE (S_IRRWUI)
+#endif /*_POSIX_SOURCE*/
+
 /*wrapper to create a directory*/
 static void mk_dir(gchar *pfile)
 {
@@ -65,7 +71,7 @@ static void mk_dir(gchar *pfile)
 		}
 		else
 		{
-            if(g_mkdir(pfile, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)== -1)
+            if(g_mkdir(pfile, MKDIR_MODE)== -1)
 		    {
                 g_printerr("%s %s: %s\n", S_FILEFUNC_ERR_MKDIR, pfile, g_strerror(errno));
                 exit(EXIT_FAILURE);

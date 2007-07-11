@@ -156,8 +156,7 @@ mtc_error net_connect(mtc_net *pnetinfo, mtc_account *paccount)
 	/*setup the connection details*/
 	their_addr.sin_family= AF_INET;
 	their_addr.sin_addr= *((struct in_addr *)he->h_addr_list[0]);
-	/*their_addr.sin_port= htons(atoi(paccount->port));*/
-	their_addr.sin_port= htons(paccount->port);
+	their_addr.sin_port= g_htons(paccount->port);
 	memset(&(their_addr.sin_zero), '\0', 8);
 	
     /*get the current connect timeout val*/

@@ -461,3 +461,8 @@ Much needed cleanup of header files.
 Password is now base64 encoded for future xml config.
 Read/write password from account files instead of separate password files.
 Move conf dir to $HOME/.config/mailtc
+
+1.3.7:
+Re-implement of all config/accounts/filters to use a single xml file (mailtc now requires
+libxml).
+Add To: and Cc: to list of possible mail header fields that can be filtered.

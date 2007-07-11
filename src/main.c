@@ -382,8 +382,11 @@ gint main(gint argc, gchar *argv[])
 	g_atexit(atexit_func);
 	
 	/*setup to cleanup on exit*/
+    /*these two signals are not available on win32*/
+#ifdef _POSIX_SOURCE
 	signal(SIGHUP, term_handler);
 	signal(SIGQUIT, term_handler);
+#endif /*_POSIX_SOURCE*/
 	signal(SIGTERM, term_handler);
 	signal(SIGABRT, term_handler);
 	signal(SIGINT, term_handler);

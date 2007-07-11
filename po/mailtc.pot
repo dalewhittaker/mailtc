@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-11 14:48+0100\n"
+"POT-Creation-Date: 2007-07-11 08:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -569,66 +569,70 @@ msgstr ""
 msgid "Error getting home directory\n"
 msgstr ""
 
-#. main.c strings
-#: include/strings.h:193
-#, c-format
-msgid "Error: Instance of %s already running\n"
-msgstr ""
-
-#: include/strings.h:194
-msgid "Error closing log file: "
-msgstr ""
-
-#: include/strings.h:195
-msgid "Error writing header to log file: "
-msgstr ""
-
-#: include/strings.h:196
-#, c-format
-msgid "%s killed.\n"
-msgstr ""
-
-#: include/strings.h:197
-#, c-format
-msgid "%s encountered a segmentation fault.  Please report this bug\n"
-msgstr ""
-
-#: include/strings.h:198
-msgid "Error closing PID file\n"
-msgstr ""
-
-#: include/strings.h:199
-#, c-format
-msgid "Error: cannot kill process: %d\n"
-msgstr ""
-
-#: include/strings.h:200
-#, c-format
-msgid "Error opening pid file %s for writing\n"
-msgstr ""
-
-#: include/strings.h:201
-#, c-format
-msgid "Error reading PID file %s\n"
-msgstr ""
-
-#: include/strings.h:202
-#, c-format
-msgid "Error renaming pid file %s to temp pid file %s\n"
-msgstr ""
-
-#: include/strings.h:203
-#, c-format
-msgid "%s started %s\n"
-msgstr ""
-
-#: include/strings.h:204
+#: include/strings.h:191
 #, c-format
 msgid ""
 "%s exists, but is not a directory, you must remove this before %s can run\n"
 msgstr ""
 
-#: include/strings.h:206
+#: include/strings.h:192
+msgid "Error creating directory\n"
+msgstr ""
+
+#. main.c strings
+#: include/strings.h:195
+#, c-format
+msgid "Error: Instance of %s already running\n"
+msgstr ""
+
+#: include/strings.h:196
+msgid "Error closing log file: "
+msgstr ""
+
+#: include/strings.h:197
+msgid "Error writing header to log file: "
+msgstr ""
+
+#: include/strings.h:198
+#, c-format
+msgid "%s killed.\n"
+msgstr ""
+
+#: include/strings.h:199
+#, c-format
+msgid "%s encountered a segmentation fault.  Please report this bug\n"
+msgstr ""
+
+#: include/strings.h:200
+msgid "Error closing PID file\n"
+msgstr ""
+
+#: include/strings.h:201
+#, c-format
+msgid "Error: cannot kill process: %d\n"
+msgstr ""
+
+#: include/strings.h:202
+#, c-format
+msgid "Error opening pid file %s for writing\n"
+msgstr ""
+
+#: include/strings.h:203
+#, c-format
+msgid "Error reading PID file %s\n"
+msgstr ""
+
+#: include/strings.h:204
+#, c-format
+msgid "Error renaming pid file %s to temp pid file %s\n"
+msgstr ""
+
+#: include/strings.h:205
+#, c-format
+msgid "%s started %s\n"
+msgstr ""
+
+#: include/strings.h:207
 #, c-format
 msgid ""
 "%s %s (C) 2006 Dale Whittaker\n"
@@ -639,7 +643,7 @@ msgid ""
 "\t%s -k (kill all mailtc processes)\n"
 msgstr ""
 
-#: include/strings.h:211
+#: include/strings.h:212
 #, c-format
 msgid ""
 "%s %s (C) 2006 Dale Whittaker\n"
@@ -650,36 +654,36 @@ msgid ""
 msgstr ""
 
 #. plugin.c strings
-#: include/strings.h:218
+#: include/strings.h:219
 #, c-format
 msgid "Error closing plugin %s: %s"
 msgstr ""
 
-#: include/strings.h:219
-msgid "Error: module loading not supported on this system"
-msgstr ""
-
 #: include/strings.h:220
-#, c-format
-msgid "Error opening plugin %s: %s\n"
+msgid "Error: module loading not supported on this system"
 msgstr ""
 
 #: include/strings.h:221
 #, c-format
-msgid "Error getting plugin pointer: %s\n"
+msgid "Error opening plugin %s: %s\n"
 msgstr ""
 
 #: include/strings.h:222
 #, c-format
-msgid "Error initialising plugin %s: %s\n"
+msgid "Error getting plugin pointer: %s\n"
 msgstr ""
 
 #: include/strings.h:223
 #, c-format
-msgid "Error: plugin %s is not compatible with %s %s\n"
+msgid "Error initialising plugin %s: %s\n"
 msgstr ""
 
 #: include/strings.h:224
+#, c-format
+msgid "Error: plugin %s is not compatible with %s %s\n"
+msgstr ""
+
+#: include/strings.h:225
 #, c-format
 msgid "Error: cannot find plugin %s\n"
 msgstr ""

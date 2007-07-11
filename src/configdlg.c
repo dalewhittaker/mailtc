@@ -589,8 +589,10 @@ static void protocol_combo_changed(GtkComboBox *entry)
 
 #ifdef MTC_NOTMINIMAL
 	/*Now enable/disable the filter widgets depending on plugin flags*/
-	gtk_widget_set_sensitive(filter_button, (pitem->flags& MTC_ENABLE_FILTERS));
-	gtk_widget_set_sensitive(filter_checkbox, (pitem->flags& MTC_ENABLE_FILTERS));
+    /*TODO removed for now, as was causing buttons to be active when they shouldn't*/
+    /*this will be reworked in a future release*/
+	/*gtk_widget_set_sensitive(filter_button, (pitem->flags& MTC_ENABLE_FILTERS));
+	gtk_widget_set_sensitive(filter_checkbox, (pitem->flags& MTC_ENABLE_FILTERS));*/
 #endif /*MTC_NOTMINIMAL*/
 }
 

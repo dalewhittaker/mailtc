@@ -2,18 +2,14 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-            i) test all the filtering of mails, including Cc: and To:
-                a) test 'match all' and 'match any'
-            ii) convert filter stuff to a GSList, then allow the dialog to add/remove filters
-            iii) write migrate script, and test
-            iv) final cleanup/testing (with valgrind)
+            i) convert filter stuff to a GSList, then allow the dialog to add/remove filters
+            ii) final cleanup/testing (with valgrind)
 
 2) Compile/test on win32
-    a) After xml stuff is done, get it all to compile on win32
-    b) Test it all works, port any stuff back if needed
-    c) Use Nullsoft scriptable installer as an installer and test.
+    a) Compile rest of plugins and test
+    b) Use Nullsoft scriptable installer as an installer and test.
+    c) Make sure GtkStatusIcon stuff is correct.
     d) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
-    e) Make sure GtkStatusIcon stuff is correct.
 
 2) Test with valgrind:
     valgrind needs to be run as follows:
