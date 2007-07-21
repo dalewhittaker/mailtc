@@ -41,13 +41,27 @@
 #define FILTERSTRING_LEN 100
 #define MAX_FILTER_EXP 5 
 
-/*widget variables used for most functions*/
-/*TODO this will need changing (somehow)*/
-static GtkWidget *filter_combo1[MAX_FILTER_EXP];
-static GtkWidget *filter_combo2[MAX_FILTER_EXP];
-static GtkWidget *filter_entry[MAX_FILTER_EXP];
-static GtkWidget *filter_radio[2];
-static GtkWidget *clear_button;
+/*structs used for the filter widgets*/
+typedef struct _filter_widgets
+{
+    GtkWidget *combo_field;
+    GtkWidget *combo_contains;
+    GtkWidget *entry_value;
+
+} filter_widgets;
+
+typedef struct _filters_widgets
+{
+    GtkWidget *radio_matchall[2];
+    GtkWidget *button_clear;
+
+    /*TODO will be a list*/
+    /*GSList *list;*/
+    filter_widgets fwidgets[MAX_FILTER_EXP];
+
+} filters_widgets;
+
+filters_widgets widgets;
 
 /*a static list of the filter fields.
  *NOTE this must be the same order as the hfield enum
@@ -90,11 +104,14 @@ static gboolean filter_save(mtc_account *paccount)
 	GtkTreeIter iter;
 	gchar *str= NULL;
 	
+    filter_widgets *pfwidgets;
+    pfwidgets= widgets.fwidgets;
+
 	/*first check if we have values*/
 	/*TODO will eventually be a list*/
     for(i= 0; i< MAX_FILTER_EXP; i++)
 	{
-		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), "")!= 0)
 			++valid;
 	}
 
@@ -113,7 +130,7 @@ static gboolean filter_save(mtc_account *paccount)
     pfilters->enabled= TRUE;
  
     /*Get the matchall field*/
-    pfilters->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0]))? TRUE: FALSE;
+    pfilters->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]))? TRUE: FALSE;
  
     /*remove any existing list and members*/
     if(pfilters->list)
@@ -128,16 +145,16 @@ static gboolean filter_save(mtc_account *paccount)
 	for(i= (MAX_FILTER_EXP- 1); i>= 0; i--)
 	{
 		/*test if the entry is empty*/
-		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), "")!= 0)
 		{
             /*add a new member*/
             pnew= (mtc_filter *)g_malloc0(sizeof(mtc_filter));   
 
 			/*get the active combo value for contains/does not contain and output*/
-			model= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo2[i]));
+			model= gtk_combo_box_get_model(GTK_COMBO_BOX(pfwidgets[i].combo_contains));
 			
             /*TODO not err_exit*/
-            if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(filter_combo2[i]), &iter))
+            if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pfwidgets[i].combo_contains), &iter))
 				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
 			gtk_tree_model_get(model, &iter, 0, &str, -1);
 			
@@ -146,14 +163,14 @@ static gboolean filter_save(mtc_account *paccount)
             g_free(str);
 			
             /*get the active field*/
-            j= gtk_combo_box_get_active(GTK_COMBO_BOX(filter_combo1[i]));
+            j= gtk_combo_box_get_active(GTK_COMBO_BOX(pfwidgets[i].combo_field));
             /*TODO not err_exit*/
             if(j== -1)
                 err_exit(S_FILTERDLG_ERR_COMBO_ITER);
 		    pnew->field= j;
 			
 			/*output the filter search string*/
-            g_strlcpy(pnew->search_string, gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), sizeof(pnew->search_string));
+            g_strlcpy(pnew->search_string, gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), sizeof(pnew->search_string));
 		    
             /*now add to list*/
             pfilters->list= g_slist_prepend(pfilters->list, pnew);
@@ -349,15 +366,18 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 static void clear_button_pressed(void)
 {
 	gint i= 0;
+    filter_widgets *pfwidgets;
+    pfwidgets= widgets.fwidgets;
+
     /*TODO will be a list eventually*/
 	for(i= 0; i< MAX_FILTER_EXP; ++i)
 	{
-		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), 0);
-		gtk_entry_set_text(GTK_ENTRY(filter_entry[i]), "");
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), 0);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), 0);
+		gtk_entry_set_text(GTK_ENTRY(pfwidgets[i].entry_value), "");
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), TRUE);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), FALSE);
 
 }
 		
@@ -373,17 +393,16 @@ gboolean filterdlg_run(mtc_account *paccount)
     gboolean saved= FALSE;
     GSList *pcurrent= NULL;
     mtc_filter *pfilter= NULL;
-	gchar *label= NULL;
 	
+    filter_widgets *pfwidgets;
+    pfwidgets= widgets.fwidgets;
+
     /*set to the start of the list*/
     if(paccount->pfilters)
         pcurrent= paccount->pfilters->list;
 
 	/*create the label*/
-	label= (gchar *)g_malloc0(sizeof(gchar)* (strlen(S_FILTERDLG_LABEL_SELECT)+ 5));
-	g_snprintf(label, strlen(S_FILTERDLG_LABEL_SELECT)+ 4, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
-	filter_label= gtk_label_new(label);
-	g_free(label);
+	filter_label= gtk_label_new("Select mail fields to filter");
 	
 	main_table= gtk_table_new(MAX_FILTER_EXP+ 2, 3, FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, 0, 1);
@@ -393,55 +412,55 @@ gboolean filterdlg_run(mtc_account *paccount)
 	while(i++ < (MAX_FILTER_EXP- 1))
 	{
 		/*create the fields combo*/
-		filter_combo1[i]= gtk_combo_box_new_text();
+		pfwidgets[i].combo_field= gtk_combo_box_new_text();
         for(j= 0; j< (sizeof(ffield)/ sizeof(ffield[0])); j++)
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo1[i]), ffield[j]);
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_field), ffield[j]);
 		
-    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), 0);
+    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), 0);
 
 		/*create the contains/does not contain combo*/
-		filter_combo2[i]= gtk_combo_box_new_text();
-		gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo2[i]), S_FILTERDLG_COMBO_CONTAINS);
-		gtk_combo_box_append_text(GTK_COMBO_BOX(filter_combo2[i]), S_FILTERDLG_COMBO_NOTCONTAINS);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), 0);
+		pfwidgets[i].combo_contains= gtk_combo_box_new_text();
+		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_contains), S_FILTERDLG_COMBO_CONTAINS);
+		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_contains), S_FILTERDLG_COMBO_NOTCONTAINS);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), 0);
 
 		/*create the filter edit box*/
-		filter_entry[i]= gtk_entry_new();
-		gtk_entry_set_max_length(GTK_ENTRY(filter_entry[i]), FILTERSTRING_LEN);
-		gtk_entry_set_width_chars(GTK_ENTRY(filter_entry[i]), 30); 
+		pfwidgets[i].entry_value= gtk_entry_new();
+		gtk_entry_set_max_length(GTK_ENTRY(pfwidgets[i].entry_value), FILTERSTRING_LEN);
+		gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets[i].entry_value), 30); 
 		
 		/*pack the stuff into the boxes*/
 		gtk_table_set_col_spacings(GTK_TABLE(main_table), 10);
 		gtk_table_set_row_spacings(GTK_TABLE(main_table), 10);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_combo1[i], 0, 1, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_combo2[i], 1, 2, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_entry[i], 2, 3, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].combo_field, 0, 1, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].combo_contains, 1, 2, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].entry_value, 2, 3, i+ 1, i+ 2);
 		
 		if(pcurrent/*&& paccount->pfilters->enabled*/)
 		{
             pfilter= (mtc_filter *)pcurrent->data;
-			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->field);
-	    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains);
-			gtk_entry_set_text(GTK_ENTRY(filter_entry[i]), pfilter->search_string);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), pfilter->field);
+	    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), !pfilter->contains);
+			gtk_entry_set_text(GTK_ENTRY(pfwidgets[i].entry_value), pfilter->search_string);
             pcurrent= g_slist_next(pcurrent);
 		}
 	}
 	
 	/*set the button to clear the entries*/
-	clear_button= gtk_button_new_with_label(S_FILTERDLG_BUTTON_CLEAR);
-  	g_signal_connect(G_OBJECT(clear_button), "clicked", G_CALLBACK(clear_button_pressed), NULL);
+	widgets.button_clear= gtk_button_new_with_label(S_FILTERDLG_BUTTON_CLEAR);
+  	g_signal_connect(G_OBJECT(widgets.button_clear), "clicked", G_CALLBACK(clear_button_pressed), NULL);
 	
-	filter_radio[0]= gtk_radio_button_new_with_label(NULL, S_FILTERDLG_BUTTON_MATCHALL);
-	filter_radio[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(filter_radio[0]), S_FILTERDLG_BUTTON_MATCHANY);
+	widgets.radio_matchall[0]= gtk_radio_button_new_with_label(NULL, S_FILTERDLG_BUTTON_MATCHALL);
+	widgets.radio_matchall[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(widgets.radio_matchall[0]), S_FILTERDLG_BUTTON_MATCHANY);
 	if(paccount->pfilters)
 	{
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), paccount->pfilters->matchall);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), !paccount->pfilters->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]), paccount->pfilters->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), !paccount->pfilters->matchall);
 	}
 	
-	gtk_table_attach(GTK_TABLE(main_table), clear_button, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_radio[0], 0, 1, i+ 2 , i+ 3);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_radio[1], 1, 2, i+ 2 , i+ 3);
+	gtk_table_attach(GTK_TABLE(main_table), widgets.button_clear, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), widgets.radio_matchall[0], 0, 1, i+ 2 , i+ 3);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), widgets.radio_matchall[1], 1, 2, i+ 2 , i+ 3);
 	
 	gtk_container_set_border_width(GTK_CONTAINER(main_table), 10);
 	
