@@ -56,7 +56,7 @@
 #ifdef _POSIX_SOURCE
 #define MKDIR_MODE (S_IRWXU| S_IRWXG| S_IROTH| S_IXOTH)
 #else
-#define MKDIR_MODE (S_IRRWUI)
+#define MKDIR_MODE (S_IRWXU)
 #endif /*_POSIX_SOURCE*/
 
 /*wrapper to create a directory*/
@@ -395,15 +395,6 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
     }
 
-#ifdef MTC_NOTMINIMAL
-    /*TODO needs reviewing*/
-/*	pnew->pfilters= NULL;
-*/		
-    /*TODO will probably change*/
-/*	if(!filter_read(pnew))
-	    pnew->runfilter= FALSE;*/
-#endif /*MTC_NOTMINIMAL*/
-	
 	/*convert any old protocols to new plugin names*/
 	protocol_to_plugin(pnew->plgname);
 
@@ -670,11 +661,7 @@ static void free_account(gpointer data, gpointer user_data)
     }
 
 	/*remove the filter struct, then the account*/
-	if(paccount->pfilters)
-	{
-		g_free(paccount->pfilters);
-		paccount->pfilters= NULL;
-	}
+    free_filters(paccount);
 #endif /*MTC_NOTMINIMAL*/
 
     /*unref the image for our account*/

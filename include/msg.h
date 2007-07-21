@@ -20,7 +20,6 @@
 #ifndef DW_MAILTC_MSG
 #define DW_MAILTC_MSG
 
-/*TODO this may be changed*/
 #include "plg_common.h"
 
 /*msg.c functions*/

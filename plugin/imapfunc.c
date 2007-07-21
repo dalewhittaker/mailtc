@@ -454,6 +454,7 @@ static mtc_error imap_get_uid(gchar *uidstring, gchar *spos, gchar *epos, gchar 
         return(MTC_RETURN_FALSE);
 
     /*create the unique string from the uid and uidvalidity values*/
+    /*TODO fix UIDL_LEN*/
     memset(uidstring, 0, UIDL_LEN);
     uid= (gchar *)g_malloc0((eflag- sflag)+ sizeof(gchar));
     g_strlcpy(uid, sflag, (eflag- sflag)+ 1);

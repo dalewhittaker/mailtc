@@ -28,5 +28,6 @@
 gboolean filterdlg_run(mtc_account *paccount);
 gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
 gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount);
+void free_filters(mtc_account *paccount);
 
 #endif /*DW_MAILTC_FILTERDLG*/

@@ -20,7 +20,6 @@
 #ifndef DW_MAILTC_IMAPFUNC
 #define DW_MAILTC_IMAPFUNC
 
-/*TODO*/
 #include "plg_common.h"
 
 /*imapfunc.c functions*/

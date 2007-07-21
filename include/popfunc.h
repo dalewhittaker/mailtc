@@ -20,7 +20,6 @@
 #ifndef DW_MAILTC_POPFUNC
 #define DW_MAILTC_POPFUNC
 
-/*TODO not sure about this*/
 #include "plg_common.h"
 
 /*popfunc.c functions*/

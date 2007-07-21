@@ -51,7 +51,7 @@ static GtkWidget *clear_button;
 /*a static list of the filter fields.
  *NOTE this must be the same order as the hfield enum
  *otherwise it won't work.  Add new ones as needed*/
- static gchar ffield[4][10]=
+ static gchar ffield[][10]=
  {
     "From",
     "Subject",
@@ -59,13 +59,29 @@ static GtkWidget *clear_button;
     "Cc"
  } ;
 
+/*function to free any filter data*/
+void free_filters(mtc_account *paccount)
+{
+	if(paccount->pfilters)
+	{
+        GSList *flist;
+
+        /*first free the list if any, then free the filters struct*/
+        flist= paccount->pfilters->list;
+        g_slist_foreach(flist, (GFunc)g_free, NULL);
+
+		g_free(paccount->pfilters);
+		paccount->pfilters= NULL;
+	}
+}
+
 /*function to store the filter struct*/
 static gboolean filter_save(mtc_account *paccount)
 {
     gint valid= 0;
 	gint i= 0;
     gint j;
-    mtc_filter *pfilter= NULL;
+    mtc_filters *pfilter= NULL;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	gchar *str= NULL;
@@ -83,7 +99,7 @@ static gboolean filter_save(mtc_account *paccount)
 	
     /*allocate new filter if it doesn't already exist*/
     if(paccount->pfilters== NULL)
-        paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
+        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
     
     pfilter= paccount->pfilters;
     
@@ -129,7 +145,7 @@ static gboolean filter_save(mtc_account *paccount)
 /*TODO write out the filter struct*/
 gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
 {
-    mtc_filter *pfilter;
+    mtc_filters *pfilter;
     xmlNodePtr filters_node= NULL;
 
     pfilter= paccount->pfilters;
@@ -176,9 +192,9 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
 static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount, gint index)
 {
 
-    mtc_filter *pfilter;
+    mtc_filters *pfilter;
     gchar tmpfield[FILTERSTRING_LEN];
-        gboolean retval= TRUE;
+    gboolean retval= TRUE;
 
     pfilter= paccount->pfilters;
     memset(tmpfield, '\0', sizeof(tmpfield));
@@ -250,14 +266,14 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
     {
         xmlNodePtr child= NULL;
         xmlChar *pcontent= NULL;
-        mtc_filter *pfilter= NULL;
+        mtc_filters *pfilter= NULL;
 
         /*TODO this will change as evenutally it will be a list*/
         gint i= 0;
         gboolean match_found= FALSE;
 
         /*allocate for the filters TODO will eventually be a list*/
-        paccount->pfilters= (mtc_filter *)g_malloc0(sizeof(mtc_filter));
+        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
 
         /*intially do not enable the filter*/
         pfilter= paccount->pfilters;
@@ -324,7 +340,7 @@ gboolean filterdlg_run(mtc_account *paccount)
     guint j;
 	gint result= 0;
     gboolean saved= FALSE;
-	mtc_filter *pfilter= paccount->pfilters;
+	mtc_filters *pfilter= paccount->pfilters;
 	gchar *label= NULL;
 		
 	/*create the label*/

@@ -192,7 +192,7 @@ msg_header *msglist_header(msg_header *hstruct, GString *phstring)
 }
 
 /*test if the message should be filtered*/
-static gboolean msglist_filter(msg_header *pheader, mtc_filter *pfilter)
+static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilter)
 {
     gint i= 0, found= 0;
     gchar *field= NULL;

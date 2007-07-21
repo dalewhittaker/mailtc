@@ -19,7 +19,6 @@
 #ifndef DW_MAILTC_NETFUNC
 #define DW_MAILTC_NETFUNC
 
-/*TODO*/
 #include "plg_common.h"
 
 /*OpenSSL libs for SSL/TLS*/

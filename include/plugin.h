@@ -194,16 +194,30 @@ typedef enum _msg_flags
 
 } msg_flags;
 
+/*TODO needs work*/
+typedef struct _mtc_filter
+{
+    gboolean contains;
+    hfield field;
+    gchar search_string[FILTERSTRING_LEN];
+
+} mtc_filter;
+
 /*structure used to hold the filter details if used*/
-typedef struct mtc_filters
+typedef struct _mtc_filters
 {
     gboolean enabled;
 	gboolean matchall;
+
+    /*TODO all of these will be replaced by a GSList*/
 	gboolean contains[MAX_FILTER_EXP];
     hfield field[MAX_FILTER_EXP];
 	gchar search_string[MAX_FILTER_EXP][FILTERSTRING_LEN+ 1];
 	
-} mtc_filter;
+    /*TODO needs work*/
+    GSList *list; /*a list of each filter*/
+
+} mtc_filters;
 
 /*the message header struct*/
 typedef struct _msg_header
@@ -262,7 +276,7 @@ typedef struct _mtc_account
     msg_info msginfo;
     
     /*filter stuff*/
-	mtc_filter *pfilters;
+	mtc_filters *pfilters;
 #else
     gint num_messages;
 #endif /*MTC_NOTMINIMAL*/

@@ -406,7 +406,7 @@ static mtc_error pop_get_uidl(GString *buf, gchar *uidl_string)
 		g_string_free(buf, TRUE);
 		return(MTC_ERR_EXIT);
 	}
-
+    /*TODO fix UIDL_LEN*/
 	memset(uidl_string, '\0', UIDL_LEN);
 	g_strlcpy(uidl_string, pos+ 1, UIDL_LEN);
     g_strlcat(g_strchomp(uidl_string), "\n", UIDL_LEN);
@@ -586,8 +586,10 @@ static mtc_error check_mail(mtc_net *pnetinfo, mtc_account *paccount, mtc_error 
 	/*test server capabilities*/
 	if(pop_capa(pnetinfo, paccount)!= MTC_RETURN_TRUE)
 	{
-		if(pnetinfo->pdata!= NULL) g_string_free(pnetinfo->pdata, TRUE);
-		return(MTC_ERR_CONNECT);
+		if(pnetinfo->pdata!= NULL)
+            g_string_free(pnetinfo->pdata, TRUE);
+		
+        return(MTC_ERR_CONNECT);
 	}
 
     /*run the authentication function*/
