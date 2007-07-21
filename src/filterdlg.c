@@ -101,29 +101,36 @@ static gboolean filter_save(mtc_account *paccount)
 	if(!valid)
 		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
 	
-    pfilters= paccount->pfilters;
-
     /*allocate new filter if it doesn't already exist*/
-    if(pfilters== NULL)
-    {
-        pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
-        pcurrent= pfilters->list;
-    }
+    if(paccount->pfilters== NULL)
+        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
 
+    pfilters= paccount->pfilters;
+    if(pfilters)
+        pcurrent= pfilters->list;
+    
     /*enable the filter*/
     pfilters->enabled= TRUE;
  
     /*Get the matchall field*/
     pfilters->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0]))? TRUE: FALSE;
  
+    /*remove any existing list and members*/
+    if(pfilters->list)
+    {
+        g_slist_foreach(pfilters->list, (GFunc)g_free, NULL);
+        g_slist_free(pfilters->list);
+        pfilters->list= NULL;
+    }
+
     /*for each filter entry*/
     /*TODO will eventually be a list*/
-	for(i= 0; i< MAX_FILTER_EXP; i++)
+	for(i= (MAX_FILTER_EXP- 1); i>= 0; i--)
 	{
 		/*test if the entry is empty*/
 		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 		{
-            /*ok we have a filter, so create a struct to save it to*/
+            /*add a new member*/
             pnew= (mtc_filter *)g_malloc0(sizeof(mtc_filter));   
 
 			/*get the active combo value for contains/does not contain and output*/
@@ -150,8 +157,10 @@ static gboolean filter_save(mtc_account *paccount)
 		    
             /*now add to list*/
             pfilters->list= g_slist_prepend(pfilters->list, pnew);
+
+            pcurrent= g_slist_next(pcurrent);
         }
-	}  
+	}
     return TRUE;
 }
 
@@ -300,7 +309,8 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
         pfilter= paccount->pfilters;
         pfilter->enabled= FALSE;
  
-        child= node->children;
+        /*NOTE must be read in backwards to avoid them getting swapped when written*/
+        child= node->last;
  
         /*get each filter child element and read it*/
         while(child!= NULL)
@@ -329,7 +339,7 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
                 xmlFree(pcontent);
 
             }
-            child= child->next;
+            child= child->prev;
         }
     }
     return(retval);

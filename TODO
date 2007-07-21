@@ -3,11 +3,11 @@ NEXT RELEASE:
 1) new stuff
     a) Implement new xml config
             i) convert filter stuff to a GSList
-                a) Test reading of list
-                b) Test writing of list
-                c) Get the dialog to add to the list
-                d) Get the dialog to remove from the list
+                a) Get the dialog to add to the list
+                b) Get the dialog to remove from the list
+                c) Need to test with valgrind
             ii) final cleanup/testing (with valgrind)
+            iii) test minimal build compiles
 
 2) Compile/test on win32
     a) Compile rest of plugins and test
