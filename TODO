@@ -3,8 +3,8 @@ NEXT RELEASE:
 1) new stuff
     a) Implement new xml config
             i) convert filter stuff to a GSList
-                a) Get it to read into the list
-                b) Get it to write into the list
+                a) Test reading of list
+                b) Test writing of list
                 c) Get the dialog to add to the list
                 d) Get the dialog to remove from the list
             ii) final cleanup/testing (with valgrind)

@@ -42,6 +42,7 @@
 #define MAX_FILTER_EXP 5 
 
 /*widget variables used for most functions*/
+/*TODO this will need changing (somehow)*/
 static GtkWidget *filter_combo1[MAX_FILTER_EXP];
 static GtkWidget *filter_combo2[MAX_FILTER_EXP];
 static GtkWidget *filter_entry[MAX_FILTER_EXP];
@@ -69,6 +70,7 @@ void free_filters(mtc_account *paccount)
         /*first free the list if any, then free the filters struct*/
         flist= paccount->pfilters->list;
         g_slist_foreach(flist, (GFunc)g_free, NULL);
+        g_slist_free(flist);
 
 		g_free(paccount->pfilters);
 		paccount->pfilters= NULL;
@@ -142,72 +144,78 @@ static gboolean filter_save(mtc_account *paccount)
     return TRUE;
 }
 
-/*TODO write out the filter struct*/
+/*function to write out the filter struct*/
 gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
 {
-    mtc_filters *pfilter;
+    mtc_filters *pfilters;
     xmlNodePtr filters_node= NULL;
 
-    pfilter= paccount->pfilters;
+    pfilters= paccount->pfilters;
 
     /*write the filters out*/
-    if((pfilter!= NULL)&& pfilter->enabled)
+    if((pfilters!= NULL)&& (pfilters->list!= NULL)&& pfilters->enabled)
     {
-        /*TODO eventually this will check if there is a list
-         *only if there is 'filters' gets written*/
+        xmlNodePtr filter_node= NULL;
+        GSList *pcurrent= NULL;
+        mtc_filter *pfilter= NULL;
+
+        filters_node= put_node_empty(acc_node, ELEMENT_FILTERS);
+        put_node_bool(filters_node, ELEMENT_MATCHALL, pfilters->matchall);
+
+        pcurrent= pfilters->list;
+
+        /*Now write each of the filters*/
+        while(pcurrent!= NULL)
         {
-            xmlNodePtr filter_node= NULL;
-            gint i;
+            pfilter= (mtc_filter *)pcurrent->data;
 
-            filters_node= put_node_empty(acc_node, ELEMENT_FILTERS);
-            put_node_bool(filters_node, ELEMENT_MATCHALL, pfilter->matchall);
-
-            /*Now write each of the filters*/
-            for(i= 0; i< MAX_FILTER_EXP; i++)
+            /*check there is a valid field value*/    
+            if(pfilter->field>= (sizeof(ffield)/ sizeof(ffield[0])))
             {
-                /*check there is a valid field value*/    
-                if(pfilter->field[i]>= (sizeof(ffield)/ sizeof(ffield[0])))
-                {
-                    err_dlg(GTK_MESSAGE_WARNING, "Error: invalid 'field' element %d\n", pfilter->field[0]);
-                    return FALSE;
-                }
-
-                /*only write if there is a string there*/
-		        /*TODO would really like to use an elements struct in some way*/
-                if(pfilter->search_string[i][0]!= 0)
-                {
-                    filter_node= put_node_empty(filters_node, ELEMENT_FILTER);
-                
-                    put_node_bool(filter_node, ELEMENT_CONTAINS, pfilter->contains[i]);
-                    put_node_str(filter_node, ELEMENT_VALUE, pfilter->search_string[i]);
-                    put_node_str(filter_node, ELEMENT_FIELD, ffield[pfilter->field[i]]);
-                }
+                err_dlg(GTK_MESSAGE_WARNING, "Error: invalid 'field' element %d\n", pfilter->field);
+                return FALSE;
             }
+
+            /*only write if there is a string there*/
+	        /*TODO would really like to use an elements struct in some way*/
+            if(pfilter->search_string[0]!= 0)
+            {
+                filter_node= put_node_empty(filters_node, ELEMENT_FILTER);
+            
+                put_node_bool(filter_node, ELEMENT_CONTAINS, pfilter->contains);
+                put_node_str(filter_node, ELEMENT_VALUE, pfilter->search_string);
+                put_node_str(filter_node, ELEMENT_FIELD, ffield[pfilter->field]);
+            }
+            pcurrent= g_slist_next(pcurrent);
         }
     }
     return TRUE;
 }
 
 /*function to read in a filter*/
-static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount, gint index)
+static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 {
 
-    mtc_filters *pfilter;
+    mtc_filters *pfilters;
+    mtc_filter *pnew;
     gchar tmpfield[FILTERSTRING_LEN];
     gboolean retval= TRUE;
 
-    pfilter= paccount->pfilters;
+    pfilters= paccount->pfilters;
     memset(tmpfield, '\0', sizeof(tmpfield));
-    
+   
+    /*create the filter list member*/
+    pnew= (mtc_filter *)g_malloc0(sizeof(mtc_filter));   
+
     /*brackets here, bad*/
     {
         xmlChar *pcontent= NULL;
         elist *pelement= NULL;
         elist elements[]=
         {
-            { ELEMENT_CONTAINS, EL_BOOL, &pfilter->contains[index],     sizeof(pfilter->contains[index]),        0 },
-            { ELEMENT_FIELD,    EL_STR,  tmpfield,                      sizeof(tmpfield),                        0 },
-            { ELEMENT_VALUE,    EL_STR,  pfilter->search_string[index], sizeof(pfilter->search_string[index]),   0 },
+            { ELEMENT_CONTAINS, EL_BOOL, &pnew->contains,     sizeof(pnew->contains),       0 },
+            { ELEMENT_FIELD,    EL_STR,  tmpfield,            sizeof(tmpfield),             0 },
+            { ELEMENT_VALUE,    EL_STR,  pnew->search_string, sizeof(pnew->search_string),  0 },
             {  NULL,            EL_NULL, NULL, 0, 0 },
         };
 
@@ -234,7 +242,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
             guint i;
             for(i= 0; i< (sizeof(ffield)/ sizeof(ffield[0])); i++)
                 if(g_ascii_strcasecmp(ffield[i], tmpfield)== 0)
-                    pfilter->field[index]= i;
+                    pnew->field= i;
          }
 
         /*search for missing elements*/
@@ -250,9 +258,13 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
         }
 
         /*enable the filters if there is a string to search*/
-        if(pfilter->search_string[index][0]!= 0)
-            pfilter->enabled= TRUE;
+        if(pnew->search_string[0]!= 0)
+            pfilters->enabled= TRUE;
     }
+
+    /*Now add to the list*/
+    pfilters->list= g_slist_prepend(pfilters->list, pnew);
+    
     return(retval);
 }
 
@@ -268,11 +280,9 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
         xmlChar *pcontent= NULL;
         mtc_filters *pfilter= NULL;
 
-        /*TODO this will change as evenutally it will be a list*/
-        gint i= 0;
         gboolean match_found= FALSE;
 
-        /*allocate for the filters TODO will eventually be a list*/
+        /*allocate for the filters*/
         paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
 
         /*intially do not enable the filter*/
@@ -282,13 +292,13 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
         child= node->children;
  
         /*get each filter child element and read it*/
-        while((child!= NULL)&& (i< 5))
+        while(child!= NULL)
         {
 
             /*filter found, now get the values from it*/
             if((xmlStrEqual(child->name, BAD_CAST ELEMENT_FILTER))&& (child->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(child->children))
             {
-                if(filter_read(doc, child->children, paccount, i++)== FALSE)
+                if(filter_read(doc, child->children, paccount)== FALSE)
                     retval= FALSE;
             }
             /*otherwise, if it is match all, treat it*/
@@ -340,9 +350,14 @@ gboolean filterdlg_run(mtc_account *paccount)
     guint j;
 	gint result= 0;
     gboolean saved= FALSE;
-	mtc_filters *pfilter= paccount->pfilters;
+    GSList *pcurrent= NULL;
+    mtc_filter *pfilter= NULL;
 	gchar *label= NULL;
-		
+	
+    /*set to the start of the list*/
+    if(paccount->pfilters)
+        pcurrent= paccount->pfilters->list;
+
 	/*create the label*/
 	label= (gchar *)g_malloc0(sizeof(gchar)* (strlen(S_FILTERDLG_LABEL_SELECT)+ 5));
 	g_snprintf(label, strlen(S_FILTERDLG_LABEL_SELECT)+ 4, S_FILTERDLG_LABEL_SELECT, MAX_FILTER_EXP);
@@ -381,11 +396,13 @@ gboolean filterdlg_run(mtc_account *paccount)
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_combo2[i], 1, 2, i+ 1, i+ 2);
 		gtk_table_attach_defaults(GTK_TABLE(main_table), filter_entry[i], 2, 3, i+ 1, i+ 2);
 		
-		if(paccount->pfilters/*&& paccount->pfilters->enabled*/)
+		if(pcurrent/*&& paccount->pfilters->enabled*/)
 		{
-			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->field[i]);
-	    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains[i]);
-			gtk_entry_set_text(GTK_ENTRY(filter_entry[i]), pfilter->search_string[i]);
+            pfilter= (mtc_filter *)pcurrent->data;
+			gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo1[i]), pfilter->field);
+	    	gtk_combo_box_set_active(GTK_COMBO_BOX(filter_combo2[i]), !pfilter->contains);
+			gtk_entry_set_text(GTK_ENTRY(filter_entry[i]), pfilter->search_string);
+            pcurrent= g_slist_next(pcurrent);
 		}
 	}
 	
@@ -397,8 +414,8 @@ gboolean filterdlg_run(mtc_account *paccount)
 	filter_radio[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(filter_radio[0]), S_FILTERDLG_BUTTON_MATCHANY);
 	if(paccount->pfilters)
 	{
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), pfilter->matchall);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), !pfilter->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[0]), paccount->pfilters->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_radio[1]), !paccount->pfilters->matchall);
 	}
 	
 	gtk_table_attach(GTK_TABLE(main_table), clear_button, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
