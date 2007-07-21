@@ -83,7 +83,9 @@ static gboolean filter_save(mtc_account *paccount)
     gint valid= 0;
 	gint i= 0;
     gint j;
-    mtc_filters *pfilter= NULL;
+    GSList *pcurrent= NULL;
+    mtc_filter *pnew= NULL;
+    mtc_filters *pfilters= NULL;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	gchar *str= NULL;
@@ -99,17 +101,20 @@ static gboolean filter_save(mtc_account *paccount)
 	if(!valid)
 		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
 	
+    pfilters= paccount->pfilters;
+
     /*allocate new filter if it doesn't already exist*/
-    if(paccount->pfilters== NULL)
-        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
-    
-    pfilter= paccount->pfilters;
-    
+    if(pfilters== NULL)
+    {
+        pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
+        pcurrent= pfilters->list;
+    }
+
     /*enable the filter*/
-    pfilter->enabled= TRUE;
+    pfilters->enabled= TRUE;
  
     /*Get the matchall field*/
-    pfilter->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0]))? TRUE: FALSE;
+    pfilters->matchall= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_radio[0]))? TRUE: FALSE;
  
     /*for each filter entry*/
     /*TODO will eventually be a list*/
@@ -118,6 +123,9 @@ static gboolean filter_save(mtc_account *paccount)
 		/*test if the entry is empty*/
 		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), "")!= 0)
 		{
+            /*ok we have a filter, so create a struct to save it to*/
+            pnew= (mtc_filter *)g_malloc0(sizeof(mtc_filter));   
+
 			/*get the active combo value for contains/does not contain and output*/
 			model= gtk_combo_box_get_model(GTK_COMBO_BOX(filter_combo2[i]));
 			
@@ -127,7 +135,7 @@ static gboolean filter_save(mtc_account *paccount)
 			gtk_tree_model_get(model, &iter, 0, &str, -1);
 			
             /*set the contains for each*/
-			pfilter->contains[i]= (g_ascii_strcasecmp(str, S_FILTERDLG_COMBO_CONTAINS)== 0)? TRUE: FALSE;
+			pnew->contains= (g_ascii_strcasecmp(str, S_FILTERDLG_COMBO_CONTAINS)== 0)? TRUE: FALSE;
             g_free(str);
 			
             /*get the active field*/
@@ -135,12 +143,15 @@ static gboolean filter_save(mtc_account *paccount)
             /*TODO not err_exit*/
             if(j== -1)
                 err_exit(S_FILTERDLG_ERR_COMBO_ITER);
-		    pfilter->field[i]= j;
+		    pnew->field= j;
 			
 			/*output the filter search string*/
-            g_strlcpy(pfilter->search_string[i], gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), sizeof(pfilter->search_string[i]));
-		}
-	}   
+            g_strlcpy(pnew->search_string, gtk_entry_get_text(GTK_ENTRY(filter_entry[i])), sizeof(pnew->search_string));
+		    
+            /*now add to list*/
+            pfilters->list= g_slist_prepend(pfilters->list, pnew);
+        }
+	}  
     return TRUE;
 }
 
