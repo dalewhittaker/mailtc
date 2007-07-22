@@ -2,12 +2,13 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-            i) convert filter stuff to a GSList
-                a) Get the dialog to add to the list
-                b) Get the dialog to remove from the list
-                c) Need to test with valgrind
+            i) Get the filter dialog to add/delete filters using the lists
+                    i) see tbl_add as example of how to add to table, and do a similar thing for filters
             ii) final cleanup/testing (with valgrind)
             iii) test minimal build compiles
+    b) sort all the strings
+    c) update the web page etc
+    d) check out remaining TODO
 
 2) Compile/test on win32
     a) Compile rest of plugins and test

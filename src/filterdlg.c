@@ -37,9 +37,8 @@
 #define ELEMENT_FIELD    "field"
 #define ELEMENT_VALUE    "value"
 
-/*TODO don't like lengths, fix it*/
+#define INITIAL_FILTERS 5
 #define FILTERSTRING_LEN 100
-#define MAX_FILTER_EXP 5 
 
 /*structs used for the filter widgets*/
 typedef struct _filter_widgets
@@ -55,13 +54,11 @@ typedef struct _filters_widgets
     GtkWidget *radio_matchall[2];
     GtkWidget *button_clear;
 
-    /*TODO will be a list*/
-    /*GSList *list;*/
-    filter_widgets fwidgets[MAX_FILTER_EXP];
+    GSList *list;
 
 } filters_widgets;
 
-filters_widgets widgets;
+static filters_widgets widgets;
 
 /*a static list of the filter fields.
  *NOTE this must be the same order as the hfield enum
@@ -95,25 +92,28 @@ void free_filters(mtc_account *paccount)
 static gboolean filter_save(mtc_account *paccount)
 {
     gint valid= 0;
-	gint i= 0;
     gint j;
     GSList *pcurrent= NULL;
+    GSList *pwlist= NULL;
     mtc_filter *pnew= NULL;
     mtc_filters *pfilters= NULL;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	gchar *str= NULL;
+    filter_widgets *pfwidgets= NULL;
 	
-    filter_widgets *pfwidgets;
-    pfwidgets= widgets.fwidgets;
-
 	/*first check if we have values*/
-	/*TODO will eventually be a list*/
-    for(i= 0; i< MAX_FILTER_EXP; i++)
-	{
-		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), "")!= 0)
-			++valid;
-	}
+    pwlist= widgets.list;
+    while(pwlist!= NULL)
+    {
+        pfwidgets= (filter_widgets *)pwlist->data;
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets->entry_value)), "")!= 0)
+		{
+            ++valid;
+            break;
+        }
+        pwlist= g_slist_next(pwlist);
+    }
 
 	if(!valid)
 		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
@@ -140,44 +140,56 @@ static gboolean filter_save(mtc_account *paccount)
         pfilters->list= NULL;
     }
 
-    /*for each filter entry*/
-    /*TODO will eventually be a list*/
-	for(i= (MAX_FILTER_EXP- 1); i>= 0; i--)
-	{
-		/*test if the entry is empty*/
-		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), "")!= 0)
-		{
+    pwlist= widgets.list;
+    pfwidgets= NULL;
+
+    /*iterate through each widget struct in list*/
+    while(pwlist!= NULL)
+    {
+        pfwidgets= (filter_widgets *)pwlist->data;
+        
+        /*if the value entry is not empty, add the filter to the list*/
+		if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(pfwidgets->entry_value)), "")!= 0)
+        {
             /*add a new member*/
             pnew= (mtc_filter *)g_malloc0(sizeof(mtc_filter));   
 
 			/*get the active combo value for contains/does not contain and output*/
-			model= gtk_combo_box_get_model(GTK_COMBO_BOX(pfwidgets[i].combo_contains));
-			
-            /*TODO not err_exit*/
-            if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pfwidgets[i].combo_contains), &iter))
-				err_exit(S_FILTERDLG_ERR_COMBO_ITER);
-			gtk_tree_model_get(model, &iter, 0, &str, -1);
+			model= gtk_combo_box_get_model(GTK_COMBO_BOX(pfwidgets->combo_contains));
+	
+            if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pfwidgets->combo_contains), &iter))
+			{
+                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
+                g_free(pnew);
+                return FALSE;
+			}
+            gtk_tree_model_get(model, &iter, 0, &str, -1);
 			
             /*set the contains for each*/
 			pnew->contains= (g_ascii_strcasecmp(str, S_FILTERDLG_COMBO_CONTAINS)== 0)? TRUE: FALSE;
             g_free(str);
 			
             /*get the active field*/
-            j= gtk_combo_box_get_active(GTK_COMBO_BOX(pfwidgets[i].combo_field));
-            /*TODO not err_exit*/
+            j= gtk_combo_box_get_active(GTK_COMBO_BOX(pfwidgets->combo_field));
             if(j== -1)
-                err_exit(S_FILTERDLG_ERR_COMBO_ITER);
+            {
+                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
+                g_free(pnew);
+                return FALSE;
+			}
 		    pnew->field= j;
 			
 			/*output the filter search string*/
-            g_strlcpy(pnew->search_string, gtk_entry_get_text(GTK_ENTRY(pfwidgets[i].entry_value)), sizeof(pnew->search_string));
+            g_strlcpy(pnew->search_string, gtk_entry_get_text(GTK_ENTRY(pfwidgets->entry_value)), sizeof(pnew->search_string));
 		    
             /*now add to list*/
             pfilters->list= g_slist_prepend(pfilters->list, pnew);
 
             pcurrent= g_slist_next(pcurrent);
+ 
         }
-	}
+        pwlist= g_slist_next(pwlist);
+    }
     return TRUE;
 }
 
@@ -365,22 +377,37 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 /*button to clear the filter entries*/
 static void clear_button_pressed(void)
 {
-	gint i= 0;
-    filter_widgets *pfwidgets;
-    pfwidgets= widgets.fwidgets;
-
-    /*TODO will be a list eventually*/
-	for(i= 0; i< MAX_FILTER_EXP; ++i)
+    GSList *pcurrent= NULL;
+    filter_widgets *pfwidgets= NULL;
+    
+    pcurrent= widgets.list;
+    
+    /*iterate through the widget list and reset them*/
+    while(pcurrent)
 	{
-		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), 0);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), 0);
-		gtk_entry_set_text(GTK_ENTRY(pfwidgets[i].entry_value), "");
+        pfwidgets= (filter_widgets *)pcurrent->data;
+
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), 0);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), 0);
+		gtk_entry_set_text(GTK_ENTRY(pfwidgets->entry_value), "");
+
+        pcurrent= g_slist_next(pcurrent);
 	}
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]), TRUE);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), FALSE);
 
 }
-		
+
+/*function called when the dialog is destroyed*/
+void filterdlg_destroyed(GtkWidget *widget, gpointer data)
+{
+    if(widgets.list!= NULL)
+    {
+        g_slist_foreach(widgets.list, (GFunc)g_free, NULL);
+        g_slist_free(widgets.list);
+    }
+}
+
 /*display the filter dialog*/
 gboolean filterdlg_run(mtc_account *paccount)
 {
@@ -391,11 +418,12 @@ gboolean filterdlg_run(mtc_account *paccount)
     guint j;
 	gint result= 0;
     gboolean saved= FALSE;
+    gboolean retval= TRUE;
     GSList *pcurrent= NULL;
     mtc_filter *pfilter= NULL;
-	
-    filter_widgets *pfwidgets;
-    pfwidgets= widgets.fwidgets;
+    filter_widgets *pfwidgets= NULL;
+
+    widgets.list= NULL;
 
     /*set to the start of the list*/
     if(paccount->pfilters)
@@ -404,46 +432,52 @@ gboolean filterdlg_run(mtc_account *paccount)
 	/*create the label*/
 	filter_label= gtk_label_new("Select mail fields to filter");
 	
-	main_table= gtk_table_new(MAX_FILTER_EXP+ 2, 3, FALSE);
+	main_table= gtk_table_new(INITIAL_FILTERS+ 2, 3, FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, 0, 1);
 	
 	/*create n number of widgets*/
     /*TODO will be a list eventually*/
-	while(i++ < (MAX_FILTER_EXP- 1))
+	while(i++ < (INITIAL_FILTERS- 1))
 	{
+        /*create the widget struct*/
+        pfwidgets= (filter_widgets *)g_malloc0(sizeof(filter_widgets));
+
 		/*create the fields combo*/
-		pfwidgets[i].combo_field= gtk_combo_box_new_text();
+		pfwidgets->combo_field= gtk_combo_box_new_text();
         for(j= 0; j< (sizeof(ffield)/ sizeof(ffield[0])); j++)
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_field), ffield[j]);
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_field), ffield[j]);
 		
-    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), 0);
+    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), 0);
 
 		/*create the contains/does not contain combo*/
-		pfwidgets[i].combo_contains= gtk_combo_box_new_text();
-		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_contains), S_FILTERDLG_COMBO_CONTAINS);
-		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets[i].combo_contains), S_FILTERDLG_COMBO_NOTCONTAINS);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), 0);
+		pfwidgets->combo_contains= gtk_combo_box_new_text();
+		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_CONTAINS);
+		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_NOTCONTAINS);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), 0);
 
 		/*create the filter edit box*/
-		pfwidgets[i].entry_value= gtk_entry_new();
-		gtk_entry_set_max_length(GTK_ENTRY(pfwidgets[i].entry_value), FILTERSTRING_LEN);
-		gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets[i].entry_value), 30); 
+		pfwidgets->entry_value= gtk_entry_new();
+		gtk_entry_set_max_length(GTK_ENTRY(pfwidgets->entry_value), FILTERSTRING_LEN);
+		gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets->entry_value), 30); 
 		
 		/*pack the stuff into the boxes*/
 		gtk_table_set_col_spacings(GTK_TABLE(main_table), 10);
 		gtk_table_set_row_spacings(GTK_TABLE(main_table), 10);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].combo_field, 0, 1, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].combo_contains, 1, 2, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets[i].entry_value, 2, 3, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->combo_field, 0, 1, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->combo_contains, 1, 2, i+ 1, i+ 2);
+		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->entry_value, 2, 3, i+ 1, i+ 2);
 		
 		if(pcurrent/*&& paccount->pfilters->enabled*/)
 		{
             pfilter= (mtc_filter *)pcurrent->data;
-			gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_field), pfilter->field);
-	    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets[i].combo_contains), !pfilter->contains);
-			gtk_entry_set_text(GTK_ENTRY(pfwidgets[i].entry_value), pfilter->search_string);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), pfilter->field);
+	    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), !pfilter->contains);
+			gtk_entry_set_text(GTK_ENTRY(pfwidgets->entry_value), pfilter->search_string);
             pcurrent= g_slist_next(pcurrent);
 		}
+
+        /*now add the widgets to the widget list*/
+        widgets.list= g_slist_prepend(widgets.list, pfwidgets);
 	}
 	
 	/*set the button to clear the entries*/
@@ -469,6 +503,9 @@ gboolean filterdlg_run(mtc_account *paccount)
 	
 	/*create the filter dialog*/
 	dialog= gtk_dialog_new_with_buttons(S_FILTERDLG_TITLE, NULL, GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+    
+    /*Set the destroy handler, and also various dialog properties*/
+    g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(filterdlg_destroyed), NULL);
 	gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), v_box_filter);
 	gtk_widget_show_all(v_box_filter);
@@ -483,6 +520,11 @@ gboolean filterdlg_run(mtc_account *paccount)
 			/*if OK save the filters to the struct*/
             case GTK_RESPONSE_ACCEPT:
 				saved= filter_save(paccount);
+                if(!saved)
+                {
+                    saved= TRUE;
+                    retval= FALSE;
+                }
 			break;
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
@@ -492,7 +534,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	}
 	/*destroy the dialog now that it is finished*/
 	gtk_widget_destroy(dialog);
-	
-	return TRUE;
+
+	return(retval);
 }
 
