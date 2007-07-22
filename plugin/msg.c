@@ -192,24 +192,27 @@ msg_header *msglist_header(msg_header *hstruct, GString *phstring)
 }
 
 /*test if the message should be filtered*/
-static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilter)
+static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilters)
 {
     gint i= 0, found= 0;
     gchar *field= NULL;
+    GSList *pcurrent= NULL;
+    mtc_filter *pfilter= NULL;
 
-   if(pheader== NULL|| pfilter== NULL)
+    if(pheader== NULL|| pfilter== NULL)
         return FALSE;
     
-    for(i= 0; i< MAX_FILTER_EXP; i++)
+    pcurrent= pfilters->list;
+    while(pcurrent!= NULL)
     {
-        if(g_ascii_strcasecmp(pfilter->search_string[i], "")== 0)
+        pfilter= (mtc_filter *)pcurrent->data;
+        if(g_ascii_strcasecmp(pfilter->search_string, "")== 0)
             break;
         
         /*get the field we wish to search*/
         if(pheader)
         {
-            /*field= (pfilter->subject[i])? pheader->psubject: pheader->pfrom;*/
-            switch(pfilter->field[i])
+            switch(pfilter->field)
             {
                 case HEADER_FROM:
                     field= pheader->pfrom;
@@ -229,18 +232,20 @@ static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilter)
         }
         
         /*search the subject or from for a match*/
-        if((field!= NULL)&& strstr(field, pfilter->search_string[i])!= NULL)
+        if((field!= NULL)&& strstr(field, pfilter->search_string)!= NULL)
         {
-            if(pfilter->contains[i])
+            if(pfilter->contains)
                 found++;
         }
         else
         {
-            if(!pfilter->contains[i])
+            if(!pfilter->contains)
                 found++;
         }
+        i++;
+        pcurrent= g_slist_next(pcurrent);
     }
-    if(pfilter->matchall)
+    if(pfilters->matchall)
         return(((found> 0)&& (found== i))? TRUE: FALSE);
     else
         return((found> 0)? TRUE: FALSE);

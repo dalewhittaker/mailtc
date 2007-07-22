@@ -194,7 +194,8 @@ typedef enum _msg_flags
 
 } msg_flags;
 
-/*TODO needs work*/
+#ifdef MTC_NOTMINIMAL
+/*structures used to hold the filter details if used*/
 typedef struct _mtc_filter
 {
     gboolean contains;
@@ -203,21 +204,15 @@ typedef struct _mtc_filter
 
 } mtc_filter;
 
-/*structure used to hold the filter details if used*/
 typedef struct _mtc_filters
 {
     gboolean enabled;
 	gboolean matchall;
 
-    /*TODO all of these will be replaced by a GSList*/
-	gboolean contains[MAX_FILTER_EXP];
-    hfield field[MAX_FILTER_EXP];
-	gchar search_string[MAX_FILTER_EXP][FILTERSTRING_LEN+ 1];
-	
-    /*TODO needs work*/
-    GSList *list; /*a list of each filter*/
+    GSList *list; /*a list of mtc_filter structs used for each filter*/
 
 } mtc_filters;
+#endif /*MTC_NOTMINIMAL*/
 
 /*the message header struct*/
 typedef struct _msg_header

@@ -647,7 +647,10 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	GSList *plgcurrent= plglist;
 	mtc_plugin *pitem= NULL;
 	mtc_icon *picon= NULL;
+
+#ifdef MTC_NOTMINIMAL
     mtc_filters *pfilter= NULL;
+#endif /*MTC_NOTMINIMAL*/
 
 	/*setup the account name info*/
 	name_entry= gtk_entry_new();

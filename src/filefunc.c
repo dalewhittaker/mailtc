@@ -23,7 +23,10 @@
 #include <libxml/xpathInternals.h>
 #include "filefunc.h"
 #include "plugfunc.h"
+
+#ifdef MTC_NOTMINIMAL
 #include "filterdlg.h"
+#endif /*MTC_NOTMINIMAL*/
 
 #ifdef MTC_USE_SSL
 #include "encrypter.h"
@@ -368,11 +371,13 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
                 xmlFree(pcontent);
             }
+#ifdef MTC_NOTMINIMAL
             else
             {    /*read in any filters*/
                 if(read_filters(doc, child, pnew)== FALSE)
                     retval= FALSE;
             }
+#endif /*MTC_NOTMINIMAL*/
             child= child->next;
         }
 
@@ -846,9 +851,11 @@ static gboolean acc_write(xmlNodePtr root_node)
         if(!pw_write(acc_node, paccount->password))
             return FALSE;
         
+#ifdef MTC_NOTMINIMAL
         /*and then also the filter, if there is one*/
         if(!filter_write(acc_node, paccount))
             return FALSE;
+#endif /*MTC_NOTMINIMAL*/
 
         /*move to next item in the list*/
 		pcurrent= g_slist_next(pcurrent);
