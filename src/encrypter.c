@@ -17,7 +17,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/*TODO bugger, now i need to verify this*/
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>

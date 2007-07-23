@@ -2,12 +2,14 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-            i) Get the filter dialog to add/delete filters using the lists
-                    i) see tbl_add as example of how to add to table, and do a similar thing for filters
+            i) Finish off filter dialog
+                a) Get add button to work
+                b) Add delete buttons, get them to work
+                c) Tidy up widget positions.
+
             ii) final cleanup/testing (with valgrind)
-    b) sort all the strings
-    c) update the web page etc
-    d) check out remaining TODO
+    b) sort all the localisation strings
+    c) check out remaining thing in popfunc and imapfunc (see TODO)
 
 2) Compile/test on win32
     a) Compile rest of plugins and test
@@ -15,7 +17,7 @@ NEXT RELEASE:
     c) Make sure GtkStatusIcon stuff is correct.
     d) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
 
-2) Test with valgrind:
+3) Test with valgrind:
     valgrind needs to be run as follows:
 
     G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind --leak-check=full --error-limit=no
@@ -40,5 +42,5 @@ NEXT RELEASE:
 WISH LIST TASKS:
 1) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
 2) Threading, allowing reading (click) when checking new mail (big job).
-3) proxy server option?
-
+3) Proxy server option?
+4) Extend the stuff that can be used for the mail command ($ stuff)

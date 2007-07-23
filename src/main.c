@@ -65,7 +65,7 @@ static gint cfgdlg_start()
 	return(EXIT_SUCCESS);
 }
 
-/*set default icon.  TODO this may need to somehow be unreffed*/
+/*set default icon for windows*/
 static gboolean set_app_icon(void)
 {
     GdkPixbuf *unscaled;

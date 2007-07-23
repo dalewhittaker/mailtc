@@ -20,12 +20,14 @@
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkstock.h>
+#include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkcombobox.h>
 #include <gtk/gtktable.h>
 #include <gtk/gtkradiobutton.h>
+#include <gtk/gtkscrolledwindow.h>
 #include "filefunc.h"
 #include "filterdlg.h"
 
@@ -37,7 +39,6 @@
 #define ELEMENT_FIELD    "field"
 #define ELEMENT_VALUE    "value"
 
-#define INITIAL_FILTERS 5
 #define FILTERSTRING_LEN 100
 
 /*structs used for the filter widgets*/
@@ -53,6 +54,7 @@ typedef struct _filters_widgets
 {
     GtkWidget *radio_matchall[2];
     GtkWidget *button_clear;
+    GtkWidget *button_add;
 
     GSList *list;
 
@@ -398,6 +400,12 @@ static void clear_button_pressed(void)
 
 }
 
+/*button to add a new filter to the list*/
+static void add_button_pressed(void)
+{
+    g_print("add button pressed\n");
+}
+
 /*function called when the dialog is destroyed*/
 void filterdlg_destroyed(GtkWidget *widget, gpointer data)
 {
@@ -413,8 +421,11 @@ gboolean filterdlg_run(mtc_account *paccount)
 {
 	GtkWidget *dialog;
 	GtkWidget *filter_label;
-	GtkWidget *main_table, *v_box_filter;
-	gint i= -1;
+	GtkWidget *v_box_filter;
+    GtkWidget *scrolled_win;
+    GtkWidget *h_box_filter;
+    GtkWidget *v_box_internal;
+/*	gint i= 0;*/
     guint j;
 	gint result= 0;
     gboolean saved= FALSE;
@@ -430,14 +441,27 @@ gboolean filterdlg_run(mtc_account *paccount)
         pcurrent= paccount->pfilters->list;
 
 	/*create the label*/
-	filter_label= gtk_label_new("Select mail fields to filter");
+    h_box_filter= gtk_hbox_new(FALSE, 0);
+	filter_label= gtk_label_new("Select mail fields to filter:");
+    gtk_box_pack_start(GTK_BOX(h_box_filter), filter_label, FALSE, FALSE, 10);
 	
-	main_table= gtk_table_new(INITIAL_FILTERS+ 2, 3, FALSE);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, 0, 1);
-	
+	/*main_table= gtk_table_new(3, 3, FALSE);
+	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, i, i+ 1);*/
+	v_box_filter= gtk_vbox_new(FALSE, 0);
+    
+    v_box_internal= gtk_vbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(v_box_filter), h_box_filter, FALSE, FALSE, 10);
+
+    /*create the scrolled window to add the widgets to*/
+    scrolled_win= gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 10);
+    gtk_widget_set_size_request(scrolled_win, 580, 280);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);
+
 	/*create n number of widgets*/
-    /*TODO will be a list eventually*/
-	while(i++ < (INITIAL_FILTERS- 1))
+	/*while(i++ < (INITIAL_FILTERS- 1))*/
+    while(pcurrent!= NULL)   
 	{
         /*create the widget struct*/
         pfwidgets= (filter_widgets *)g_malloc0(sizeof(filter_widgets));
@@ -460,30 +484,40 @@ gboolean filterdlg_run(mtc_account *paccount)
 		gtk_entry_set_max_length(GTK_ENTRY(pfwidgets->entry_value), FILTERSTRING_LEN);
 		gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets->entry_value), 30); 
 		
-		/*pack the stuff into the boxes*/
-		gtk_table_set_col_spacings(GTK_TABLE(main_table), 10);
-		gtk_table_set_row_spacings(GTK_TABLE(main_table), 10);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->combo_field, 0, 1, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->combo_contains, 1, 2, i+ 1, i+ 2);
-		gtk_table_attach_defaults(GTK_TABLE(main_table), pfwidgets->entry_value, 2, 3, i+ 1, i+ 2);
+	    /*pack the stuff into box*/
+        h_box_filter= gtk_hbox_new(FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->combo_field, TRUE, TRUE, 5);
+        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->combo_contains, TRUE, TRUE, 5);
+        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->entry_value, TRUE, TRUE, 5);
 		
-		if(pcurrent/*&& paccount->pfilters->enabled*/)
-		{
+        gtk_box_pack_start(GTK_BOX(v_box_internal), h_box_filter, FALSE, FALSE, 5);
+		
+        /*if(pcurrent&& paccount->pfilters->enabled)
+		{*/
             pfilter= (mtc_filter *)pcurrent->data;
 			gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), pfilter->field);
 	    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), !pfilter->contains);
 			gtk_entry_set_text(GTK_ENTRY(pfwidgets->entry_value), pfilter->search_string);
             pcurrent= g_slist_next(pcurrent);
-		}
+		/*}*/
 
         /*now add the widgets to the widget list*/
         widgets.list= g_slist_prepend(widgets.list, pfwidgets);
 	}
+    /*TODO if there are no filters, a row still needs to be created!*/
 	
-	/*set the button to clear the entries*/
+    /*add the scrolled window to the main table*/
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win), v_box_internal);
+    
+    /*set the button to clear the entries*/
 	widgets.button_clear= gtk_button_new_with_label(S_FILTERDLG_BUTTON_CLEAR);
   	g_signal_connect(G_OBJECT(widgets.button_clear), "clicked", G_CALLBACK(clear_button_pressed), NULL);
 	
+    /*set the button to add new filters*/
+	widgets.button_add= gtk_button_new_with_label("Add filter");
+    gtk_button_set_image(GTK_BUTTON(widgets.button_add), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_BUTTON));
+  	g_signal_connect(G_OBJECT(widgets.button_add), "clicked", G_CALLBACK(add_button_pressed), NULL);
+
 	widgets.radio_matchall[0]= gtk_radio_button_new_with_label(NULL, S_FILTERDLG_BUTTON_MATCHALL);
 	widgets.radio_matchall[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(widgets.radio_matchall[0]), S_FILTERDLG_BUTTON_MATCHANY);
 	if(paccount->pfilters)
@@ -492,14 +526,17 @@ gboolean filterdlg_run(mtc_account *paccount)
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), !paccount->pfilters->matchall);
 	}
 	
-	gtk_table_attach(GTK_TABLE(main_table), widgets.button_clear, 2, 3, i+ 2, i+ 3, GTK_SHRINK, GTK_SHRINK, 0, 0);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), widgets.radio_matchall[0], 0, 1, i+ 2 , i+ 3);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), widgets.radio_matchall[1], 1, 2, i+ 2 , i+ 3);
-	
-	gtk_container_set_border_width(GTK_CONTAINER(main_table), 10);
-	
-	v_box_filter= gtk_vbox_new(FALSE, 10);
-	gtk_box_pack_start(GTK_BOX(v_box_filter), main_table, FALSE, FALSE, 10);
+    /*Add the scrolled window with filter widgets*/
+	gtk_box_pack_start(GTK_BOX(v_box_filter), scrolled_win, FALSE, FALSE, 0);
+
+    h_box_filter= gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.radio_matchall[0], FALSE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.radio_matchall[1], FALSE, FALSE, 10);
+	/*gtk_button_set_alignment(GTK_BUTTON(widgets.button_clear), 1, 1);*/
+    /*TODO more work needed on clear button positioning*/
+    gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.button_add, TRUE, FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.button_clear, TRUE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(v_box_filter), h_box_filter, FALSE, FALSE, 10);
 	
 	/*create the filter dialog*/
 	dialog= gtk_dialog_new_with_buttons(S_FILTERDLG_TITLE, NULL, GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
@@ -509,7 +546,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), v_box_filter);
 	gtk_widget_show_all(v_box_filter);
-	gtk_window_set_default_size(GTK_WINDOW(dialog), 80, 50);
+	gtk_window_set_default_size(GTK_WINDOW(dialog), 80, 80);
 
 	/*keep running dialog until details are saved (i.e all values entered)*/
 	while(!saved)
