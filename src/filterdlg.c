@@ -407,13 +407,56 @@ static void add_button_pressed(void)
 }
 
 /*function called when the dialog is destroyed*/
-void filterdlg_destroyed(GtkWidget *widget, gpointer data)
+static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
 {
     if(widgets.list!= NULL)
     {
         g_slist_foreach(widgets.list, (GFunc)g_free, NULL);
         g_slist_free(widgets.list);
     }
+}
+
+/*function to create widgets*/
+static filter_widgets *create_widgets(GtkWidget *vbox)
+{
+    filter_widgets *pfwidgets= NULL;
+    GtkWidget *hbox= NULL;
+    guint j;
+    
+    /*create the widget struct*/
+    pfwidgets= (filter_widgets *)g_malloc0(sizeof(filter_widgets));
+    
+    /*create the fields combo*/
+    pfwidgets->combo_field= gtk_combo_box_new_text();
+    for(j= 0; j< (sizeof(ffield)/ sizeof(ffield[0])); j++)
+		    gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_field), ffield[j]);
+		
+    gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), 0);
+
+	/*create the contains/does not contain combo*/
+	pfwidgets->combo_contains= gtk_combo_box_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_CONTAINS);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_NOTCONTAINS);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), 0);
+
+	/*create the filter edit box*/
+	pfwidgets->entry_value= gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(pfwidgets->entry_value), FILTERSTRING_LEN);
+	gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets->entry_value), 30); 
+	
+    /*pack the stuff into box*/
+    hbox= gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_field, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_contains, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->entry_value, TRUE, TRUE, 5);
+	
+    /*add the hbox to the scroll windows vbox*/
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+		
+    /*now add the widgets to the widget list*/
+    widgets.list= g_slist_prepend(widgets.list, pfwidgets);
+
+    return(pfwidgets);
 }
 
 /*display the filter dialog*/
@@ -425,8 +468,6 @@ gboolean filterdlg_run(mtc_account *paccount)
     GtkWidget *scrolled_win;
     GtkWidget *h_box_filter;
     GtkWidget *v_box_internal;
-/*	gint i= 0;*/
-    guint j;
 	gint result= 0;
     gboolean saved= FALSE;
     gboolean retval= TRUE;
@@ -445,8 +486,6 @@ gboolean filterdlg_run(mtc_account *paccount)
 	filter_label= gtk_label_new("Select mail fields to filter:");
     gtk_box_pack_start(GTK_BOX(h_box_filter), filter_label, FALSE, FALSE, 10);
 	
-	/*main_table= gtk_table_new(3, 3, FALSE);
-	gtk_table_attach_defaults(GTK_TABLE(main_table), filter_label, 0, 1, i, i+ 1);*/
 	v_box_filter= gtk_vbox_new(FALSE, 0);
     
     v_box_internal= gtk_vbox_new(FALSE, 0);
@@ -459,53 +498,29 @@ gboolean filterdlg_run(mtc_account *paccount)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);
 
-	/*create n number of widgets*/
-	/*while(i++ < (INITIAL_FILTERS- 1))*/
-    while(pcurrent!= NULL)   
-	{
-        /*create the widget struct*/
-        pfwidgets= (filter_widgets *)g_malloc0(sizeof(filter_widgets));
-
-		/*create the fields combo*/
-		pfwidgets->combo_field= gtk_combo_box_new_text();
-        for(j= 0; j< (sizeof(ffield)/ sizeof(ffield[0])); j++)
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_field), ffield[j]);
-		
-    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), 0);
-
-		/*create the contains/does not contain combo*/
-		pfwidgets->combo_contains= gtk_combo_box_new_text();
-		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_CONTAINS);
-		gtk_combo_box_append_text(GTK_COMBO_BOX(pfwidgets->combo_contains), S_FILTERDLG_COMBO_NOTCONTAINS);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), 0);
-
-		/*create the filter edit box*/
-		pfwidgets->entry_value= gtk_entry_new();
-		gtk_entry_set_max_length(GTK_ENTRY(pfwidgets->entry_value), FILTERSTRING_LEN);
-		gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets->entry_value), 30); 
-		
-	    /*pack the stuff into box*/
-        h_box_filter= gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->combo_field, TRUE, TRUE, 5);
-        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->combo_contains, TRUE, TRUE, 5);
-        gtk_box_pack_start(GTK_BOX(h_box_filter), pfwidgets->entry_value, TRUE, TRUE, 5);
-		
-        gtk_box_pack_start(GTK_BOX(v_box_internal), h_box_filter, FALSE, FALSE, 5);
-		
-        /*if(pcurrent&& paccount->pfilters->enabled)
-		{*/
+    /*create a single empty widget*/
+    if(pcurrent== NULL)
+        pfwidgets= create_widgets(v_box_internal);
+    else
+    {
+        /*iterate through the filters read from the config file, and add them to the dialog*/
+        while(pcurrent!= NULL)
+        {
+            /*if(paccount->pfilters->enabled)
+		    {*/
+            pfwidgets= create_widgets(v_box_internal);
+            
+            /*Add the widget data*/
             pfilter= (mtc_filter *)pcurrent->data;
 			gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_field), pfilter->field);
 	    	gtk_combo_box_set_active(GTK_COMBO_BOX(pfwidgets->combo_contains), !pfilter->contains);
 			gtk_entry_set_text(GTK_ENTRY(pfwidgets->entry_value), pfilter->search_string);
-            pcurrent= g_slist_next(pcurrent);
-		/*}*/
 
-        /*now add the widgets to the widget list*/
-        widgets.list= g_slist_prepend(widgets.list, pfwidgets);
-	}
-    /*TODO if there are no filters, a row still needs to be created!*/
-	
+            pcurrent= g_slist_next(pcurrent);
+		    /*}*/
+        }
+    }
+
     /*add the scrolled window to the main table*/
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win), v_box_internal);
     
