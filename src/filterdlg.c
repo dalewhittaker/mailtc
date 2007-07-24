@@ -48,6 +48,7 @@ typedef struct _filter_widgets
     GtkWidget *combo_field;
     GtkWidget *combo_contains;
     GtkWidget *entry_value;
+    GtkWidget *button_remove;
 
 } filter_widgets;
 
@@ -440,11 +441,16 @@ static filter_widgets *create_widgets(filters_widgets *pwidgets)
 	gtk_entry_set_max_length(GTK_ENTRY(pfwidgets->entry_value), FILTERSTRING_LEN);
 	gtk_entry_set_width_chars(GTK_ENTRY(pfwidgets->entry_value), 30); 
 	
+    /*create the remove button*/
+    pfwidgets->button_remove= gtk_button_new();
+    gtk_button_set_image(GTK_BUTTON(pfwidgets->button_remove), gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_BUTTON));
+
     /*pack the stuff into box*/
     hbox= gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_field, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_contains, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->entry_value, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->button_remove, TRUE, TRUE, 5);
 	
     /*add the hbox to the scroll windows vbox*/
     gtk_box_pack_start(GTK_BOX(pwidgets->vbox), hbox, FALSE, FALSE, 5);
@@ -506,7 +512,7 @@ gboolean filterdlg_run(mtc_account *paccount)
     /*create the scrolled window to add the widgets to*/
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 10);
-    gtk_widget_set_size_request(scrolled_win, 580, 280);
+    gtk_widget_set_size_request(scrolled_win, 600, 300);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);
 
