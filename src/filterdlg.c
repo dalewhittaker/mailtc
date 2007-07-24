@@ -40,6 +40,7 @@
 #define ELEMENT_VALUE    "value"
 
 #define FILTERSTRING_LEN 100
+#define MAX_FILTERS 100
 
 /*structs used for the filter widgets*/
 typedef struct _filter_widgets
@@ -52,6 +53,7 @@ typedef struct _filter_widgets
 
 typedef struct _filters_widgets
 {
+    GtkWidget *vbox;
     GtkWidget *radio_matchall[2];
     GtkWidget *button_clear;
     GtkWidget *button_add;
@@ -91,7 +93,7 @@ void free_filters(mtc_account *paccount)
 }
 
 /*function to store the filter struct*/
-static gboolean filter_save(mtc_account *paccount)
+static gint filter_save(mtc_account *paccount)
 {
     gint valid= 0;
     gint j;
@@ -163,7 +165,7 @@ static gboolean filter_save(mtc_account *paccount)
 			{
                 err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
                 g_free(pnew);
-                return FALSE;
+                return(-1);
 			}
             gtk_tree_model_get(model, &iter, 0, &str, -1);
 			
@@ -177,7 +179,7 @@ static gboolean filter_save(mtc_account *paccount)
             {
                 err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
                 g_free(pnew);
-                return FALSE;
+                return(-1);
 			}
 		    pnew->field= j;
 			
@@ -192,7 +194,7 @@ static gboolean filter_save(mtc_account *paccount)
         }
         pwlist= g_slist_next(pwlist);
     }
-    return TRUE;
+    return(1);
 }
 
 /*function to write out the filter struct*/
@@ -400,12 +402,6 @@ static void clear_button_pressed(void)
 
 }
 
-/*button to add a new filter to the list*/
-static void add_button_pressed(void)
-{
-    g_print("add button pressed\n");
-}
-
 /*function called when the dialog is destroyed*/
 static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
 {
@@ -417,7 +413,7 @@ static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
 }
 
 /*function to create widgets*/
-static filter_widgets *create_widgets(GtkWidget *vbox)
+static filter_widgets *create_widgets(filters_widgets *pwidgets)
 {
     filter_widgets *pfwidgets= NULL;
     GtkWidget *hbox= NULL;
@@ -451,12 +447,29 @@ static filter_widgets *create_widgets(GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->entry_value, TRUE, TRUE, 5);
 	
     /*add the hbox to the scroll windows vbox*/
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(pwidgets->vbox), hbox, FALSE, FALSE, 5);
 		
     /*now add the widgets to the widget list*/
-    widgets.list= g_slist_prepend(widgets.list, pfwidgets);
+    pwidgets->list= g_slist_prepend(pwidgets->list, pfwidgets);
 
     return(pfwidgets);
+}
+
+/*button to add a new filter to the list*/
+static void add_button_pressed(void)
+{
+    guint length;
+
+    length= g_slist_length(widgets.list);
+    if(length< MAX_FILTERS)
+    {
+        filter_widgets *pfwidgets= NULL;
+
+        pfwidgets= create_widgets(&widgets);
+	    gtk_widget_show_all(widgets.vbox);
+    }
+    else
+		err_dlg(GTK_MESSAGE_WARNING, "You can only add up to %u filters", MAX_FILTERS);
 }
 
 /*display the filter dialog*/
@@ -467,7 +480,6 @@ gboolean filterdlg_run(mtc_account *paccount)
 	GtkWidget *v_box_filter;
     GtkWidget *scrolled_win;
     GtkWidget *h_box_filter;
-    GtkWidget *v_box_internal;
 	gint result= 0;
     gboolean saved= FALSE;
     gboolean retval= TRUE;
@@ -488,7 +500,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	
 	v_box_filter= gtk_vbox_new(FALSE, 0);
     
-    v_box_internal= gtk_vbox_new(FALSE, 0);
+    widgets.vbox= gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(v_box_filter), h_box_filter, FALSE, FALSE, 10);
 
     /*create the scrolled window to add the widgets to*/
@@ -500,7 +512,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 
     /*create a single empty widget*/
     if(pcurrent== NULL)
-        pfwidgets= create_widgets(v_box_internal);
+        pfwidgets= create_widgets(&widgets);
     else
     {
         /*iterate through the filters read from the config file, and add them to the dialog*/
@@ -508,7 +520,7 @@ gboolean filterdlg_run(mtc_account *paccount)
         {
             /*if(paccount->pfilters->enabled)
 		    {*/
-            pfwidgets= create_widgets(v_box_internal);
+            pfwidgets= create_widgets(&widgets);
             
             /*Add the widget data*/
             pfilter= (mtc_filter *)pcurrent->data;
@@ -522,7 +534,7 @@ gboolean filterdlg_run(mtc_account *paccount)
     }
 
     /*add the scrolled window to the main table*/
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win), v_box_internal);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win), widgets.vbox);
     
     /*set the button to clear the entries*/
 	widgets.button_clear= gtk_button_new_with_label(S_FILTERDLG_BUTTON_CLEAR);
@@ -547,10 +559,8 @@ gboolean filterdlg_run(mtc_account *paccount)
     h_box_filter= gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.radio_matchall[0], FALSE, FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.radio_matchall[1], FALSE, FALSE, 10);
-	/*gtk_button_set_alignment(GTK_BUTTON(widgets.button_clear), 1, 1);*/
-    /*TODO more work needed on clear button positioning*/
-    gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.button_add, TRUE, FALSE, 10);
-    gtk_box_pack_start(GTK_BOX(h_box_filter), widgets.button_clear, TRUE, FALSE, 10);
+    gtk_box_pack_end(GTK_BOX(h_box_filter), widgets.button_clear, FALSE, FALSE, 10);
+    gtk_box_pack_end(GTK_BOX(h_box_filter), widgets.button_add, FALSE, FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(v_box_filter), h_box_filter, FALSE, FALSE, 10);
 	
 	/*create the filter dialog*/
@@ -564,7 +574,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 80, 80);
 
 	/*keep running dialog until details are saved (i.e all values entered)*/
-	while(!saved)
+	while(saved== 0)
 	{
 		result= gtk_dialog_run(GTK_DIALOG(dialog)); 
 		switch(result)
@@ -572,16 +582,13 @@ gboolean filterdlg_run(mtc_account *paccount)
 			/*if OK save the filters to the struct*/
             case GTK_RESPONSE_ACCEPT:
 				saved= filter_save(paccount);
-                if(!saved)
-                {
-                    saved= TRUE;
+                if(saved== -1)
                     retval= FALSE;
-                }
 			break;
 			/*if Cancel set saved to 1 so that the dialog will exit*/
 			case GTK_RESPONSE_REJECT:
 			default:
-				saved= TRUE;
+				saved= 1;
 		}
 	}
 	/*destroy the dialog now that it is finished*/

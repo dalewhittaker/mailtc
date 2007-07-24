@@ -2,10 +2,14 @@ NEXT RELEASE:
 
 1) new stuff
     a) Implement new xml config
-            i) Finish off filter dialog
-                a) Get add button to work
-                b) Add delete buttons, get them to work
-                c) Tidy up widget positions.
+            i) Add delete buttons, get them to work
+                a) Delete will somehow need to remove from the list.  It must also be clever e.g:
+                    i) Reset all widgets for current position, then remove from the vbox
+
+                    then when adding:
+                    i) Iterate through widget list and search for a empty entry
+                    ii) If empty one found use that (add to the vbox)
+                    iii) If no empty's found, create a new one and add to vbox
 
             ii) final cleanup/testing (with valgrind)
     b) sort all the localisation strings

@@ -740,7 +740,6 @@ gboolean accdlg_run(gint profile, gint newaccount)
 			pitem= plglist->data;
 
 		gtk_tree_model_foreach(model, set_combo_text, (gchar *)pitem->name);
-		/*gtk_tree_model_foreach(model, set_combo_text, pcurrent->plgname);*/
 
 #ifdef MTC_NOTMINIMAL
         pfilter= pcurrent->pfilters;
