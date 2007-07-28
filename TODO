@@ -1,25 +1,21 @@
 NEXT RELEASE:
-
 1) new stuff
-    a) Implement new xml config
-            i) Add delete buttons, get them to work
-                a) Delete will somehow need to remove from the list.  It must also be clever e.g:
-                    i) Reset all widgets for current position, then remove from the vbox
-
-                    then when adding:
-                    i) Iterate through widget list and search for a empty entry
-                    ii) If empty one found use that (add to the vbox)
-                    iii) If no empty's found, create a new one and add to vbox
-
-            ii) final cleanup/testing (with valgrind)
+    a) final cleanup/testing of xml files/filters (with valgrind)
+        i) test all xml file stuff with valgrind
+        ii) test all filters thoroughly with valgrind
+        iii) test mailtc itself works, with valgrind
     b) sort all the localisation strings
     c) check out remaining thing in popfunc and imapfunc (see TODO)
+    d) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
 
+
+
+ONE AFTER:
+1) Rework plugin API so that the filters can be moved there
 2) Compile/test on win32
     a) Compile rest of plugins and test
     b) Use Nullsoft scriptable installer as an installer and test.
     c) Make sure GtkStatusIcon stuff is correct.
-    d) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
 
 3) Test with valgrind:
     valgrind needs to be run as follows:
@@ -44,7 +40,7 @@ NEXT RELEASE:
     m) docklet stuff; see docklet1 and docklet2 test scripts
 
 WISH LIST TASKS:
-1) Improve plugin architecture so that it is possible to have plugin specific options in config dialog. This would likely mean reworking all the filter stuff.
-2) Threading, allowing reading (click) when checking new mail (big job).
-3) Proxy server option?
-4) Extend the stuff that can be used for the mail command ($ stuff)
+1) Threading, allowing reading (click) when checking new mail (big job).
+2) Proxy server option?
+3) Extend the stuff that can be used for the mail command ($ stuff)
+4) Non-blocking sockets?

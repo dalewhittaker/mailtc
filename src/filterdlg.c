@@ -45,6 +45,7 @@
 /*structs used for the filter widgets*/
 typedef struct _filter_widgets
 {
+    GtkWidget *hbox;
     GtkWidget *combo_field;
     GtkWidget *combo_contains;
     GtkWidget *entry_value;
@@ -413,11 +414,24 @@ static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
     }
 }
 
+/*button to remove a filter from the list*/
+static void remove_button_pressed(GtkButton *button, gpointer user_data)
+{
+    filter_widgets *pfwidgets= (filter_widgets *)user_data;
+
+    /*simply remove the widget and destroy it, then remove it from the list*/
+    gtk_widget_hide_all(pfwidgets->hbox);
+    
+    /*first remove from the list, then remove from the vbox to destroy*/
+    widgets.list= g_slist_remove(widgets.list, pfwidgets);
+    gtk_container_remove(GTK_CONTAINER(widgets.vbox), pfwidgets->hbox);
+    
+}
+
 /*function to create widgets*/
 static filter_widgets *create_widgets(filters_widgets *pwidgets)
 {
     filter_widgets *pfwidgets= NULL;
-    GtkWidget *hbox= NULL;
     guint j;
     
     /*create the widget struct*/
@@ -446,14 +460,16 @@ static filter_widgets *create_widgets(filters_widgets *pwidgets)
     gtk_button_set_image(GTK_BUTTON(pfwidgets->button_remove), gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_BUTTON));
 
     /*pack the stuff into box*/
-    hbox= gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_field, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->combo_contains, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->entry_value, TRUE, TRUE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), pfwidgets->button_remove, TRUE, TRUE, 5);
+    pfwidgets->hbox= gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(pfwidgets->hbox), pfwidgets->combo_field, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(pfwidgets->hbox), pfwidgets->combo_contains, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(pfwidgets->hbox), pfwidgets->entry_value, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(pfwidgets->hbox), pfwidgets->button_remove, TRUE, TRUE, 5);
 	
     /*add the hbox to the scroll windows vbox*/
-    gtk_box_pack_start(GTK_BOX(pwidgets->vbox), hbox, FALSE, FALSE, 5);
+    /*g_object_ref(G_OBJECT(pfwidgets->hbox));*/
+    gtk_box_pack_start(GTK_BOX(pwidgets->vbox), pfwidgets->hbox, FALSE, FALSE, 5);
+  	g_signal_connect(G_OBJECT(pfwidgets->button_remove), "clicked", G_CALLBACK(remove_button_pressed), pfwidgets);
 		
     /*now add the widgets to the widget list*/
     pwidgets->list= g_slist_prepend(pwidgets->list, pfwidgets);
@@ -598,7 +614,8 @@ gboolean filterdlg_run(mtc_account *paccount)
 		}
 	}
 	/*destroy the dialog now that it is finished*/
-	gtk_widget_destroy(dialog);
+    /*gtk_container_foreach(GTK_CONTAINER(widgets.vbox), (GtkCallback)g_object_unref, NULL);*/
+    gtk_widget_destroy(dialog);
 
 	return(retval);
 }
