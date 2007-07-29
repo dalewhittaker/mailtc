@@ -24,6 +24,14 @@
 #include "msg.h"
 #endif /*MTC_NOTMINIMAL*/
 
+/*TODO
+ *The spec said that the max length of a UID was 70
+ *however some servers return very long UID's
+ *to handle such cases the length has been increased.
+ *In an ideal world the string should be dynamically allocated
+ *rather than have a set value*/
+#define UIDL_LEN 300
+
 /*define the various imap responses, note they can either be tagged or untagged
  *both are required.  Rather than define an id for each, use a macro to use higher word for tagged*/
 #define MAX_RESPONSE_STRING 20

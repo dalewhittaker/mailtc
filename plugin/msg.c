@@ -252,7 +252,7 @@ static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilters)
 }
 
 /*create a new message and add to the list*/
-static GSList *msglist_new(mtc_account *paccount, gchar *uid, GString *header)
+static GSList *msglist_new(mtc_account *paccount, const gchar *uid, GString *header)
 {
     msg_struct *msgnew= NULL;
     msg_struct *msgfirst;

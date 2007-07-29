@@ -38,14 +38,6 @@
 #define PROTOCOL_LEN NAME_MAX
 #define ICON_LEN 10
 
-/*TODO
- *The POP spec said that the max length of a UID was 70
- *however some servers return very long UID's
- *to handle such cases the length has been increased.
- *In an ideal world the string should be dynamically allocated
- *rather than have a set value*/
-#define UIDL_LEN 300
-
 #define MAX_FILTER_EXP 5 
 #define FILTERSTRING_LEN 100
 

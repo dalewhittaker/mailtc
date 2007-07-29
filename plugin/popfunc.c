@@ -395,23 +395,25 @@ static GString *pop_recv_uidl(mtc_net *pnetinfo, mtc_account *paccount, gint mes
 }
 
 /*function to get the uidl from the received string*/
-static mtc_error pop_get_uidl(GString *buf, gchar *uidl_string)
+static gchar *pop_get_uidl(GString *buf, gchar *uidl_string)
 {
 	/*int uidllen= 0;*/
 	gchar *pos= NULL;
+    gint uidl_len= 0;
 
 	if((pos= strrchr(buf->str, ' '))== NULL)
 	{
 		plg_err(S_POPFUNC_ERR_GET_UIDL);
 		g_string_free(buf, TRUE);
-		return(MTC_ERR_EXIT);
+		return(NULL);
 	}
-    /*TODO fix UIDL_LEN*/
-	memset(uidl_string, '\0', UIDL_LEN);
-	g_strlcpy(uidl_string, pos+ 1, UIDL_LEN);
-    g_strlcat(g_strchomp(uidl_string), "\n", UIDL_LEN);
-	
-    return(MTC_RETURN_TRUE);
+
+    uidl_len= ((buf->str+ buf->len)- (pos+ 1))+ 1;
+    uidl_string= g_malloc0(uidl_len);
+	g_strlcpy(uidl_string, pos+ 1, uidl_len);
+    g_strlcat(g_strchomp(uidl_string), "\n", uidl_len);
+    
+    return(uidl_string);
 }
 
 /* function to get uidl values of messages on server, 
@@ -422,7 +424,7 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
 	gint total_messages= 0, i;
 	FILE *outfile;
 	FILE *infile= NULL;
-	gchar uidl_string[UIDL_LEN];
+    gchar *uidl_string= NULL;
 	gchar uidlfile[NAME_MAX]; 
 	gchar tmpuidlfile[NAME_MAX];
 	GString *buf= NULL;
@@ -476,7 +478,8 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
             uidlfound= FALSE;
 			
             /*get the uidl part from the received string*/
-            if(pop_get_uidl(buf, uidl_string)!= MTC_RETURN_TRUE)
+            uidl_string= pop_get_uidl(buf, uidl_string);
+            if(uidl_string== NULL)
                 return(MTC_ERR_EXIT);
 		
 			g_string_free(buf, TRUE);
@@ -524,10 +527,14 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
 			    }   
                 /*in case of error we must break after the file is closed*/
                 if(retval!= MTC_RETURN_TRUE)
+                {
+                    g_free(uidl_string);
                     break;
+                }
 			}
             /*output the uidl string to the temp file*/
 			fputs(uidl_string, outfile);
+            g_free(uidl_string);
 		}
         else
         {
