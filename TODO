@@ -4,42 +4,21 @@ NEXT RELEASE:
     a) test all xml file stuff with valgrind
     b) test all filters thoroughly with valgrind
     c) test mailtc itself works, with valgrind
-    d) test UIDL_LEN thing for popfunc
-2) sort all the localisation strings, and all them silly warnings (test each warning with valgrind after changing)
+    d) test UIDL_LEN thing for popfunc with valgrind
+    e) test main mailtc timeout loop with valgrind
+2) sort configdlg.c compiler warnings (test each warning with valgrind after changing); may need to set to NULL
 3) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
 ----------
 
 ----------
 ONE AFTER:
 1) Rework plugin API so that the filters can be moved there
-2) Compile/test on win32
+2) Remove UIDL_LEN for imapfunc and make dynamic instead
+3) Compile/test on win32
     a) Compile rest of plugins and test
     b) Use Nullsoft scriptable installer as an installer and test.
     c) Make sure GtkStatusIcon stuff is correct.
-3) Remove UIDL_LEN for imapfunc and make dynamic instead
 ----------
-
-Stuff to test with valgrind:
-    valgrind needs to be run as follows:
-
-    G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind --leak-check=full --error-limit=no
-
-    NOTE: currently g_module_open() dlopen() are reporting errors, need to investigate this
-    (e.g write small app that calls dlopen to check whether problem is specific to mailtc)
-
-    a) everything plugin related
-    b) the message list/header adding
-    c) config file reading/writing
-    d) pop stuff
-    e) filter stuff
-    f) localisation stuff
-    g) connection error stuff
-    h) run command on new mail stuff
-    i) IMAP stuff.  NOTE mark as read stuff needs full heavy testing.
-    j) With/without message list disabled
-    k) All stuff relating to the docklet and tooltip
-    l) config dialog ref counting: we really need to check that everything is being alloc'ed/free'd ok.
-    m) docklet stuff; see docklet1 and docklet2 test scripts
 
 WISH LIST TASKS:
 1) Threading, allowing reading (click) when checking new mail (big job).

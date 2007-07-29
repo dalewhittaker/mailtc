@@ -515,11 +515,11 @@ static gint docklet_status(void)
 
 /*callback function that is called if the panel dies*/
 #ifdef MTC_EGGTRAYICON
-void docklet_destroyed(GtkWidget *widget, gpointer data)
+void docklet_destroyed(void)
 {
     GtkWidget *pdockimage= NULL;
     mtc_icon *picon= NULL;
-    
+ 
     picon= docklet_status();
     
     /*The icon must be removed and then re-added*/
@@ -532,7 +532,7 @@ void docklet_destroyed(GtkWidget *widget, gpointer data)
 #endif /*MTC_EGGTRAYICON*/
 
 /*the main thread that is called to check the various mail accounts*/
-gboolean mail_thread(gpointer data)
+gboolean mail_thread(void)
 {
 	/*if no thread is running*/
 	if(!lock)

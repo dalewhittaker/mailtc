@@ -445,15 +445,9 @@ gint main(gint argc, gchar *argv[])
     /*if mailtc -c*/
 	if(runmode== MODE_CFG)
 	{
-        gboolean cfgfound= FALSE;
         config.isdlg= TRUE;
-	    
-        cfgfound= cfg_read();
-        /*TODO requires better erroring than this*/
-		/*if(acclist== NULL|| !cfgfound)
-		{	
-			return(warndlg_run(S_MAIN_NO_CONFIG_FOUND, TRUE));
-		}*/
+        cfg_read();
+        
         return(cfgdlg_start());
     }
 
@@ -471,7 +465,7 @@ gint main(gint argc, gchar *argv[])
 
         /*warn if no accounts found*/
         if(acclist== NULL&& cfgok)
-            err_dlg(GTK_MESSAGE_WARNING, "No accounts found.\nPlease enter a mail account");
+            err_dlg(GTK_MESSAGE_WARNING, S_MAIN_ERR_NO_ACCOUNTS);
 
         /*run the config dialog if any config needed*/
 		if(acclist== NULL|| !cfgok)
@@ -498,10 +492,10 @@ gint main(gint argc, gchar *argv[])
 
 	    /*call the mail thread for the initial mail check
 	    *(otherwise it will wait a full minute or more before initial check)*/
-	    mail_thread(NULL);
+	    mail_thread();
 	
         /*call the mail thread to check every sleeptime milliseconds*/
-	    func_ref= g_timeout_add(sleeptime, mail_thread, NULL);
+	    func_ref= g_timeout_add(sleeptime, (GSourceFunc)mail_thread, NULL);
 	    gtk_main();
 	    /*g_source_remove(func_ref);*/
 

@@ -227,7 +227,7 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             /*check there is a valid field value*/    
             if(pfilter->field>= (sizeof(ffield)/ sizeof(ffield[0])))
             {
-                err_dlg(GTK_MESSAGE_WARNING, "Error: invalid 'field' element %d\n", pfilter->field);
+                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
                 return FALSE;
             }
 
@@ -306,7 +306,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
         {
             if(!pelement->found)
             {
-                err_dlg(GTK_MESSAGE_WARNING, "Error: '%s' element not found for filter %d.\n", pelement->name, paccount->id);           
+                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_NOT_FOUND, pelement->name, paccount->id);           
                 retval= FALSE;
             }
             pelement++;
@@ -368,7 +368,7 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 
                 pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
                 if(match_found)
-                    err_dlg(GTK_MESSAGE_WARNING, "Error: duplicate element '%s'\n", BAD_CAST child->name);
+                    err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
                 
                 match_found= TRUE;
                 xmlFree(pcontent);
@@ -405,7 +405,7 @@ static void clear_button_pressed(void)
 }
 
 /*function called when the dialog is destroyed*/
-static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
+static void filterdlg_destroyed(void)
 {
     if(widgets.list!= NULL)
     {
@@ -417,15 +417,21 @@ static void filterdlg_destroyed(GtkWidget *widget, gpointer data)
 /*button to remove a filter from the list*/
 static void remove_button_pressed(GtkButton *button, gpointer user_data)
 {
-    filter_widgets *pfwidgets= (filter_widgets *)user_data;
+    guint length;
+    
+    length= g_slist_length(widgets.list);
+    if(length> 1)
+    {
+        filter_widgets *pfwidgets= (filter_widgets *)user_data;
 
-    /*simply remove the widget and destroy it, then remove it from the list*/
-    gtk_widget_hide_all(pfwidgets->hbox);
+        /*simply remove the widget and destroy it, then remove it from the list*/
+        gtk_widget_hide_all(pfwidgets->hbox);
     
-    /*first remove from the list, then remove from the vbox to destroy*/
-    widgets.list= g_slist_remove(widgets.list, pfwidgets);
-    gtk_container_remove(GTK_CONTAINER(widgets.vbox), pfwidgets->hbox);
-    
+        /*first remove from the list, then remove from the vbox to destroy*/
+        widgets.list= g_slist_remove(widgets.list, pfwidgets);
+        gtk_container_remove(GTK_CONTAINER(widgets.vbox), pfwidgets->hbox);
+        g_free(pfwidgets);
+    }
 }
 
 /*function to create widgets*/
@@ -491,7 +497,7 @@ static void add_button_pressed(void)
 	    gtk_widget_show_all(widgets.vbox);
     }
     else
-		err_dlg(GTK_MESSAGE_WARNING, "You can only add up to %u filters", MAX_FILTERS);
+		err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_MAX_REACHED, MAX_FILTERS);
 }
 
 /*display the filter dialog*/
@@ -517,7 +523,7 @@ gboolean filterdlg_run(mtc_account *paccount)
 
 	/*create the label*/
     h_box_filter= gtk_hbox_new(FALSE, 0);
-	filter_label= gtk_label_new("Select mail fields to filter:");
+	filter_label= gtk_label_new(S_FILTERDLG_LABEL_SELECT);
     gtk_box_pack_start(GTK_BOX(h_box_filter), filter_label, FALSE, FALSE, 10);
 	
 	v_box_filter= gtk_vbox_new(FALSE, 0);
@@ -563,7 +569,7 @@ gboolean filterdlg_run(mtc_account *paccount)
   	g_signal_connect(G_OBJECT(widgets.button_clear), "clicked", G_CALLBACK(clear_button_pressed), NULL);
 	
     /*set the button to add new filters*/
-	widgets.button_add= gtk_button_new_with_label("Add filter");
+	widgets.button_add= gtk_button_new_with_label(S_FILTERDLG_BUTTON_ADD_FILTER);
     gtk_button_set_image(GTK_BUTTON(widgets.button_add), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_BUTTON));
   	g_signal_connect(G_OBJECT(widgets.button_add), "clicked", G_CALLBACK(add_button_pressed), NULL);
 

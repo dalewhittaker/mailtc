@@ -27,10 +27,10 @@
 #define ACTIVE_ICON_MULTI -2 
 
 /*docklet.c functions*/
-gboolean mail_thread(gpointer data);
+gboolean mail_thread(void);
 #ifdef MTC_EGGTRAYICON
 void docklet_clicked(GtkWidget *button, GdkEventButton *event);
-void docklet_destroyed(GtkWidget *widget, gpointer data);
+void docklet_destroyed(void);
 #else
 void docklet_rclicked(GtkStatusIcon *status_icon, guint button, guint activate_time, gpointer user_data);
 void docklet_lclicked(GtkStatusIcon *status_icon, gpointer user_data);

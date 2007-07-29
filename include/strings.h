@@ -91,6 +91,8 @@
 #define S_CONFIGDLG_FAILED_CONNECTIONS _("failed connections")
 #define S_CONFIGDLG_RUN_NEWMAIL_CMD _("Run command when new mail received:")
 
+#define S_FILEFUNC_DEFAULT_ACC_STRING _("Account %d")
+
 /*filterdlg.c strings*/
 #define S_FILTERDLG_NO_FILTERS _("You must enter at least one filter string")
 #define S_FILTERDLG_COMBO_SENDER _("Sender")
@@ -101,7 +103,8 @@
 #define S_FILTERDLG_BUTTON_MATCHALL _("Match all conditions")
 #define S_FILTERDLG_BUTTON_MATCHANY _("Match any condition")
 #define S_FILTERDLG_BUTTON_CLEAR _("Clear filters")
-#define S_FILTERDLG_LABEL_SELECT _("Select up to %u filters:")
+#define S_FILTERDLG_LABEL_SELECT _("Select mail fields to filter:")
+#define S_FILTERDLG_BUTTON_ADD_FILTER _("Add filter")
 
 /*summarydlg.c strings*/
 #define S_SUMMARYDLG_OPTS _("Summary options")
@@ -148,6 +151,10 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_FILTERDLG_ERR_OPEN_FILE _("Error opening file %s\n")
 #define S_FILTERDLG_ERR_COMBO_ITER _("Error getting combobox iterator\n")
 #define S_FILTERDLG_ERR_CLOSE_FILE _("Error closing file %s\n")
+#define S_FILTERDLG_ERR_MAX_REACHED _("You can only add up to %u filters")
+#define S_FILTERDLG_ERR_ELEMENT_DUPLICATE _("Error: duplicate element '%s'\n")
+#define S_FILTERDLG_ERR_ELEMENT_NOT_FOUND _("Error: '%s' element not found for filter %d.\n")
+#define S_FILTERDLG_ERR_ELEMENT_INVALID_FIELD _("Error: invalid 'field' element %d\n")
 
 /*filefunc.c strings*/
 #define S_FILEFUNC_ERR_OPEN_FILE _("Error opening file %s\n")
@@ -190,6 +197,14 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_FILEFUNC_ERR_CREATE_PIXBUF _("Error creating icon pixbuf\n")
 #define S_FILEFUNC_ERR_NOT_DIRECTORY _("%s exists, but is not a directory, you must remove this before %s can run\n")
 #define S_FILEFUNC_ERR_MKDIR _("Error creating directory\n")
+#define S_FILEFUNC_ERR_CFG_WRITE _("Error writing config file: %s\n")
+#define S_FILEFUNC_ERR_PARSER_CTX _("Failed to allocate parser context\n")
+#define S_FILEFUNC_ERR_CFG_PARSE _("Error parsing config file %s: %s\n\nYou will need to either fix this or re-enter your configuration.")
+#define S_FILEFUNC_ERR_CFG_VALIDATE _("Failed to validate %s.")
+#define S_FILEFUNC_ERR_NO_ROOT_ELEMENT _("Error getting config root element.\nPlease re-enter your configuration.")
+#define S_FILEFUNC_ERR_ACC_ELEMENT_NOT_FOUND _("Error: '%s' element not found for account %d.\n")
+#define S_FILEFUNC_ERR_ELEMENT_DUPLICATE _("Error: duplicate element '%s'\n")
+#define S_FILEFUNC_ERR_PASSWORD_ELEMENTS _("Error: encrypted and unencrypted password elements found.\n")
 
 /*main.c strings*/
 #define S_MAIN_ERR_INSTANCE_RUNNING _("Error: Instance of %s already running\n")
@@ -203,6 +218,7 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_MAIN_ERR_OPEN_PIDFILE_READ _("Error reading PID file %s\n")
 #define S_MAIN_ERR_RENAME_PIDFILE _("Error renaming pid file %s to temp pid file %s\n")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
+#define S_MAIN_ERR_NO_ACCOUNTS _("No accounts found.\nPlease enter a mail account")
 
 #define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 \n\t%s -c (to configure mail details)\

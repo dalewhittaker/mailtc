@@ -172,7 +172,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, "Error: duplicate element '%s'\n", element->name);
+        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_ELEMENT_DUPLICATE, element->name);
         retval= TRUE;
     }
     element->found++;
@@ -244,7 +244,7 @@ static gboolean pw_read(elist *element, xmlChar *src)
      *check if both are present and it is invalid, so error*/
     if(*pdest!= 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, "Error: encrypted and unencrypted password elements found.\n");
+        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_PASSWORD_ELEMENTS);
         /*wipe the value*/
         memset(pdest, '\0', element->length);
         return FALSE;
@@ -355,7 +355,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
         };
 
         /*copy default values that are not required in config*/
-        g_snprintf(pnew->name, sizeof(pnew->name), "Account %d", pnew->id+ 1);
+        g_snprintf(pnew->name, sizeof(pnew->name), S_FILEFUNC_DEFAULT_ACC_STRING, pnew->id+ 1);
 
         child= node->children;
         while(child!= NULL)
@@ -392,7 +392,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
             if((!pelement->found&& (pelement->type!= EL_PW))||
                 ((pelement->type== EL_PW)&& (pnew->password[0]== 0)))
             {
-                err_dlg(GTK_MESSAGE_WARNING, "Error: '%s' element not found for account %d.\n", pelement->name, pnew->id);           
+                err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_ACC_ELEMENT_NOT_FOUND, pelement->name, pnew->id);           
                 retval= FALSE;
             }
             pelement++;
@@ -470,7 +470,7 @@ static gboolean cfg_elements(xmlDocPtr doc)
     node= xmlDocGetRootElement(doc);
     if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST ELEMENT_CONFIG)))
     {
-        err_dlg(GTK_MESSAGE_WARNING, "Error getting config root element.\nPlease re-enter your configuration.");
+        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_NO_ROOT_ELEMENT);
         return FALSE;
     }
          
@@ -516,7 +516,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
         xmlErrorPtr perror;
 
         perror= xmlCtxtGetLastError(ctxt);
-        err_dlg(GTK_MESSAGE_WARNING, "Error parsing config file %s: %s\n\nYou will need to either fix this or re-enter your configuration.", filename, perror->message);
+        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_CFG_PARSE, filename, perror->message);
         xmlCtxtResetLastError(ctxt);
         return FALSE;
     }
@@ -524,7 +524,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
     /*if file is valid, get the elements*/
     if(ctxt->valid== 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, "Failed to validate %s.", filename);
+        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_CFG_VALIDATE, filename);
         retval= FALSE;
     }
     else
@@ -565,7 +565,7 @@ gboolean cfg_read(void)
     {
         /*this is a fatal error, so exit*/
         xml_cleanup();
-        err_dlg(GTK_MESSAGE_ERROR, "Failed to allocate parser context\n");
+        err_dlg(GTK_MESSAGE_ERROR, S_FILEFUNC_ERR_PARSER_CTX);
 	    exit(EXIT_FAILURE);
     }
     /*now do some parsing*/
@@ -624,10 +624,9 @@ GSList *create_account(void)
 
 #ifdef MTC_NOTMINIMAL    
 /*Function to free the message list of an account*/
-static void msglist_free(gpointer data, gpointer user_data)
+static void msglist_free(gpointer data)
 {
     msg_struct *pmsg= (msg_struct *)data;
-    user_data= NULL;
 
     if(pmsg->header)
     {
@@ -645,7 +644,7 @@ static void msglist_free(gpointer data, gpointer user_data)
 #endif /*MTC_NOTMINIMAL*/
 
 /*Function to free an account*/
-static void free_account(gpointer data, gpointer user_data)
+static void free_account(gpointer data)
 {
 	mtc_account *paccount= (mtc_account *)data;
     mtc_icon *picon;
@@ -660,7 +659,7 @@ static void free_account(gpointer data, gpointer user_data)
     /*remove the message list if any*/
     if(msglist)
     {
-    	g_slist_foreach(msglist, msglist_free, NULL);
+    	g_slist_foreach(msglist, (GFunc)msglist_free, NULL);
 	    g_slist_free(msglist);
 	    msglist= NULL;
     }
@@ -693,7 +692,7 @@ void remove_account(guint item)
 	if(pcurrent_data== NULL) return;
 
 	/*free the data*/
-	free_account((gpointer)pcurrent_data, NULL);
+	free_account((gpointer)pcurrent_data);
 
 	/*remove from list*/
 	acclist= g_slist_remove(acclist, pcurrent_data);
@@ -716,7 +715,7 @@ void remove_account(guint item)
 void free_accounts(void)
 {
 	/*call the remove for each one*/
-	g_slist_foreach(acclist, free_account, NULL);
+	g_slist_foreach(acclist, (GFunc)free_account, NULL);
 	g_slist_free(acclist);
 	acclist= NULL;
 
@@ -919,7 +918,7 @@ gboolean cfg_write(void)
         xmlErrorPtr perror;
 
         perror= xmlGetLastError();
-        err_dlg(GTK_MESSAGE_ERROR, "Error writing config file: %s\n", perror->message);
+        err_dlg(GTK_MESSAGE_ERROR, S_FILEFUNC_ERR_CFG_WRITE, perror->message);
         xmlResetLastError();
         retval= FALSE;
     }
