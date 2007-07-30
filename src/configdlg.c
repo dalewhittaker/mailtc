@@ -320,7 +320,7 @@ static gboolean cfg_save(void)
 }
 
 /*signal called when close button of config dialog is pressed*/
-static void close_button_pressed(GtkButton *widget, gpointer user_data)
+static void close_button_pressed(void)
 {
 	/*display message to tell user to run mailtc, then dialog destroy widget*/
     err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_READYTORUN, PACKAGE);
@@ -340,7 +340,7 @@ static gboolean count_rows(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *
 }
 
 /*signal called when the add button of config dialog is pressed*/
-static void add_button_pressed(GtkButton *widget, gpointer user_data)
+static void add_button_pressed(void)
 {
 	GtkTreeModel *model;
 	gint count= 0;
@@ -350,7 +350,7 @@ static void add_button_pressed(GtkButton *widget, gpointer user_data)
 
 	gtk_tree_model_foreach(model, count_rows, &count);
 
-	/*otherwise run the details dialog*/
+	/*run the details dialog*/
 	accdlg_run(count, 1);
 }
 
@@ -367,7 +367,7 @@ static gboolean get_current_selection(GtkTreeModel *model, GtkTreePath *path, Gt
 }
 
 /*signal called when the edit button of config dialog is pressed*/
-static void edit_button_pressed(GtkButton *widget, gpointer user_data)
+static void edit_button_pressed(void)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter;
@@ -391,7 +391,7 @@ static void edit_button_pressed(GtkButton *widget, gpointer user_data)
 }
 
 /*signal called when the remove button of config dialog is pressed*/
-static void remove_button_pressed(GtkButton *widget, gpointer user_data)
+static void remove_button_pressed(void)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter1, iter2;
@@ -509,7 +509,7 @@ static void config_iconcolour_button_pressed(GtkWidget *widget, gpointer user_da
 }
 
 /*signal called when plugin information button is pressed*/
-static void plginfo_button_pressed(GtkWidget *widget, gpointer user_data)
+static void plginfo_button_pressed(void)
 {
 	mtc_plugin *pitem= NULL;
 
