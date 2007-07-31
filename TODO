@@ -1,18 +1,11 @@
 ----------
 NEXT RELEASE:
 1) final cleanup/testing of xml files/filters (with valgrind)
-    first, generate suppression file
     a) test all xml file stuff with valgrind
-        i) check each option works
-            a) interval
-            b) new mail command
-            c) multi mode
-            d) deleting accounts etc
-        ii) check filefunc to try and reproduce possible alloc/free's
-        iii) test from start as if new user
+        i) check filefunc to try and reproduce possible alloc/free's
     b) test all filters thoroughly with valgrind
 
-2) Final release: Update webpage, build mailtc, build example plugin, update ebuild (SVN?)
+2) Final release: Update webpage, build mailtc, build example plugin, update ebuild
 ----------
 
 ----------
@@ -24,6 +17,7 @@ ONE AFTER:
     a) Compile rest of plugins and test
     b) Use Nullsoft scriptable installer as an installer and test.
     c) Make sure GtkStatusIcon stuff is correct.
+5) autogen.sh script svn checkouts?
 ----------
 
 WISH LIST TASKS:
