@@ -125,7 +125,7 @@ static gboolean plg_load(const gchar *plugin_name)
 	pitem->handle= module;
 
 	/*if it is greater than the current mailtc version, report an error*/
-	if(g_ascii_strcasecmp(VERSION, pitem->compatibility)< 0)
+	if(g_ascii_strcasecmp(VERSION, pitem->compatibility)!= 0)
 	{
 		err_noexit(S_PLUGIN_ERR_COMPATIBILITY, g_module_name(module), PACKAGE, VERSION);
 		plg_unload(pitem, NULL);

@@ -1,15 +1,18 @@
 ----------
 NEXT RELEASE:
 1) final cleanup/testing of xml files/filters (with valgrind)
+    first, generate suppression file
     a) test all xml file stuff with valgrind
+        i) check each option works
+            a) interval
+            b) new mail command
+            c) multi mode
+            d) deleting accounts etc
+        ii) check filefunc to try and reproduce possible alloc/free's
+        iii) test from start as if new user
     b) test all filters thoroughly with valgrind
-    c) test mailtc itself works, with valgrind
-    d) test UIDL_LEN thing for popfunc with valgrind
-    e) test main mailtc timeout loop with valgrind
-2) Final release:
-    a) Update example plugin
-    b) Svn ebuild?
-    c) Update webpage
+
+2) Final release: Update webpage, build mailtc, build example plugin, update ebuild (SVN?)
 ----------
 
 ----------
