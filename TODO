@@ -1,10 +1,6 @@
 ----------
 NEXT RELEASE:
-1) final cleanup/testing of xml files/filters (with valgrind)
-    a) test all xml file stuff with valgrind
-        i) check filefunc to try and reproduce possible alloc/free's
-    b) test all filters thoroughly with valgrind
-
+1) test all filters thoroughly with valgrind
 2) Final release: Update webpage, build mailtc, build example plugin, update ebuild
 ----------
 

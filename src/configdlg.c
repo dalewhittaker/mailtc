@@ -191,7 +191,7 @@ static gboolean acc_save(int profile)
 {
 	gboolean retval= FALSE;
     gint empty= 0;
-	gchar msg[10];
+	gchar msg[20];
 	GtkTreeIter iter;
 	GSList *pcurrent= NULL;
 	mtc_account *pcurrent_data= NULL;
@@ -204,27 +204,27 @@ static gboolean acc_save(int profile)
 	/*check that there are no empty values before saving the details*/
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(password_entry)), "")== 0)
 	{
-		g_strlcpy(msg, S_CONFIGDLG_PASSWORD, 10);
+		g_strlcpy(msg, S_CONFIGDLG_PASSWORD, sizeof(msg));
 		empty++;
 	}
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(username_entry)), "")== 0)
 	{
-		g_strlcpy(msg, S_CONFIGDLG_USERNAME, 10);
+		g_strlcpy(msg, S_CONFIGDLG_USERNAME, sizeof(msg));
 		empty++;
 	}
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(port_entry)), "")== 0)
 	{	
-		g_strlcpy(msg, S_CONFIGDLG_PORT, 10);
+		g_strlcpy(msg, S_CONFIGDLG_PORT, sizeof(msg));
 		empty++;
 	}
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(server_entry)), "")== 0)
 	{
-		g_strlcpy(msg, S_CONFIGDLG_HOSTNAME, 10);
+		g_strlcpy(msg, S_CONFIGDLG_HOSTNAME, sizeof(msg));
 		empty++;
 	}
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(name_entry)), "")== 0)
 	{
-		g_strlcpy(msg, S_CONFIGDLG_ACCNAME, 10);
+		g_strlcpy(msg, S_CONFIGDLG_ACCNAME, sizeof(msg));
 		empty++;
 	}
 	
@@ -517,7 +517,6 @@ static void plginfo_button_pressed(void)
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
-	/*set the port to the default port for the specified plugin*/
     err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
 
 }
@@ -724,15 +723,13 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	
 	    gtk_entry_set_text(GTK_ENTRY(name_entry), pcurrent->name);
 		gtk_entry_set_text(GTK_ENTRY(server_entry), pcurrent->server);
-	    g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
-		gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
 		gtk_entry_set_text(GTK_ENTRY(username_entry), pcurrent->username);
 		gtk_entry_set_text(GTK_ENTRY(password_entry), pcurrent->password);
 
-		/*set the combobox to first entry and get the iterator*/
+        /*set the combobox to first entry and get the iterator*/
 		model= gtk_combo_box_get_model(GTK_COMBO_BOX(protocol_combo));
 		if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(protocol_combo), &iter))
-				err_exit(S_CONFIGDLG_ERR_COMBO_ITER);
+			err_exit(S_CONFIGDLG_ERR_COMBO_ITER);
 				
 		/*loop through listbox entries to see which is selected and run the details dialog for the account*/
 		/*if not found for whatever reason, default to the first in the list*/
@@ -741,7 +738,11 @@ gboolean accdlg_run(gint profile, gint newaccount)
 
 		gtk_tree_model_foreach(model, set_combo_text, (gchar *)pitem->name);
 
-#ifdef MTC_NOTMINIMAL
+        /*set the port text after the default port value has been set*/
+        g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pcurrent->port);
+        gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
+
+   #ifdef MTC_NOTMINIMAL
         pfilter= pcurrent->pfilters;
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
 #endif /*MTC_NOTMINIMAL*/	

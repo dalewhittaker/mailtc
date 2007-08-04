@@ -343,14 +343,14 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
         
         elist elements[]=
         {
-            { ELEMENT_NAME,         EL_STR,  pnew->name,     sizeof(pnew->name),     0 },
+            { ELEMENT_NAME,         EL_STR,  pnew->name,        sizeof(pnew->name),        0 },
             { ELEMENT_PLUGINNAME,   EL_STR,  pnew->plgname,     sizeof(pnew->plgname),     0 },
             { ELEMENT_SERVER,       EL_STR,  pnew->server,      sizeof(pnew->server),      0 },
             { ELEMENT_PORT,         EL_INT,  &pnew->port,       sizeof(pnew->port),        0 },
             { ELEMENT_USERNAME,     EL_STR,  pnew->username,    sizeof(pnew->username),    0 },
             { ELEMENT_ICONCOLOUR,   EL_STR,  pnew->icon.colour, sizeof(pnew->icon.colour), 0 },
-            { ELEMENT_ENCPASSWORD,  EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
-            { ELEMENT_PASSWORD,     EL_PW,  pnew->password,     sizeof(pnew->password),    0 },
+            { ELEMENT_ENCPASSWORD,  EL_PW,   pnew->password,    sizeof(pnew->password),    0 },
+            { ELEMENT_PASSWORD,     EL_PW,   pnew->password,    sizeof(pnew->password),    0 },
             { NULL, EL_NULL, NULL, 0, 0 },
         };
 
@@ -576,6 +576,9 @@ gboolean cfg_read(void)
     xml_cleanup();
 
     /*create the image*/
+    if(retval!= TRUE)
+        g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon->colour));
+    
     picon= icon_create(picon);
 
     return(retval);
