@@ -199,7 +199,7 @@ static gboolean msglist_filter(msg_header *pheader, mtc_filters *pfilters)
     GSList *pcurrent= NULL;
     mtc_filter *pfilter= NULL;
 
-    if(pheader== NULL|| pfilter== NULL)
+    if(pheader== NULL|| pfilters== NULL)
         return FALSE;
     
     pcurrent= pfilters->list;

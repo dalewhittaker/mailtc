@@ -376,6 +376,7 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
             }
             child= child->prev;
         }
+        
     }
     return(retval);
 }
