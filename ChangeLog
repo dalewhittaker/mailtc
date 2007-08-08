@@ -468,4 +468,4 @@ libxml).
 Add To: and Cc: to list of possible mail header fields that can be filtered.
 Use GSList for filters.
 Dynamically allocate for POP3 UIDL strings
-Fix various compilter warnings.
+Fix various compiler warnings.
