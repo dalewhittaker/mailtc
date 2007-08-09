@@ -53,7 +53,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__mailtc_SOURCES_DIST = configdlg.c docklet.c filefunc.c common.c \
 	plugfunc.c encrypter.c filterdlg.c eggtrayicon.c main.c
-am__objects_1 = encrypter.$(OBJEXT)
+#am__objects_1 = encrypter.$(OBJEXT)
 am__objects_2 = filterdlg.$(OBJEXT)
 am__objects_3 = eggtrayicon.$(OBJEXT)
 am_mailtc_OBJECTS = configdlg.$(OBJEXT) docklet.$(OBJEXT) \
@@ -110,9 +110,9 @@ CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2
 CYGPATH_W = echo
 DATADIRNAME = share
-DEBUG_FALSE = #
-DEBUG_TRUE = 
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.3.6\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_SSL=1 -DMTC_USE_POP=1 -DMTC_USE_IMAP=1 -DMTC_NOTMINIMAL=1 -DMTC_EGGTRAYICON=1
+DEBUG_FALSE = 
+DEBUG_TRUE = #
+DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"mailtc\" -DVERSION=\"1.3.7\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DHAVE_LIMITS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_NETDB_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_VPRINTF=1 -DHAVE_FORK=1 -DHAVE_EXECLP=1 -DHAVE_ACCESS=1 -DHAVE_RENAME=1 -DHAVE_REMOVE=1 -DHAVE_MKDIR=1 -DHAVE_SOCKET=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_CONNECT=1 -DHAVE_SEND=1 -DHAVE_RECV=1 -DHAVE_MEMSET=1 -DHAVE_FOPEN=1 -DHAVE_TIME=1 -DHAVE_STRSTR=1 -DHAVE_SELECT=1 -DHAVE_KILL=1 -DHAVE_LOCALE_H=1 -DHAVE_LC_MESSAGES=1 -DHAVE_BIND_TEXTDOMAIN_CODESET=1 -DHAVE_GETTEXT=1 -DHAVE_DCGETTEXT=1 -DENABLE_NLS=1 -DGETTEXT_PACKAGE=\"mailtc\" -DMTC_USE_POP=1 -DMTC_USE_IMAP=1 -DMTC_NOTMINIMAL=1 -DMTC_EGGTRAYICON=1
 DEPDIR = .deps
 ECHO = echo
 ECHO_C = 
@@ -154,8 +154,8 @@ MTC_NLS_FALSE = #
 MTC_NLS_TRUE = 
 MTC_POP_FALSE = #
 MTC_POP_TRUE = 
-MTC_SSL_FALSE = #
-MTC_SSL_TRUE = 
+MTC_SSL_FALSE = 
+MTC_SSL_TRUE = #
 OBJEXT = o
 PACKAGE = mailtc
 PACKAGE_BUGREPORT = 
@@ -175,7 +175,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 1.3.6
+VERSION = 1.3.7
 XGETTEXT = /usr/bin/xgettext
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -217,7 +217,7 @@ mandir = ${datarootdir}/man
 mkdir_p = mkdir -p --
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/dale/test
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -229,9 +229,9 @@ target_cpu = x86_64
 target_os = linux-gnu
 target_vendor = unknown
 mtc_include = $(top_srcdir)/include
-ssl_libraries = -lcrypto -lssl
-ssl_sources = encrypter.c
-ssl_headers = $(mtc_include)/encrypter.h
+#ssl_libraries = -lcrypto -lssl
+#ssl_sources = encrypter.c
+#ssl_headers = $(mtc_include)/encrypter.h
 mtc_cflags = $(CFLAGS) -Wall -W -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED 
 
 #extra cflags are for the gettext stuff, and also the plugin dir
@@ -245,7 +245,7 @@ msglist_sources = filterdlg.c
 msglist_headers = $(mtc_include)/envelope_small.h \
 				$(mtc_include)/filterdlg.h
 
-debug_cflags = -g -DDEBUG
+#debug_cflags = -g -DDEBUG
 egg_sources = eggtrayicon.c
 egg_headers = $(mtc_include)/eggtrayicon.h
 AM_CFLAGS = $(mtc_cflags) \
