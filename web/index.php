@@ -234,7 +234,7 @@ function show_page7()
 
 ?>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link rel="stylesheet" href="styles.css" type="text/css" /><title>mailtc - <?=ucfirst($link?$link:'Home')?></title></head>
 <body>
