@@ -1,12 +1,14 @@
 ----------
 NEXT RELEASE:
-1) Rework plugin API so that the filters can be moved there
-2) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
-3) Remove UIDL_LEN for imapfunc and make dynamic instead
+1) autogen.sh script svn checkouts
+    a) use the 1.3.7 release, then remove any non source files
+    b) run the autogen.sh script and verify it works
+    c) then remove same files from svn
+2) Rework plugin API so that the filters can be moved there
+3) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
+4) Remove UIDL_LEN for imapfunc and make dynamic instead
 ----------
 
 WISH LIST TASKS:
 1) Threading, allowing reading (click) when checking new mail (big job).
 2) Proxy server option?
-3) autogen.sh script svn checkouts?
-4) Extend the stuff that can be used for the mail command ($ stuff)
