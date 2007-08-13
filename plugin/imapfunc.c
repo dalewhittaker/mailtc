@@ -24,14 +24,6 @@
 #include "msg.h"
 #endif /*MTC_NOTMINIMAL*/
 
-/*TODO
- *The spec said that the max length of a UID was 70
- *however some servers return very long UID's
- *to handle such cases the length has been increased.
- *In an ideal world the string should be dynamically allocated
- *rather than have a set value*/
-#define UIDL_LEN 300
-
 /*define the various imap responses, note they can either be tagged or untagged
  *both are required.  Rather than define an id for each, use a macro to use higher word for tagged*/
 #define MAX_RESPONSE_STRING 20
@@ -431,44 +423,47 @@ static GString *imap_select_inbox(mtc_net *pnetinfo, mtc_account *paccount, GStr
 }
 
 /*get the fetch data from a line, including UID's and flags*/
-static mtc_error imap_get_uid(gchar *uidstring, gchar *spos, gchar *epos, gchar *uidvalidity)
+static gchar *imap_get_uid(gchar *uidstring, gchar *spos, gchar *epos, gchar *uidvalidity)
 {
     gchar *sflag= NULL, *eflag= NULL;
     gchar *uid= NULL;
-
+    gint uidlen= 0;
+    
     /*find the "FETCH" to verify we have a correct line*/
     sflag= strstr(spos, " FETCH ");
     if((sflag== NULL)|| (sflag> epos))
-       return(MTC_RETURN_FALSE);
+       return(NULL);
 
     /*find the start parenthesis*/
     sflag= strchr(sflag+ 6, '(');
     if((sflag== NULL)|| (sflag> epos))
-       return(MTC_RETURN_FALSE);
+       return(NULL);
 
     /*check if the message is seen, don't add if that is the case*/
     eflag= strstr(sflag, "\\Seen");
     if((eflag!= NULL)&& (eflag< epos))
-        return(MTC_RETURN_FALSE);
+        return(NULL);
     
     /*get the UID from the message*/
     sflag= strstr(sflag, "UID ");
     if((sflag== NULL)|| (sflag> epos))
-        return(MTC_RETURN_FALSE);
+        return(NULL);
 
     sflag+= 4;
     eflag= strchr(sflag, ' ');
     if((eflag== NULL)|| (eflag> epos))
-        return(MTC_RETURN_FALSE);
+        return(NULL);
 
     /*create the unique string from the uid and uidvalidity values*/
-    /*TODO fix UIDL_LEN*/
-    memset(uidstring, 0, UIDL_LEN);
-    uid= (gchar *)g_malloc0((eflag- sflag)+ sizeof(gchar));
-    g_strlcpy(uid, sflag, (eflag- sflag)+ 1);
-    g_snprintf(uidstring, UIDL_LEN, "%s-%s\n", uidvalidity, uid);
+    uid= g_strndup(sflag, eflag- sflag);
+
+    /*3 takes into account the '-' and the '\n'*/
+    uidlen= strlen(uid)+ strlen(uidvalidity)+ 3* sizeof(gchar);
+    uidstring= (gchar *)g_malloc0(uidlen);
+    g_snprintf(uidstring, uidlen, "%s-%s\n", uidvalidity, uid);
     g_free(uid);
-    return(MTC_RETURN_TRUE);
+    
+    return(uidstring);
 }
 
 /*function to get the header of a message*/
@@ -496,7 +491,7 @@ static GString *imap_get_header(mtc_net *pnetinfo, mtc_account *paccount, GStrin
 	    
     }
     /*put the \r\n back*/
-    g_strlcat(message, "\r\n", UIDL_LEN);
+    g_strlcat(message, "\r\n", strlen(message)+ 1);
     return(buf);
 }
 #endif /*MTC_NOTMINIMAL*/
@@ -510,7 +505,7 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
 {
 
     gchar *spos= NULL, *epos= NULL;
-    gchar uidstring[UIDL_LEN];
+    gchar *uidstring= NULL;
     mtc_error retval= MTC_RETURN_TRUE;
 
     /*reset the message list (must be done after marking as read)*/
@@ -536,7 +531,8 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
             break;
         
         /*end and start found, so add to list etc.*/
-        if(imap_get_uid(uidstring, spos, epos, uidvalidity)== MTC_RETURN_TRUE)
+        uidstring= imap_get_uid(uidstring, spos, epos, uidvalidity);
+        if(uidstring!= NULL)
         {
             
 #ifdef MTC_NOTMINIMAL
@@ -551,6 +547,7 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
                if((header= imap_get_header(pnetinfo, paccount, header, uidstring))== NULL)
                {
                    retval= MTC_ERR_CONNECT;
+                   g_free(uidstring);
                    break;
                }
             }
@@ -563,6 +560,8 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
 #else
             paccount->num_messages++;
 #endif /*MTC_NOTMINIMAL*/
+
+            g_free(uidstring);
         }
 
         if((spos= strstr(epos, "\r\n*"))!= NULL)
@@ -612,7 +611,6 @@ static mtc_error imap_mark_read(mtc_net *pnetinfo, mtc_account *paccount, const 
 
 		/*strip the uid from the line*/ 
 		g_strchomp(line);
-		
         if((spos= strchr(line, '-'))== NULL)
 		{
 			plg_err(S_IMAPFUNC_ERR_GET_UID);
