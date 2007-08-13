@@ -50,20 +50,21 @@ static GString *pop_recvfunc(mtc_net *pnetinfo, GString *msg, gchar *endstring, 
 
 		/*add the received string to the buffer*/
         msg= g_string_append(msg, tmpbuf);
-
+        
 		/*added so we dont have to wait for select() timeout every time*/
 		if((msg->len>= endslen)&& (g_ascii_strncasecmp(msg->str+ (msg->len- endslen), endstring, endslen)== 0))
-			break;
+		{
+            break;
+        }
 	}
-	
 	/*check if there was an error with the command*/
 	if((msg->str!= NULL)&& (g_ascii_strncasecmp(msg->str, "-ERR", 4))== 0)
 	{	
 		g_string_free(msg, TRUE);
 		return(NULL);
 	}
-	
-	/*check that the received string was receive fully (i.e ends with endstring)*/
+    
+   	/*check that the received string was receive fully (i.e ends with endstring)*/
 	if((msg->len< endslen)||
 	((msg->str!= NULL)&& (g_ascii_strncasecmp(msg->str+ (msg->len- endslen), endstring, endslen)!= 0)))
 	{
@@ -246,7 +247,7 @@ static mtc_error crammd5_login(mtc_net *pnetinfo, mtc_account *paccount)
         return(retval);
 
 	/*receive back from server to check username was sent ok*/
-	if(!(buf= pop_recv(pnetinfo, paccount, "AUTH CRAM-MD5", buf)))
+    if(!(buf= pop_recv(pnetinfo, paccount, "AUTH CRAM-MD5", buf)))
         return(MTC_ERR_CONNECT);
 
     /*remove trailing whitespace*/
@@ -601,7 +602,7 @@ static mtc_error check_mail(mtc_net *pnetinfo, mtc_account *paccount, mtc_error 
 
     /*run the authentication function*/
     retval= (*authfunc)(pnetinfo, paccount);
-    
+
     if(pnetinfo->pdata!= NULL)
         g_string_free(pnetinfo->pdata, TRUE);
     
