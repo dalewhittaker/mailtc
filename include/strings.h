@@ -135,7 +135,6 @@
 #define S_CONFIGDLG_ERR_FIND_PLUGIN _("Plugin not found")
 
 /*docklet.c strings*/
-#define S_DOCKLET_ERR_FIND_PLUGIN _("Error finding plugin %s\n")
 #define S_DOCKLET_ERR_FIND_PLUGIN_MSG _("Cannot find the plugin '%s' used for account '%s'.\n\n\
 You will need to select and resave a plugin from the list for each account.")
 #define S_DOCKLET_ERR_CONNECT _("%s: connection error (%d)\n")

@@ -20,6 +20,7 @@
 #include <stdlib.h> /*exit*/
 #include <time.h> /*asctime etc.c*/
 #include <gtk/gtkimage.h>
+#include <gtk/gtkmessagedialog.h>
 
 #include "common.h"
 #include "envelope_large.h"
@@ -27,6 +28,26 @@
 #ifdef MTC_NOTMINIMAL
 #include "envelope_small.h"
 #endif /*MTC_NOTMINIMAL*/
+
+static gboolean use_gtkmsg= FALSE;
+
+static void msg_gtk(GtkMessageType type, gchar *msg)
+{
+	GtkWidget *dialog;
+	
+    dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, msg);
+    gtk_window_set_title(GTK_WINDOW(dialog), PACKAGE);
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+}
+
+/*TODO we should check if it ends with "\n", if it doesn't then it must be added*/
+static void msg_glib(FILE *pfile, gchar *msg)
+{
+    g_fprintf(pfile, msg);
+    fflush(pfile);
+}
 
 /*function to get the date and time*/
 gchar *str_time(void)
@@ -40,46 +61,8 @@ gchar *str_time(void)
 	return(asctime(timeinfo));
 }
 
-/*run an error dialog reporting error*/
-gboolean err_dlg(GtkMessageType type, gchar *errmsg, ...)
-{
-	GtkWidget *dialog;
-	va_list list;
-    gsize msglen= 0;
-    gchar *err_string= NULL;
-
-    va_start(list, errmsg);
-    msglen= g_printf_string_upper_bound(errmsg, list)+ 1;
-    va_end(list);
-
-    err_string= (gchar *)g_malloc0(msglen);
-	
-	/*create a va_list and display it as a dialog*/
-    va_start(list, errmsg); 
-	g_vsnprintf(err_string, msglen, errmsg, list);
-	dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, err_string);
-	
-    /*set the title*/
-    gtk_window_set_title(GTK_WINDOW(dialog), PACKAGE);
-
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-	va_end(list);
-	
-    g_free(err_string);
-
-	return TRUE;
-}
-
-/*output to stderr*/
-static void err_stderr(gchar *errmsg, va_list args)
-{
-	g_vfprintf(stderr, errmsg, args);
-	fflush(stderr);
-}
-
-/*output to logfile*/
-static void err_log(gchar *errmsg, va_list args)
+/*TODO we should check if it ends with "\n", if it doesn't then it must be added*/
+static void msg_log(gchar *msg)
 {
 	gchar *ptimestring;
 	
@@ -88,54 +71,101 @@ static void err_log(gchar *errmsg, va_list args)
 	
 	if(config.logfile!= NULL)
 	{
-		g_fprintf(config.logfile, "%s: ", ptimestring);
-		g_vfprintf(config.logfile, errmsg, args);
-	
+		g_fprintf(config.logfile, "%s: %s", ptimestring, msg);
 		fflush(config.logfile);
 	}
 }
 
-/*function to report error, log it, and then exit*/
-gboolean err_exit(gchar *errmsg, ...)
+/*function to print a message in the various appropriate ways*/
+static void print_msg(GtkMessageType msg_type, gchar *msg)
 {
-	/*create va_list of arguments*/
-	va_list list;
-	
-	va_start(list, errmsg); 
-	err_stderr(errmsg, list);
-	va_end(list);
-
-    /*NOTE 64-bit crashes unless va_list is reset
-     *which is why this is not cleaner than this
-     *someday this will be tidyed*/
-    va_start(list, errmsg); 
-	err_log(errmsg, list);
-	va_end(list);
-
-	exit(EXIT_FAILURE);
-
-	return FALSE; /*shouldnt really ever happen*/
+    if(use_gtkmsg)
+        msg_gtk(msg_type, msg);
+    else
+    {
+        msg_glib((msg_type== GTK_MESSAGE_INFO|| msg_type== GTK_MESSAGE_QUESTION)?
+            stdout: stderr, msg);
+    }
+    msg_log(msg);
 }
 
-/*function to report error and log*/
-gboolean err_noexit(gchar *errmsg, ...)
-{
-	/*create va_list of arguments*/
-	va_list list;
-	
-	va_start(list, errmsg); 
-	err_stderr(errmsg, list);
-	va_end(list);
-
-    /*NOTE 64-bit crashes unless va_list is reset
-     *which is why this is not cleaner than this
-     *someday this will be tidyed*/
-    va_start(list, errmsg); 
-	err_log(errmsg, list);
-	va_end(list);
-
-	return TRUE;
+/*without using variadic macros, this is the best i can think
+ *converts a variable argument list to a buffer which must be freed*/
+#define VALIST_TO_STR(list, msg) \
+{ \
+    gsize msglen= 0; \
+    va_start(list, msg); \
+    msglen= g_printf_string_upper_bound(msg, list)+ 1; \
+    va_end(list); \
+    fmsg= (gchar *)g_malloc0(msglen); \
+    \
+    va_start(list, msg); \
+    g_vsnprintf(fmsg, msglen, msg, list); \
+    va_end(list); \
 }
+
+/*warning message*/
+void msgbox_warn(gchar *msg, ...)
+{
+    gchar *fmsg= NULL;
+    va_list list;
+
+    VALIST_TO_STR(list, msg);
+    print_msg(GTK_MESSAGE_WARNING, fmsg);
+    g_free(fmsg);
+}
+
+/*information message*/
+void msgbox_info(gchar *msg, ...)
+{
+    gchar *fmsg= NULL;
+    va_list list;
+
+    VALIST_TO_STR(list, msg);
+    print_msg(GTK_MESSAGE_INFO, fmsg);
+    g_free(fmsg);
+}
+
+/*error message*/
+void msgbox_err(gchar *msg, ...)
+{
+    gchar *fmsg= NULL;
+    va_list list;
+
+    VALIST_TO_STR(list, msg);
+    print_msg(GTK_MESSAGE_ERROR, fmsg);
+    g_free(fmsg);
+}
+
+/*fatal (unrecoverable) error message*/
+void msgbox_fatal(gchar *msg, ...)
+{
+    gchar *fmsg= NULL;
+    va_list list;
+
+    VALIST_TO_STR(list, msg);
+    print_msg(GTK_MESSAGE_ERROR, fmsg);
+    g_free(fmsg);
+    
+    exit(EXIT_FAILURE);
+}
+
+/*set the message reporting to gtk*/
+void msgbox_init(void)
+{
+    use_gtkmsg= TRUE;
+}
+
+/*set the message reporting to glib*/
+void msgbox_term(void)
+{
+    use_gtkmsg= FALSE;
+}
+
+/*Variadic macros are highly useful, but unfortunately only introduced in C99*/
+/*#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define ERR_EXIT(format, ...)    report_msg(GTK_MESSAGE_ERROR, TRUE, format, __VA_ARGS__)
+#endif*/
 
 /*function to set the colour of the icon*/
 static GdkPixbuf *iconcolour_set(GdkPixbuf *pixbuf, gchar *colourstring)
@@ -257,4 +287,72 @@ mtc_icon *icon_create(mtc_icon *picon)
     g_object_ref(G_OBJECT(picon->image));
 
     return(picon);
+}
+
+
+/*TODO all below to be removed*/
+/*output to stderr*/
+static void err_stderr(gchar *errmsg, va_list args)
+{
+	g_vfprintf(stderr, errmsg, args);
+	fflush(stderr);
+}
+
+/*output to logfile*/
+static void err_log(gchar *errmsg, va_list args)
+{
+	gchar *ptimestring;
+	
+	ptimestring= str_time();
+	g_strchomp(ptimestring);
+	
+	if(config.logfile!= NULL)
+	{
+		g_fprintf(config.logfile, "%s: ", ptimestring);
+		g_vfprintf(config.logfile, errmsg, args);
+	
+		fflush(config.logfile);
+	}
+}
+
+/*function to report error, log it, and then exit*/
+gboolean err_exit(gchar *errmsg, ...)
+{
+	/*create va_list of arguments*/
+	va_list list;
+	
+	va_start(list, errmsg); 
+	err_stderr(errmsg, list);
+	va_end(list);
+
+    /*NOTE 64-bit crashes unless va_list is reset
+     *which is why this is not cleaner than this
+     *someday this will be tidyed*/
+    va_start(list, errmsg); 
+	err_log(errmsg, list);
+	va_end(list);
+
+	exit(EXIT_FAILURE);
+
+	return FALSE; /*shouldnt really ever happen*/
+}
+
+/*function to report error and log*/
+gboolean err_noexit(gchar *errmsg, ...)
+{
+	/*create va_list of arguments*/
+	va_list list;
+	
+	va_start(list, errmsg); 
+	err_stderr(errmsg, list);
+	va_end(list);
+
+    /*NOTE 64-bit crashes unless va_list is reset
+     *which is why this is not cleaner than this
+     *someday this will be tidyed*/
+    va_start(list, errmsg); 
+	err_log(errmsg, list);
+	va_end(list);
+
+	return TRUE;
 }

@@ -253,6 +253,9 @@ static void atexit_func(void)
 {
     mtc_icon *picon= NULL;
     
+    /*set future error reporting via glib*/
+    msgbox_term();
+
 	/*remove the source if it was active*/
 	if(func_ref)
 		g_source_remove(func_ref);
@@ -345,7 +348,7 @@ static gboolean mtc_init(void)
 static gint warndlg_run(gchar *msg, gboolean startconfig)
 {
 	/*run the dialog*/
-    err_dlg(GTK_MESSAGE_WARNING, msg, PACKAGE);
+    msgbox_warn(msg, PACKAGE);
 	
 	/*run the config dialog and return*/
 	return((startconfig)? cfgdlg_start(): EXIT_FAILURE);
@@ -421,7 +424,8 @@ gint main(gint argc, gchar *argv[])
 
     /*initialise gtk first*/
 	gtk_init(&argc, &argv);
-	
+	msgbox_init();
+
     /*set the default icon*/
     if(!set_app_icon())
         return(1);
@@ -465,7 +469,7 @@ gint main(gint argc, gchar *argv[])
 
         /*warn if no accounts found*/
         if(acclist== NULL&& cfgok)
-            err_dlg(GTK_MESSAGE_WARNING, S_MAIN_ERR_NO_ACCOUNTS);
+            msgbox_warn(S_MAIN_ERR_NO_ACCOUNTS);
 
         /*run the config dialog if any config needed*/
 		if(acclist== NULL|| !cfgok)
