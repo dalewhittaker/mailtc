@@ -17,7 +17,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-
 #ifndef DW_MAILTC_COMMON
 #define DW_MAILTC_COMMON
 
@@ -45,6 +44,5 @@ mtc_icon *icon_create(mtc_icon *picon);
 
 /*TODO to be removed*/
 gboolean err_exit(gchar *errmsg, ...);
-gboolean err_noexit(gchar *errmsg, ...);
 
 #endif /*DW_MAILTC_COMMON*/

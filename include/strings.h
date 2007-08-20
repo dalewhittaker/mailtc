@@ -231,8 +231,8 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_MAIN_ERR_LOAD_PLUGINS ("Error loading network plugins\n")
 
 /*plugin.c strings*/
-#define S_PLUGIN_ERR_CLOSE_PLUGIN _("Error closing plugin %s: %s")
-#define S_PLUGIN_ERR_MODULE_SUPPORT _("Error: module loading not supported on this system")
+#define S_PLUGIN_ERR_CLOSE_PLUGIN _("Error closing plugin %s: %s\n")
+#define S_PLUGIN_ERR_MODULE_SUPPORT _("Error: module loading not supported on this system\n")
 #define S_PLUGIN_ERR_OPEN_PLUGIN _("Error opening plugin %s: %s\n")
 #define S_PLUGIN_ERR_PLUGIN_POINTER _("Error getting plugin pointer: %s\n")
 #define S_PLUGIN_ERR_INIT_PLUGIN _("Error initialising plugin %s: %s\n")

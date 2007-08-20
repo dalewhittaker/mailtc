@@ -337,22 +337,3 @@ gboolean err_exit(gchar *errmsg, ...)
 	return FALSE; /*shouldnt really ever happen*/
 }
 
-/*function to report error and log*/
-gboolean err_noexit(gchar *errmsg, ...)
-{
-	/*create va_list of arguments*/
-	va_list list;
-	
-	va_start(list, errmsg); 
-	err_stderr(errmsg, list);
-	va_end(list);
-
-    /*NOTE 64-bit crashes unless va_list is reset
-     *which is why this is not cleaner than this
-     *someday this will be tidyed*/
-    va_start(list, errmsg); 
-	err_log(errmsg, list);
-	va_end(list);
-
-	return TRUE;
-}
