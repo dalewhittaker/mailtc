@@ -231,7 +231,7 @@ static gboolean acc_save(int profile)
 	/*if there were any empty values tell user to enter it*/
 	if(empty)
 	{
-        err_dlg(GTK_MESSAGE_ERROR, S_CONFIGDLG_DETAILS_INCOMPLETE, msg);
+        msgbox_warn(S_CONFIGDLG_DETAILS_INCOMPLETE, msg);
 		return FALSE;
 	}
 
@@ -279,7 +279,7 @@ static gboolean acc_save(int profile)
 
 		/*find the plugin and update the list*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
+			msgbox_warn(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
 
 		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->name, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);
   		pcurrent= g_slist_next(pcurrent);
@@ -323,7 +323,7 @@ static gboolean cfg_save(void)
 static void close_button_pressed(void)
 {
 	/*display message to tell user to run mailtc, then dialog destroy widget*/
-    err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_READYTORUN, PACKAGE);
+    msgbox_info(S_CONFIGDLG_READYTORUN, PACKAGE);
 	gtk_main_quit();
 }
 
@@ -517,7 +517,7 @@ static void plginfo_button_pressed(void)
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
 		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
-    err_dlg(GTK_MESSAGE_INFO, S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
+    msgbox_info(S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
 
 }
 
@@ -986,7 +986,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 		/*find the plugin and add it to the listbox*/
 		/*Message box here if we cannot find the plugin*/
 		if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-			err_dlg(GTK_MESSAGE_WARNING, S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
+			msgbox_warn(S_CONFIGDLG_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
 		
 		/*add to the list, if we cannot find it, report that it is not found*/
 		gtk_list_store_set(store, &iter, ACCOUNT_COLUMN, pcurrent_data->name, PROTOCOL_COLUMN, (pitem!= NULL)? pitem->name: S_CONFIGDLG_ERR_FIND_PLUGIN, -1);

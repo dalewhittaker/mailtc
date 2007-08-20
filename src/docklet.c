@@ -181,8 +181,7 @@ static gboolean run_cmd(gchar *mailapp)
 	/*Run the mail application and report an error if it does not work*/
 	if(!g_spawn_async(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &spawn_error))
 	{
-		err_noexit("%s\n", spawn_error->message);
-		err_dlg(GTK_MESSAGE_WARNING, spawn_error->message);
+		msgbox_warn("%s\n", spawn_error->message);
 		if(spawn_error) g_error_free(spawn_error);
 		retval= FALSE;
 	}
@@ -241,8 +240,7 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 	/*find the correct pluin to handle the click*/
 	if((pitem= plg_find(paccount->plgname))== NULL)
 	{
-		err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->name);
-		err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, paccount->plgname);
+		msgbox_warn(S_DOCKLET_ERR_FIND_PLUGIN_MSG, paccount->plgname, paccount->name);
 		
 		/*this should not happen for single mode; if it is active, it should exist*/
 		if(exitflag)
@@ -573,9 +571,7 @@ gboolean mail_thread(void)
 			/*search for the plugin, if it is not found, report and error*/
 			if((pitem= plg_find(pcurrent_data->plgname))== NULL)
 			{
-				err_noexit(S_DOCKLET_ERR_FIND_PLUGIN, pcurrent_data->plgname);
-				err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_ERR_FIND_PLUGIN_MSG,
-					pcurrent_data->plgname, pcurrent_data->name);
+				msgbox_warn(S_DOCKLET_ERR_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
 
 				/*now go to the next account*/
 				pcurrent= g_slist_next(pcurrent);
@@ -598,7 +594,7 @@ gboolean mail_thread(void)
 			{
                 /*new connection error, so increment*/
                 pcurrent_data->cerr++;
-                err_noexit(S_DOCKLET_ERR_CONNECT, pcurrent_data->server, pcurrent_data->cerr);
+                msgbox_warn(S_DOCKLET_ERR_CONNECT, pcurrent_data->server, pcurrent_data->cerr);
                 
                 if(err_msg== NULL)
 					err_msg= g_string_new(NULL);
@@ -639,7 +635,7 @@ gboolean mail_thread(void)
 		
 		/*report if checking an account failed*/
 		if(errflag)
-            err_dlg(GTK_MESSAGE_WARNING, S_DOCKLET_CONNECT_ERR, err_msg->str, PACKAGE, config.dir, LOG_FILE);
+            msgbox_warn(S_DOCKLET_CONNECT_ERR, err_msg->str, PACKAGE, config.dir, LOG_FILE);
         
         /*free the string if need be*/
         if(err_msg!= NULL)

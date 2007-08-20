@@ -2,6 +2,9 @@
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
 2) Sort out error/warnings in src/*.c.  Should probably use err_dlg, or warn_dlg unless GTK is not running, then report in text mode.
+    i) remove err_exit
+    ii) remove err_noexit
+    iii) make sure all messages have "\n" at the end.  Then add code to use strchomp if reporting with gtk.  Reporting with glib etc should always have "\n".
 ----------
 
 WISH LIST TASKS:

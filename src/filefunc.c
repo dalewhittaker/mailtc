@@ -172,7 +172,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_ELEMENT_DUPLICATE, element->name);
+        msgbox_warn(S_FILEFUNC_ERR_ELEMENT_DUPLICATE, element->name);
         retval= TRUE;
     }
     element->found++;
@@ -244,7 +244,7 @@ static gboolean pw_read(elist *element, xmlChar *src)
      *check if both are present and it is invalid, so error*/
     if(*pdest!= 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_PASSWORD_ELEMENTS);
+        msgbox_warn(S_FILEFUNC_ERR_PASSWORD_ELEMENTS);
         /*wipe the value*/
         memset(pdest, '\0', element->length);
         return FALSE;
@@ -392,7 +392,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
             if((!pelement->found&& (pelement->type!= EL_PW))||
                 ((pelement->type== EL_PW)&& (pnew->password[0]== 0)))
             {
-                err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_ACC_ELEMENT_NOT_FOUND, pelement->name, pnew->id);           
+                msgbox_warn(S_FILEFUNC_ERR_ACC_ELEMENT_NOT_FOUND, pelement->name, pnew->id);           
                 retval= FALSE;
             }
             pelement++;
@@ -470,7 +470,7 @@ static gboolean cfg_elements(xmlDocPtr doc)
     node= xmlDocGetRootElement(doc);
     if((node== NULL)|| (!xmlStrEqual(node->name, BAD_CAST ELEMENT_CONFIG)))
     {
-        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_NO_ROOT_ELEMENT);
+        msgbox_warn(S_FILEFUNC_ERR_NO_ROOT_ELEMENT);
         return FALSE;
     }
          
@@ -516,7 +516,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
         xmlErrorPtr perror;
 
         perror= xmlCtxtGetLastError(ctxt);
-        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_CFG_PARSE, filename, perror->message);
+        msgbox_warn(S_FILEFUNC_ERR_CFG_PARSE, filename, perror->message);
         xmlCtxtResetLastError(ctxt);
         return FALSE;
     }
@@ -524,7 +524,7 @@ static gboolean cfg_parse(xmlParserCtxtPtr ctxt, gchar *filename)
     /*if file is valid, get the elements*/
     if(ctxt->valid== 0)
     {
-        err_dlg(GTK_MESSAGE_WARNING, S_FILEFUNC_ERR_CFG_VALIDATE, filename);
+        msgbox_warn(S_FILEFUNC_ERR_CFG_VALIDATE, filename);
         retval= FALSE;
     }
     else
@@ -553,7 +553,7 @@ gboolean cfg_read(void)
         
         g_strlcpy(picon->colour, "#FFFFFF", sizeof(picon->colour));
         picon= icon_create(picon);
-        err_dlg(GTK_MESSAGE_WARNING, S_MAIN_NO_CONFIG_FOUND);
+        msgbox_warn(S_MAIN_NO_CONFIG_FOUND);
         return FALSE;
     }
     /*initialise libxml*/
@@ -565,8 +565,7 @@ gboolean cfg_read(void)
     {
         /*this is a fatal error, so exit*/
         xml_cleanup();
-        err_dlg(GTK_MESSAGE_ERROR, S_FILEFUNC_ERR_PARSER_CTX);
-	    exit(EXIT_FAILURE);
+        msgbox_fatal(S_FILEFUNC_ERR_PARSER_CTX);
     }
     /*now do some parsing*/
     retval= cfg_parse(ctxt, configfilename);
@@ -921,7 +920,7 @@ gboolean cfg_write(void)
         xmlErrorPtr perror;
 
         perror= xmlGetLastError();
-        err_dlg(GTK_MESSAGE_ERROR, S_FILEFUNC_ERR_CFG_WRITE, perror->message);
+        msgbox_err(S_FILEFUNC_ERR_CFG_WRITE, perror->message);
         xmlResetLastError();
         retval= FALSE;
     }

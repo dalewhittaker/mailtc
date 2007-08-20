@@ -23,7 +23,6 @@
 
 #include <string.h> /*memset, strlen*/
 #include <errno.h> /*not sure if this is actually required*/
-#include <gtk/gtkmessagedialog.h>
 
 #include "plugin.h"
 #include "strings.h"
@@ -35,11 +34,17 @@ GSList *plglist;
 
 /*common.c functions*/
 gchar *str_time(void);
-gboolean err_dlg(GtkMessageType type, gchar *errmsg, ...);
-gboolean err_exit(gchar *errmsg, ...);
-gboolean err_noexit(gchar *errmsg, ...);
+void msgbox_warn(gchar *msg, ...);
+void msgbox_info(gchar *msg, ...);
+void msgbox_err(gchar *msg, ...);
+void msgbox_fatal(gchar *msg, ...);
+void msgbox_init(void);
+void msgbox_term(void);
 mtc_icon *pixbuf_create(mtc_icon *picon);
 mtc_icon *icon_create(mtc_icon *picon);
 
-#endif /*DW_MAILTC_COMMON*/
+/*TODO to be removed*/
+gboolean err_exit(gchar *errmsg, ...);
+gboolean err_noexit(gchar *errmsg, ...);
 
+#endif /*DW_MAILTC_COMMON*/

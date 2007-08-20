@@ -17,6 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <gtk/gtkdialog.h>
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkstock.h>
@@ -122,8 +123,11 @@ static gint filter_save(mtc_account *paccount)
     }
 
 	if(!valid)
-		return(!err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_NO_FILTERS));
-	
+	{
+        msgbox_warn(S_FILTERDLG_NO_FILTERS);
+        return FALSE;
+	}
+
     /*allocate new filter if it doesn't already exist*/
     if(paccount->pfilters== NULL)
         paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
@@ -165,7 +169,7 @@ static gint filter_save(mtc_account *paccount)
 	
             if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pfwidgets->combo_contains), &iter))
 			{
-                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
+                msgbox_warn(S_FILTERDLG_ERR_COMBO_ITER);
                 g_free(pnew);
                 return(-1);
 			}
@@ -179,7 +183,7 @@ static gint filter_save(mtc_account *paccount)
             j= gtk_combo_box_get_active(GTK_COMBO_BOX(pfwidgets->combo_field));
             if(j== -1)
             {
-                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_COMBO_ITER);
+                msgbox_warn(S_FILTERDLG_ERR_COMBO_ITER);
                 g_free(pnew);
                 return(-1);
 			}
@@ -227,7 +231,7 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             /*check there is a valid field value*/    
             if(pfilter->field>= (sizeof(ffield)/ sizeof(ffield[0])))
             {
-                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
+                msgbox_warn(S_FILTERDLG_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
                 return FALSE;
             }
 
@@ -306,7 +310,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
         {
             if(!pelement->found)
             {
-                err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_NOT_FOUND, pelement->name, paccount->id);           
+                msgbox_warn(S_FILTERDLG_ERR_ELEMENT_NOT_FOUND, pelement->name, paccount->id);           
                 retval= FALSE;
             }
             pelement++;
@@ -368,7 +372,7 @@ gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 
                 pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
                 if(match_found)
-                    err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
+                    msgbox_warn(S_FILTERDLG_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
                 
                 match_found= TRUE;
                 xmlFree(pcontent);
@@ -498,7 +502,7 @@ static void add_button_pressed(void)
 	    gtk_widget_show_all(widgets.vbox);
     }
     else
-		err_dlg(GTK_MESSAGE_WARNING, S_FILTERDLG_ERR_MAX_REACHED, MAX_FILTERS);
+		msgbox_warn(S_FILTERDLG_ERR_MAX_REACHED, MAX_FILTERS);
 }
 
 /*display the filter dialog*/
