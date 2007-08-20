@@ -43,12 +43,12 @@ gchar *pw_encrypt(gchar *decstring)
 	/*encrypt the data and the final padding*/
 	if(!EVP_EncryptUpdate(&ctx, (guchar *)tmpstring, &encrypted_len, (guchar *)decstring, strlen(decstring)))
 	{
-        err_noexit(S_ENCRYPTER_ERR_ENC_PW);
+        msgbox_err(S_ENCRYPTER_ERR_ENC_PW);
 	    success= FALSE;
     }
     else if(!EVP_EncryptFinal_ex(&ctx, (guchar *)(tmpstring+ encrypted_len), &tmplen))
 	{
-        err_noexit(S_ENCRYPTER_ERR_ENC_PW_FINAL);
+        msgbox_err(S_ENCRYPTER_ERR_ENC_PW_FINAL);
 	    success= FALSE;
     }
 	/*set length equal to encrypted string plus encrypted padding*/
@@ -82,12 +82,12 @@ gboolean pw_decrypt(gchar *encstring, gchar *decstring)
 	/*Decrypt the data and the final padding at the end*/
     if(!EVP_DecryptUpdate(&ctx, (guchar *)decstring, &outlen, tmpstring, (gint)len))
 	{
-        err_noexit(S_ENCRYPTER_ERR_DEC_PW);
+        msgbox_err(S_ENCRYPTER_ERR_DEC_PW);
 	    retval= FALSE;
     }
     else if(!EVP_DecryptFinal_ex(&ctx, (guchar *)(decstring+ outlen), &tmplen))
 	{
-        err_noexit(S_ENCRYPTER_ERR_DEC_PW_FINAL);
+        msgbox_err(S_ENCRYPTER_ERR_DEC_PW_FINAL);
 	    retval= FALSE;
     }
     /*free the temp buffer*/

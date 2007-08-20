@@ -149,7 +149,7 @@ static gboolean pid_read(gint action)
 					    case PID_APPKILL:
 						    if((!currentpid)&& (kill(atoi(pidstring), SIGHUP)!= 0))
 						    {
-							    err_noexit(S_MAIN_ERR_CANNOT_KILL, currentpid);
+							    msgbox_err(S_MAIN_ERR_CANNOT_KILL, currentpid);
 							    g_fprintf(pidfile, "%s\n", pidstring);
 						    }
 					    break;
@@ -433,18 +433,13 @@ gint main(gint argc, gchar *argv[])
 	/*check if instance is running*/
 #ifdef MTC_USE_PIDFUNC	
     if(!pid_read(PID_APPLOAD))
-	{
-		err_noexit(S_MAIN_ERR_INSTANCE_RUNNING, PACKAGE);
 		return(warndlg_run(S_MAIN_INSTANCE_RUNNING, FALSE));
-	}
-	/*load the network plugins*/
+	
+    /*load the network plugins*/
 	else 
 #endif /*MTC_USE_PIDFUNC*/
     	if(!plg_load_all())
-		{
-			err_noexit(S_MAIN_ERR_LOAD_PLUGINS);
 			return(warndlg_run(S_MAIN_LOAD_PLUGINS, FALSE));
-		}
 
     /*if mailtc -c*/
 	if(runmode== MODE_CFG)

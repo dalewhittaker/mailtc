@@ -67,7 +67,7 @@ static void plg_unload(gpointer data, gpointer user_data)
 	(*pitem->unload)();
 	
 	if(!g_module_close((GModule *)pitem->handle))
-		err_noexit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name((GModule *)pitem->handle), g_module_error());
+		msgbox_err(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name((GModule *)pitem->handle), g_module_error());
 	
 }
 
@@ -94,24 +94,24 @@ static gboolean plg_load(const gchar *plugin_name)
 	/*check if the system supports loading modules*/
 	if(!g_module_supported())
 	{
-		err_noexit(S_PLUGIN_ERR_MODULE_SUPPORT);
+		msgbox_err(S_PLUGIN_ERR_MODULE_SUPPORT);
 		return(FALSE);
 	}
 
 	/*open the shared library*/
 	if((module= g_module_open(plugin_name, G_MODULE_BIND_LOCAL/*1*//*0*//*G_MODULE_BIND_LAZY*/))== NULL)
 	{
-		err_noexit(S_PLUGIN_ERR_OPEN_PLUGIN, plugin_name, g_module_error());
+		msgbox_warn(S_PLUGIN_ERR_OPEN_PLUGIN, plugin_name, g_module_error());
 		return(TRUE);
 	}
 	
 	/*get the plugin struct from the module*/
 	if(!g_module_symbol(module, "init_plugin", (gpointer)&init_plugin))
 	{
-		err_noexit(S_PLUGIN_ERR_PLUGIN_POINTER, g_module_error());
+		msgbox_warn(S_PLUGIN_ERR_PLUGIN_POINTER, g_module_error());
 		/*now close the module*/
 		if(!g_module_close(module))
-			err_noexit(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(module), g_module_error());
+			msgbox_warn(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name(module), g_module_error());
 		
 		return(TRUE);
 	}
@@ -119,7 +119,7 @@ static gboolean plg_load(const gchar *plugin_name)
 	/*initialise the plugin*/
 	if((pitem= init_plugin())== NULL)
 	{
-		err_noexit(S_PLUGIN_ERR_INIT_PLUGIN, g_module_name(module), g_module_error());
+		msgbox_warn(S_PLUGIN_ERR_INIT_PLUGIN, g_module_name(module), g_module_error());
 		return(TRUE);
 	}
 	pitem->handle= module;
@@ -127,7 +127,7 @@ static gboolean plg_load(const gchar *plugin_name)
 	/*if it is greater than the current mailtc version, report an error*/
 	if(g_ascii_strcasecmp(VERSION, pitem->compatibility)!= 0)
 	{
-		err_noexit(S_PLUGIN_ERR_COMPATIBILITY, g_module_name(module), PACKAGE, VERSION);
+		msgbox_err(S_PLUGIN_ERR_COMPATIBILITY, g_module_name(module), PACKAGE, VERSION);
 		plg_unload(pitem, NULL);
 		return(FALSE);
 	}
@@ -170,7 +170,7 @@ mtc_plugin *plg_find(const gchar *plugin_name)
 	/*if it returns NULL (i.e not found, we should report an error and then default to first in list*/
 	if(pfound== NULL)
 	{
-		err_noexit(S_PLUGIN_ERR_FIND_PLUGIN, plugin_name);
+		msgbox_warn(S_PLUGIN_ERR_FIND_PLUGIN, plugin_name);
 		return(NULL);
 	}
 	return((mtc_plugin *)pfound->data);
@@ -206,7 +206,7 @@ gboolean plg_load_all(void)
 	/*open the dir for reading*/
 	if(!(dir= g_dir_open(LIBDIR, 0, &error)))
 	{
-		err_noexit("%s\n", error->message);
+		msgbox_err("%s\n", error->message);
 		return(FALSE);
 	}
 
