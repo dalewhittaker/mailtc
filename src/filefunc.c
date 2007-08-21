@@ -91,15 +91,18 @@ gboolean mtc_dir(void)
 
 	/*first create the .config dir*/
 	if((pcfg= g_build_filename(g_get_home_dir(), ".config", NULL))== NULL)
-		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
+		msgbox_fatal(S_FILEFUNC_ERR_GET_HOMEDIR);
 	
     /*create the dir if it doesn't exist*/
     mk_dir(pcfg);
 
     /*second, create the .config/mailtc dir*/
     if((pmtc= g_build_filename(pcfg, PACKAGE, NULL))== NULL)
-		err_exit(S_FILEFUNC_ERR_GET_HOMEDIR);
-	
+	{
+        g_free(pcfg);
+		msgbox_fatal(S_FILEFUNC_ERR_GET_HOMEDIR);
+	}
+
     /*create the dir if it doesn't exist*/
     mk_dir(pmtc);
 	
@@ -884,11 +887,11 @@ gboolean cfg_write(void)
     
     /*set the permissions on the file so it can only be read*/
 	if(exists&& (g_chmod(cfgfilename, S_IRUSR| S_IWUSR)== -1))
-		err_exit(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
+		msgbox_fatal(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
 	
     /*if the file cannot be accessed or removed report error*/
 	if(exists&& (g_remove(cfgfilename)== -1))
-		err_exit(S_FILEFUNC_ERR_ATTEMPT_WRITE, cfgfilename);
+		msgbox_fatal(S_FILEFUNC_ERR_ATTEMPT_WRITE, cfgfilename);
 	
     /*initialise libxml*/
     xml_init();
@@ -933,7 +936,7 @@ gboolean cfg_write(void)
 
     /*set the permissions on the file so it can only be read*/
 	if(g_chmod(cfgfilename, S_IRUSR)== -1)
-		err_exit(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
+		msgbox_fatal(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
 	
     return(retval);
 }
@@ -951,7 +954,7 @@ gboolean rm_mtc_file(gchar *shortname, gint count, gint fullcount)
 	
 	/*remove the file*/
 	if((IS_FILE(full_filename))&& (g_remove(full_filename)== -1))
-		err_exit(S_FILEFUNC_ERR_REMOVE_FILE, full_filename);
+		msgbox_fatal(S_FILEFUNC_ERR_REMOVE_FILE, full_filename);
 
 	/*traverse through each of the files after the removed one*/
 	for(i= count; i< fullcount; i++)
@@ -962,7 +965,7 @@ gboolean rm_mtc_file(gchar *shortname, gint count, gint fullcount)
 		
 		/*rename file to file- 1 so that there are no gaps*/
     	if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
-			err_exit(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
+			msgbox_fatal(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
 	}
 	return TRUE;
 }

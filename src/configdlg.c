@@ -199,7 +199,7 @@ static gboolean acc_save(int profile)
     gchar *pbasename= NULL;
 
 	if((pcurrent_data= get_account(profile))== NULL)
-		err_exit(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, profile);
+		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, profile);
 	
 	/*check that there are no empty values before saving the details*/
 	if(g_ascii_strcasecmp(gtk_entry_get_text(GTK_ENTRY(password_entry)), "")== 0)
@@ -244,7 +244,7 @@ static gboolean acc_save(int profile)
 	
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
-		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
+		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 
     pbasename= plg_name(pitem);
 	g_strlcpy(pcurrent_data->plgname, pbasename, sizeof(pcurrent_data->plgname));
@@ -264,7 +264,7 @@ static gboolean acc_save(int profile)
 	{
   		gtk_list_store_append(store, &iter);
 		if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter))
-			err_exit(S_CONFIGDLG_ERR_LISTBOX_ITER);
+			msgbox_fatal(S_CONFIGDLG_ERR_LISTBOX_ITER);
 	}
 
 	/*clear the listbox*/
@@ -382,7 +382,7 @@ static void edit_button_pressed(void)
 	{
 		/*get the iterator if a row is selected*/
 		if(!gtk_tree_model_get_iter_first(model, &iter))
-			err_exit(S_CONFIGDLG_ERR_LISTBOX_ITER);
+			msgbox_fatal(S_CONFIGDLG_ERR_LISTBOX_ITER);
 	
 		/*loop through listbox entries to see which is selected and run the details dialog for the account*/
 		gtk_tree_model_foreach(model, get_current_selection, &count);
@@ -406,7 +406,7 @@ static void remove_button_pressed(void)
 	{
 		/*get the listbox iterator*/
 		if(!gtk_tree_model_get_iter_first(model, &iter2))
-			err_exit(S_CONFIGDLG_ERR_LISTBOX_ITER);
+			msgbox_fatal(S_CONFIGDLG_ERR_LISTBOX_ITER);
 	
 		/*loop through listbox entries to see which is selected*/
 		gtk_tree_model_foreach(model, get_current_selection, &count);
@@ -481,7 +481,7 @@ static void details_iconcolour_button_pressed(GtkWidget *widget, gpointer user_d
 	
     picon= pixbuf_create(picon);
 	if(!picon->image)
-		err_exit(S_CONFIGDLG_ERR_CREATE_PIXBUF);
+		msgbox_fatal(S_CONFIGDLG_ERR_CREATE_PIXBUF);
 
     tbl_clear(&dicon_table);
     tbl_addcol_new(&dicon_table, picon->image, 0, 1, 0, 0);
@@ -500,7 +500,7 @@ static void config_iconcolour_button_pressed(GtkWidget *widget, gpointer user_da
 	
     picon= pixbuf_create(picon);
 	if(!picon->image)
-		err_exit(S_CONFIGDLG_ERR_CREATE_PIXBUF);
+		msgbox_fatal(S_CONFIGDLG_ERR_CREATE_PIXBUF);
 	
     tbl_clear(&cicon_table);
     tbl_addcol_new(&cicon_table, picon->image, 0, 1, 0, 0);
@@ -515,7 +515,7 @@ static void plginfo_button_pressed(void)
 
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(protocol_combo))))== NULL)
-		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
+		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
     msgbox_info(S_CONFIGDLG_DISPLAY_PLG_INFO, pitem->name, pitem->author, pitem->desc);
 
@@ -544,7 +544,7 @@ static void filter_button_pressed(GtkWidget *widget, gpointer data)
 	gint *p_count= (gint*)data;
 
 	if((pcurrent= get_account(*p_count))== NULL)
-		err_exit(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, *p_count);		
+		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, *p_count);		
 
 	filterdlg_run(pcurrent);
 }
@@ -580,7 +580,7 @@ static void protocol_combo_changed(GtkComboBox *entry)
 
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(entry))))== NULL)
-		err_exit(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
+		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
 	
 	/*set the port to the default port for the specified plugin*/
 	g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
@@ -729,7 +729,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
         /*set the combobox to first entry and get the iterator*/
 		model= gtk_combo_box_get_model(GTK_COMBO_BOX(protocol_combo));
 		if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(protocol_combo), &iter))
-			err_exit(S_CONFIGDLG_ERR_COMBO_ITER);
+			msgbox_fatal(S_CONFIGDLG_ERR_COMBO_ITER);
 				
 		/*loop through listbox entries to see which is selected and run the details dialog for the account*/
 		/*if not found for whatever reason, default to the first in the list*/
@@ -965,7 +965,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
   
 	/*get the model for the listbox and clear it before*/
 	if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter))
-  		err_exit(S_CONFIGDLG_ERR_COMBO_ITER);
+  		msgbox_fatal(S_CONFIGDLG_ERR_COMBO_ITER);
 	gtk_list_store_clear(store);
 
 	/*create the scroll for the listbox*/

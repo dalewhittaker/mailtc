@@ -98,21 +98,21 @@ static gboolean pid_read(gint action)
 	
 	/*rename the pidfile to a temp pid file*/
 	if((IS_FILE(pidfilename))&& (g_rename(pidfilename, tmppidfilename)== -1))
-		err_exit(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
+		msgbox_fatal(S_MAIN_ERR_RENAME_PIDFILE, pidfilename, tmppidfilename);
 
     /*get the current pid*/
     pid= getpid();
 
 	
 		if((pidfile= g_fopen(pidfilename, "w"))== NULL)
-			err_exit(S_MAIN_ERR_OPEN_PIDFILE_WRITE, pidfilename);
+			msgbox_fatal(S_MAIN_ERR_OPEN_PIDFILE_WRITE, pidfilename);
 	
         if(IS_FILE(tmppidfilename))
 	    {	
 		
 		    /*open the pid file and the temp pid file*/
 		    if((tmppidfile= g_fopen(tmppidfilename, "r"))== NULL)
-			    err_exit(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
+			    msgbox_fatal(S_MAIN_ERR_OPEN_PIDFILE_READ, tmppidfilename);
 		
 		    memset(pidstring, '\0', G_ASCII_DTOSTR_BUF_SIZE);
 		
@@ -158,7 +158,7 @@ static gboolean pid_read(gint action)
 		    }
 	
             if(fclose(tmppidfile)== EOF)
-			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
+			    msgbox_fatal(S_MAIN_ERR_CLOSE_PIDFILE);
 			
 		    g_remove(tmppidfilename);
 		
@@ -175,7 +175,7 @@ static gboolean pid_read(gint action)
 		
         /*close the files and cleanup*/
 		if(fclose(pidfile)== EOF)
-			err_exit(S_MAIN_ERR_CLOSE_PIDFILE);
+			msgbox_fatal(S_MAIN_ERR_CLOSE_PIDFILE);
 							 
 	return(retval);
 }
@@ -304,10 +304,11 @@ static void atexit_func(void)
 void term_handler(gint signal)
 {
 
+    msgbox_term();
 	if(signal== SIGSEGV)
-		err_exit(S_MAIN_ERR_SEGFAULT, PACKAGE);
+		msgbox_fatal(S_MAIN_ERR_SEGFAULT, PACKAGE);
 	else
-		err_exit(S_MAIN_ERR_APP_KILLED, PACKAGE);
+		msgbox_fatal(S_MAIN_ERR_APP_KILLED, PACKAGE);
 }
 
 /*function to write the initial header to the log file when mailtc starts*/

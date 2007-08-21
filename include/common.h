@@ -42,7 +42,6 @@ void msgbox_term(void);
 mtc_icon *pixbuf_create(mtc_icon *picon);
 mtc_icon *icon_create(mtc_icon *picon);
 
-/*TODO to be removed*/
-gboolean err_exit(gchar *errmsg, ...);
+#define MSG_NOGTK(proc) { msgbox_term(); (proc); msgbox_init(); }
 
 #endif /*DW_MAILTC_COMMON*/

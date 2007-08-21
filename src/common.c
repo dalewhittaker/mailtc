@@ -31,6 +31,7 @@
 
 static gboolean use_gtkmsg= FALSE;
 
+/*report message via GTK messagebox*/
 static void msg_gtk(GtkMessageType type, gchar *msg)
 {
 	GtkWidget *dialog;
@@ -42,10 +43,11 @@ static void msg_gtk(GtkMessageType type, gchar *msg)
 	gtk_widget_destroy(dialog);
 }
 
-/*TODO we should check if it ends with "\n", if it doesn't then it must be added*/
+/*function to print message if GTK is not enabled*/
 static void msg_glib(FILE *pfile, gchar *msg)
 {
-    g_fprintf(pfile, msg);
+    /*add the \n which is removed in print_msg*/
+    g_fprintf(pfile, "%s\n", msg);
     fflush(pfile);
 }
 
@@ -61,7 +63,7 @@ gchar *str_time(void)
 	return(asctime(timeinfo));
 }
 
-/*TODO we should check if it ends with "\n", if it doesn't then it must be added*/
+/*function to write message to log*/
 static void msg_log(gchar *msg)
 {
 	gchar *ptimestring;
@@ -71,7 +73,8 @@ static void msg_log(gchar *msg)
 	
 	if(config.logfile!= NULL)
 	{
-		g_fprintf(config.logfile, "%s: %s", ptimestring, msg);
+        /*add the \n which is removed in print_msg*/
+		g_fprintf(config.logfile, "%s: %s\n", ptimestring, msg);
 		fflush(config.logfile);
 	}
 }
@@ -79,14 +82,21 @@ static void msg_log(gchar *msg)
 /*function to print a message in the various appropriate ways*/
 static void print_msg(GtkMessageType msg_type, gchar *msg)
 {
+    gboolean iserrmsg;
+
+    iserrmsg= (msg_type== GTK_MESSAGE_INFO|| msg_type== GTK_MESSAGE_QUESTION)? FALSE: TRUE;
+    
+    /*remove any trailing whitespace, \n is added later if needed*/
+    g_strchomp(msg);
+
     if(use_gtkmsg)
         msg_gtk(msg_type, msg);
     else
     {
-        msg_glib((msg_type== GTK_MESSAGE_INFO|| msg_type== GTK_MESSAGE_QUESTION)?
-            stdout: stderr, msg);
+        msg_glib(iserrmsg? stdout: stderr, msg);
     }
-    msg_log(msg);
+    if(iserrmsg)
+        msg_log(msg);
 }
 
 /*without using variadic macros, this is the best i can think
@@ -281,59 +291,11 @@ mtc_icon *icon_create(mtc_icon *picon)
     picon->image= gtk_image_new();
 	picon= pixbuf_create(picon);
     if(!picon|| !picon->image) 
-		err_exit(S_FILEFUNC_ERR_CREATE_PIXBUF);
+		msgbox_fatal(S_FILEFUNC_ERR_CREATE_PIXBUF);
     
     /*ref count the image, be sure to unref it when we leave*/
     g_object_ref(G_OBJECT(picon->image));
 
     return(picon);
-}
-
-
-/*TODO all below to be removed*/
-/*output to stderr*/
-static void err_stderr(gchar *errmsg, va_list args)
-{
-	g_vfprintf(stderr, errmsg, args);
-	fflush(stderr);
-}
-
-/*output to logfile*/
-static void err_log(gchar *errmsg, va_list args)
-{
-	gchar *ptimestring;
-	
-	ptimestring= str_time();
-	g_strchomp(ptimestring);
-	
-	if(config.logfile!= NULL)
-	{
-		g_fprintf(config.logfile, "%s: ", ptimestring);
-		g_vfprintf(config.logfile, errmsg, args);
-	
-		fflush(config.logfile);
-	}
-}
-
-/*function to report error, log it, and then exit*/
-gboolean err_exit(gchar *errmsg, ...)
-{
-	/*create va_list of arguments*/
-	va_list list;
-	
-	va_start(list, errmsg); 
-	err_stderr(errmsg, list);
-	va_end(list);
-
-    /*NOTE 64-bit crashes unless va_list is reset
-     *which is why this is not cleaner than this
-     *someday this will be tidyed*/
-    va_start(list, errmsg); 
-	err_log(errmsg, list);
-	va_end(list);
-
-	exit(EXIT_FAILURE);
-
-	return FALSE; /*shouldnt really ever happen*/
 }
 
