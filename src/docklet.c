@@ -594,7 +594,7 @@ gboolean mail_thread(void)
 			{
                 /*new connection error, so increment*/
                 pcurrent_data->cerr++;
-                msgbox_warn(S_DOCKLET_ERR_CONNECT, pcurrent_data->server, pcurrent_data->cerr);
+                MSG_NOGTK(msgbox_warn(S_DOCKLET_ERR_CONNECT, pcurrent_data->server, pcurrent_data->cerr));
                 
                 if(err_msg== NULL)
 					err_msg= g_string_new(NULL);
