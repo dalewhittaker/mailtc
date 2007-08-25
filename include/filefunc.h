@@ -64,6 +64,5 @@ GSList *create_account(void);
 gboolean cfg_read(void);
 gboolean cfg_write(void);
 gchar *mtc_file(gchar *fullpath, gchar *filename, gint account);
-gint rm_mtc_file(gchar *shortname, gint count, gint fullcount);
 
 #endif /*DW_MAILTC_FILEFUNC*/

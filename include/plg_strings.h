@@ -33,7 +33,9 @@
 #define S_PLG_COMMON_ERR_SSL_CONNECT "Error connecting with SSL\n"
 #define S_PLG_COMMON_ERR_SSL_SHUTDOWN "Error shutting down SSL connection\n"
 #define S_PLG_COMMON_ERR_BASE64_DECODE "Error: invalid length returned after base 64 decode\n"
-#define S_PLG_COMMON_ERR_BASE64_ENCODE "Error: invalid length returned after base 64 decode\n"
+#define S_PLG_COMMON_ERR_BASE64_ENCODE "Error: invalid length returned after base 64 encode\n"
+#define S_PLG_COMMON_ERR_REMOVE_FILE "Error removing file %s\n"
+#define S_PLG_COMMON_ERR_RENAME_FILE "Error renaming %s to %s\n"
 
 /*plg_apop.c strings*/
 #define S_PLG_APOP_ERR_DIGEST_INIT "Error initialising message digest\n"

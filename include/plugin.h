@@ -291,7 +291,8 @@ typedef struct _mtc_plugin
 	mtc_error (*unload)(void);
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
-	
+	mtc_error (*remove)(gpointer, guint *);
+
 } mtc_plugin;
 
 #endif /*MTC_PLUGIN_HEADER*/

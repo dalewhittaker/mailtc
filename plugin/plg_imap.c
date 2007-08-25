@@ -59,6 +59,13 @@ mtc_error imap_clicked(gpointer pdata)
 	return(imap_read_mail(paccount, cfg_get()));
 }
 
+/*this is called when an account is removed*/
+mtc_error imap_remove(gpointer pdata, guint *naccounts)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(rm_uidfile(paccount, *naccounts));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imap_pluginfo =
 {
@@ -72,7 +79,8 @@ static mtc_plugin imap_pluginfo =
 	&imap_load,
 	&imap_unload, 
 	&imap_get_messages,
-	&imap_clicked
+	&imap_clicked,
+    &imap_remove
 };
 
 /*the initialisation function*/

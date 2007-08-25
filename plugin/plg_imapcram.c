@@ -59,6 +59,13 @@ mtc_error imapcram_clicked(gpointer pdata)
 	return(imap_read_mail(paccount, cfg_get()));
 }
 
+/*this is called when an account is removed*/
+mtc_error imapcram_remove(gpointer pdata, guint *naccounts)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(rm_uidfile(paccount, *naccounts));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imapcram_pluginfo =
 {
@@ -72,7 +79,8 @@ static mtc_plugin imapcram_pluginfo =
 	&imapcram_load,
 	&imapcram_unload, 
 	&imapcram_get_messages,
-	&imapcram_clicked
+	&imapcram_clicked,
+    &imapcram_remove,
 };
 
 /*the initialisation function*/
