@@ -59,6 +59,13 @@ mtc_error pop_clicked(gpointer pdata)
 	return(pop_read_mail(paccount, cfg_get()));
 }
 
+/*this is called when an account is removed*/
+mtc_error pop_remove(gpointer pdata, guint *naccounts)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(rm_uidfile(paccount, *naccounts));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin pop_pluginfo =
 {
@@ -72,7 +79,8 @@ static mtc_plugin pop_pluginfo =
 	&pop_load,
 	&pop_unload, 
 	&pop_get_messages,
-	&pop_clicked
+	&pop_clicked,
+    &pop_remove
 };
 
 /*the initialisation function*/

@@ -227,3 +227,40 @@ gint strstr_cins(gchar *haystack, gchar *needle)
 	return -1;
 }
 
+/*function to remove uidfile for account and shift the files so they are in order*/
+mtc_error rm_uidfile(mtc_account *paccount, gint fullcount)
+{
+	gint i= 0;
+    gchar *shortname= UIDL_FILE;
+    mtc_cfg *pconfig= NULL;
+
+	/*allocate memory and get full path of the file to delete*/
+	gchar full_filename[NAME_MAX];
+	gchar new_filename[NAME_MAX];
+
+    pconfig= cfg_get();
+	mtc_file(full_filename, pconfig->dir, shortname, paccount->id);
+	
+	/*remove the file*/
+	if((IS_FILE(full_filename))&& (g_remove(full_filename)== -1))
+	{
+        plg_err(S_PLG_COMMON_ERR_REMOVE_FILE, full_filename);
+        return(MTC_RETURN_FALSE);
+    }
+	/*traverse through each of the files after the removed one*/
+	for(i= paccount->id+ 1; i< fullcount; i++)
+	{
+		/*get the name of the file and the file before it*/
+		mtc_file(full_filename, pconfig->dir, shortname, i);
+		mtc_file(new_filename, pconfig->dir, shortname, i- 1);
+		
+		/*rename file to file- 1 so that there are no gaps*/
+    	if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
+		{
+            plg_err(S_PLG_COMMON_ERR_RENAME_FILE, full_filename, new_filename);
+            return(MTC_RETURN_FALSE);
+        }
+	}
+	return(MTC_RETURN_TRUE);
+}
+

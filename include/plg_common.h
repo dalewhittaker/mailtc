@@ -44,6 +44,7 @@ void cfg_unload(void);
 gint plg_err(gchar *errmsg, ...);
 gchar *mtc_file(gchar *fullpath, const gchar *cfgdir, gchar *filename, guint account);
 gint strstr_cins(gchar *haystack, gchar *needle);
+mtc_error rm_uidfile(mtc_account *paccount, gint fullcount);
 
 /*extra authentication functions*/
 #ifdef SSL_PLUGIN

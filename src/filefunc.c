@@ -690,13 +690,23 @@ static void free_account(gpointer data)
 void remove_account(guint item)
 {
 	GSList *pcurrent= NULL;
+	mtc_plugin *pitem= NULL;
 	mtc_account *pcurrent_data;
+    guint naccounts= 0;
 	
 	/*get the data to remove*/
 	pcurrent_data= get_account(item);
 	if(pcurrent_data== NULL) return;
 
-	/*free the data*/
+    /*get the plugin and call it's remove function*/
+	if((pitem= plg_find(pcurrent_data->plgname))== NULL)
+		msgbox_fatal(S_DOCKLET_ERR_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
+    
+    naccounts= g_slist_length(acclist);
+	if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
+        exit(EXIT_FAILURE);
+
+    /*free the data*/
 	free_account((gpointer)pcurrent_data);
 
 	/*remove from list*/
@@ -713,7 +723,6 @@ void remove_account(guint item)
 		
 		pcurrent= g_slist_next(pcurrent);
 	}
-
 }
 
 /*free the account list*/
@@ -939,34 +948,5 @@ gboolean cfg_write(void)
 		msgbox_fatal(S_FILEFUNC_ERR_SET_PERM, cfgfilename);
 	
     return(retval);
-}
-
-/*function to remove a file in ~/.PACKAGE and shift the files so they are in order*/
-gboolean rm_mtc_file(gchar *shortname, gint count, gint fullcount)
-{
-	gint i= 0;
-
-	/*allocate memory and get full path of the file to delete*/
-	gchar full_filename[NAME_MAX];
-	gchar new_filename[NAME_MAX];
-
-	mtc_file(full_filename, shortname, count- 1);
-	
-	/*remove the file*/
-	if((IS_FILE(full_filename))&& (g_remove(full_filename)== -1))
-		msgbox_fatal(S_FILEFUNC_ERR_REMOVE_FILE, full_filename);
-
-	/*traverse through each of the files after the removed one*/
-	for(i= count; i< fullcount; i++)
-	{
-		/*get the name of the file and the file before it*/
-		mtc_file(full_filename, shortname, i);
-		mtc_file(new_filename, shortname, i- 1);
-		
-		/*rename file to file- 1 so that there are no gaps*/
-    	if((IS_FILE(full_filename))&& (g_rename(full_filename, new_filename)== -1))
-			msgbox_fatal(S_FILEFUNC_ERR_RENAME_FILE, full_filename, new_filename);
-	}
-	return TRUE;
 }
 

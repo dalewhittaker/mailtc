@@ -395,7 +395,7 @@ static void remove_button_pressed(void)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter1, iter2;
-	gint count= 0, fullcount=0;
+	gint count= 0;
 	
 	/*get the listbox model and selection*/
 	model= gtk_tree_view_get_model(GTK_TREE_VIEW(account_listbox));
@@ -411,19 +411,12 @@ static void remove_button_pressed(void)
 		/*loop through listbox entries to see which is selected*/
 		gtk_tree_model_foreach(model, get_current_selection, &count);
 		
-		/*get the full count of rows*/
-		gtk_tree_model_foreach(model, count_rows, &fullcount);
-		
-		/*Remove the account files/linked list*/
-		remove_account(count- 1); 
+		/*Remove the account and call plugin remove function*/
+		remove_account(count- 1);
 	
         /*re-write the config*/
         cfg_write();
 
-        /*remove the UIDL file*/
-		/*TODO this should really be in a plugin!*/
-        rm_mtc_file(UIDL_FILE, count, fullcount);
-		
 		/*remove from listbox*/
 		gtk_list_store_remove(GTK_LIST_STORE(model), &iter1);
 	}

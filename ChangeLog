@@ -467,8 +467,9 @@ Re-implement of all config/accounts/filters to use a single xml file (mailtc now
 libxml).
 Add To: and Cc: to list of possible mail header fields that can be filtered.
 Use GSList for filters.
-Dynamically allocate for POP3 UIDL strings
+Dynamically allocate for POP3 UIDL strings.
 Fix various compiler warnings.
 
 1.3.8:
-Dynamically allocate for IMAP4 UID strings
+Dynamically allocate for IMAP4 UID strings.
+Add plugin function that is called when an account is removed.
