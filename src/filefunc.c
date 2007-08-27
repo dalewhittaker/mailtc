@@ -705,12 +705,12 @@ void remove_account(guint item)
     /*get the plugin and call it's remove function*/
 	if(*pcurrent_data->plgname!= 0)
     {
-        if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-		    msgbox_fatal(S_DOCKLET_ERR_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
-    
-        naccounts= g_slist_length(acclist);
-	    if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
-            exit(EXIT_FAILURE);
+        if((pitem= plg_find(pcurrent_data->plgname))!= NULL)
+        {
+            naccounts= g_slist_length(acclist);
+	        if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
+                exit(EXIT_FAILURE);
+        }
     }
 
     /*free the data*/
