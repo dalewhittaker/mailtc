@@ -574,9 +574,6 @@ static void protocol_combo_changed(GtkComboBox *entry)
     const gchar* tabname= "Plugin";
     gint i= 0;
      
-    /*TODO this is only a temporary table, final one will be from the plugin*/
-    GtkWidget *tmptable= gtk_table_new(1, 1, FALSE);
-
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(entry))))== NULL)
 		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACTIVE_PLUGIN);
@@ -600,19 +597,24 @@ static void protocol_combo_changed(GtkComboBox *entry)
         }
     }
     
-    /*TODO right, what will happen is this:
-      1. if it does, call plugin routine that returns a GtkTable
-      2. if returned GtkTable is not NULL, add new notebook with table*/
+    /*test if the plugin has custom options*/
     if(pitem->flags& MTC_HAS_PLUGIN_OPTS)
     {
         GtkWidget *notebook_title;
+        GtkWidget *plg_widget= NULL;
         
-        /*show the newly added tab*/
-        /*TODO get the table from the plugin, if it is not NULL add the table to the notebook*/
-        notebook_title= gtk_label_new(tabname);
-	    gtk_notebook_append_page(GTK_NOTEBOOK(accbook), tmptable, notebook_title);
-        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), TRUE);
-        gtk_widget_show_all(accbook);
+        /*get the option widgets from the plugin*/
+        /*TODO not sure if anything needs passing to the function*/
+        plg_widget= GTK_WIDGET((*pitem->show_config)(NULL));
+
+        /*add the new plugin option widgets to the plugin tab*/
+        if(plg_widget!= NULL)
+        {
+            notebook_title= gtk_label_new(tabname);
+	        gtk_notebook_append_page(GTK_NOTEBOOK(accbook), plg_widget, notebook_title);
+            gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), TRUE);
+            gtk_widget_show_all(accbook);
+        }
     }
 }
 

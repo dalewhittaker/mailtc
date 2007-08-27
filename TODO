@@ -1,8 +1,12 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) Write small test plugin that passes table to mailtc and go from there
-
+    a) add read/write functionality to plugin conf
+    b) improve using ref counts:
+        i) should ref count when initially started
+        ii) when combo box is changed and notebook_tab removed, plugin widget should not be destroyed
+                instead, all values should be cleared and re-read if necessary.
+        iv) when unload is called, drop the reference count and destroy the widget.
 ----------
 
 WISH LIST TASKS:

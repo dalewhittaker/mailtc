@@ -699,12 +699,15 @@ void remove_account(guint item)
 	if(pcurrent_data== NULL) return;
 
     /*get the plugin and call it's remove function*/
-	if((pitem= plg_find(pcurrent_data->plgname))== NULL)
-		msgbox_fatal(S_DOCKLET_ERR_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
+	if(*pcurrent_data->plgname!= 0)
+    {
+        if((pitem= plg_find(pcurrent_data->plgname))== NULL)
+		    msgbox_fatal(S_DOCKLET_ERR_FIND_PLUGIN_MSG, pcurrent_data->plgname, pcurrent_data->name);
     
-    naccounts= g_slist_length(acclist);
-	if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
-        exit(EXIT_FAILURE);
+        naccounts= g_slist_length(acclist);
+	    if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
+            exit(EXIT_FAILURE);
+    }
 
     /*free the data*/
 	free_account((gpointer)pcurrent_data);

@@ -1,5 +1,5 @@
 /* plg_dummy.c
- * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2007 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,9 @@
 #include <stdlib.h> /*included for rand()*/
 #include <time.h> /*included for rand() seed*/
 
+#include <gtk/gtklabel.h> /*GtkLabel*/
+#include <gtk/gtktable.h> /*GtkTable*/
+
 #include "plugin.h" /*must be included in order to work*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
@@ -33,6 +36,9 @@
 
 /*pointer used to write to mailtc log*/
 static mtc_cfg *pcfg= NULL;
+
+/*create some Gtk widgets for the plugin option tab*/
+static GtkWidget *dummy_table= NULL;
 
 /*log file that will point to the mailtc log*/
 G_MODULE_EXPORT mtc_plugin *init_plugin(void);
@@ -103,7 +109,15 @@ mtc_error dummy_remove(gpointer pdata, guint *naccounts)
 gpointer dummy_show_config(gpointer pdata)
 {
     /*TODO work here*/
-    return(NULL);
+    GtkWidget *dummy_label;
+
+    /*create a table containing widgets and return it to be shown*/
+    dummy_label= gtk_label_new(PLUGIN_NAME " plugin options:");
+    dummy_table= gtk_table_new(1, 2, FALSE);
+
+    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_label, 0, 1, 0, 1);
+    
+    return((gpointer)dummy_table);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
