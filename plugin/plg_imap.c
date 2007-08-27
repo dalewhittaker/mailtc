@@ -66,6 +66,13 @@ mtc_error imap_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+/*this is called when showing configuration options*/
+gpointer imap_show_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(NULL);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imap_pluginfo =
 {
@@ -80,7 +87,8 @@ static mtc_plugin imap_pluginfo =
 	&imap_unload, 
 	&imap_get_messages,
 	&imap_clicked,
-    &imap_remove
+    &imap_remove,
+    &imap_show_config
 };
 
 /*the initialisation function*/

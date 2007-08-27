@@ -63,6 +63,7 @@
 /*enable experimental/broken code. NOTE do not enable this unless you want things to be broken*/
 #undef MTC_EXPERIMENTAL
 
+#ifdef MTC_EXPERIMENTAL
 /*the various positions the summary window can be*/
 typedef enum _mtc_wpos
 {
@@ -72,7 +73,6 @@ typedef enum _mtc_wpos
     WPOS_BOTTOMRIGHT
 } mtc_wpos;
 
-#ifdef MTC_EXPERIMENTAL
 /*structure to hold all the summary configuration details*/
 typedef struct _mtc_summary
 {
@@ -153,7 +153,8 @@ typedef enum _mtc_flags
 } mtc_flags;
 
 /*the defines here are used for the flags passed to the core*/
-#define MTC_ENABLE_FILTERS 1
+#define MTC_ENABLE_FILTERS 1 /*no longer used, is left here as reminder that 1 cannot be used*/
+#define MTC_HAS_PLUGIN_OPTS 2
 
 /*define the possible plugin errors that can be returned*/
 /*these two must be negative as the return value is also the num messages*/
@@ -291,7 +292,9 @@ typedef struct _mtc_plugin
 	mtc_error (*unload)(void);
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
-	
+	mtc_error (*remove)(gpointer, guint *);
+    gpointer (*show_config)(gpointer);
+
 } mtc_plugin;
 
 #endif /*MTC_PLUGIN_HEADER*/

@@ -81,7 +81,8 @@ static GtkWidget *name_entry,
 #endif
     *cerr_combo,
     *cerr_spin,
-    *cerr_label2;
+    *cerr_label2,
+    *accbook;
 
 static dlgtable cicon_table, dicon_table;
 static GtkTreeViewColumn *listbox_account_column, *listbox_protocol_column;
@@ -570,6 +571,11 @@ static void protocol_combo_changed(GtkComboBox *entry)
 {
 	mtc_plugin *pitem= NULL;
 	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
+    const gchar* tabname= "Plugin";
+    gint i= 0;
+     
+    /*TODO this is only a temporary table, final one will be from the plugin*/
+    GtkWidget *tmptable= gtk_table_new(1, 1, FALSE);
 
 	/*get the relevant item depending on the active combo item*/
 	if((pitem= g_slist_nth_data(plglist, gtk_combo_box_get_active(GTK_COMBO_BOX(entry))))== NULL)
@@ -579,13 +585,35 @@ static void protocol_combo_changed(GtkComboBox *entry)
 	g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pitem->default_port);
 	gtk_entry_set_text(GTK_ENTRY(port_entry), port_str); 
 
-#ifdef MTC_NOTMINIMAL
-	/*Now enable/disable the filter widgets depending on plugin flags*/
-    /*TODO removed for now, as was causing buttons to be active when they shouldn't*/
-    /*this will be reworked in a future release*/
-	/*gtk_widget_set_sensitive(filter_button, (pitem->flags& MTC_ENABLE_FILTERS));
-	gtk_widget_set_sensitive(filter_checkbox, (pitem->flags& MTC_ENABLE_FILTERS));*/
-#endif /*MTC_NOTMINIMAL*/
+    /*hide the notebook tabs until a new tab is added*/
+	/*gtk_notebook_set_show_border(GTK_NOTEBOOK(accbook), FALSE);
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), FALSE);*/
+    
+    /*Remove any existing tabs name 'Plugin'*/
+    for(i= 0; i< gtk_notebook_get_n_pages(GTK_NOTEBOOK(accbook)); i++)
+    {
+	    if(g_ascii_strcasecmp(tabname,
+           gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(accbook),
+            gtk_notebook_get_nth_page(GTK_NOTEBOOK(accbook), i)))== 0)
+	    {
+            gtk_notebook_remove_page(GTK_NOTEBOOK(accbook), i);
+        }
+    }
+    
+    /*TODO right, what will happen is this:
+      1. if it does, call plugin routine that returns a GtkTable
+      2. if returned GtkTable is not NULL, add new notebook with table*/
+    if(pitem->flags& MTC_HAS_PLUGIN_OPTS)
+    {
+        GtkWidget *notebook_title;
+        
+        /*show the newly added tab*/
+        /*TODO get the table from the plugin, if it is not NULL add the table to the notebook*/
+        notebook_title= gtk_label_new(tabname);
+	    gtk_notebook_append_page(GTK_NOTEBOOK(accbook), tmptable, notebook_title);
+        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), TRUE);
+        gtk_widget_show_all(accbook);
+    }
 }
 
 /*signal called when connection error combo box changes*/
@@ -628,6 +656,7 @@ static gboolean set_combo_text(GtkTreeModel *model, GtkTreePath *path, GtkTreeIt
 /*display the details dialog*/
 gboolean accdlg_run(gint profile, gint newaccount)
 {
+	GtkWidget *notebook_title;
 	GtkWidget *dialog, *iconcolour_button, *plginfo_button;
 	GtkWidget *name_label, *server_label, *port_label, *username_label, *password_label, *protocol_label, *icon_label;
 	dlgtable main_table;
@@ -644,6 +673,13 @@ gboolean accdlg_run(gint profile, gint newaccount)
     mtc_filters *pfilter= NULL;
 #endif /*MTC_NOTMINIMAL*/
 
+    /*TODO needs plenty more work, will eventually be tabbed*/
+	accbook= gtk_notebook_new();
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(accbook), GTK_POS_TOP);
+/*	gtk_notebook_set_show_border(GTK_NOTEBOOK(accbook), FALSE);
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), FALSE);*/
+    notebook_title= gtk_label_new("Account");
+	
 	/*setup the account name info*/
 	name_entry= gtk_entry_new();
 	name_label= gtk_label_new(S_CONFIGDLG_DETAILS_ACNAME);
@@ -789,8 +825,11 @@ gboolean accdlg_run(gint profile, gint newaccount)
     gtk_container_set_border_width(GTK_CONTAINER(main_table.widget), 10);
 	
 	v_box_details= gtk_vbox_new(FALSE, 10);
-	gtk_box_pack_start(GTK_BOX(v_box_details), main_table.widget, FALSE, FALSE, 10);
 	
+    /*create the notebook pages*/
+	gtk_notebook_prepend_page(GTK_NOTEBOOK(accbook), main_table.widget, notebook_title);
+	gtk_box_pack_start(GTK_BOX(v_box_details), accbook, FALSE, FALSE, 10);
+
 	/*create the details dialog*/
 	dialog= gtk_dialog_new_with_buttons(S_CONFIGDLG_DETAILS_TITLE, NULL, GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
@@ -859,7 +898,7 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 	notebook= gtk_notebook_new();
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
 	notebook_title[0]= gtk_label_new(S_CONFIGDLG_TAB_GENERAL);
-	notebook_title[1]= gtk_label_new("Display");
+	notebook_title[1]= gtk_label_new(S_CONFIGDLG_TAB_DISPLAY);
 	notebook_title[2]= gtk_label_new(S_CONFIGDLG_TAB_ACCOUNTS);
   
 	/*setup the delay info*/ 
@@ -1087,5 +1126,4 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 		g_object_unref(cicon);*/
 	return dialog;
 }
-
 

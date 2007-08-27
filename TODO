@@ -1,6 +1,8 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
+    a) Write small test plugin that passes table to mailtc and go from there
+
 ----------
 
 WISH LIST TASKS:
