@@ -2,6 +2,9 @@
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
     a) add read/write functionality to plugin conf
+        i) add write function which passes the account and pointer to xml node, and write custom value
+        ii) add similar read function
+
     b) improve using ref counts:
         i) should ref count when initially started
         ii) when combo box is changed and notebook_tab removed, plugin widget should not be destroyed

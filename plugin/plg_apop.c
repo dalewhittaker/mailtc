@@ -66,10 +66,17 @@ mtc_error apop_remove(gpointer pdata, guint *naccounts)
 }
 
 /*this is called when showing configuration options*/
-gpointer apop_show_config(gpointer pdata)
+gpointer apop_get_config(gpointer pdata)
 {
     /*TODO work here*/
     return(NULL);
+}
+
+/*this is called when storing configuration options*/
+mtc_error apop_put_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -87,7 +94,8 @@ static mtc_plugin apop_pluginfo =
 	&apop_get_messages,
 	&apop_clicked,
     &apop_remove,
-    &apop_show_config
+    &apop_get_config,
+    &apop_put_config
 };
 
 /*the initialisation function*/
