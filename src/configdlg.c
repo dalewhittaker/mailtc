@@ -251,6 +251,10 @@ static gboolean acc_save(int profile)
 	g_strlcpy(pcurrent_data->plgname, pbasename, sizeof(pcurrent_data->plgname));
     g_free(pbasename);
 
+    /*store the plugin options*/
+    if((*pitem->put_config)(pcurrent_data)!= MTC_RETURN_TRUE)
+        msgbox_fatal("Error storing plugin options");
+
 #ifdef MTC_NOTMINIMAL
 	/*get the filter setting*/
     if(pcurrent_data->pfilters!= NULL)
@@ -605,7 +609,7 @@ static void protocol_combo_changed(GtkComboBox *entry)
         
         /*get the option widgets from the plugin*/
         /*TODO not sure if anything needs passing to the function*/
-        plg_widget= GTK_WIDGET((*pitem->show_config)(NULL));
+        plg_widget= GTK_WIDGET((*pitem->get_config)(NULL));
 
         /*add the new plugin option widgets to the plugin tab*/
         if(plg_widget!= NULL)

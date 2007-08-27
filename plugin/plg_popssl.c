@@ -66,10 +66,17 @@ mtc_error popssl_remove(gpointer pdata, guint *naccounts)
 }
 
 /*this is called when showing configuration options*/
-gpointer popssl_show_config(gpointer pdata)
+gpointer popssl_get_config(gpointer pdata)
 {
     /*TODO work here*/
     return(NULL);
+}
+
+/*this is called when storing configuration options*/
+mtc_error popssl_put_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -87,7 +94,8 @@ static mtc_plugin popssl_pluginfo =
 	&popssl_get_messages,
 	&popssl_clicked,
     &popssl_remove,
-    &popssl_show_config
+    &popssl_get_config,
+    &popssl_put_config
 };
 
 /*the initialisation function*/

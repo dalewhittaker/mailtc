@@ -25,6 +25,7 @@
 
 #include <gtk/gtklabel.h> /*GtkLabel*/
 #include <gtk/gtktable.h> /*GtkTable*/
+#include <gtk/gtkentry.h> /*GtkEntry*/
 
 #include "plugin.h" /*must be included in order to work*/
 
@@ -34,11 +35,19 @@
 #define PLUGIN_DESC "An example network plugin."
 #define DEFAULT_PORT 123
 
+/*define a structure that will hold the plugin option*/
+typedef struct _dummy_opts
+{
+    gchar myopt1[NAME_MAX];
+
+} dummy_opts;
+
 /*pointer used to write to mailtc log*/
 static mtc_cfg *pcfg= NULL;
 
 /*create some Gtk widgets for the plugin option tab*/
 static GtkWidget *dummy_table= NULL;
+static GtkWidget *dummy_entry= NULL;
 
 /*log file that will point to the mailtc log*/
 G_MODULE_EXPORT mtc_plugin *init_plugin(void);
@@ -106,18 +115,41 @@ mtc_error dummy_remove(gpointer pdata, guint *naccounts)
 }
 
 /*this is called when showing configuration options*/
-gpointer dummy_show_config(gpointer pdata)
+gpointer dummy_get_config(gpointer pdata)
 {
-    /*TODO work here*/
+    /*TODO work here (e.g ref counts)*/
+    GtkWidget *dummy_title;
     GtkWidget *dummy_label;
 
     /*create a table containing widgets and return it to be shown*/
-    dummy_label= gtk_label_new(PLUGIN_NAME " plugin options:");
-    dummy_table= gtk_table_new(1, 2, FALSE);
+    dummy_title= gtk_label_new(PLUGIN_NAME " plugin options:");
+    dummy_label= gtk_label_new("example option:");
+    dummy_entry= gtk_entry_new();
+    dummy_table= gtk_table_new(2, 2, FALSE);
 
-    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_label, 0, 1, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_title, 0, 1, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2);
     
     return((gpointer)dummy_table);
+}
+
+/*this is called when storing configuration options*/
+mtc_error dummy_put_config(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    dummy_opts *popts;
+    
+    /*create an options struct if there isn't one already*/
+    if(paccount->plg_opts== NULL)
+        paccount->plg_opts= (gpointer)g_malloc0(sizeof(dummy_opts));
+
+    /*copy the entry value to the option struct*/
+    popts= (dummy_opts *)paccount->plg_opts;
+    g_strlcpy(popts->myopt1, gtk_entry_get_text(GTK_ENTRY(dummy_entry)), sizeof(popts->myopt1));
+    g_print("opt= %s\n", popts->myopt1);
+    
+    return(MTC_RETURN_TRUE);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -135,7 +167,8 @@ static mtc_plugin dummy_pluginfo =
 	&dummy_get_messages, /*function called every n minutes by mailtc to get number of messages*/
 	&dummy_clicked, /*function called when the mail icon is clicked in the system tray*/
     &dummy_remove, /*function called when an account is removed from the config dialog*/
-    &dummy_show_config /*function called when requesting plugin config options*/
+    &dummy_get_config, /*function called when requesting plugin config options*/
+    &dummy_put_config /*function called when storing plugin config options prior to write*/
 };
 
 /*the initialisation function leave this as is*/

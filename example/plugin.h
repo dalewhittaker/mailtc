@@ -272,6 +272,9 @@ typedef struct _mtc_account
     /*used for connection error counting*/
     gint cerr;
 
+    /*holds the plugin specific options*/
+    gpointer plg_opts;
+
 } mtc_account;
 
 typedef struct _mtc_plugin
@@ -293,7 +296,8 @@ typedef struct _mtc_plugin
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
 	mtc_error (*remove)(gpointer, guint *);
-    gpointer (*show_config)(gpointer);
+    gpointer (*get_config)(gpointer);
+    mtc_error (*put_config)(gpointer);
 
 } mtc_plugin;
 

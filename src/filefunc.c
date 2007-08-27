@@ -669,7 +669,7 @@ static void free_account(gpointer data)
 	    msglist= NULL;
     }
 
-	/*remove the filter struct, then the account*/
+    /*TODO remove this eventually*/
     free_filters(paccount);
 #endif /*MTC_NOTMINIMAL*/
 
@@ -681,6 +681,10 @@ static void free_account(gpointer data)
     if(picon->pixbuf)
         g_object_unref(G_OBJECT(picon->pixbuf));
 #endif /*MTC_EGGTRAYICON*/
+
+    /*free any plugin options*/
+    if(paccount->plg_opts!= NULL)
+        g_free(paccount->plg_opts);
 
     g_free(paccount);
 	paccount= NULL;

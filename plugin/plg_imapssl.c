@@ -67,10 +67,17 @@ mtc_error imapssl_remove(gpointer pdata, guint *naccounts)
 }
 
 /*this is called when showing configuration options*/
-gpointer imapssl_show_config(gpointer pdata)
+gpointer imapssl_get_config(gpointer pdata)
 {
     /*TODO work here*/
     return(NULL);
+}
+
+/*this is called when storing configuration options*/
+mtc_error imapssl_put_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -88,7 +95,8 @@ static mtc_plugin imapssl_pluginfo =
 	&imapssl_get_messages,
 	&imapssl_clicked,
     &imapssl_remove,
-    &imapssl_show_config
+    &imapssl_get_config,
+    &imapssl_put_config
 };
 
 /*the initialisation function*/
