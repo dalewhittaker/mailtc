@@ -65,6 +65,13 @@ mtc_error popcram_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+/*this is called when showing configuration options*/
+gpointer popcram_show_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(NULL);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popcram_pluginfo =
 {
@@ -80,6 +87,7 @@ static mtc_plugin popcram_pluginfo =
 	&popcram_get_messages,
 	&popcram_clicked,
     &popcram_remove,
+    &popcram_show_config
 };
 
 /*the initialisation function*/

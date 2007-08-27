@@ -82,10 +82,28 @@ mtc_error dummy_clicked(gpointer pdata)
 	/*get the pointer to the mail_details structure*/
 	mtc_account *paccount= (mtc_account *)pdata;
 
-	/*report to stdout and log that icon has been clicked for the account*/
+	/*report to stdout that icon has been clicked for the account*/
 	printf("Clicked: read messages for account %s\n", paccount->name);
 	
 	return(MTC_RETURN_TRUE);
+}
+
+/*this is called when an account is removed*/
+mtc_error dummy_remove(gpointer pdata, guint *naccounts)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+
+    /*print to stdout when account is removed*/
+	printf("Remove account %d of %d (%s)\n", paccount->id, *naccounts, paccount->name);
+    
+    return(MTC_RETURN_TRUE);
+}
+
+/*this is called when showing configuration options*/
+gpointer dummy_show_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(NULL);
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/
@@ -96,12 +114,14 @@ static mtc_plugin dummy_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	0/*MTC_ENABLE_FILTERS*/, /*this enables filter options in the dialog, set to MTC_ENABLE_FILTERS if you want filters*/
+	MTC_HAS_PLUGIN_OPTS, /*the flags that the plugin sets.  Add MTC_HAS_PLUGIN_OPTS if you wish to use custom plugin options*/
 	DEFAULT_PORT,
 	&dummy_load, /*function called when plugin is loaded*/
 	&dummy_unload, /*function called when plugin is unloaded*/
 	&dummy_get_messages, /*function called every n minutes by mailtc to get number of messages*/
-	&dummy_clicked /*function called when the mail icon is clicked in the system tray*/
+	&dummy_clicked, /*function called when the mail icon is clicked in the system tray*/
+    &dummy_remove, /*function called when an account is removed from the config dialog*/
+    &dummy_show_config /*function called when requesting plugin config options*/
 };
 
 /*the initialisation function leave this as is*/

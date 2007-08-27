@@ -66,6 +66,13 @@ mtc_error imapcram_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+/*this is called when showing configuration options*/
+gpointer imapcram_show_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(NULL);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imapcram_pluginfo =
 {
@@ -81,6 +88,7 @@ static mtc_plugin imapcram_pluginfo =
 	&imapcram_get_messages,
 	&imapcram_clicked,
     &imapcram_remove,
+    &imapcram_show_config
 };
 
 /*the initialisation function*/

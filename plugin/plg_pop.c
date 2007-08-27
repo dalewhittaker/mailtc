@@ -66,6 +66,13 @@ mtc_error pop_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+/*this is called when showing configuration options*/
+gpointer pop_show_config(gpointer pdata)
+{
+    /*TODO work here*/
+    return(NULL);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin pop_pluginfo =
 {
@@ -80,7 +87,8 @@ static mtc_plugin pop_pluginfo =
 	&pop_unload, 
 	&pop_get_messages,
 	&pop_clicked,
-    &pop_remove
+    &pop_remove,
+    &pop_show_config
 };
 
 /*the initialisation function*/

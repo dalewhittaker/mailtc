@@ -70,6 +70,7 @@
 #define S_CONFIGDLG_DETAILS_TITLE _("Mail Account Configuration")
 #define S_CONFIGDLG_CONFIG_TITLE _("%s configuration")
 #define S_CONFIGDLG_TAB_GENERAL _("General")
+#define S_CONFIGDLG_TAB_DISPLAY _("Display")
 #define S_CONFIGDLG_TAB_ACCOUNTS _("Mail accounts")
 #define S_CONFIGDLG_INTERVAL _("Interval in minutes for mail check: ")
 #define S_CONFIGDLG_SMALLICON _("Use small envelope icon")
