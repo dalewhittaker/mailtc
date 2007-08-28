@@ -152,6 +152,18 @@ mtc_error dummy_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when writing the configuration options to file*/
+mtc_error dummy_write_config(xmlNodePtr node, gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    dummy_opts *popts= (dummy_opts *)paccount->plg_opts;
+
+    /*TODO work here*/
+    g_print("write xml option %s\n", popts->myopt1);
+
+    return(MTC_RETURN_TRUE);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin dummy_pluginfo =
 {
@@ -168,7 +180,8 @@ static mtc_plugin dummy_pluginfo =
 	&dummy_clicked, /*function called when the mail icon is clicked in the system tray*/
     &dummy_remove, /*function called when an account is removed from the config dialog*/
     &dummy_get_config, /*function called when requesting plugin config options*/
-    &dummy_put_config /*function called when storing plugin config options prior to write*/
+    &dummy_put_config, /*function called when storing plugin config options prior to write*/
+    &dummy_write_config /*function called when writing plugin config to file*/
 };
 
 /*the initialisation function leave this as is*/

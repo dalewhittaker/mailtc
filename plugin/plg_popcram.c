@@ -79,6 +79,13 @@ mtc_error popcram_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when writing the configuration options to file*/
+mtc_error popcram_write_config(xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popcram_pluginfo =
 {
@@ -95,7 +102,8 @@ static mtc_plugin popcram_pluginfo =
 	&popcram_clicked,
     &popcram_remove,
     &popcram_get_config,
-    &popcram_put_config
+    &popcram_put_config,
+    &popcram_write_config
 };
 
 /*the initialisation function*/

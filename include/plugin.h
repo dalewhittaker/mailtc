@@ -4,6 +4,7 @@
 /*headers required for the various structs
  *would be nicer if the plugin file did not require these,
  *but, ho hum*/
+#include <libxml/tree.h>
 #include <glib/gprintf.h> /*also includes stdio.h*/
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -296,8 +297,9 @@ typedef struct _mtc_plugin
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
 	mtc_error (*remove)(gpointer, guint *);
-    gpointer (*get_config)(gpointer);
+    gpointer  (*get_config)(gpointer);
     mtc_error (*put_config)(gpointer);
+    mtc_error (*write_config)(xmlNodePtr, gpointer);
 
 } mtc_plugin;
 
