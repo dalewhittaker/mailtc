@@ -571,7 +571,7 @@ static void summary_button_pressed(GtkWidget *widget, gpointer user_data)
 #endif
 
 /*signal called when protocol combo box changes*/
-static void protocol_combo_changed(GtkComboBox *entry)
+static void protocol_combo_changed(GtkComboBox *entry, gpointer user_data)
 {
 	mtc_plugin *pitem= NULL;
 	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
@@ -606,10 +606,11 @@ static void protocol_combo_changed(GtkComboBox *entry)
     {
         GtkWidget *notebook_title;
         GtkWidget *plg_widget= NULL;
+        mtc_account *paccount= (mtc_account *)user_data;
         
         /*get the option widgets from the plugin*/
         /*TODO not sure if anything needs passing to the function*/
-        plg_widget= GTK_WIDGET((*pitem->get_config)(NULL));
+        plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
 
         /*add the new plugin option widgets to the plugin tab*/
         if(plg_widget!= NULL)
@@ -754,7 +755,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		GtkTreeIter iter;
 		
 		/*set the inital combo stuff (must be done after account read, but before port change)*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo));
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), pcurrent);
 	
 	    gtk_entry_set_text(GTK_ENTRY(name_entry), pcurrent->name);
 		gtk_entry_set_text(GTK_ENTRY(server_entry), pcurrent->server);
@@ -786,7 +787,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	else
 	{
 		/*set the initial combo stuff*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo));
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), NULL);
 	
 		/*set the default port value*/
 		acclist= create_account();

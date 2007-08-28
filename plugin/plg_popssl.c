@@ -80,6 +80,13 @@ mtc_error popssl_put_config(gpointer pdata)
 }
 
 /*this is called when writing the configuration options to file*/
+mtc_error popssl_read_config(xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
+/*this is called when writing the configuration options to file*/
 mtc_error popssl_write_config(xmlNodePtr node, gpointer pdata)
 {
     /*TODO work here*/
@@ -103,6 +110,7 @@ static mtc_plugin popssl_pluginfo =
     &popssl_remove,
     &popssl_get_config,
     &popssl_put_config,
+    &popssl_read_config,
     &popssl_write_config
 };
 

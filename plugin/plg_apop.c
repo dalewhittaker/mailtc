@@ -79,6 +79,13 @@ mtc_error apop_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error apop_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error apop_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -103,6 +110,7 @@ static mtc_plugin apop_pluginfo =
     &apop_remove,
     &apop_get_config,
     &apop_put_config,
+    &apop_read_config,
     &apop_write_config
 };
 

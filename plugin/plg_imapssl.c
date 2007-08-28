@@ -80,6 +80,13 @@ mtc_error imapssl_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error imapssl_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error imapssl_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -104,6 +111,7 @@ static mtc_plugin imapssl_pluginfo =
     &imapssl_remove,
     &imapssl_get_config,
     &imapssl_put_config,
+    &imapssl_read_config,
     &imapssl_write_config
 };
 

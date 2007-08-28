@@ -80,6 +80,13 @@ mtc_error imap_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error imap_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error imap_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -104,6 +111,7 @@ static mtc_plugin imap_pluginfo =
     &imap_remove,
     &imap_get_config,
     &imap_put_config,
+    &imap_read_config,
     &imap_write_config
 };
 

@@ -342,6 +342,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
     {
         xmlChar *pcontent= NULL;
         xmlNodePtr child= NULL;
+        mtc_plugin *pitem= NULL;
         elist *pelement;
         
         elist elements[]=
@@ -376,7 +377,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
             }
 #ifdef MTC_NOTMINIMAL
             else
-            {    /*read in any filters*/
+            { 
                 if(read_filters(doc, child, pnew)== FALSE)
                     retval= FALSE;
             }
@@ -399,6 +400,24 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
                 retval= FALSE;
             }
             pelement++;
+        }
+
+        /*finally read in any plugin configuration options*/
+        child= node->children;
+        while(child!= NULL)
+        {
+            if((child->type!= XML_ELEMENT_NODE)|| (child->children== NULL)||
+                (child->children->type!= XML_TEXT_NODE)|| xmlIsBlankNode(child->children))
+            {
+                /*read the plugin configuration options*/
+                if((pitem= plg_find(pnew->plgname))== NULL)
+                    retval= FALSE;
+ 
+                /*read any plugin options*/
+                if((*pitem->read_config)(doc, child, pnew)!= MTC_RETURN_TRUE)
+                    retval= FALSE;
+            }
+            child= child->next;
         }
 
     }

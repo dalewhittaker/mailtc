@@ -80,6 +80,13 @@ mtc_error imapcram_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error imapcram_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error imapcram_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -104,6 +111,7 @@ static mtc_plugin imapcram_pluginfo =
     &imapcram_remove,
     &imapcram_get_config,
     &imapcram_put_config,
+    &imapcram_read_config,
     &imapcram_write_config
 };
 

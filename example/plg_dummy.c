@@ -34,6 +34,8 @@
 #define PLUGIN_AUTHOR "Dale Whittaker (dayul@users.sf.net)"
 #define PLUGIN_DESC "An example network plugin."
 #define DEFAULT_PORT 123
+#define ELEMENT_DUMMYOPT "dummy_options"
+#define ELEMENT_OPT1 "opt1"
 
 /*define a structure that will hold the plugin option*/
 typedef struct _dummy_opts
@@ -118,6 +120,7 @@ mtc_error dummy_remove(gpointer pdata, guint *naccounts)
 gpointer dummy_get_config(gpointer pdata)
 {
     /*TODO work here (e.g ref counts)*/
+	mtc_account *paccount= (mtc_account *)pdata;
     GtkWidget *dummy_title;
     GtkWidget *dummy_label;
 
@@ -131,6 +134,16 @@ gpointer dummy_get_config(gpointer pdata)
     gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2);
     gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2);
     
+    /*if there are plugin options, get them*/
+    if((paccount!= NULL)&& paccount->plg_opts!= NULL)
+    {
+        dummy_opts *popts;
+        popts= (dummy_opts *)paccount->plg_opts;
+        
+        /*set the value*/
+        if(*popts->myopt1!= 0)
+            gtk_entry_set_text(GTK_ENTRY(dummy_entry), popts->myopt1);
+    }
     return((gpointer)dummy_table);
 }
 
@@ -147,8 +160,46 @@ mtc_error dummy_put_config(gpointer pdata)
     /*copy the entry value to the option struct*/
     popts= (dummy_opts *)paccount->plg_opts;
     g_strlcpy(popts->myopt1, gtk_entry_get_text(GTK_ENTRY(dummy_entry)), sizeof(popts->myopt1));
-    g_print("opt= %s\n", popts->myopt1);
     
+    return(MTC_RETURN_TRUE);
+}
+
+/*this is called when reading options from the configuration file*/
+mtc_error dummy_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*test if there are any options defined*/
+    if(xmlIsBlankNode(node->children)&& (xmlStrEqual(node->name, BAD_CAST ELEMENT_DUMMYOPT)))
+    {
+        xmlNodePtr child= NULL;
+
+        /*get the child option*/
+        child= node->children;
+        
+        while(child!= NULL)
+        {
+            if((child!= NULL)&& (xmlStrEqual(child->name, BAD_CAST ELEMENT_OPT1))&&
+                (child->type== XML_ELEMENT_NODE)&& !(xmlIsBlankNode(child->children)))
+            {
+	            mtc_account *paccount= (mtc_account *)pdata;
+                xmlChar *pcontent;
+                dummy_opts *popts;
+
+                /*valid node, get the content*/
+                pcontent= xmlNodeListGetString(doc, child->children, 1);
+
+                /*create an options struct if there isn't one already*/
+                if(paccount->plg_opts== NULL)
+                    paccount->plg_opts= (gpointer)g_malloc0(sizeof(dummy_opts));
+
+                /*copy the entry value to the option struct*/
+                popts= (dummy_opts *)paccount->plg_opts;
+                g_strlcpy(popts->myopt1, (gchar *)pcontent, sizeof(popts->myopt1));
+ 
+                xmlFree(pcontent);
+            }
+            child= child->next;
+        }
+    }
     return(MTC_RETURN_TRUE);
 }
 
@@ -156,11 +207,19 @@ mtc_error dummy_put_config(gpointer pdata)
 mtc_error dummy_write_config(xmlNodePtr node, gpointer pdata)
 {
 	mtc_account *paccount= (mtc_account *)pdata;
-    dummy_opts *popts= (dummy_opts *)paccount->plg_opts;
+    if(paccount!= NULL)
+    {
+        dummy_opts *popts= (dummy_opts *)paccount->plg_opts;
+        
+        if(popts!= NULL&& *popts->myopt1!= 0)
+        {
+            xmlNodePtr dummy_node;
 
-    /*TODO work here*/
-    g_print("write xml option %s\n", popts->myopt1);
-
+            /*write the plugin option to the config file*/
+            dummy_node= xmlNewChild(node, NULL, BAD_CAST ELEMENT_DUMMYOPT, NULL);
+            xmlNewChild(dummy_node, NULL, BAD_CAST ELEMENT_OPT1, BAD_CAST popts->myopt1);
+        }
+    }
     return(MTC_RETURN_TRUE);
 }
 
@@ -181,6 +240,7 @@ static mtc_plugin dummy_pluginfo =
     &dummy_remove, /*function called when an account is removed from the config dialog*/
     &dummy_get_config, /*function called when requesting plugin config options*/
     &dummy_put_config, /*function called when storing plugin config options prior to write*/
+    &dummy_read_config, /*function called when reading plugin config from file*/
     &dummy_write_config /*function called when writing plugin config to file*/
 };
 
