@@ -79,6 +79,13 @@ mtc_error popcram_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error popcram_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error popcram_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -103,6 +110,7 @@ static mtc_plugin popcram_pluginfo =
     &popcram_remove,
     &popcram_get_config,
     &popcram_put_config,
+    &popcram_read_config,
     &popcram_write_config
 };
 

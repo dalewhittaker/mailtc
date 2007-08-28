@@ -80,6 +80,13 @@ mtc_error pop_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when reading options from the configuration file*/
+mtc_error pop_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*this is called when writing the configuration options to file*/
 mtc_error pop_write_config(xmlNodePtr node, gpointer pdata)
 {
@@ -104,7 +111,8 @@ static mtc_plugin pop_pluginfo=
     &pop_remove,
     &pop_get_config,
     &pop_put_config,
-    &pop_write_config,
+    &pop_read_config,
+    &pop_write_config
 };
 
 /*the initialisation function*/
