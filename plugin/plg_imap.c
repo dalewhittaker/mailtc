@@ -80,6 +80,13 @@ mtc_error imap_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when writing the configuration options to file*/
+mtc_error imap_write_config(xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imap_pluginfo =
 {
@@ -96,7 +103,8 @@ static mtc_plugin imap_pluginfo =
 	&imap_clicked,
     &imap_remove,
     &imap_get_config,
-    &imap_put_config
+    &imap_put_config,
+    &imap_write_config
 };
 
 /*the initialisation function*/

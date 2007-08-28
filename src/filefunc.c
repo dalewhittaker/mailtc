@@ -846,6 +846,7 @@ static gboolean acc_write(xmlNodePtr root_node)
 	GSList *pcurrent= NULL;
     mtc_account *paccount;
     mtc_icon *picon;
+    mtc_plugin *pitem= NULL;
 
 	pcurrent= acclist;
     
@@ -870,7 +871,14 @@ static gboolean acc_write(xmlNodePtr root_node)
         /*now write the password out*/
         if(!pw_write(acc_node, paccount->password))
             return FALSE;
+     
+        /*write the plugin configuration options*/
+        if((pitem= plg_find(paccount->plgname))== NULL)
+            return FALSE;
         
+		if((*pitem->write_config)(acc_node, paccount)!= MTC_RETURN_TRUE)
+            return FALSE;
+               
 #ifdef MTC_NOTMINIMAL
         /*and then also the filter, if there is one*/
         if(!filter_write(acc_node, paccount))

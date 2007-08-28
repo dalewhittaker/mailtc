@@ -79,6 +79,13 @@ mtc_error apop_put_config(gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when writing the configuration options to file*/
+mtc_error apop_write_config(xmlNodePtr node, gpointer pdata)
+{
+    /*TODO work here*/
+    return(MTC_RETURN_TRUE);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin apop_pluginfo =
 {
@@ -95,7 +102,8 @@ static mtc_plugin apop_pluginfo =
 	&apop_clicked,
     &apop_remove,
     &apop_get_config,
-    &apop_put_config
+    &apop_put_config,
+    &apop_write_config
 };
 
 /*the initialisation function*/

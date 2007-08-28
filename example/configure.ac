@@ -23,7 +23,10 @@ AC_PROG_MAKE_SET
 
 CFLAGS=""
 
-AM_PATH_GTK_2_0(2.4.0,,AC_MSG_ERROR([mailtc needs GTK+ 2.4 or higher]))
+dnl AM_PATH_GTK_2_0(2.4.0,,AC_MSG_ERROR([mailtc needs GTK+ 2.4 or higher]))
+PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.10.0  libxml-2.0 >= 2.4.0)
+AC_SUBST(GTK_LIBS)
+AC_SUBST(GTK_CFLAGS)
 dnl Checks for header files.
 AC_CHECK_HEADERS(limits.h unistd.h netdb.h sys/types.h netinet/in.h sys/socket.h sys/stat.h sys/select.h glib.h)
 
