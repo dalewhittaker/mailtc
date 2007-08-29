@@ -7,8 +7,10 @@ includedir = $(top_srcdir)/include
 #define the message list stuff
 if MTC_ALLFEATURES
 msglist_cflags = -DMTC_NOTMINIMAL
-msglist_src = msg.c
-msglist_headers = $(includedir)/msg.h
+msglist_src = msg.c \
+	filter.c
+msglist_headers = $(includedir)/msg.h \
+	$(includedir)/filter.h
 endif
 
 #define the common source files

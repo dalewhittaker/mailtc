@@ -188,7 +188,7 @@ static void insert_text_handler(GtkEditable *editable, const gchar *text, gint l
 }
 
 /*function to save the mail account details to details and password file*/
-static gboolean acc_save(int profile)
+static gboolean acc_save(gint profile)
 {
 	gboolean retval= FALSE;
     gint empty= 0;
@@ -608,10 +608,14 @@ static void protocol_combo_changed(GtkComboBox *entry, gpointer user_data)
     {
         GtkWidget *notebook_title;
         GtkWidget *plg_widget= NULL;
-        mtc_account *paccount= (mtc_account *)user_data;
-        
+    	gint *p_count= (gint*)user_data;
+        mtc_account *paccount;
+
+        /*get the account*/
+	    paccount= get_account(*p_count);
+	    
         /*get the option widgets from the plugin*/
-        /*TODO not sure if anything needs passing to the function*/
+        /*TODO really not sure if this is enough, may need to handle NULL accounts*/
         plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
 
         /*add the new plugin option widgets to the plugin tab*/
@@ -748,7 +752,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
  
    /*set initial combo values*/
 	gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
-	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed", G_CALLBACK(protocol_combo_changed), NULL);
+	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed", G_CALLBACK(protocol_combo_changed), &profile);
 	
 	/*read the details for the selected account and display it in the widgets*/
 	if((pcurrent= get_account(profile))!= NULL)
@@ -757,7 +761,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		GtkTreeIter iter;
 		
 		/*set the inital combo stuff (must be done after account read, but before port change)*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), pcurrent);
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), &profile);
 	
 	    gtk_entry_set_text(GTK_ENTRY(name_entry), pcurrent->name);
 		gtk_entry_set_text(GTK_ENTRY(server_entry), pcurrent->server);
@@ -780,7 +784,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
         g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pcurrent->port);
         gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
 
-   #ifdef MTC_NOTMINIMAL
+#ifdef MTC_NOTMINIMAL
         pfilter= pcurrent->pfilters;
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
 #endif /*MTC_NOTMINIMAL*/	
@@ -788,11 +792,13 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	/*set the default pop port if details could not be read*/
 	else
 	{
-		/*set the initial combo stuff*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), NULL);
-	
+
 		/*set the default port value*/
 		acclist= create_account();
+
+		/*set the initial combo stuff (must be done after creating account)*/
+		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), &profile);	
+
 		pcurrent= get_account(profile);
  	}
 
