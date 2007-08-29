@@ -170,38 +170,34 @@ mtc_error dummy_put_config(gpointer pdata)
 /*this is called when reading options from the configuration file*/
 mtc_error dummy_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
-    /*test if there are any options defined*/
-    if(xmlIsBlankNode(node->children)&& (xmlStrEqual(node->name, BAD_CAST ELEMENT_DUMMYOPT)))
-    {
-        xmlNodePtr child= NULL;
+    xmlNodePtr child= NULL;
 
-        /*get the child option*/
-        child= node->children;
+    /*get the child option*/
+    child= node->children;
         
-        while(child!= NULL)
+    while(child!= NULL)
+    {
+        if((child!= NULL)&& (xmlStrEqual(child->name, BAD_CAST ELEMENT_OPT1))&&
+            (child->type== XML_ELEMENT_NODE)&& !(xmlIsBlankNode(child->children)))
         {
-            if((child!= NULL)&& (xmlStrEqual(child->name, BAD_CAST ELEMENT_OPT1))&&
-                (child->type== XML_ELEMENT_NODE)&& !(xmlIsBlankNode(child->children)))
-            {
-	            mtc_account *paccount= (mtc_account *)pdata;
-                xmlChar *pcontent;
-                dummy_opts *popts;
+	        mtc_account *paccount= (mtc_account *)pdata;
+            xmlChar *pcontent;
+            dummy_opts *popts;
 
-                /*valid node, get the content*/
-                pcontent= xmlNodeListGetString(doc, child->children, 1);
+            /*valid node, get the content*/
+            pcontent= xmlNodeListGetString(doc, child->children, 1);
 
-                /*create an options struct if there isn't one already*/
-                if(paccount->plg_opts== NULL)
-                    paccount->plg_opts= (gpointer)g_malloc0(sizeof(dummy_opts));
+            /*create an options struct if there isn't one already*/
+            if(paccount->plg_opts== NULL)
+                paccount->plg_opts= (gpointer)g_malloc0(sizeof(dummy_opts));
 
-                /*copy the entry value to the option struct*/
-                popts= (dummy_opts *)paccount->plg_opts;
-                g_strlcpy(popts->myopt1, (gchar *)pcontent, sizeof(popts->myopt1));
+            /*copy the entry value to the option struct*/
+            popts= (dummy_opts *)paccount->plg_opts;
+            g_strlcpy(popts->myopt1, (gchar *)pcontent, sizeof(popts->myopt1));
  
-                xmlFree(pcontent);
-            }
-            child= child->next;
+            xmlFree(pcontent);
         }
+        child= child->next;
     }
     return(MTC_RETURN_TRUE);
 }
@@ -216,11 +212,8 @@ mtc_error dummy_write_config(xmlNodePtr node, gpointer pdata)
         
         if(popts!= NULL&& *popts->myopt1!= 0)
         {
-            xmlNodePtr dummy_node;
-
             /*write the plugin option to the config file*/
-            dummy_node= xmlNewChild(node, NULL, BAD_CAST ELEMENT_DUMMYOPT, NULL);
-            xmlNewChild(dummy_node, NULL, BAD_CAST ELEMENT_OPT1, BAD_CAST popts->myopt1);
+            xmlNewChild(node, NULL, BAD_CAST ELEMENT_OPT1, BAD_CAST popts->myopt1);
         }
     }
     return(MTC_RETURN_TRUE);
