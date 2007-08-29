@@ -26,6 +26,10 @@
 #define PLUGIN_DESC "POP3 network plugin."
 #define DEFAULT_PORT 110
 
+#ifdef MTC_NOTMINIMAL
+#include "filter.h"
+#endif /*MTC_NOTMINIMAL*/
+
 G_MODULE_EXPORT mtc_plugin *init_plugin(void);
 
 /*this is called every n minutes by mailtc to check for new messages*/
@@ -69,8 +73,9 @@ mtc_error pop_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer pop_get_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(NULL);
+    /*TODO will eventually be something like pop_filterdlg_run*/
+	mtc_account *paccount= (mtc_account *)pdata;
+    return((gpointer)filter_table(paccount, PLUGIN_NAME));
 }
 
 /*this is called when storing configuration options*/
@@ -102,7 +107,7 @@ static mtc_plugin pop_pluginfo=
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_ENABLE_FILTERS,
+	MTC_HAS_PLUGIN_OPTS,
 	DEFAULT_PORT,
 	&pop_load,
 	&pop_unload, 
