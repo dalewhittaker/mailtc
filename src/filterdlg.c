@@ -626,7 +626,8 @@ gboolean filterdlg_run(mtc_account *paccount)
 	}
 	/*destroy the dialog now that it is finished*/
     /*gtk_container_foreach(GTK_CONTAINER(widgets.vbox), (GtkCallback)g_object_unref, NULL);*/
-    gtk_widget_destroy(dialog);
+    if(dialog&& GTK_IS_WIDGET(dialog))
+        gtk_widget_destroy(dialog);
 
 	return(retval);
 }
