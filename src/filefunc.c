@@ -50,6 +50,7 @@
 #define ELEMENT_USERNAME       "username"
 #define ELEMENT_ENCPASSWORD    "enc_password"
 #define ELEMENT_PASSWORD       "password"
+#define ELEMENT_PLUGINOPTIONS  "plugin_options"
 
 /*define the config file encoding*/
 #define CFGFILE_ENCODING "UTF-8"
@@ -409,13 +410,16 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
             if((child->type!= XML_ELEMENT_NODE)|| (child->children== NULL)||
                 (child->children->type!= XML_TEXT_NODE)|| xmlIsBlankNode(child->children))
             {
-                /*read the plugin configuration options*/
-                if((pitem= plg_find(pnew->plgname))== NULL)
-                    retval= FALSE;
+                if(xmlStrEqual(child->name, BAD_CAST ELEMENT_PLUGINOPTIONS))
+                {
+                    /*read the plugin configuration options*/
+                    if((pitem= plg_find(pnew->plgname))== NULL)
+                        retval= FALSE;
  
-                /*read any plugin options*/
-                if((*pitem->read_config)(doc, child, pnew)!= MTC_RETURN_TRUE)
-                    retval= FALSE;
+                    /*read any plugin options*/
+                    if((*pitem->read_config)(doc, child, pnew)!= MTC_RETURN_TRUE)
+                        retval= FALSE;
+                }
             }
             child= child->next;
         }
@@ -861,7 +865,8 @@ static gboolean acc_write(xmlNodePtr root_node)
 {
     xmlNodePtr accs_node= NULL;
     xmlNodePtr acc_node= NULL;
- 
+    xmlNodePtr plg_node= NULL;
+
 	GSList *pcurrent= NULL;
     mtc_account *paccount;
     mtc_icon *picon;
@@ -895,7 +900,8 @@ static gboolean acc_write(xmlNodePtr root_node)
         if((pitem= plg_find(paccount->plgname))== NULL)
             return FALSE;
         
-		if((*pitem->write_config)(acc_node, paccount)!= MTC_RETURN_TRUE)
+        plg_node= put_node_empty(acc_node, ELEMENT_PLUGINOPTIONS);
+		if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
             return FALSE;
                
 #ifdef MTC_NOTMINIMAL
