@@ -130,9 +130,12 @@ gpointer dummy_get_config(gpointer pdata)
     dummy_entry= gtk_entry_new();
     dummy_table= gtk_table_new(2, 2, FALSE);
 
-    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_title, 0, 1, 0, 1);
-    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2);
-    gtk_table_attach_defaults(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2);
+	gtk_table_set_col_spacings(GTK_TABLE(dummy_table), 10);
+	gtk_table_set_row_spacings(GTK_TABLE(dummy_table), 20);
+    gtk_container_set_border_width(GTK_CONTAINER(dummy_table), 10);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_title, 0, 2, 0, 1, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
     
     /*if there are plugin options, get them*/
     if((paccount!= NULL)&& paccount->plg_opts!= NULL)
