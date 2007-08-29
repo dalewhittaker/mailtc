@@ -451,11 +451,13 @@ static void iconcolour_button_pressed(GtkWidget *widget, gchar *scolour)
 	if(response== GTK_RESPONSE_OK)
 	{
 		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(coloursel), &colour);
-		gtk_widget_destroy(colour_dialog);
+		if(colour_dialog&& GTK_IS_WIDGET(colour_dialog))
+            gtk_widget_destroy(colour_dialog);
 	}
 	else
 	{
-		gtk_widget_destroy(colour_dialog);
+		if(colour_dialog&& GTK_IS_WIDGET(colour_dialog))
+		    gtk_widget_destroy(colour_dialog);
 		return;
 	}
 
@@ -870,7 +872,8 @@ gboolean accdlg_run(gint profile, gint newaccount)
     gtk_container_remove(GTK_CONTAINER(dicon_table.widget), picon->image);
 	
     /*destroy the dialog now that it is finished*/
-	gtk_widget_destroy(dialog);
+	if(dialog&& GTK_IS_WIDGET(dialog))
+	    gtk_widget_destroy(dialog);
 
 	return TRUE;
 }

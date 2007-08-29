@@ -1,13 +1,8 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) improve dummy plugin using ref counts:
-        i) should ref count when initially started
-        ii) when combo box is changed and notebook_tab removed, plugin widget should not be destroyed
-                instead, all values should be cleared and re-read if necessary.
-        iv) when unload is called, drop the reference count and destroy the widget.
-    b) use dummy as reference and move filters over
-    c) test lots
+    a) use dummy as reference and move filters over
+    b) test lots with valgrind
 ----------
 
 WISH LIST TASKS:
