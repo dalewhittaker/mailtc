@@ -1,16 +1,16 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) protocol_combo_changed needs big testing with valgrind, only 1 call should be made, check this.
-    
     a) use dummy as reference and move filters over
-        i) get_config
-        ii) put_config
-        iii) write_config
-        iv) read_config
-        v) get above working for one plugin, then working for all
+        i) put_config
+        ii) write_config
+        iii) read_config
+        iv) get above working for one plugin, then working for all
     b) make sure everything works with MTC_NOTMINIMAL not defined (i.e minimal build)
-    c) test lots with valgrind
+    c) remove the strings.h file from the filter.c file and check all plg_err() lines
+    d) test lots with valgrind
+    e) get plugins working nicely together, e.g the dialogs
+    f) should the tab be removed from the notebook or simply hidden/shown?
 ----------
 
 WISH LIST TASKS:
