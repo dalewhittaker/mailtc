@@ -616,15 +616,18 @@ static void protocol_combo_changed(GtkComboBox *entry, gpointer user_data)
 	    
         /*get the option widgets from the plugin*/
         /*TODO really not sure if this is enough, may need to handle NULL accounts*/
-        plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
-
-        /*add the new plugin option widgets to the plugin tab*/
-        if(plg_widget!= NULL)
+        if(paccount!= NULL)
         {
-            notebook_title= gtk_label_new(tabname);
-	        gtk_notebook_append_page(GTK_NOTEBOOK(accbook), plg_widget, notebook_title);
-            gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), TRUE);
-            gtk_widget_show_all(accbook);
+            plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
+
+            /*add the new plugin option widgets to the plugin tab*/
+            if(plg_widget!= NULL)
+            {
+                notebook_title= gtk_label_new(tabname);
+	            gtk_notebook_append_page(GTK_NOTEBOOK(accbook), plg_widget, notebook_title);
+                gtk_notebook_set_show_tabs(GTK_NOTEBOOK(accbook), TRUE);
+                gtk_widget_show_all(accbook);
+            }
         }
     }
 }
@@ -750,8 +753,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	/*set the icon button to open the colour dialog*/
 	iconcolour_button= gtk_button_new_with_label(S_CONFIGDLG_SETICONCOLOUR);
  
-   /*set initial combo values*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
+    /*set initial combo values*/
 	g_signal_connect(G_OBJECT(GTK_COMBO_BOX(protocol_combo)), "changed", G_CALLBACK(protocol_combo_changed), &profile);
 	
 	/*read the details for the selected account and display it in the widgets*/
@@ -760,17 +762,14 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		GtkTreeModel *model;
 		GtkTreeIter iter;
 		
-		/*set the inital combo stuff (must be done after account read, but before port change)*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), &profile);
-	
 	    gtk_entry_set_text(GTK_ENTRY(name_entry), pcurrent->name);
 		gtk_entry_set_text(GTK_ENTRY(server_entry), pcurrent->server);
 		gtk_entry_set_text(GTK_ENTRY(username_entry), pcurrent->username);
 		gtk_entry_set_text(GTK_ENTRY(password_entry), pcurrent->password);
 
-        /*set the combobox to first entry and get the iterator*/
+        /*get the combobox first entry and get the iterator*/
 		model= gtk_combo_box_get_model(GTK_COMBO_BOX(protocol_combo));
-		if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(protocol_combo), &iter))
+		if(!gtk_tree_model_get_iter_first(model, &iter))
 			msgbox_fatal(S_CONFIGDLG_ERR_COMBO_ITER);
 				
 		/*loop through listbox entries to see which is selected and run the details dialog for the account*/
@@ -778,8 +777,9 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		if((pitem= plg_find(pcurrent->plgname))== NULL)
 			pitem= plglist->data;
 
+		/*set the inital combo stuff (must be done after account read, but before port change)*/
 		gtk_tree_model_foreach(model, set_combo_text, (gchar *)pitem->name);
-
+	
         /*set the port text after the default port value has been set*/
         g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pcurrent->port);
         gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
@@ -797,7 +797,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
 		acclist= create_account();
 
 		/*set the initial combo stuff (must be done after creating account)*/
-		protocol_combo_changed(GTK_COMBO_BOX(protocol_combo), &profile);	
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(protocol_combo), 0);
 
 		pcurrent= get_account(profile);
  	}
