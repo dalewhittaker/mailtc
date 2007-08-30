@@ -1,7 +1,7 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) protocol_combo_changed needs work.  It sets the initial combo to 0; when this is done, the get_config function should NOT be called.
+    a) protocol_combo_changed needs big testing with valgrind, only 1 call should be made, check this.
     
     a) use dummy as reference and move filters over
         i) get_config
