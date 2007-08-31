@@ -69,8 +69,6 @@ static GtkWidget *name_entry,
     *protocol_combo,
     *iconsize_checkbox,
 #ifdef MTC_NOTMINIMAL
-    *filter_checkbox,
-    *filter_button,
     *nmailcmd_entry,
 #endif /*MTC_NOTMINIMAL*/
     *multi_accounts_checkbox,
@@ -253,12 +251,6 @@ static gboolean acc_save(gint profile)
     /*store the plugin options*/
     if((*pitem->put_config)(pcurrent_data)!= MTC_RETURN_TRUE)
         msgbox_fatal("Error storing plugin options");
-
-#ifdef MTC_NOTMINIMAL
-	/*get the filter setting*/
-    if(pcurrent_data->pfilters!= NULL)
-	    pcurrent_data->pfilters->enabled= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox));
-#endif /*MTC_NOTMINIMAL*/
 
 	/*write the details to the file*/
 	retval= cfg_write();
@@ -529,26 +521,6 @@ static void multi_checkbox_pressed(GtkWidget *widget, gpointer user_data)
 	gtk_widget_set_sensitive(GTK_WIDGET(config_iconcolour_button), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-#if 0
-/*signal called when filter checkbox is pressed*/
-static void filter_checkbox_pressed(GtkWidget *widget)
-{
-	gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
-}
-
-/*signal called when filter button is pressed*/
-static void filter_button_pressed(GtkWidget *widget, gpointer data)
-{
-	mtc_account *pcurrent= NULL;
-	gint *p_count= (gint*)data;
-
-	if((pcurrent= get_account(*p_count))== NULL)
-		msgbox_fatal(S_CONFIGDLG_ERR_GET_ACCOUNT_INFO, *p_count);		
-
-	filterdlg_run(pcurrent);
-}
-#endif
-
 #ifdef MTC_EXPERIMENTAL
 /*signal called when summary checkbox is pressed*/
 static void summary_checkbox_pressed(GtkWidget *widget)
@@ -684,10 +656,6 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	mtc_plugin *pitem= NULL;
 	mtc_icon *picon= NULL;
 
-#if 0
-    mtc_filters *pfilter= NULL;
-#endif
-
     /*TODO needs plenty more work, will eventually be tabbed*/
 	accbook= gtk_notebook_new();
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(accbook), GTK_POS_TOP);
@@ -729,14 +697,6 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	/*setup the plugin info stuff*/
 	plginfo_button= gtk_button_new_with_label(S_CONFIGDLG_PLG_INFO_BUTTON);
   	g_signal_connect(G_OBJECT(plginfo_button), "clicked", G_CALLBACK(plginfo_button_pressed), NULL);
-
-#if 0
-	/*setup filter stuff*/
-	filter_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_ENABLEFILTERS);
-  	g_signal_connect(G_OBJECT(filter_checkbox), "clicked", G_CALLBACK(filter_checkbox_pressed), NULL);
-	filter_button= gtk_button_new_with_label(S_CONFIGDLG_CONFIGFILTERS);
-  	g_signal_connect(G_OBJECT(filter_button), "clicked", G_CALLBACK(filter_button_pressed), &profile);
-#endif 
 
 	/*add the plugin protocol names to the combo box*/
 	while(plgcurrent!= NULL)
@@ -782,11 +742,6 @@ gboolean accdlg_run(gint profile, gint newaccount)
         /*set the port text after the default port value has been set*/
         g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pcurrent->port);
         gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
-
-#if 0
-        pfilter= pcurrent->pfilters;
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
-#endif
     }
 	/*set the default pop port if details could not be read*/
 	else
@@ -804,9 +759,6 @@ gboolean accdlg_run(gint profile, gint newaccount)
     picon= &pcurrent->icon;
   	g_signal_connect(G_OBJECT(iconcolour_button), "clicked", G_CALLBACK(details_iconcolour_button_pressed), picon);
 	
-#if 0
-	gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
-#endif
     tbl_init(&main_table, 8, 3);
 
 	gtk_table_set_col_spacings(GTK_TABLE(main_table.widget), 10);
@@ -832,10 +784,7 @@ gboolean accdlg_run(gint profile, gint newaccount)
     tbl_addcol(&dicon_table, iconcolour_button, 1, 1, GTK_FILL| GTK_SHRINK, GTK_FILL| GTK_EXPAND| GTK_SHRINK);
     tbl_addcol_new(&main_table, icon_label, 0, 1, 0, 0);
     tbl_addcol(&main_table, dicon_table.widget, 1, 1, 0, 0);
-#if 0
-    tbl_addcol_new(&main_table, filter_checkbox, 0, 1, 0, 0);
-    tbl_addcol(&main_table, filter_button, 1, 1, GTK_SHRINK| GTK_FILL, GTK_FILL| GTK_EXPAND| GTK_SHRINK);
-#endif
+    
     gtk_container_set_border_width(GTK_CONTAINER(main_table.widget), 10);
 	
 	v_box_details= gtk_vbox_new(FALSE, 10);

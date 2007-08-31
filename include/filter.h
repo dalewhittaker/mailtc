@@ -24,12 +24,30 @@
 
 #include "plg_common.h"
 
-/*filterdlg.c functions*/
-/*TODO all these will be removed*/
-/*gboolean filterdlg_run(mtc_account *paccount);*/
+/*structures used to hold the filter details if used*/
+typedef struct _mtc_filter
+{
+    gboolean contains;
+    hfield field;
+    gchar search_string[FILTERSTRING_LEN];
+
+} mtc_filter;
+
+typedef struct _mtc_filters
+{
+    gboolean enabled;
+	gboolean matchall;
+
+    GSList *list; /*a list of mtc_filter structs used for each filter*/
+
+} mtc_filters;
+
+/*filter.c functions*/
 mtc_error read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
 mtc_error filter_write(xmlNodePtr acc_node, mtc_account *paccount);
-void free_filters(mtc_account *paccount);
+mtc_error filter_enabled(mtc_account *paccount);
 GtkWidget *filter_table(mtc_account *paccount, gchar *plgname);
 
+/*TODO will probably be removed at some point*/
+void free_filters(mtc_account *paccount);
 #endif /*DW_MAILTC_FILTER*/

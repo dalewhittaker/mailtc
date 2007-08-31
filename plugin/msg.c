@@ -18,6 +18,7 @@
  */
 
 #include "plg_common.h"
+#include "filter.h"
 
 #if 0
 gboolean print_msg_info(mtc_account *paccount)
@@ -283,7 +284,7 @@ static GSList *msglist_new(mtc_account *paccount, const gchar *uid, GString *hea
             plg_err(S_MSG_ERR_GET_HEADER, uid);
     }
     /*only increment the messages if it is not filtered*/
-    if(msglist_filter(msgnew->header, paccount->pfilters))
+    if(msglist_filter(msgnew->header, (mtc_filters *)paccount->plg_opts))
         msgnew->flags|= MSG_FILTERED;
     else
     {
@@ -311,7 +312,7 @@ GSList *msglist_add(mtc_account *paccount, gchar *uid, GString *header)
             list_data->flags|= MSG_NEW;
         
             /*if filtered do not increment*/
-            if(msglist_filter(list_data->header, paccount->pfilters))
+            if(msglist_filter(list_data->header, (mtc_filters *)paccount->plg_opts))
                 list_data->flags|= MSG_FILTERED;
             else
                 paccount->msginfo.num_messages++;

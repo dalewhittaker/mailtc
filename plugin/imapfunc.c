@@ -22,6 +22,7 @@
 
 #ifdef MTC_NOTMINIMAL
 #include "msg.h"
+#include "filter.h"
 #endif /*MTC_NOTMINIMAL*/
 
 /*define the various imap responses, note they can either be tagged or untagged
@@ -510,6 +511,7 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
 
     /*reset the message list (must be done after marking as read)*/
 #ifdef MTC_NOTMINIMAL
+    mtc_filters *pfilters= NULL;
 	GString *header= NULL;
     msglist_reset(paccount);
 #else
@@ -536,12 +538,13 @@ static mtc_error imap_fetch_data(mtc_net *pnetinfo, mtc_account *paccount, gchar
         {
             
 #ifdef MTC_NOTMINIMAL
+             pfilters= (mtc_filters *)paccount->plg_opts;
 
             /*get/add the message header if we need to*/
 #ifdef MTC_EXPERIMENTAL
-	        if(((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)|| pconfig->run_summary)
+	        if(((pfilters!= NULL)&& pfilters->enabled)|| pconfig->run_summary)
 #else
-	        if((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)
+	        if((pfilters!= NULL)&& pfilters->enabled)
 #endif /*MTC_EXPERIMENTAL*/
             {
                if((header= imap_get_header(pnetinfo, paccount, header, uidstring))== NULL)

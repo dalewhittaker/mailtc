@@ -24,10 +24,6 @@
 #include "filefunc.h"
 #include "plugfunc.h"
 
-#if 0
-#include "filterdlg.h"
-#endif
-
 #ifdef MTC_USE_SSL
 #include "encrypter.h"
 #endif /*MTC_USE_SSL*/
@@ -347,9 +343,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 	
     picon= &pnew->icon;
 
-#if 0
-	pnew->pfilters= NULL;
-#endif /*MTC_NOTMINIMAL*/
+	pnew->plg_opts= NULL;
 
     /*yeah, putting in brackets here aint great*/
     {
@@ -388,13 +382,6 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
                 xmlFree(pcontent);
             }
-#if 0
-            else
-            { 
-                if(read_filters(doc, child, pnew)== FALSE)
-                    retval= FALSE;
-            }
-#endif
             child= child->next;
         }
 
@@ -650,9 +637,7 @@ GSList *create_account(void)
 
 	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
 	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
-#if 0
-	pnew->pfilters= NULL;
-#endif /*MTC_NOTMINIMAL*/
+	pnew->plg_opts= NULL;
 
     /*create default image*/
     picon= &pnew->icon;
@@ -916,12 +901,6 @@ static gboolean acc_write(xmlNodePtr root_node)
 		if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
             return FALSE;
                
-#if 0
-        /*and then also the filter, if there is one*/
-        if(!filter_write(acc_node, paccount))
-            return FALSE;
-#endif /*MTC_NOTMINIMAL*/
-
         /*move to next item in the list*/
 		pcurrent= g_slist_next(pcurrent);
 	}
