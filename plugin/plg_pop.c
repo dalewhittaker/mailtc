@@ -81,8 +81,8 @@ gpointer pop_get_config(gpointer pdata)
 /*this is called when storing configuration options*/
 mtc_error pop_put_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_enabled(paccount));
 }
 
 /*this is called when reading options from the configuration file*/

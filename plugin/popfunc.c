@@ -22,6 +22,7 @@
 
 #ifdef MTC_NOTMINIMAL
 #include "msg.h"
+#include "filter.h"
 #endif /*MTC_NOTMINIMAL*/
 
 #define DIGEST_LEN 32
@@ -435,6 +436,7 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
     gboolean uexists = FALSE;
 
 #ifdef MTC_NOTMINIMAL
+    mtc_filters *pfilters= NULL;
     total_messages= paccount->msginfo.num_messages;
     
     /*reset the list so we know what is new*/
@@ -508,11 +510,11 @@ mtc_error pop_calc_new(mtc_net *pnetinfo, mtc_account *paccount, const mtc_cfg *
 			    if(!uidlfound)
 			    {
 #ifdef MTC_NOTMINIMAL
-
+                    pfilters= (mtc_filters *)paccount->plg_opts;
 #ifdef MTC_EXPERIMENTAL
-	                if(((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)|| pconfig->run_summary)
+	                if(((pfilters!= NULL)&& pfilters->enabled)|| pconfig->run_summary)
 #else
-	                if((paccount->pfilters!= NULL)&& paccount->pfilters->enabled)
+	                if((pfilters!= NULL)&& pfilters->enabled)
 #endif /*MTC_EXPERIMENTAL*/
                     {
                         if((buf= pop_get_header(pnetinfo, paccount, buf, i))== NULL)
