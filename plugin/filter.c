@@ -17,6 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+
 #include <gtk/gtkdialog.h>
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtktreeview.h>
@@ -67,6 +71,18 @@ typedef struct _filters_widgets
 
 } filters_widgets;
 
+typedef enum _eltype { EL_NULL= 0, EL_STR, EL_BOOL } eltype;
+
+/*structure used when reading in the xml config elements*/
+typedef struct _elist
+{
+    gchar *name; /*the element name*/
+    eltype type; /*type used for copying*/
+    gpointer value; /*the config value*/
+    gint length; /*length in bytes of config value*/
+    gboolean found; /*used to track duplicates, or not found at all*/
+} elist;
+
 static filters_widgets widgets;
 static GtkWidget *ftable= NULL;
 static GtkWidget *filter_button= NULL;
@@ -83,6 +99,7 @@ static GtkWidget *filter_button= NULL;
  } ;
 
 /*function to free any filter data*/
+/*TODO fix this*/
 void free_filters(mtc_account *paccount)
 {
 	if(paccount->pfilters)
@@ -133,10 +150,10 @@ static gint filter_save(mtc_account *paccount)
 	}
 
     /*allocate new filter if it doesn't already exist*/
-    if(paccount->pfilters== NULL)
-        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
+    if(paccount->plg_opts== NULL)
+        paccount->plg_opts= g_malloc0(sizeof(mtc_filters));
 
-    pfilters= paccount->pfilters;
+    pfilters= (mtc_filters *)paccount->plg_opts;
     if(pfilters)
         pcurrent= pfilters->list;
     
@@ -207,15 +224,66 @@ static gint filter_save(mtc_account *paccount)
     return(1);
 }
 
-#if 0
+/*add a node of type string*/
+static xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
+{
+    xmlChar *pname;
+    xmlChar *pcontent;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL|| content== NULL|| *content== 0)
+        return(NULL);
+
+    pname= BAD_CAST name;
+    pcontent= BAD_CAST content;
+
+    /*now add the string*/
+    return(xmlNewChild(parent, NULL, pname, pcontent));
+}
+
+/*add a node of type integer*/
+static xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
+{
+    xmlNodePtr node;
+    xmlChar *pstring;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL)
+        return(NULL);
+
+    /*add the string*/
+    pstring= xmlXPathCastBooleanToString(content);
+    node= put_node_str(parent, name, (const gchar *)pstring);
+
+    /*now free the string*/
+    xmlFree(pstring);
+
+    return(node);
+}
+
+/*add an empty node*/
+static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
+{
+    xmlChar *pname;
+
+    /*don't add anything if there is no value*/
+    if(name== NULL)
+        return(NULL);
+
+    pname= BAD_CAST name;
+    
+    /*now add the string*/
+    return(xmlNewChild(parent, NULL, pname, NULL));
+}
+
 /*function to write out the filter struct*/
-gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
+mtc_error filter_write(xmlNodePtr acc_node, mtc_account *paccount)
 {
     mtc_filters *pfilters;
     xmlNodePtr filters_node= NULL;
 
-    pfilters= paccount->pfilters;
-
+    pfilters= (mtc_filters *)paccount->plg_opts;
+    
     /*write the filters out*/
     if((pfilters!= NULL)&& (pfilters->list!= NULL)&& pfilters->enabled)
     {
@@ -237,7 +305,7 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             if(pfilter->field>= (sizeof(ffield)/ sizeof(ffield[0])))
             {
                 plg_err(S_FILTERDLG_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
-                return FALSE;
+                return(MTC_RETURN_FALSE);
             }
 
             /*only write if there is a string there*/
@@ -253,6 +321,94 @@ gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             pcurrent= g_slist_next(pcurrent);
         }
     }
+    return(MTC_RETURN_TRUE);
+}
+
+/*wrapper to report if there is a duplicate*/
+static gboolean isduplicate(elist *element)
+{
+    gboolean retval= FALSE;
+
+    if(element->found> 0)
+    {
+        plg_err(S_FILEFUNC_ERR_ELEMENT_DUPLICATE, element->name);
+        retval= TRUE;
+    }
+    element->found++;
+
+    return(retval);
+}
+
+/*copy a string element*/
+static gboolean get_node_str(elist *element, const xmlChar *src)
+{
+    const gchar *psrc;
+    gchar *pdest;
+
+    pdest= (gchar *)element->value;
+    if(isduplicate(element))
+    {
+        /*wipe the value if it is a duplicate*/
+        memset(pdest, '\0', element->length);
+        return FALSE;
+    }
+
+    psrc= (const gchar *)src;
+
+    g_strlcpy(pdest, psrc, element->length);
+    return TRUE;
+}
+
+/*copy a boolean element*/
+static gboolean get_node_bool(elist *element, const xmlChar *src)
+{
+    gboolean *pdest;
+
+    if(isduplicate(element))
+        return FALSE;
+
+    pdest= (gboolean *)element->value;
+
+    *pdest= (xmlStrcasecmp(src, BAD_CAST "true")== 0)? TRUE: FALSE;
+    return TRUE;
+}
+
+/*the generic copy function, this will call the specific copy functions*/
+static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
+{
+    gboolean retval= TRUE;
+
+    /*determine the copy function to call*/
+    switch(pelement->type)
+    {
+        case EL_STR:
+            retval= get_node_str(pelement, content);
+        break;
+        case EL_BOOL:
+            retval= get_node_bool(pelement, content);
+        break;
+        default: ;
+    }
+    return(retval);
+}
+
+/*function to copy the config values*/
+static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
+{
+    /*check the element with each value in the list, and run the appropriate function*/
+    while(pelement->name!= NULL)
+    {
+        if(xmlStrEqual(node->name, BAD_CAST pelement->name))
+        {
+            /*do the copying, returning if duplicate found*/
+            if(!cfg_copy_func(pelement, content))
+                return FALSE;
+
+            /*break out if found*/
+            break;
+        }
+        pelement++;
+    }
     return TRUE;
 }
 
@@ -265,7 +421,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
     gchar tmpfield[FILTERSTRING_LEN];
     gboolean retval= TRUE;
 
-    pfilters= paccount->pfilters;
+    pfilters= (mtc_filters *)paccount->plg_opts;
     memset(tmpfield, '\0', sizeof(tmpfield));
    
     /*create the filter list member*/
@@ -333,63 +489,67 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
 }
 
 /*function to read in any filter info from the config file*/
-gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
+mtc_error read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 {
-    gboolean retval= TRUE;
-
-    /*check if there are any filters defined*/
-    if(xmlIsBlankNode(node->children)&& (xmlStrEqual(node->name, BAD_CAST ELEMENT_FILTERS)))
+    gboolean retval= MTC_RETURN_TRUE;
+    xmlNodePtr parent= NULL;
+    
+    parent= node->children;
+    while(parent!= NULL)
     {
-        xmlNodePtr child= NULL;
-        xmlChar *pcontent= NULL;
-        mtc_filters *pfilter= NULL;
-
-        gboolean match_found= FALSE;
-
-        /*allocate for the filters*/
-        paccount->pfilters= (mtc_filters *)g_malloc0(sizeof(mtc_filters));
-
-        /*intially do not enable the filter*/
-        pfilter= paccount->pfilters;
-        pfilter->enabled= FALSE;
- 
-        /*NOTE must be read in backwards to avoid them getting swapped when written*/
-        child= node->last;
- 
-        /*get each filter child element and read it*/
-        while(child!= NULL)
+        /*check if there are any filters defined*/
+        if(xmlIsBlankNode(parent->children)&& (xmlStrEqual(parent->name, BAD_CAST ELEMENT_FILTERS)))
         {
+            xmlNodePtr child= NULL;
+            xmlChar *pcontent= NULL;
+            mtc_filters *pfilter= NULL;
 
-            /*filter found, now get the values from it*/
-            if((xmlStrEqual(child->name, BAD_CAST ELEMENT_FILTER))&& (child->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(child->children))
+            gboolean match_found= FALSE;
+
+            /*allocate for the filters*/
+            paccount->plg_opts= g_malloc0(sizeof(mtc_filters));
+
+            /*intially do not enable the filter*/
+            pfilter= (mtc_filters *)paccount->plg_opts;
+            pfilter->enabled= FALSE;
+     
+            /*NOTE must be read in backwards to avoid them getting swapped when written*/
+            child= parent->last;
+     
+            /*get each filter child element and read it*/
+            while(child!= NULL)
             {
-                if(filter_read(doc, child->children, paccount)== FALSE)
-                    retval= FALSE;
-            }
-            /*otherwise, if it is match all, treat it*/
-            else if((xmlStrEqual(child->name, BAD_CAST ELEMENT_MATCHALL))&&
-                    (child->type== XML_ELEMENT_NODE)&&
-                    (child->children!= NULL)&&
-                    (!xmlIsBlankNode(child->children))&&
-                    (child->children->type== XML_TEXT_NODE))
-            {
-                pcontent= xmlNodeListGetString(doc, child->children, 1);
 
-                pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
-                if(match_found)
-                    plg_err(S_FILTERDLG_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
-                
-                match_found= TRUE;
-                xmlFree(pcontent);
+                /*filter found, now get the values from it*/
+                if((xmlStrEqual(child->name, BAD_CAST ELEMENT_FILTER))&& (child->type== XML_ELEMENT_NODE)&& xmlIsBlankNode(child->children))
+                {
+                    if(filter_read(doc, child->children, paccount)== FALSE)
+                        retval= MTC_RETURN_FALSE;
+                }
+                /*otherwise, if it is match all, treat it*/
+                else if((xmlStrEqual(child->name, BAD_CAST ELEMENT_MATCHALL))&&
+                        (child->type== XML_ELEMENT_NODE)&&
+                        (child->children!= NULL)&&
+                        (!xmlIsBlankNode(child->children))&&
+                        (child->children->type== XML_TEXT_NODE))
+                {
+                    pcontent= xmlNodeListGetString(doc, child->children, 1);
 
+                    pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
+                    if(match_found)
+                        plg_err(S_FILTERDLG_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
+                    
+                    match_found= TRUE;
+                    xmlFree(pcontent);
+
+                }
+                child= child->prev;
             }
-            child= child->prev;
         }
-        
+        parent= parent->next;
     }
     return(retval);
 }
-#endif
 
 /*button to clear the filter entries*/
 static void clear_button_pressed(void)
@@ -529,8 +689,8 @@ gboolean filterdlg_run(mtc_account *paccount)
     widgets.list= NULL;
 
     /*set to the start of the list*/
-    if(paccount&& paccount->pfilters)
-        pcurrent= paccount->pfilters->list;
+    if(paccount&& paccount->plg_opts)
+        pcurrent= ((mtc_filters *)paccount->plg_opts)->list;
 
 	/*create the label*/
     h_box_filter= gtk_hbox_new(FALSE, 0);
@@ -557,7 +717,7 @@ gboolean filterdlg_run(mtc_account *paccount)
         /*iterate through the filters read from the config file, and add them to the dialog*/
         while(pcurrent!= NULL)
         {
-            /*if(paccount->pfilters->enabled)
+            /*if(((mtc_filters *)paccount->plg_opts)->enabled)
 		    {*/
             pfwidgets= create_widgets(&widgets);
             
@@ -586,10 +746,10 @@ gboolean filterdlg_run(mtc_account *paccount)
 
 	widgets.radio_matchall[0]= gtk_radio_button_new_with_label(NULL, S_FILTERDLG_BUTTON_MATCHALL);
 	widgets.radio_matchall[1]= gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(widgets.radio_matchall[0]), S_FILTERDLG_BUTTON_MATCHANY);
-	if(paccount->pfilters)
+	if(paccount->plg_opts)
 	{
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]), paccount->pfilters->matchall);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), !paccount->pfilters->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[0]), ((mtc_filters *)paccount->plg_opts)->matchall);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.radio_matchall[1]), !((mtc_filters *)paccount->plg_opts)->matchall);
 	}
 	
     /*Add the scrolled window with filter widgets*/

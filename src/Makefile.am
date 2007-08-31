@@ -19,9 +19,9 @@ extra_cflags = -DLOCALE_DIR=\""$(datadir)/locale"\" \
 
 if MTC_ALLFEATURES
 msglist_cflags = -DMTC_NOTMINIMAL
-msglist_sources = filterdlg.c
-msglist_headers = $(mtc_include)/envelope_small.h \
-				$(mtc_include)/filterdlg.h
+#msglist_sources = filterdlg.c
+msglist_headers = $(mtc_include)/envelope_small.h
+#				$(mtc_include)/filterdlg.h
 endif
 
 if DEBUG

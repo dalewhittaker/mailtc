@@ -24,9 +24,9 @@
 #include "filefunc.h"
 #include "plugfunc.h"
 
-#ifdef MTC_NOTMINIMAL
+#if 0
 #include "filterdlg.h"
-#endif /*MTC_NOTMINIMAL*/
+#endif
 
 #ifdef MTC_USE_SSL
 #include "encrypter.h"
@@ -62,6 +62,18 @@
 #else
 #define MKDIR_MODE (S_IRWXU)
 #endif /*_POSIX_SOURCE*/
+
+typedef enum _eltype { EL_NULL= 0, EL_STR, EL_INT, EL_BOOL, EL_PW } eltype;
+
+/*structure used when reading in the xml config elements*/
+typedef struct _elist
+{
+    gchar *name; /*the element name*/
+    eltype type; /*type used for copying*/
+    gpointer value; /*the config value*/
+    gint length; /*length in bytes of config value*/
+    gboolean found; /*used to track duplicates, or not found at all*/
+} elist;
 
 /*wrapper to create a directory*/
 static void mk_dir(gchar *pfile)
@@ -298,7 +310,7 @@ static gboolean cfg_copy_func(elist *pelement, xmlChar *content)
 }
 
 /*function to copy the config values*/
-gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
+static gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content)
 {
     /*check the element with each value in the list, and run the appropriate function*/
     while(pelement->name!= NULL)
@@ -335,7 +347,7 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 	
     picon= &pnew->icon;
 
-#ifdef MTC_NOTMINIMAL
+#if 0
 	pnew->pfilters= NULL;
 #endif /*MTC_NOTMINIMAL*/
 
@@ -376,13 +388,13 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
 
                 xmlFree(pcontent);
             }
-#ifdef MTC_NOTMINIMAL
+#if 0
             else
             { 
                 if(read_filters(doc, child, pnew)== FALSE)
                     retval= FALSE;
             }
-#endif /*MTC_NOTMINIMAL*/
+#endif
             child= child->next;
         }
 
@@ -638,7 +650,7 @@ GSList *create_account(void)
 
 	pnew= (mtc_account *)g_malloc0(sizeof(mtc_account));
 	pnew->id= (pfirst== NULL)? 0: pfirst->id+ 1;
-#ifdef MTC_NOTMINIMAL    
+#if 0
 	pnew->pfilters= NULL;
 #endif /*MTC_NOTMINIMAL*/
 
@@ -691,10 +703,10 @@ static void free_account(gpointer data)
 	    g_slist_free(msglist);
 	    msglist= NULL;
     }
+#endif /*MTC_NOTMINIMAL*/
 
     /*TODO remove this eventually*/
-    free_filters(paccount);
-#endif /*MTC_NOTMINIMAL*/
+    /*free_filters(paccount);*/
 
     /*unref the image for our account*/
    	if(picon->image)
@@ -766,7 +778,7 @@ void free_accounts(void)
 }
 
 /*add a node of type string*/
-xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
+static xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content)
 {
     xmlChar *pname;
     xmlChar *pcontent;
@@ -803,7 +815,7 @@ static xmlNodePtr put_node_int(xmlNodePtr parent, const gchar *name, const doubl
 }
 
 /*add a node of type integer*/
-xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
+static xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content)
 {
     xmlNodePtr node;
     xmlChar *pstring;
@@ -823,7 +835,7 @@ xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean co
 }
 
 /*add an empty node*/
-xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
+static xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name)
 {
     xmlChar *pname;
 
@@ -904,7 +916,7 @@ static gboolean acc_write(xmlNodePtr root_node)
 		if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
             return FALSE;
                
-#ifdef MTC_NOTMINIMAL
+#if 0
         /*and then also the filter, if there is one*/
         if(!filter_write(acc_node, paccount))
             return FALSE;

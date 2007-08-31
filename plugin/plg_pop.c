@@ -88,15 +88,15 @@ mtc_error pop_put_config(gpointer pdata)
 /*this is called when reading options from the configuration file*/
 mtc_error pop_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(read_filters(doc, node, paccount));
 }
 
 /*this is called when writing the configuration options to file*/
 mtc_error pop_write_config(xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_write(node, paccount));
 }
 
 /*setup all our plugin stuff so mailtc knows what to do*/

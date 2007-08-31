@@ -27,8 +27,8 @@
 /*filterdlg.c functions*/
 /*TODO all these will be removed*/
 /*gboolean filterdlg_run(mtc_account *paccount);*/
-gboolean read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
-gboolean filter_write(xmlNodePtr acc_node, mtc_account *paccount);
+mtc_error read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
+mtc_error filter_write(xmlNodePtr acc_node, mtc_account *paccount);
 void free_filters(mtc_account *paccount);
 GtkWidget *filter_table(mtc_account *paccount, gchar *plgname);
 

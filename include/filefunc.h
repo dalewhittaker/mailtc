@@ -39,25 +39,10 @@
 #define FILE_EXISTS(file) g_file_test(file, G_FILE_TEST_EXISTS)
 #define PATH_DELIM (G_DIR_SEPARATOR == '/') ? '\\' : '/'
 
-typedef enum _eltype { EL_NULL= 0, EL_STR, EL_INT, EL_BOOL, EL_PW } eltype;
-
-/*structure used when reading in the xml config elements*/
-typedef struct _elist
-{
-    gchar *name; /*the element name*/
-    eltype type; /*type used for copying*/
-    gpointer value; /*the config value*/
-    gint length; /*length in bytes of config value*/
-    gboolean found; /*used to track duplicates, or not found at all*/
-} elist;
-
 /*filefunc.c functions*/
 gboolean mtc_dir(void);
 mtc_account *get_account(guint item);
-gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content);
-xmlNodePtr put_node_empty(xmlNodePtr parent, const gchar *name);
-xmlNodePtr put_node_bool(xmlNodePtr parent, const gchar *name, const gboolean content);
-xmlNodePtr put_node_str(xmlNodePtr parent, const gchar *name, const gchar *content);
+/*gboolean cfg_copy_element(xmlNodePtr node, elist *pelement, xmlChar *content);*/
 void remove_account(guint item);
 void free_accounts(void);
 GSList *create_account(void);

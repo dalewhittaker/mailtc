@@ -37,7 +37,6 @@
 
 #include "configdlg.h"
 #include "filefunc.h"
-#include "filterdlg.h"
 #include "plugfunc.h"
 
 enum { ACCOUNT_COLUMN= 0, PROTOCOL_COLUMN, N_COLUMNS };
@@ -530,7 +529,7 @@ static void multi_checkbox_pressed(GtkWidget *widget, gpointer user_data)
 	gtk_widget_set_sensitive(GTK_WIDGET(config_iconcolour_button), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-#ifdef MTC_NOTMINIMAL
+#if 0
 /*signal called when filter checkbox is pressed*/
 static void filter_checkbox_pressed(GtkWidget *widget)
 {
@@ -548,7 +547,7 @@ static void filter_button_pressed(GtkWidget *widget, gpointer data)
 
 	filterdlg_run(pcurrent);
 }
-#endif /*MTC_NOTMINIMAL*/
+#endif
 
 #ifdef MTC_EXPERIMENTAL
 /*signal called when summary checkbox is pressed*/
@@ -685,9 +684,9 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	mtc_plugin *pitem= NULL;
 	mtc_icon *picon= NULL;
 
-#ifdef MTC_NOTMINIMAL
+#if 0
     mtc_filters *pfilter= NULL;
-#endif /*MTC_NOTMINIMAL*/
+#endif
 
     /*TODO needs plenty more work, will eventually be tabbed*/
 	accbook= gtk_notebook_new();
@@ -731,13 +730,13 @@ gboolean accdlg_run(gint profile, gint newaccount)
 	plginfo_button= gtk_button_new_with_label(S_CONFIGDLG_PLG_INFO_BUTTON);
   	g_signal_connect(G_OBJECT(plginfo_button), "clicked", G_CALLBACK(plginfo_button_pressed), NULL);
 
-#ifdef MTC_NOTMINIMAL
+#if 0
 	/*setup filter stuff*/
 	filter_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_ENABLEFILTERS);
   	g_signal_connect(G_OBJECT(filter_checkbox), "clicked", G_CALLBACK(filter_checkbox_pressed), NULL);
 	filter_button= gtk_button_new_with_label(S_CONFIGDLG_CONFIGFILTERS);
   	g_signal_connect(G_OBJECT(filter_button), "clicked", G_CALLBACK(filter_button_pressed), &profile);
-#endif /*MTC_NOTMINIMAL*/
+#endif 
 
 	/*add the plugin protocol names to the combo box*/
 	while(plgcurrent!= NULL)
@@ -784,10 +783,10 @@ gboolean accdlg_run(gint profile, gint newaccount)
         g_ascii_dtostr(port_str, G_ASCII_DTOSTR_BUF_SIZE, (gdouble)pcurrent->port);
         gtk_entry_set_text(GTK_ENTRY(port_entry), port_str);
 
-#ifdef MTC_NOTMINIMAL
+#if 0
         pfilter= pcurrent->pfilters;
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
-#endif /*MTC_NOTMINIMAL*/	
+#endif
     }
 	/*set the default pop port if details could not be read*/
 	else
@@ -805,9 +804,9 @@ gboolean accdlg_run(gint profile, gint newaccount)
     picon= &pcurrent->icon;
   	g_signal_connect(G_OBJECT(iconcolour_button), "clicked", G_CALLBACK(details_iconcolour_button_pressed), picon);
 	
-#ifdef MTC_NOTMINIMAL
+#if 0
 	gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
-#endif /*MTC_NOTMINIMAL*/
+#endif
     tbl_init(&main_table, 8, 3);
 
 	gtk_table_set_col_spacings(GTK_TABLE(main_table.widget), 10);
@@ -833,10 +832,10 @@ gboolean accdlg_run(gint profile, gint newaccount)
     tbl_addcol(&dicon_table, iconcolour_button, 1, 1, GTK_FILL| GTK_SHRINK, GTK_FILL| GTK_EXPAND| GTK_SHRINK);
     tbl_addcol_new(&main_table, icon_label, 0, 1, 0, 0);
     tbl_addcol(&main_table, dicon_table.widget, 1, 1, 0, 0);
-#ifdef MTC_NOTMINIMAL
+#if 0
     tbl_addcol_new(&main_table, filter_checkbox, 0, 1, 0, 0);
     tbl_addcol(&main_table, filter_button, 1, 1, GTK_SHRINK| GTK_FILL, GTK_FILL| GTK_EXPAND| GTK_SHRINK);
-#endif /*MTC_NOTMINIMAL*/
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(main_table.widget), 10);
 	
 	v_box_details= gtk_vbox_new(FALSE, 10);
