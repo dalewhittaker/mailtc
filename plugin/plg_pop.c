@@ -99,6 +99,13 @@ mtc_error pop_write_config(xmlNodePtr node, gpointer pdata)
     return(filter_write(node, paccount));
 }
 
+/*this is called when freeing an account*/
+mtc_error pop_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin pop_pluginfo=
 {
@@ -117,7 +124,8 @@ static mtc_plugin pop_pluginfo=
     &pop_get_config,
     &pop_put_config,
     &pop_read_config,
-    &pop_write_config
+    &pop_write_config,
+    &pop_free
 };
 
 /*the initialisation function*/

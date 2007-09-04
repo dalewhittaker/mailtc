@@ -93,6 +93,13 @@ mtc_error popcram_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error popcram_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popcram_pluginfo =
 {
@@ -111,7 +118,8 @@ static mtc_plugin popcram_pluginfo =
     &popcram_get_config,
     &popcram_put_config,
     &popcram_read_config,
-    &popcram_write_config
+    &popcram_write_config,
+    &popcram_free
 };
 
 /*the initialisation function*/

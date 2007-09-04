@@ -94,6 +94,13 @@ mtc_error imapcram_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error imapcram_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imapcram_pluginfo =
 {
@@ -112,7 +119,8 @@ static mtc_plugin imapcram_pluginfo =
     &imapcram_get_config,
     &imapcram_put_config,
     &imapcram_read_config,
-    &imapcram_write_config
+    &imapcram_write_config,
+    &imapcram_free
 };
 
 /*the initialisation function*/

@@ -273,11 +273,12 @@ typedef struct _mtc_plugin
 	mtc_error (*unload)(void);
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
-	mtc_error (*remove)(gpointer, guint *);
+	mtc_error (*removed)(gpointer, guint *);
     gpointer  (*get_config)(gpointer);
     mtc_error (*put_config)(gpointer);
     mtc_error (*read_config)(xmlDocPtr, xmlNodePtr, gpointer);
     mtc_error (*write_config)(xmlNodePtr, gpointer);
+    mtc_error (*freed)(gpointer);
 
 } mtc_plugin;
 

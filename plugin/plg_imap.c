@@ -94,6 +94,13 @@ mtc_error imap_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error imap_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin imap_pluginfo =
 {
@@ -112,7 +119,8 @@ static mtc_plugin imap_pluginfo =
     &imap_get_config,
     &imap_put_config,
     &imap_read_config,
-    &imap_write_config
+    &imap_write_config,
+    &imap_free
 };
 
 /*the initialisation function*/

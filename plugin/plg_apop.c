@@ -93,6 +93,13 @@ mtc_error apop_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error apop_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin apop_pluginfo =
 {
@@ -111,7 +118,8 @@ static mtc_plugin apop_pluginfo =
     &apop_get_config,
     &apop_put_config,
     &apop_read_config,
-    &apop_write_config
+    &apop_write_config,
+    &apop_free
 };
 
 /*the initialisation function*/

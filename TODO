@@ -2,13 +2,11 @@
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
     a) use dummy as reference and move filters over
-        i) probably going to have to add a free_config routine. bummer.
         ii) get above working for one plugin, then working for all
     b) make sure everything works with MTC_NOTMINIMAL not defined (i.e minimal build)
     c) check all plg_err() lines, some will need to be dialogs, some plg_err with correct CR
     d) test lots with valgrind
     e) get plugins working nicely together, e.g the dialogs
-    f) should the tab be removed from the notebook or simply hidden/shown?
 ----------
 
 WISH LIST TASKS:
