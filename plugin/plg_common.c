@@ -64,7 +64,7 @@ static void print_time(void)
 }
 
 /*function to report error and log*/
-gint plg_err(gchar *errmsg, ...)
+mtc_error plg_err(gchar *errmsg, ...)
 {
 	/*create va_list of arguments*/
 	va_list list;
@@ -74,15 +74,16 @@ gint plg_err(gchar *errmsg, ...)
 	g_vfprintf(stderr, errmsg, list);
 	va_end(list);
 	print_time();
-	
-    /*NOTE va_list must be reset, otherwise it crashes some systems*/
-    va_start(list, errmsg);
-	g_vfprintf(pcfg->logfile, errmsg, list);
-	va_end(list);
-	
 	fflush(stderr);
-	fflush(pcfg->logfile);
-	
+    
+    /*NOTE va_list must be reset, otherwise it crashes some systems*/
+	if(pcfg&& pcfg->logfile)
+    {
+        va_start(list, errmsg);
+        g_vfprintf(pcfg->logfile, errmsg, list);
+        va_end(list);
+	    fflush(pcfg->logfile);
+	}
 	return(MTC_RETURN_TRUE);
 }
 
