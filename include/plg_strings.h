@@ -45,7 +45,7 @@
 /*filter.c strings*/
 #define S_FILTER_ENABLEFILTERS  "Use mail filters"
 #define S_FILTER_CONFIGFILTERS "Configure filters..."
-#define S_FILTER_NO_FILTERS "You must enter at least one filter string"
+#define S_FILTER_NO_FILTERS "You must enter at least one filter string\n"
 #define S_FILTER_COMBO_SENDER "Sender"
 #define S_FILTER_COMBO_SUBJECT "Subject"
 #define S_FILTER_COMBO_CONTAINS "Contains"
@@ -60,7 +60,7 @@
 #define S_FILTER_ERR_OPEN_FILE "Error opening file %s\n"
 #define S_FILTER_ERR_COMBO_ITER "Error getting combobox iterator\n"
 #define S_FILTER_ERR_CLOSE_FILE "Error closing file %s\n"
-#define S_FILTER_ERR_MAX_REACHED "You can only add up to %u filters"
+#define S_FILTER_ERR_MAX_REACHED "You can only add up to %u filters\n"
 #define S_FILTER_ERR_ELEMENT_DUPLICATE "Error: duplicate element '%s'\n"
 #define S_FILTER_ERR_ELEMENT_NOT_FOUND "Error: '%s' element not found for filter %d.\n"
 #define S_FILTER_ERR_ELEMENT_INVALID_FIELD "Error: invalid 'field' element %d\n"

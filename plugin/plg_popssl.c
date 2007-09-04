@@ -80,7 +80,7 @@ mtc_error popssl_put_config(gpointer pdata)
 }
 
 /*this is called when writing the configuration options to file*/
-mtc_error popssl_read_config(xmlNodePtr node, gpointer pdata)
+mtc_error popssl_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
     /*TODO work here*/
     return(MTC_RETURN_TRUE);

@@ -41,7 +41,7 @@
 mtc_cfg *cfg_get(void);
 void cfg_load(mtc_cfg *pconfig);
 void cfg_unload(void);
-gint plg_err(gchar *errmsg, ...);
+mtc_error plg_err(gchar *errmsg, ...);
 gchar *mtc_file(gchar *fullpath, const gchar *cfgdir, gchar *filename, guint account);
 gint strstr_cins(gchar *haystack, gchar *needle);
 mtc_error rm_uidfile(mtc_account *paccount, gint fullcount);

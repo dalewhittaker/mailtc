@@ -22,6 +22,7 @@
 #include <libxml/xpathInternals.h>
 
 #include <gtk/gtkdialog.h>
+#include <gtk/gtkmessagedialog.h>
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkstock.h>
@@ -89,13 +90,53 @@ static GtkWidget *filter_checkbox= NULL;
 /*a static list of the filter fields.
  *NOTE this must be the same order as the hfield enum
  *otherwise it won't work.  Add new ones as needed*/
- static gchar ffield[][10]=
- {
+static gchar ffield[][10]=
+{
     "From",
     "Subject",
     "To",
     "Cc"
- } ;
+} ;
+
+/*show an error message dialog*/
+static mtc_error filter_err(gchar *errmsg, ...)
+{
+    va_list list;
+    gchar *fmsg= NULL;
+    gsize msglen= 0;
+    GtkWidget *dialog;
+    mtc_cfg *pcfg= NULL;
+    
+    /*get the length of the string*/
+	va_start(list, errmsg);
+    msglen= g_printf_string_upper_bound(errmsg, list)+ 1;
+	va_end(list);
+
+    /*allocate/format the string*/
+    fmsg= (gchar *)g_malloc0(msglen);
+	va_start(list, errmsg);
+    g_vsnprintf(fmsg, msglen, errmsg, list);
+	va_end(list);
+
+    /*display the messagebox*/
+    dialog= gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, fmsg);
+    gtk_window_set_title(GTK_WINDOW(dialog), PACKAGE);
+    gtk_window_set_keep_above(GTK_WINDOW(dialog), TRUE);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    /*NOTE va_list must be reset, otherwise it crashes some systems*/
+    pcfg= cfg_get();
+	if(pcfg&& pcfg->logfile)
+    {
+        g_fprintf(pcfg->logfile, fmsg);
+	    fflush(pcfg->logfile);
+	}
+
+    g_free(fmsg);
+	return(MTC_RETURN_TRUE);
+
+}
 
 /*function to free any filter data*/
 mtc_error free_filters(mtc_account *paccount)
@@ -144,7 +185,7 @@ static gint filter_save(mtc_account *paccount)
 
 	if(!valid)
 	{
-        plg_err(S_FILTER_NO_FILTERS);
+        filter_err(S_FILTER_NO_FILTERS);
         return FALSE;
 	}
 
@@ -189,7 +230,7 @@ static gint filter_save(mtc_account *paccount)
 	
             if(!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(pfwidgets->combo_contains), &iter))
 			{
-                plg_err(S_FILTER_ERR_COMBO_ITER);
+                filter_err(S_FILTER_ERR_COMBO_ITER);
                 g_free(pnew);
                 return(-1);
 			}
@@ -203,7 +244,7 @@ static gint filter_save(mtc_account *paccount)
             j= gtk_combo_box_get_active(GTK_COMBO_BOX(pfwidgets->combo_field));
             if(j== -1)
             {
-                plg_err(S_FILTER_ERR_COMBO_ITER);
+                filter_err(S_FILTER_ERR_COMBO_ITER);
                 g_free(pnew);
                 return(-1);
 			}
@@ -303,7 +344,7 @@ mtc_error filter_write(xmlNodePtr acc_node, mtc_account *paccount)
             /*check there is a valid field value*/    
             if(pfilter->field>= (sizeof(ffield)/ sizeof(ffield[0])))
             {
-                plg_err(S_FILTER_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
+                filter_err(S_FILTER_ERR_ELEMENT_INVALID_FIELD, pfilter->field);
                 return(MTC_RETURN_FALSE);
             }
 
@@ -330,7 +371,7 @@ static gboolean isduplicate(elist *element)
 
     if(element->found> 0)
     {
-        plg_err(S_FILTER_ERR_ELEMENT_DUPLICATE, element->name);
+        filter_err(S_FILTER_ERR_ELEMENT_DUPLICATE, element->name);
         retval= TRUE;
     }
     element->found++;
@@ -470,7 +511,7 @@ static gboolean filter_read(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccoun
         {
             if(!pelement->found)
             {
-                plg_err(S_FILTER_ERR_ELEMENT_NOT_FOUND, pelement->name, paccount->id);           
+                filter_err(S_FILTER_ERR_ELEMENT_NOT_FOUND, pelement->name, paccount->id);           
                 retval= FALSE;
             }
             pelement++;
@@ -536,7 +577,7 @@ mtc_error read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount)
 
                     pfilter->matchall= (xmlStrcasecmp(pcontent, BAD_CAST "true")== 0)? TRUE: FALSE;
                     if(match_found)
-                        plg_err(S_FILTER_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
+                        filter_err(S_FILTER_ERR_ELEMENT_DUPLICATE, BAD_CAST child->name);
                     
                     match_found= TRUE;
                     xmlFree(pcontent);
@@ -667,7 +708,7 @@ static void add_button_pressed(void)
 	    gtk_widget_show_all(widgets.vbox);
     }
     else
-		plg_err(S_FILTER_ERR_MAX_REACHED, MAX_FILTERS);
+		filter_err(S_FILTER_ERR_MAX_REACHED, MAX_FILTERS);
 }
 
 /*display the filter dialog*/
