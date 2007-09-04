@@ -93,6 +93,13 @@ mtc_error popssl_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error popssl_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(free_filters(paccount));
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popssl_pluginfo =
 {
@@ -111,7 +118,8 @@ static mtc_plugin popssl_pluginfo =
     &popssl_get_config,
     &popssl_put_config,
     &popssl_read_config,
-    &popssl_write_config
+    &popssl_write_config,
+    &popssl_free
 };
 
 /*the initialisation function*/

@@ -235,6 +235,18 @@ mtc_error dummy_write_config(xmlNodePtr node, gpointer pdata)
     return(MTC_RETURN_TRUE);
 }
 
+/*this is called when freeing an account*/
+mtc_error dummy_free(gpointer pdata)
+{
+	mtc_account *paccount= (mtc_account *)pdata;
+    
+    /*free the struct if it exists*/
+    if(paccount->plg_opts!= NULL)
+        g_free(paccount->plg_opts);
+
+    return(MTC_RETURN_TRUE);
+}
+
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin dummy_pluginfo =
 {
@@ -253,7 +265,8 @@ static mtc_plugin dummy_pluginfo =
     &dummy_get_config, /*function called when requesting plugin config options*/
     &dummy_put_config, /*function called when storing plugin config options prior to write*/
     &dummy_read_config, /*function called when reading plugin config from file*/
-    &dummy_write_config /*function called when writing plugin config to file*/
+    &dummy_write_config, /*function called when writing plugin config to file*/
+    &dummy_free /*function called when freeing an account*/
 };
 
 /*the initialisation function leave this as is*/

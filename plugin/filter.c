@@ -98,24 +98,22 @@ static GtkWidget *filter_checkbox= NULL;
  } ;
 
 /*function to free any filter data*/
-/*TODO fix this*/
-#if 0
-void free_filters(mtc_account *paccount)
+mtc_error free_filters(mtc_account *paccount)
 {
-	if(paccount->pfilters)
+	if(paccount->plg_opts!= NULL)
 	{
         GSList *flist;
 
         /*first free the list if any, then free the filters struct*/
-        flist= paccount->pfilters->list;
+        flist= ((mtc_filters *)(paccount->plg_opts))->list;
         g_slist_foreach(flist, (GFunc)g_free, NULL);
         g_slist_free(flist);
 
-		g_free(paccount->pfilters);
-		paccount->pfilters= NULL;
+		g_free(paccount->plg_opts);
+		paccount->plg_opts= NULL;
 	}
+    return(MTC_RETURN_TRUE);
 }
-#endif 
 
 /*function to store the filter struct*/
 static gint filter_save(mtc_account *paccount)

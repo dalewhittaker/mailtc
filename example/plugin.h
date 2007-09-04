@@ -188,26 +188,6 @@ typedef enum _msg_flags
 
 } msg_flags;
 
-#ifdef MTC_NOTMINIMAL
-/*structures used to hold the filter details if used*/
-typedef struct _mtc_filter
-{
-    gboolean contains;
-    hfield field;
-    gchar search_string[FILTERSTRING_LEN];
-
-} mtc_filter;
-
-typedef struct _mtc_filters
-{
-    gboolean enabled;
-	gboolean matchall;
-
-    GSList *list; /*a list of mtc_filter structs used for each filter*/
-
-} mtc_filters;
-#endif /*MTC_NOTMINIMAL*/
-
 /*the message header struct*/
 typedef struct _msg_header
 {
@@ -263,9 +243,6 @@ typedef struct _mtc_account
 #ifdef MTC_NOTMINIMAL
     /*list to contain the mail summaries*/
     msg_info msginfo;
-    
-    /*filter stuff*/
-	mtc_filters *pfilters;
 #else
     gint num_messages;
 #endif /*MTC_NOTMINIMAL*/
@@ -296,11 +273,12 @@ typedef struct _mtc_plugin
 	mtc_error (*unload)(void);
 	mtc_error (*get_messages)(gpointer);
 	mtc_error (*clicked)(gpointer);
-	mtc_error (*remove)(gpointer, guint *);
+	mtc_error (*removed)(gpointer, guint *);
     gpointer  (*get_config)(gpointer);
     mtc_error (*put_config)(gpointer);
     mtc_error (*read_config)(xmlDocPtr, xmlNodePtr, gpointer);
     mtc_error (*write_config)(xmlNodePtr, gpointer);
+    mtc_error (*freed)(gpointer);
 
 } mtc_plugin;
 

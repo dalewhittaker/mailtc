@@ -47,7 +47,5 @@ mtc_error read_filters(xmlDocPtr doc, xmlNodePtr node, mtc_account *paccount);
 mtc_error filter_write(xmlNodePtr acc_node, mtc_account *paccount);
 mtc_error filter_enabled(mtc_account *paccount);
 GtkWidget *filter_table(mtc_account *paccount, gchar *plgname);
-
-/*TODO will probably be removed at some point*/
-void free_filters(mtc_account *paccount);
+mtc_error free_filters(mtc_account *paccount);
 #endif /*DW_MAILTC_FILTER*/

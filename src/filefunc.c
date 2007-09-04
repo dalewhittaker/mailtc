@@ -690,9 +690,6 @@ static void free_account(gpointer data)
     }
 #endif /*MTC_NOTMINIMAL*/
 
-    /*TODO remove this eventually*/
-    /*free_filters(paccount);*/
-
     /*unref the image for our account*/
    	if(picon->image)
 		g_object_unref(G_OBJECT(picon->image));
@@ -703,8 +700,15 @@ static void free_account(gpointer data)
 #endif /*MTC_EGGTRAYICON*/
 
     /*free any plugin options*/
-    if(paccount->plg_opts!= NULL)
-        g_free(paccount->plg_opts);
+	if(*paccount->plgname!= 0)
+    {
+	    mtc_plugin *pitem= NULL;
+        if((pitem= plg_find(paccount->plgname))!= NULL)
+        {
+	        if((*pitem->freed)(paccount)!= MTC_RETURN_TRUE)
+                exit(EXIT_FAILURE);
+        }
+    }
 
     g_free(paccount);
 	paccount= NULL;
@@ -714,7 +718,6 @@ static void free_account(gpointer data)
 void remove_account(guint item)
 {
 	GSList *pcurrent= NULL;
-	mtc_plugin *pitem= NULL;
 	mtc_account *pcurrent_data;
     guint naccounts= 0;
 	
@@ -725,10 +728,11 @@ void remove_account(guint item)
     /*get the plugin and call it's remove function*/
 	if(*pcurrent_data->plgname!= 0)
     {
+	    mtc_plugin *pitem= NULL;
         if((pitem= plg_find(pcurrent_data->plgname))!= NULL)
         {
             naccounts= g_slist_length(acclist);
-	        if((*pitem->remove)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
+	        if((*pitem->removed)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
                 exit(EXIT_FAILURE);
         }
     }
