@@ -1,5 +1,5 @@
 /* plg_popssl.c
- * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2007 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,10 @@
 
 /*The POP SSL/TLS plugin*/
 #include "popfunc.h"
+
+#ifdef MTC_NOTMINIMAL
+#include "filter.h"
+#endif /*MTC_NOTMINIMAL*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "POP (SSL/TLS)"
@@ -41,6 +45,7 @@ mtc_error popssl_load(gpointer pdata)
 	/*set the network debug flag and log file*/
     cfg_load((mtc_cfg *)pdata);
 	g_fprintf(((mtc_cfg  *)pdata)->logfile, PLUGIN_NAME " plugin loaded\n");
+
 	return(MTC_RETURN_TRUE);
 }
 
@@ -68,29 +73,29 @@ mtc_error popssl_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer popssl_get_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(NULL);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return((gpointer)filter_table(paccount, PLUGIN_NAME));
 }
 
 /*this is called when storing configuration options*/
 mtc_error popssl_put_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_enabled(paccount));
 }
 
-/*this is called when writing the configuration options to file*/
+/*this is called when reading options from the configuration file*/
 mtc_error popssl_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(read_filters(doc, node, paccount));
 }
 
 /*this is called when writing the configuration options to file*/
 mtc_error popssl_write_config(xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_write(node, paccount));
 }
 
 /*this is called when freeing an account*/
@@ -108,7 +113,7 @@ static mtc_plugin popssl_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_ENABLE_FILTERS,
+	MTC_HAS_PLUGIN_OPTS,
 	DEFAULT_PORT,
 	&popssl_load,
 	&popssl_unload, 
@@ -128,3 +133,4 @@ G_MODULE_EXPORT mtc_plugin *init_plugin(void)
 	/*set the plugin pointer passed to point to the struct*/
 	return(&popssl_pluginfo);
 }
+

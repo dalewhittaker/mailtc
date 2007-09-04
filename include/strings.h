@@ -1,5 +1,5 @@
 /* strings.h
- * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2007 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -191,12 +191,12 @@ You will need to select and resave a plugin from the list for each account.")
 #define S_MAIN_LOG_STARTED _("%s started %s\n")
 #define S_MAIN_ERR_NO_ACCOUNTS _("No accounts found.\nPlease enter a mail account")
 
-#define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
+#define S_MAIN_ERR_PRINT_USAGE _("%s %s (C) 2007 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 \n\t%s -c (to configure mail details)\
 \n\t%s -d (run in network debug mode)\
 \n\t%s -k (kill all mailtc processes)\n")
 
-#define S_MAIN_ERR_PRINT_USAGE_NOKILL _("%s %s (C) 2006 Dale Whittaker\nUsage:\n\t%s (to run %s)\
+#define S_MAIN_ERR_PRINT_USAGE_NOKILL _("%s %s (C) 2007 Dale Whittaker\nUsage:\n\t%s (to run %s)\
 \n\t%s -c (to configure mail details)\
 \n\t%s -d (run in network debug mode)\n")
 

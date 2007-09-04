@@ -1,5 +1,5 @@
 /* plg_pop.c
- * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2007 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,15 +20,15 @@
 /*The POP3 plugin*/
 #include "popfunc.h"
 
+#ifdef MTC_NOTMINIMAL
+#include "filter.h"
+#endif /*MTC_NOTMINIMAL*/
+
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "POP"
 #define PLUGIN_AUTHOR "Dale Whittaker (dayul@users.sf.net)"
 #define PLUGIN_DESC "POP3 network plugin."
 #define DEFAULT_PORT 110
-
-#ifdef MTC_NOTMINIMAL
-#include "filter.h"
-#endif /*MTC_NOTMINIMAL*/
 
 G_MODULE_EXPORT mtc_plugin *init_plugin(void);
 
@@ -73,7 +73,6 @@ mtc_error pop_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer pop_get_config(gpointer pdata)
 {
-    /*TODO will eventually be something like pop_filterdlg_run*/
 	mtc_account *paccount= (mtc_account *)pdata;
     return((gpointer)filter_table(paccount, PLUGIN_NAME));
 }

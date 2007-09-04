@@ -1,5 +1,5 @@
 /* plg_popcram.c
- * Copyright (C) 2006 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2007 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,10 @@
 
 /*The POP CRAM-MD5 plugin*/
 #include "popfunc.h"
+
+#ifdef MTC_NOTMINIMAL
+#include "filter.h"
+#endif /*MTC_NOTMINIMAL*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "POP (CRAM-MD5)"
@@ -68,29 +72,29 @@ mtc_error popcram_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer popcram_get_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(NULL);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return((gpointer)filter_table(paccount, PLUGIN_NAME));
 }
 
 /*this is called when storing configuration options*/
 mtc_error popcram_put_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_enabled(paccount));
 }
 
 /*this is called when reading options from the configuration file*/
 mtc_error popcram_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(read_filters(doc, node, paccount));
 }
 
 /*this is called when writing the configuration options to file*/
 mtc_error popcram_write_config(xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_write(node, paccount));
 }
 
 /*this is called when freeing an account*/
@@ -108,7 +112,7 @@ static mtc_plugin popcram_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_ENABLE_FILTERS,
+	MTC_HAS_PLUGIN_OPTS,
 	DEFAULT_PORT,
 	&popcram_load,
 	&popcram_unload, 
