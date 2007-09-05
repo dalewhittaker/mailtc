@@ -1,8 +1,9 @@
 ----------
 NEXT RELEASE:
-1) Rework plugin API so that the filters can be moved there
-    a) get plugins working nicely together, e.g the dialogs
-    b) test lots with valgrind
+1) Test all new plugin stuff lots with valgrind
+        i) test tabs work correctly
+        ii) test every plugin routine (e.g clicked, get_config etc) work, for both minimal and non-minimal
+        iii) test filter error reporting is ok
 ----------
 
 WISH LIST TASKS:

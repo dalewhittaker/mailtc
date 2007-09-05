@@ -588,7 +588,6 @@ static void protocol_combo_changed(GtkComboBox *entry, gpointer user_data)
 	    paccount= get_account(*p_count);
 	    
         /*get the option widgets from the plugin*/
-        /*TODO really not sure if this is enough, may need to handle NULL accounts*/
         if(paccount!= NULL)
         {
             if(pitem->get_config!= NULL)
@@ -653,13 +652,13 @@ gboolean accdlg_run(gint profile, gint newaccount)
     GtkWidget *v_box_details;
 	gchar port_str[G_ASCII_DTOSTR_BUF_SIZE];
 	gint result= 0;
+    gint i= 0;
     gboolean saved= FALSE;
 	mtc_account *pcurrent= NULL;
 	GSList *plgcurrent= plglist;
 	mtc_plugin *pitem= NULL;
 	mtc_icon *picon= NULL;
 
-    /*TODO needs plenty more work, will eventually be tabbed*/
 	accbook= gtk_notebook_new();
 	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(accbook), GTK_POS_TOP);
 /*	gtk_notebook_set_show_border(GTK_NOTEBOOK(accbook), FALSE);
@@ -828,6 +827,10 @@ gboolean accdlg_run(gint profile, gint newaccount)
     /*we MUST remove the image from the table before destroying, otherwise it will also be destroyed*/
     gtk_container_remove(GTK_CONTAINER(dicon_table.widget), picon->image);
 	
+    /*also remove all the notebook pages to be used next time*/
+    for(i= 0; i< gtk_notebook_get_n_pages(GTK_NOTEBOOK(accbook)); i++)
+        gtk_notebook_remove_page(GTK_NOTEBOOK(accbook), i);
+     
     /*destroy the dialog now that it is finished*/
 	if(dialog&& GTK_IS_WIDGET(dialog))
 	    gtk_widget_destroy(dialog);

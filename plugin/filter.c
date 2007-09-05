@@ -843,9 +843,7 @@ static void filter_button_pressed(GtkWidget *widget, gpointer data)
 {
 	mtc_account *pcurrent= NULL;
 	
-    /*TODO may need some work, e.g if account is NULL*/
     pcurrent= (mtc_account *)data;
-
 	filterdlg_run(pcurrent);
 }
 
@@ -867,43 +865,49 @@ mtc_error filter_enabled(mtc_account *paccount)
 /*function to get create/get the filter table to pass to mailtc*/
 GtkWidget *filter_table(mtc_account *paccount, gchar *plgname)
 {
-        /*TODO needs work, see example plugin*/
-    {
-        GtkWidget *filter_label;
-        mtc_filters *pfilter= NULL;
-        gchar title[100];
+    mtc_filters *pfilter= NULL;
+    GtkWidget *filter_label;
+    gchar title[100];
 
-        /*create a table containing widgets and return it to be shown*/
-        g_snprintf(title, sizeof(title), "%s plugin options", plgname);
-        filter_label= gtk_label_new(title);
+    /*create a table containing widgets and return it to be shown*/
+    g_snprintf(title, sizeof(title), "%s plugin options", plgname);
+    filter_label= gtk_label_new(title);
 
-	    filter_checkbox= gtk_check_button_new_with_label(S_FILTER_ENABLEFILTERS);
-  	    g_signal_connect(G_OBJECT(filter_checkbox), "clicked", G_CALLBACK(filter_checkbox_pressed), NULL);
-	    filter_button= gtk_button_new_with_label(S_FILTER_CONFIGFILTERS);
+	filter_checkbox= gtk_check_button_new_with_label(S_FILTER_ENABLEFILTERS);
+  	g_signal_connect(G_OBJECT(filter_checkbox), "clicked", G_CALLBACK(filter_checkbox_pressed), NULL);
+	filter_button= gtk_button_new_with_label(S_FILTER_CONFIGFILTERS);
      
-  	    g_signal_connect(G_OBJECT(filter_button), "clicked", G_CALLBACK(filter_button_pressed), paccount);
+  	g_signal_connect(G_OBJECT(filter_button), "clicked", G_CALLBACK(filter_button_pressed), paccount);
     
-        ftable= gtk_table_new(2, 2, FALSE);
-        gtk_table_set_col_spacings(GTK_TABLE(ftable), 10);
-        gtk_table_set_row_spacings(GTK_TABLE(ftable), 20);
-        gtk_container_set_border_width(GTK_CONTAINER(ftable), 10);
-        gtk_table_attach(GTK_TABLE(ftable), filter_label, 0, 2, 0, 1, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
-        gtk_table_attach(GTK_TABLE(ftable), filter_checkbox, 0, 1, 1, 2, GTK_SHRINK| GTK_FILL, GTK_SHRINK, 0, 0);
-        gtk_table_attach(GTK_TABLE(ftable), filter_button, 1, 2, 1, 2, GTK_SHRINK| GTK_FILL, GTK_SHRINK, 0, 0);     
+    ftable= gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(ftable), 10);
+    gtk_table_set_row_spacings(GTK_TABLE(ftable), 20);
+    gtk_container_set_border_width(GTK_CONTAINER(ftable), 10);
+      
+    gtk_table_attach(GTK_TABLE(ftable), filter_label, 0, 2, 0, 1, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(ftable), filter_checkbox, 0, 1, 1, 2, GTK_SHRINK| GTK_FILL, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(ftable), filter_button, 1, 2, 1, 2, GTK_SHRINK| GTK_FILL, GTK_SHRINK, 0, 0);     
     
-	    /*set the button based on the checkbox value*/
-        gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
+	/*set the button based on the checkbox value*/
+    gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
         
-        /*ref the table, otherwise it will be destroyed when removed*/
-        g_object_ref(G_OBJECT(ftable));
-
-        /*if there are plugin options, get them*/
-        if(paccount!= NULL)
-            pfilter= (mtc_filters *)paccount->plg_opts;
+    /*if there are plugin options, get them*/
+    if(paccount!= NULL)
+        pfilter= (mtc_filters *)paccount->plg_opts;
  
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
-	    gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filter_checkbox), ((pfilter!= NULL)&& (pfilter->enabled)));
+	gtk_widget_set_sensitive(filter_button, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(filter_checkbox)));
  
-    }
     return(ftable);
 }
+
+/*function to destroy the plugin table widget when unloading*/
+mtc_error filter_unload(void)
+{
+    /*destroy the table widget if it exists*/
+    if((ftable!= NULL)&& GTK_IS_WIDGET(ftable))
+        gtk_widget_destroy(ftable);
+
+    return(MTC_RETURN_TRUE);
+}
+
