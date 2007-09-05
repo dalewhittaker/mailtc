@@ -123,10 +123,9 @@ mtc_error dummy_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer dummy_get_config(gpointer pdata)
 {
-    /*TODO work here (e.g ref counts)*/
 	mtc_account *paccount= (mtc_account *)pdata;
     
-    if(dummy_table== NULL)
+    /*if(dummy_table== NULL)*/
     {
         GtkWidget *dummy_title;
         GtkWidget *dummy_label;
@@ -145,7 +144,7 @@ gpointer dummy_get_config(gpointer pdata)
         gtk_table_attach(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
         
         /*ref the table, otherwise it will be destroyed when removed*/
-        g_object_ref(G_OBJECT(dummy_table));
+        /*g_object_ref(G_OBJECT(dummy_table));*/
 
         /*if there are plugin options, get them*/
         if(paccount!= NULL&& paccount->plg_opts!= NULL)
@@ -158,11 +157,13 @@ gpointer dummy_get_config(gpointer pdata)
                 gtk_entry_set_text(GTK_ENTRY(dummy_entry), popts->myopt1);
         }
     }
+#if 0
     else
     {
         /*table is already created, simply reset the value*/
         gtk_entry_set_text(GTK_ENTRY(dummy_entry), "");
     }
+#endif
     return((gpointer)dummy_table);
 }
 
