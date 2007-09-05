@@ -412,12 +412,17 @@ static gboolean acc_read(xmlDocPtr doc, xmlNodePtr node)
                 if(xmlStrEqual(child->name, BAD_CAST ELEMENT_PLUGINOPTIONS))
                 {
                     /*read the plugin configuration options*/
-                    if((pitem= plg_find(pnew->plgname))== NULL)
+                    pitem= plg_find(pnew->plgname);
+                    if(pitem== NULL)
                         retval= FALSE;
  
                     /*read any plugin options*/
-                    if((*pitem->read_config)(doc, child, pnew)!= MTC_RETURN_TRUE)
-                        retval= FALSE;
+                    else
+                    {
+                        if(pitem->read_config!= NULL)
+                            if((*pitem->read_config)(doc, child, pnew)!= MTC_RETURN_TRUE)
+                                retval= FALSE;
+                    }
                 }
             }
             child= child->next;
@@ -703,7 +708,8 @@ static void free_account(gpointer data)
 	if(*paccount->plgname!= 0)
     {
 	    mtc_plugin *pitem= NULL;
-        if((pitem= plg_find(paccount->plgname))!= NULL)
+        pitem= plg_find(paccount->plgname);
+        if((pitem!= NULL)&& (pitem->freed!= NULL))
         {
 	        if((*pitem->freed)(paccount)!= MTC_RETURN_TRUE)
                 exit(EXIT_FAILURE);
@@ -719,7 +725,6 @@ void remove_account(guint item)
 {
 	GSList *pcurrent= NULL;
 	mtc_account *pcurrent_data;
-    guint naccounts= 0;
 	
 	/*get the data to remove*/
 	pcurrent_data= get_account(item);
@@ -729,8 +734,13 @@ void remove_account(guint item)
 	if(*pcurrent_data->plgname!= 0)
     {
 	    mtc_plugin *pitem= NULL;
-        if((pitem= plg_find(pcurrent_data->plgname))!= NULL)
+        
+        pitem= plg_find(pcurrent_data->plgname);
+
+        if((pitem!= NULL)&& (pitem->removed!= NULL))
         {
+            guint naccounts= 0;
+
             naccounts= g_slist_length(acclist);
 	        if((*pitem->removed)(pcurrent_data, &naccounts)!= MTC_RETURN_TRUE)
                 exit(EXIT_FAILURE);
@@ -898,13 +908,14 @@ static gboolean acc_write(xmlNodePtr root_node)
             return FALSE;
      
         /*write the plugin configuration options*/
-        if((pitem= plg_find(paccount->plgname))== NULL)
-            return FALSE;
-        
-        plg_node= put_node_empty(acc_node, ELEMENT_PLUGINOPTIONS);
-		if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
-            return FALSE;
-               
+        pitem= plg_find(paccount->plgname);
+        if((pitem!= NULL)&& (pitem->write_config!= NULL))
+        {    
+            plg_node= put_node_empty(acc_node, ELEMENT_PLUGINOPTIONS);
+		    if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
+                return FALSE;
+        }
+
         /*move to next item in the list*/
 		pcurrent= g_slist_next(pcurrent);
 	}

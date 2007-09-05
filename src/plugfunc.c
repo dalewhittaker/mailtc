@@ -64,7 +64,8 @@ static void plg_unload(gpointer data, gpointer user_data)
     user_data= NULL;
 
 	/*call the unload routine*/
-	(*pitem->unload)();
+    if(pitem->unload!= NULL)
+	    (*pitem->unload)();
 	
 	if(!g_module_close((GModule *)pitem->handle))
 		msgbox_err(S_PLUGIN_ERR_CLOSE_PLUGIN, g_module_name((GModule *)pitem->handle), g_module_error());
@@ -136,7 +137,8 @@ static gboolean plg_load(const gchar *plugin_name)
 	plglist= g_slist_insert_sorted(plglist, (gpointer)pitem, (GCompareFunc)plg_compare);
 
 	/*call the plugin load routine*/
-	(*pitem->load)(&config);
+	if(pitem->load!= NULL)
+        (*pitem->load)(&config);
 
 	return(TRUE);
 }

@@ -1,9 +1,8 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) make sure everything works with MTC_NOTMINIMAL not defined (i.e minimal build)
-    b) get plugins working nicely together, e.g the dialogs
-    c) test lots with valgrind
+    a) get plugins working nicely together, e.g the dialogs
+    b) test lots with valgrind
 ----------
 
 WISH LIST TASKS:

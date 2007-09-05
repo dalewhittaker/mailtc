@@ -22,6 +22,9 @@
 
 #ifdef MTC_NOTMINIMAL
 #include "filter.h"
+#define PLUGIN_FLAGS MTC_HAS_PLUGIN_OPTS
+#else
+#define PLUGIN_FLAGS 0
 #endif /*MTC_NOTMINIMAL*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
@@ -69,6 +72,7 @@ mtc_error apop_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+#ifdef MTC_NOTMINIMAL
 /*this is called when showing configuration options*/
 gpointer apop_get_config(gpointer pdata)
 {
@@ -103,6 +107,7 @@ mtc_error apop_free(gpointer pdata)
 	mtc_account *paccount= (mtc_account *)pdata;
     return(free_filters(paccount));
 }
+#endif /*MTC_NOTMINIMAL*/
 
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin apop_pluginfo =
@@ -112,18 +117,22 @@ static mtc_plugin apop_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_HAS_PLUGIN_OPTS,
+	PLUGIN_FLAGS,
 	DEFAULT_PORT,
 	&apop_load,
 	&apop_unload, 
 	&apop_get_messages,
 	&apop_clicked,
     &apop_remove,
+#ifdef MTC_NOTMINIMAL
     &apop_get_config,
     &apop_put_config,
     &apop_read_config,
     &apop_write_config,
     &apop_free
+#else
+    NULL, NULL, NULL, NULL, NULL
+#endif /*MTC_NOTMINIMAL*/
 };
 
 /*the initialisation function*/

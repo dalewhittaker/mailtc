@@ -249,9 +249,11 @@ static gboolean acc_save(gint profile)
     g_free(pbasename);
 
     /*store the plugin options*/
-    if((*pitem->put_config)(pcurrent_data)!= MTC_RETURN_TRUE)
-        msgbox_fatal("Error storing plugin options");
-
+    if(pitem->put_config)
+    {
+        if((*pitem->put_config)(pcurrent_data)!= MTC_RETURN_TRUE)
+            msgbox_fatal("Error storing plugin options");
+    }
 	/*write the details to the file*/
 	retval= cfg_write();
 	
@@ -589,7 +591,8 @@ static void protocol_combo_changed(GtkComboBox *entry, gpointer user_data)
         /*TODO really not sure if this is enough, may need to handle NULL accounts*/
         if(paccount!= NULL)
         {
-            plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
+            if(pitem->get_config!= NULL)
+                plg_widget= GTK_WIDGET((*pitem->get_config)(paccount));
 
             /*add the new plugin option widgets to the plugin tab*/
             if(plg_widget!= NULL)
