@@ -1,12 +1,9 @@
 ----------
 NEXT RELEASE:
 1) Rework plugin API so that the filters can be moved there
-    a) use dummy as reference and move filters over
-        ii) get above working for one plugin, then working for all
-            imap, imapcram, imapssl
-    b) make sure everything works with MTC_NOTMINIMAL not defined (i.e minimal build)
+    a) make sure everything works with MTC_NOTMINIMAL not defined (i.e minimal build)
+    b) get plugins working nicely together, e.g the dialogs
     c) test lots with valgrind
-    d) get plugins working nicely together, e.g the dialogs
 ----------
 
 WISH LIST TASKS:

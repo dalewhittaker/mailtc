@@ -20,6 +20,10 @@
 /*The IMAP SSL/TLS plugin*/
 #include "imapfunc.h"
 
+#ifdef MTC_NOTMINIMAL
+#include "filter.h"
+#endif /*MTC_NOTMINIMAL*/
+
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
 #define PLUGIN_NAME "IMAP (SSL/TLS)"
 #define PLUGIN_AUTHOR "Dale Whittaker (dayul@users.sf.net)"
@@ -69,29 +73,29 @@ mtc_error imapssl_remove(gpointer pdata, guint *naccounts)
 /*this is called when showing configuration options*/
 gpointer imapssl_get_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(NULL);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return((gpointer)filter_table(paccount, PLUGIN_NAME));
 }
 
 /*this is called when storing configuration options*/
 mtc_error imapssl_put_config(gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_enabled(paccount));
 }
 
 /*this is called when reading options from the configuration file*/
 mtc_error imapssl_read_config(xmlDocPtr doc, xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(read_filters(doc, node, paccount));
 }
 
 /*this is called when writing the configuration options to file*/
 mtc_error imapssl_write_config(xmlNodePtr node, gpointer pdata)
 {
-    /*TODO work here*/
-    return(MTC_RETURN_TRUE);
+	mtc_account *paccount= (mtc_account *)pdata;
+    return(filter_write(node, paccount));
 }
 
 /*this is called when freeing an account*/
@@ -109,7 +113,7 @@ static mtc_plugin imapssl_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_ENABLE_FILTERS,
+	MTC_HAS_PLUGIN_OPTS,
 	DEFAULT_PORT,
 	&imapssl_load,
 	&imapssl_unload, 
