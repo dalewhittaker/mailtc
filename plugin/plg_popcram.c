@@ -22,6 +22,9 @@
 
 #ifdef MTC_NOTMINIMAL
 #include "filter.h"
+#define PLUGIN_FLAGS MTC_HAS_PLUGIN_OPTS
+#else
+#define PLUGIN_FLAGS 0
 #endif /*MTC_NOTMINIMAL*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
@@ -69,6 +72,7 @@ mtc_error popcram_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+#ifdef MTC_NOTMINIMAL
 /*this is called when showing configuration options*/
 gpointer popcram_get_config(gpointer pdata)
 {
@@ -103,6 +107,7 @@ mtc_error popcram_free(gpointer pdata)
 	mtc_account *paccount= (mtc_account *)pdata;
     return(free_filters(paccount));
 }
+#endif /*MTC_NOTMINIMAL*/
 
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popcram_pluginfo =
@@ -112,18 +117,22 @@ static mtc_plugin popcram_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_HAS_PLUGIN_OPTS,
+	PLUGIN_FLAGS,
 	DEFAULT_PORT,
 	&popcram_load,
 	&popcram_unload, 
 	&popcram_get_messages,
 	&popcram_clicked,
     &popcram_remove,
+#ifdef MTC_NOTMINIMAL
     &popcram_get_config,
     &popcram_put_config,
     &popcram_read_config,
     &popcram_write_config,
     &popcram_free
+#else
+    NULL, NULL, NULL, NULL, NULL
+#endif /*MTC_NOTMINIMAL*/
 };
 
 /*the initialisation function*/

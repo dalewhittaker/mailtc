@@ -254,9 +254,11 @@ static void docklet_read(mtc_account *paccount, gboolean exitflag)
 #else
     if(paccount->num_messages> 0)
 #endif /*MTC_NOTMINIMAL*/
-		if((*pitem->clicked)(paccount)!= MTC_RETURN_TRUE)
-			exit(EXIT_FAILURE);
-			
+        if(pitem->clicked!= NULL)
+		{
+            if((*pitem->clicked)(paccount)!= MTC_RETURN_TRUE)
+			    exit(EXIT_FAILURE);
+		}	
 }
 
 /*generic click handler for the docklet*/
@@ -578,17 +580,19 @@ gboolean mail_thread(void)
 				continue;
 			}
 
-			/*use the plugin to check the mail and get number of messages*/
-			if((retval= (*pitem->get_messages)(pcurrent_data))!= MTC_RETURN_TRUE)
-            {
+            if(pitem->get_messages!= NULL)
+			{
+                /*use the plugin to check the mail and get number of messages*/
+			    if((retval= (*pitem->get_messages)(pcurrent_data))!= MTC_RETURN_TRUE)
+                {
 #ifdef MTC_NOTMINIMAL
-                pcurrent_data->msginfo.num_messages= -1;
-			    pcurrent_data->msginfo.new_messages= -1;
+                    pcurrent_data->msginfo.num_messages= -1;
+			        pcurrent_data->msginfo.new_messages= -1;
 #else
-                pcurrent_data->num_messages= -1;
+                    pcurrent_data->num_messages= -1;
 #endif /*MTC_NOTMINIMAL*/
+                }
             }
-
 			/*if there was a connection error*/
 			if(retval== MTC_ERR_CONNECT)
 			{

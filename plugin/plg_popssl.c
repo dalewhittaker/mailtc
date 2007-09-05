@@ -22,6 +22,9 @@
 
 #ifdef MTC_NOTMINIMAL
 #include "filter.h"
+#define PLUGIN_FLAGS MTC_HAS_PLUGIN_OPTS
+#else
+#define PLUGIN_FLAGS 0
 #endif /*MTC_NOTMINIMAL*/
 
 /*This MUST match the mailtc revision it is used with, if not, mailtc will report that it is an invalid plugin*/
@@ -70,6 +73,7 @@ mtc_error popssl_remove(gpointer pdata, guint *naccounts)
     return(rm_uidfile(paccount, *naccounts));
 }
 
+#ifdef MTC_NOTMINIMAL
 /*this is called when showing configuration options*/
 gpointer popssl_get_config(gpointer pdata)
 {
@@ -104,6 +108,7 @@ mtc_error popssl_free(gpointer pdata)
 	mtc_account *paccount= (mtc_account *)pdata;
     return(free_filters(paccount));
 }
+#endif /*MTC_NOTMINIMAL*/
 
 /*setup all our plugin stuff so mailtc knows what to do*/
 static mtc_plugin popssl_pluginfo =
@@ -113,18 +118,22 @@ static mtc_plugin popssl_pluginfo =
 	PLUGIN_NAME,
 	PLUGIN_AUTHOR,
 	PLUGIN_DESC,
-	MTC_HAS_PLUGIN_OPTS,
+	PLUGIN_FLAGS,
 	DEFAULT_PORT,
 	&popssl_load,
 	&popssl_unload, 
 	&popssl_get_messages,
 	&popssl_clicked,
     &popssl_remove,
+#ifdef MTC_NOTMINIMAL
     &popssl_get_config,
     &popssl_put_config,
     &popssl_read_config,
     &popssl_write_config,
     &popssl_free
+#else
+    NULL, NULL, NULL, NULL, NULL
+#endif /*MTC_NOTMINIMAL*/
 };
 
 /*the initialisation function*/
