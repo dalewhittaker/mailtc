@@ -55,7 +55,9 @@ mtc_error imapcram_load(gpointer pdata)
 /*this is called when unloading, one use for this is to free memory if needed*/
 mtc_error imapcram_unload(void)
 {
+#ifdef MTC_NOTMINIMAL
     filter_unload();
+#endif /*MTC_NOTMINIMAL*/
 	cfg_unload();
 	return(MTC_RETURN_TRUE);
 }
