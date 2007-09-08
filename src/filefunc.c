@@ -909,7 +909,7 @@ static gboolean acc_write(xmlNodePtr root_node)
      
         /*write the plugin configuration options*/
         pitem= plg_find(paccount->plgname);
-        if((pitem!= NULL)&& (pitem->write_config!= NULL))
+        if((pitem!= NULL)&& (pitem->write_config!= NULL)&& (paccount->plg_opts!= NULL))
         {    
             plg_node= put_node_empty(acc_node, ELEMENT_PLUGINOPTIONS);
 		    if((*pitem->write_config)(plg_node, paccount)!= MTC_RETURN_TRUE)
