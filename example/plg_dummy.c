@@ -125,45 +125,32 @@ gpointer dummy_get_config(gpointer pdata)
 {
 	mtc_account *paccount= (mtc_account *)pdata;
     
-    /*if(dummy_table== NULL)*/
-    {
-        GtkWidget *dummy_title;
-        GtkWidget *dummy_label;
+    GtkWidget *dummy_title;
+    GtkWidget *dummy_label;
 
-        /*create a table containing widgets and return it to be shown*/
-        dummy_title= gtk_label_new(PLUGIN_NAME " plugin options:");
-        dummy_label= gtk_label_new("example option:");
-        dummy_entry= gtk_entry_new();
-        dummy_table= gtk_table_new(2, 2, FALSE);
+    /*create a table containing widgets and return it to be shown*/
+    dummy_title= gtk_label_new(PLUGIN_NAME " plugin options:");
+    dummy_label= gtk_label_new("example option:");
+    dummy_entry= gtk_entry_new();
+    dummy_table= gtk_table_new(2, 2, FALSE);
 
-        gtk_table_set_col_spacings(GTK_TABLE(dummy_table), 10);
-        gtk_table_set_row_spacings(GTK_TABLE(dummy_table), 20);
-        gtk_container_set_border_width(GTK_CONTAINER(dummy_table), 10);
-        gtk_table_attach(GTK_TABLE(dummy_table), dummy_title, 0, 2, 0, 1, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
-        gtk_table_attach(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
-        gtk_table_attach(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_set_col_spacings(GTK_TABLE(dummy_table), 10);
+    gtk_table_set_row_spacings(GTK_TABLE(dummy_table), 20);
+    gtk_container_set_border_width(GTK_CONTAINER(dummy_table), 10);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_title, 0, 2, 0, 1, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_label, 0, 1, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
+    gtk_table_attach(GTK_TABLE(dummy_table), dummy_entry, 1, 2, 1, 2, GTK_FILL| GTK_EXPAND, GTK_SHRINK, 0, 0);
         
-        /*ref the table, otherwise it will be destroyed when removed*/
-        /*g_object_ref(G_OBJECT(dummy_table));*/
-
-        /*if there are plugin options, get them*/
-        if(paccount!= NULL&& paccount->plg_opts!= NULL)
-        {
-            dummy_opts *popts;
-            popts= (dummy_opts *)paccount->plg_opts;
-            
-            /*set the value*/
-            if(*popts->myopt1!= 0)
-                gtk_entry_set_text(GTK_ENTRY(dummy_entry), popts->myopt1);
-        }
-    }
-#if 0
-    else
+    /*if there are plugin options, get them*/
+    if(paccount!= NULL&& paccount->plg_opts!= NULL)
     {
-        /*table is already created, simply reset the value*/
-        gtk_entry_set_text(GTK_ENTRY(dummy_entry), "");
+        dummy_opts *popts;
+        popts= (dummy_opts *)paccount->plg_opts;
+            
+        /*set the value*/
+        if(*popts->myopt1!= 0)
+            gtk_entry_set_text(GTK_ENTRY(dummy_entry), popts->myopt1);
     }
-#endif
     return((gpointer)dummy_table);
 }
 
