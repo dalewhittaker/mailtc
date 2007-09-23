@@ -3,7 +3,7 @@ AC_INIT(plg_dummy.c)
 
 PACKAGE=mtc_dummyplug
 dnl the VERSION should match the mailtc version it is to be used with
-VERSION=1.3.7
+VERSION=1.3.9
 
 AM_INIT_AUTOMAKE([$PACKAGE], [$VERSION])
 

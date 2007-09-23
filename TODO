@@ -1,18 +1,2 @@
-----------
-NEXT RELEASE:
-1) Test all new plugin stuff lots with valgrind
-        i) test every plugin routine (e.g clicked, get_config etc) work, for both minimal and non-minimal
-            load
-            unload
-            get_messages
-            clicked
-            removed
-            get_config
-            put_config
-            read_config
-            write_config
-            freed
-----------
-
 WISH LIST TASKS:
 1) Threading, allowing reading (click) when checking new mail (big job).
