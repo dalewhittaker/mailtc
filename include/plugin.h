@@ -28,7 +28,12 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gtk/gtkmain.h>
+#include <gtk/gtkversion.h>
+#if GTK_CHECK_VERSION(2,12,0)
+#include <gtk/gtktooltip.h>
+#else
 #include <gtk/gtktooltips.h>
+#endif /*GTK_CHECK_VERSION*/
 
 /*test GtkStatusIcon stuff by undeffing here*/
 /*#undef MTC_EGGTRAYICON*/
@@ -122,7 +127,9 @@ typedef struct _mtc_trayicon
 #ifdef MTC_EGGTRAYICON
     EggTrayIcon *docklet;
     GtkWidget *box;
+#if !GTK_CHECK_VERSION(2,12,0)
     GtkTooltips *tooltip;
+#endif /*GTK_CHECK_VERSION*/
 #else
     GtkStatusIcon *docklet;
     gint active;
