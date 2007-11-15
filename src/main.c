@@ -192,7 +192,10 @@ static gboolean trayicon_init(void)
     /*create the trayicon event box, and tooltip*/
 	ptrayicon->box= gtk_event_box_new();
 	g_object_ref(G_OBJECT(ptrayicon->box));
+
+#if !(GTK_CHECK_VERSION(2,12,0))
     ptrayicon->tooltip= gtk_tooltips_new();
+#endif /*GTK_CHECK_VERSION*/
 	
     g_signal_connect(G_OBJECT(ptrayicon->box), "button-press-event", G_CALLBACK(docklet_clicked), NULL);
 #else
@@ -226,11 +229,14 @@ static gboolean trayicon_destroy(void)
 		ptrayicon->box= NULL;
     }
     /*NOTE important that the tooltip is destroyed after the box*/
+#if !(GTK_CHECK_VERSION(2,12,0))
     if(ptrayicon->tooltip)
 	{
 		gtk_object_destroy(GTK_OBJECT(ptrayicon->tooltip));
 		ptrayicon->tooltip= NULL;
 	}
+#endif /*GTK_CHECK_VERSION*/
+
 #endif /*MTC_EGGTRAYICON*/
 
 	/*destroy the widget then unref the docklet*/

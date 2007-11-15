@@ -851,7 +851,9 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 	GtkWidget *treescroll;
 	GtkAdjustment *delay_adj, *cerr_adj;
 	GtkWidget *add_button, *remove_button, *edit_button, *close_button, *save_button;
+#if !GTK_CHECK_VERSION(2,12,0)
 	GtkTooltips *multi_tooltip;
+#endif
 	gchar window_title[30];
 	dlgtable main_table[2];
 	GtkWidget *cerr_box;
@@ -882,9 +884,12 @@ GtkWidget *cfgdlg_run(GtkWidget *dialog)
 	
 	/*set the option for multiple accounts*/
 	multi_accounts_checkbox= gtk_check_button_new_with_label(S_CONFIGDLG_MULTIPLE_ACCOUNTS);
+#if GTK_CHECK_VERSION(2,12,0)
+    gtk_widget_set_tooltip_text(GTK_WIDGET(multi_accounts_checkbox), S_CONFIGDLG_MULTI_TOOLTIP);
+#else
 	multi_tooltip= gtk_tooltips_new();
 	gtk_tooltips_set_tip(GTK_TOOLTIPS(multi_tooltip), multi_accounts_checkbox, S_CONFIGDLG_MULTI_TOOLTIP, S_CONFIGDLG_MULTI_TOOLTIP);
-	
+#endif	
 	/*setup the mail program info*/
 	mailprog_entry= gtk_entry_new();
 	mailprog_label= gtk_label_new(S_CONFIGDLG_MAILAPP);

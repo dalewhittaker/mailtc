@@ -367,7 +367,7 @@ static void docklet_tooltip()
 	
     memset(tmpstring, 0, sizeof(tmpstring));
 
-#ifdef MTC_EGGTRAYICON
+#if defined(MTC_EGGTRAYICON) && !(GTK_CHECK_VERSION(2,12,0))
     /*disable the tooltip while we create it*/
     gtk_tooltips_disable(ptrayicon->tooltip);
 #endif /*MTC_EGGTRAYICON*/
@@ -411,12 +411,20 @@ static void docklet_tooltip()
 	/*set the text*/
 #ifdef MTC_EGGTRAYICON
    if(tipstring->str)
+
+#if GTK_CHECK_VERSION(2,12,0)
+        gtk_widget_set_tooltip_text(GTK_WIDGET(ptrayicon->box), tipstring->str);
+#else
 	    gtk_tooltips_set_tip(GTK_TOOLTIPS(ptrayicon->tooltip), ptrayicon->box, tipstring->str, NULL);
-	
+#endif /*GTK_CHECK_VERSION*/
+
     g_string_free(tipstring, TRUE);
 	
+#if !(GTK_CHECK_VERSION(2,12,0))
     /*right now re-enable the tip*/
     gtk_tooltips_enable(ptrayicon->tooltip);
+#endif /*GTK_CHECK_VERSION*/
+
 #else
     if(tipstring->str)
         gtk_status_icon_set_tooltip(ptrayicon->docklet, tipstring->str);

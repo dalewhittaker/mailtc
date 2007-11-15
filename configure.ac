@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/main.c)
 
 PACKAGE=mailtc
-VERSION=1.3.9
+VERSION=1.4.0
 
 dnl set $target
 AC_CANONICAL_SYSTEM
