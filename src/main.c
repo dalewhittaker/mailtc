@@ -225,7 +225,8 @@ static gboolean trayicon_destroy(void)
 	if(ptrayicon->box)
 	{
 		g_object_unref(G_OBJECT(ptrayicon->box));
-		gtk_widget_destroy(GTK_WIDGET(ptrayicon->box));
+        if(GTK_IS_WIDGET(ptrayicon->box))
+		    gtk_widget_destroy(GTK_WIDGET(ptrayicon->box));
 		ptrayicon->box= NULL;
     }
     /*NOTE important that the tooltip is destroyed after the box*/
@@ -246,7 +247,8 @@ static gboolean trayicon_destroy(void)
 #ifdef MTC_EGGTRAYICON
         /*always disconnect prior to destroying the widget*/
         g_signal_handlers_disconnect_by_func(G_OBJECT(ptrayicon->docklet), G_CALLBACK(docklet_destroyed), NULL);
-		gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
+        if(GTK_IS_WIDGET(ptrayicon->docklet))
+		    gtk_widget_destroy(GTK_WIDGET(ptrayicon->docklet)); 
 #endif /*MTC_EGGTRAYICON*/
 		ptrayicon->docklet= NULL;
 	}

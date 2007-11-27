@@ -482,3 +482,6 @@ Move all filter configuration out of mailtc core and into the plugin code.
 1.4.0:
 Use new GTKTooltip class if GTK version is >= 2.12, otherwise use the
 deprecated GTKTooltips class.
+
+1.4.1:
+Check that docklet widgets are in fact widgets before destroying.
