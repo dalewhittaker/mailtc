@@ -1,0 +1,50 @@
+bin_PROGRAMS = mailtc
+
+AM_CPPFLAGS = \
+		-DATK_DISABLE_SINGLE_INCLUDES \
+		-DATK_DISABLE_DEPRECATED \
+		-DG_DISABLE_SINGLE_INCLUDES \
+		-DG_DISABLE_DEPRECATED \
+		-DGTK_DISABLE_DEPRECATED \
+		-DGDK_PIXBUF_DISABLE_DEPRECATED \
+		-DGDK_DISABLE_DEPRECATED \
+		-DGDK_MULTIHEAD_SAFE \
+		-DGTK_MULTIHEAD_SAFE \
+		-DPANGO_DISABLE_DEPRECATED \
+		-DGSEAL_ENABLE \
+		-DLIBDIR=\""$(libdir)/mailtc"\"
+
+# TODO libunique doesn't like this
+# -DGTK_DISABLE_SINGLE_INCLUDES
+
+AM_CFLAGS = \
+		-Wall \
+		-W
+
+if ENABLE_DEBUG
+AM_CPPFLAGS += \
+		-DDEBUG
+
+AM_CFLAGS += \
+		-ggdb
+endif
+
+INCLUDES = \
+		$(GTK_CFLAGS) \
+		$(OPENSSL_CFLAGS) \
+		$(UNIQUE_CFLAGS)
+
+LDADD = \
+		$(GTK_LIBS) \
+		$(OPENSSL_LIBS) \
+		$(UNIQUE_LIBS)
+
+mailtc_SOURCES = \
+		mtc-config.c \
+		mtc-envelope.c \
+		mtc-file.c \
+		mtc-mail.c \
+		mtc-plugin.c \
+		mtc-statusicon.c \
+		mtc-util.c \
+		main.c
