@@ -1,0 +1,2 @@
+SUBDIRS = plugin \
+		  src
