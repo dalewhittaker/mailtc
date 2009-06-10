@@ -1,4 +1,4 @@
-/* mtc-files.c
+/* mtc-file.c
  * Copyright (C) 2009 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -249,8 +249,9 @@ mailtc_save_config (mtc_config* config,
         g_key_file_set_string (key_file, key_group, "server", account->server);
         g_key_file_set_integer (key_file, key_group, "port", account->port);
         g_key_file_set_string (key_file, key_group, "user", account->user);
-        g_key_file_set_string (key_file, key_group, "protocol",
+        g_key_file_set_string (key_file, key_group, "plugin",
                                g_module_name (account->plugin->module));
+        g_key_file_set_integer (key_file, key_group, "protocol", account->protocol);
 
         colour = gdk_color_to_string (account->icon_colour);
         g_key_file_set_string (key_file, key_group, "iconcolour", colour + 1);
@@ -367,8 +368,10 @@ mailtc_load_config (mtc_config* config,
                 if (!*error)
                     account->user = g_key_file_get_string (key_file, key_group, "user", error);
                 if (!*error)
+                    account->protocol = g_key_file_get_integer (key_file, key_group, "protocol", error);
+                if (!*error)
                 {
-                    plugin_name = g_key_file_get_string (key_file, key_group, "protocol", error);
+                    plugin_name = g_key_file_get_string (key_file, key_group, "plugin", error);
 
                     list = config->plugins;
                     while (list)

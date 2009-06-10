@@ -1,4 +1,4 @@
-/* mtc-files.h
+/* mtc-file.h
  * Copyright (C) 2009 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
