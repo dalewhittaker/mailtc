@@ -57,6 +57,7 @@ typedef struct
     gchar*              name;
     gchar*              author;
     gchar*              description;
+    gchar**             protocols;
 
     add_account_func    add_account;
     remove_account_func remove_account;
@@ -76,6 +77,7 @@ typedef struct
     gchar*      password;
     GdkColor*   icon_colour;
     mtc_plugin* plugin;
+    guint       protocol;
 
 } mtc_account;
 

@@ -24,9 +24,19 @@
 
 enum
 {
-    ACCOUNT_COLUMN = 0,
-    PROTOCOL_COLUMN,
-    N_COLUMNS
+    TREEVIEW_ACCOUNT_COLUMN = 0,
+    TREEVIEW_PROTOCOL_COLUMN,
+
+    N_TREEVIEW_COLUMNS
+};
+
+enum
+{
+    COMBO_PROTOCOL_COLUMN = 0,
+    COMBO_PLUGIN_COLUMN,
+    COMBO_INDEX_COLUMN,
+
+    N_COMBO_COLUMNS
 };
 
 static void
@@ -289,9 +299,12 @@ mailtc_account_update_tree_view (mtc_config* config,
                                  gint        index)
 {
     GtkTreeModel* model;
+    GtkTreeModel* combo_model;
     GtkTreeIter iter;
+    GtkTreeIter combo_iter;
     mtc_prefs* prefs;
     mtc_account* account;
+    gboolean exists;
     gint n;
 
     g_return_if_fail (config && config->prefs);
@@ -313,9 +326,13 @@ mailtc_account_update_tree_view (mtc_config* config,
 
     account = g_slist_nth_data (config->accounts, index);
 
+    combo_model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &combo_iter);
+    g_assert (exists);
+
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
-                        ACCOUNT_COLUMN, account->name,
-                        PROTOCOL_COLUMN, account->plugin->name, -1);
+                        TREEVIEW_ACCOUNT_COLUMN, account->name,
+                        TREEVIEW_PROTOCOL_COLUMN, account->plugin->protocols[account->protocol], -1);
 }
 
 static gint
@@ -325,14 +342,20 @@ mailtc_account_dialog_save (mtc_config*  config,
 {
     mtc_prefs* prefs;
     mtc_plugin* plugin;
+    GtkTreeModel* model;
+    GtkTreeIter iter;
     const gchar* name;
     const gchar* server;
     const gchar* user;
     const gchar* password;
     const gchar* port;
     const gchar*msg;
+    gboolean exists;
     gboolean empty;
+    gboolean changed;
     gint active;
+    guint iport;
+    guint protocol;
 
     g_return_val_if_fail (config && config->prefs, FALSE);
     prefs = config->prefs;
@@ -343,9 +366,13 @@ mailtc_account_dialog_save (mtc_config*  config,
     user = gtk_entry_get_text (GTK_ENTRY (prefs->entry_user));
     password = gtk_entry_get_text (GTK_ENTRY (prefs->entry_password));
 
-    active = gtk_combo_box_get_active (GTK_COMBO_BOX (prefs->combo_plugin));
-    g_assert (active > -1);
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+    g_assert (GTK_IS_TREE_MODEL (model));
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &iter);
+    g_assert (exists);
 
+    gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &active,
+                        COMBO_INDEX_COLUMN, &protocol, -1);
     plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, active);
     g_assert (plugin);
 
@@ -397,16 +424,26 @@ mailtc_account_dialog_save (mtc_config*  config,
         if (account->icon_colour)
             gdk_color_free (account->icon_colour);
     }
+
+    iport = (guint) g_ascii_strtod (port, NULL);
+    changed = (account->server != server ||
+               account->user != user ||
+               account->password != password ||
+               account->port != iport ||
+               account->plugin != plugin ||
+               account->protocol != protocol);
+
     account->name = g_strdup (name);
     account->server = g_strdup (server);
     account->user = g_strdup (user);
     account->password = g_strdup (password);
-    account->port = (gint) g_ascii_strtod (port, NULL);
+    account->port = iport;
     account->icon_colour = mailtc_envelope_get_envelope_colour (
                                 MAILTC_ENVELOPE (prefs->envelope_account));
+    account->protocol = protocol;
 
-    if (plugin != account->plugin)
-    {
+   if (changed)
+   {
         /* TODO error check */
         if (account->plugin && account->plugin->remove_account)
             (*account->plugin->remove_account) (account, error);
@@ -443,6 +480,38 @@ mailtc_port_entry_insert_text_cb (GtkEditable* editable,
     g_signal_stop_emission_by_name (editable, "insert-text");
 }
 
+static gint
+mailtc_combo_get_protocol_index (mtc_config*  config,
+                                 mtc_account* account)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    mtc_prefs* prefs;
+    gint plgindex;
+    guint combo_index;
+    guint combo_plgindex;
+    gint i;
+
+    g_return_val_if_fail (config && config->prefs, -1);
+
+    prefs = config->prefs;
+
+    plgindex = g_slist_index (config->plugins, account->plugin);
+    g_assert (plgindex > -1);
+
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+    i = 0;
+    while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
+    {
+        gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &combo_plgindex,
+                            COMBO_INDEX_COLUMN, &combo_index, -1);
+
+        if ((guint) plgindex == combo_plgindex && account->protocol == combo_index)
+            return (i - 1);
+    }
+    return -1;
+}
+
 static void
 mailtc_account_dialog_run (GtkWidget*   button,
                            mtc_config*  config,
@@ -467,6 +536,8 @@ mailtc_account_dialog_run (GtkWidget*   button,
     GtkWidget* label_icon;
     GtkWidget* envelope_icon;
     GtkWidget* button_icon;
+    GtkListStore* store;
+    GtkCellRenderer* renderer;
     GError* error;
     GSList* plglist;
     mtc_prefs* prefs;
@@ -474,6 +545,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     gchar* port;
     gint result;
     gint index;
+    guint plgindex;
 
     (void) button;
     g_return_if_fail (config && config->prefs);
@@ -516,14 +588,27 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_visibility (GTK_ENTRY (entry_password), FALSE);
 
         label_protocol = gtk_label_new ("Protocol:");
-        combo_protocol = gtk_combo_box_new_text ();
+        store = gtk_list_store_new (N_COMBO_COLUMNS, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+        combo_protocol = gtk_combo_box_new_with_model (GTK_TREE_MODEL (store));
+        g_object_unref (store);
+        renderer = gtk_cell_renderer_text_new ();
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_protocol), renderer, TRUE);
+        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_protocol), renderer, "text", 0, NULL);
 
         plglist = config->plugins;
+        plgindex = 0;
         while (plglist)
         {
             plugin = (mtc_plugin* ) plglist->data;
-            gtk_combo_box_append_text (GTK_COMBO_BOX (combo_protocol), plugin->name);
+            for (index = 0; (guint) index < g_strv_length (plugin->protocols); index++)
+            {
+                gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
+                                                   COMBO_PROTOCOL_COLUMN, plugin->protocols[index],
+                                                   COMBO_PLUGIN_COLUMN, plgindex,
+                                                   COMBO_INDEX_COLUMN, index, -1);
+            }
             plglist = g_slist_next (plglist);
+            plgindex++;
         }
 
         button_plugin = gtk_button_new_with_label ("Plugin Information...");
@@ -612,7 +697,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port);
         g_free (port);
 
-        index = g_slist_index (config->plugins, account->plugin);
+        index = mailtc_combo_get_protocol_index (config, account);
         g_assert (index > -1);
         gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), index);
         mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account),
@@ -703,7 +788,7 @@ mailtc_edit_button_clicked_cb (GtkWidget*    button,
                                                 model, &iter);
     if (index != -1)
     {
-        account = (mtc_account*)g_slist_nth_data (config->accounts, index);
+        account = (mtc_account*) g_slist_nth_data (config->accounts, index);
         g_assert (account);
 
         mailtc_account_dialog_run (button, config, account);
@@ -790,17 +875,17 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     prefs = config->prefs;
     list = config->accounts;
 
-    store = gtk_list_store_new (N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
+    store = gtk_list_store_new (N_TREEVIEW_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
     tree_view = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
     g_object_unref (store);
 
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes ("Account",
-                                    renderer, "text", ACCOUNT_COLUMN, NULL);
+                                    renderer, "text", TREEVIEW_ACCOUNT_COLUMN, NULL);
     gtk_tree_view_column_set_min_width (column, 250);
     gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
     column = gtk_tree_view_column_new_with_attributes ("Protocol",
-                                    renderer, "text", PROTOCOL_COLUMN, NULL);
+                                    renderer, "text", TREEVIEW_PROTOCOL_COLUMN, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
 
     selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
@@ -816,8 +901,8 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     {
         account = (mtc_account*) list->data;
         gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
-                                           ACCOUNT_COLUMN, account->name,
-                                           PROTOCOL_COLUMN, account->plugin->name, -1);
+                                           TREEVIEW_ACCOUNT_COLUMN, account->name,
+                                           TREEVIEW_PROTOCOL_COLUMN, account->plugin->protocols[account->protocol], -1);
         list = g_slist_next (list);
     }
 

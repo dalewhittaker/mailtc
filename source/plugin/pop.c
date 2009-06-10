@@ -41,6 +41,15 @@ typedef enum
 
 } pop_command;
 
+typedef enum
+{
+    POP_PROTOCOL = 0,
+    POP_PROTOCOL_SSL,
+
+    POP_N_PROTOCOLS
+
+} pop_protocol;
+
 typedef struct _pop_private pop_private;
 
 typedef gboolean
@@ -475,6 +484,10 @@ plugin_init (void)
     plugin->get_messages = (get_message_func) pop_get_messages;
     plugin->read_messages = (read_message_func) pop_read_messages;
     plugin->terminate = (terminate_func) pop_terminate;
+
+    plugin->protocols = g_new0 (gchar*, POP_N_PROTOCOLS + 1);
+    plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
+    plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
 
     priv = (pop_private*) g_new0 (pop_private, 1);
     priv->sock = mailtc_socket_new ();
