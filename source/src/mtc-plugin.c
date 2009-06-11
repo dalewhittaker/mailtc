@@ -193,6 +193,7 @@ mailtc_unload_plugin (mtc_plugin* plugin,
                               g_module_error ());
     }
     g_strfreev (plugin->protocols);
+    g_free (plugin->ports);
     g_free (plugin->directory);
     g_free (plugin);
 }

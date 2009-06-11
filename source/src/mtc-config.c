@@ -513,6 +513,42 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
 }
 
 static void
+mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
+                                  mtc_config*  config)
+{
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    mtc_prefs* prefs;
+    mtc_plugin* plugin;
+    gint plgindex;
+    gint index;
+    gchar* port;
+    gboolean exists;
+
+    g_return_if_fail (config && config->prefs);
+
+    port = NULL;
+    prefs = config->prefs;
+
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (combo));
+    g_assert (GTK_IS_TREE_MODEL (model));
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (combo), &iter);
+    g_assert (exists);
+
+    gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
+                        COMBO_INDEX_COLUMN, &index, -1);
+    g_assert (index > -1);
+    plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, plgindex);
+    g_assert (plugin);
+
+    if (plugin->ports[index])
+        port = g_strdup_printf ("%u", plugin->ports[index]);
+
+    gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port ? port : "");
+    g_free (port);
+}
+
+static void
 mailtc_account_dialog_run (GtkWidget*   button,
                            mtc_config*  config,
                            mtc_account* account)
@@ -664,6 +700,8 @@ mailtc_account_dialog_run (GtkWidget*   button,
                 G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
         g_signal_connect (button_plugin, "clicked",
                 G_CALLBACK (mailtc_button_plugin_clicked_cb), config);
+        g_signal_connect (combo_protocol, "changed",
+            G_CALLBACK (mailtc_combo_protocol_changed_cb), config);
 
         prefs->entry_name = entry_name;
         prefs->entry_server = entry_server;
@@ -680,6 +718,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     else
         dialog = prefs->dialog_account;
 
+    port = NULL;
     if (account)
     {
         g_assert (account->name &&
@@ -695,7 +734,6 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_user), account->user);
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), account->password);
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port);
-        g_free (port);
 
         index = mailtc_combo_get_protocol_index (config, account);
         g_assert (index > -1);
@@ -709,10 +747,19 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_server), "");
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_user), "");
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), "");
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), "");
+        plglist = config->plugins;
+        if (plglist)
+        {
+            plugin = (mtc_plugin* ) plglist->data;
+            if (plugin && plugin->ports)
+                port = g_strdup_printf ("%u", plugin->ports[0]);
+        }
         gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), 0);
         mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account), NULL);
     }
+
+    gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port ? port : "");
+    g_free (port);
 
     gtk_widget_show_all (dialog);
     index = -1;
