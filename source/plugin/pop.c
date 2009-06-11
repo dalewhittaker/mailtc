@@ -492,9 +492,13 @@ plugin_init (void)
     plugin->terminate = (terminate_func) pop_terminate;
 
     plugin->protocols = g_new0 (gchar*, POP_N_PROTOCOLS + 1);
+    plugin->ports = g_new0 (guint, POP_N_PROTOCOLS);
+
     plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
+    plugin->ports[POP_PROTOCOL] = 110;
 #if HAVE_OPENSSL
     plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
+    plugin->ports[POP_PROTOCOL_SSL] = 995;
 #endif
 
     priv = (pop_private*) g_new0 (pop_private, 1);

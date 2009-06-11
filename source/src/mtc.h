@@ -58,6 +58,7 @@ typedef struct
     gchar*              author;
     gchar*              description;
     gchar**             protocols;
+    guint*              ports;
 
     add_account_func    add_account;
     remove_account_func remove_account;
