@@ -17,6 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <config.h>
 #include "mtc.h"
 #include "mtc-socket.h"
 #include "mtc-uid.h"
@@ -44,7 +45,9 @@ typedef enum
 typedef enum
 {
     POP_PROTOCOL = 0,
+#if HAVE_OPENSSL
     POP_PROTOCOL_SSL,
+#endif
 
     POP_N_PROTOCOLS
 
@@ -372,6 +375,9 @@ pop_get_messages (mtc_config*  config,
     priv->account = account;
     sock = priv->sock;
 
+#if HAVE_OPENSSL
+    mailtc_socket_set_ssl (sock, account->protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
+#endif
     if (!mailtc_socket_connect (sock, account->server, account->port, error))
         return -1;
     if (!pop_run (priv, POP_CMD_NULL, error))
@@ -487,7 +493,9 @@ plugin_init (void)
 
     plugin->protocols = g_new0 (gchar*, POP_N_PROTOCOLS + 1);
     plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
+#if HAVE_OPENSSL
     plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
+#endif
 
     priv = (pop_private*) g_new0 (pop_private, 1);
     priv->sock = mailtc_socket_new ();

@@ -79,6 +79,9 @@ struct _MailtcSocket
     GObject parent_instance;
 
     MailtcSocketPrivate* priv;
+#if HAVE_OPENSSL
+    gboolean ssl;
+#endif
 };
 
 struct _MailtcSocketClass
@@ -88,12 +91,71 @@ struct _MailtcSocketClass
 
 G_DEFINE_TYPE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT)
 
+enum
+{
+    PROP_0,
+    PROP_SSL
+};
+
 static void
 mailtc_socket_finalize (GObject* object)
 {
     mailtc_socket_disconnect (MAILTC_SOCKET (object));
     G_OBJECT_CLASS (mailtc_socket_parent_class)->finalize (object);
 }
+
+#if HAVE_OPENSSL
+void
+mailtc_socket_set_ssl (MailtcSocket* sock,
+                       gboolean      ssl)
+{
+    g_return_if_fail (MAILTC_IS_SOCKET (sock));
+
+    sock->ssl = ssl;
+}
+
+static void
+mailtc_socket_set_property (GObject*      object,
+                            guint         prop_id,
+                            const GValue* value,
+                            GParamSpec*   pspec)
+{
+    MailtcSocket* sock;
+
+    sock = MAILTC_SOCKET (object);
+
+    switch (prop_id)
+    {
+        case PROP_SSL:
+            mailtc_socket_set_ssl (sock, g_value_get_boolean (value));
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
+static void
+mailtc_socket_get_property (GObject*    object,
+                            guint       prop_id,
+                            GValue*     value,
+                            GParamSpec* pspec)
+{
+    MailtcSocket* sock;
+
+    sock = MAILTC_SOCKET (object);
+
+    switch (prop_id)
+    {
+        case PROP_SSL:
+            g_value_set_boolean (value, sock->ssl);
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+#endif
 
 static void
 mailtc_socket_class_init (MailtcSocketClass* class)
@@ -102,7 +164,10 @@ mailtc_socket_class_init (MailtcSocketClass* class)
 
     gobject_class = G_OBJECT_CLASS (class);
     gobject_class->finalize = mailtc_socket_finalize;
-
+#if HAVE_OPENSSL
+    gobject_class->set_property = mailtc_socket_set_property;
+    gobject_class->get_property = mailtc_socket_get_property;
+#endif
     g_type_class_add_private (class, sizeof (MailtcSocketPrivate));
 }
 
@@ -121,6 +186,7 @@ mailtc_socket_init (MailtcSocket* sock)
 #if HAVE_OPENSSL
     priv->ssl = NULL;
     priv->ctx = NULL;
+    sock->ssl = FALSE;
 #endif
 }
 
@@ -444,10 +510,10 @@ mailtc_socket_connect (MailtcSocket* sock,
     }
 
 #if HAVE_OPENSSL
-    return mailtc_socket_ssl_connect (sock, error);
-#else
-    return TRUE;
+    if (sock->ssl)
+        return mailtc_socket_ssl_connect (sock, error);
 #endif
+    return TRUE;
 }
 
 MailtcSocket*
