@@ -35,6 +35,10 @@ typedef struct _MailtcSocket        MailtcSocket;
 typedef struct _MailtcSocketClass   MailtcSocketClass;
 typedef struct _MailtcSocketPrivate MailtcSocketPrivate;
 
+void
+mailtc_socket_set_ssl    (MailtcSocket* sock,
+                          gboolean      ssl);
+
 gboolean
 mailtc_socket_connect    (MailtcSocket* sock,
                           gchar*        server,
