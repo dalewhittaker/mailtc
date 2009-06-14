@@ -929,7 +929,7 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes ("Account",
                                     renderer, "text", TREEVIEW_ACCOUNT_COLUMN, NULL);
-    gtk_tree_view_column_set_min_width (column, 250);
+    gtk_tree_view_column_set_min_width (column, 230);
     gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
     column = gtk_tree_view_column_new_with_attributes ("Protocol",
                                     renderer, "text", TREEVIEW_PROTOCOL_COLUMN, NULL);

@@ -77,6 +77,9 @@ mailtc_uid_table_load (MailtcUidTable* uid_table,
     g_return_val_if_fail (MAILTC_IS_UID_TABLE (uid_table), FALSE);
     g_return_val_if_fail (uid_table->filename, FALSE);
 
+    if (!g_file_test (uid_table->filename, G_FILE_TEST_EXISTS))
+        return TRUE;
+
     priv = uid_table->priv;
     if (!(uidfile = g_io_channel_new_file (uid_table->filename, "r", error)))
         return FALSE;
