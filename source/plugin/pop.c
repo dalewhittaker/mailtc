@@ -34,7 +34,6 @@
 typedef enum
 {
     POP_CMD_NULL = 0,
-    POP_CMD_CAPA,
     POP_CMD_USER,
     POP_CMD_PASS,
     POP_CMD_STAT,
@@ -149,21 +148,6 @@ pop_read (pop_private* priv,
 }
 
 static gboolean
-pop_caparead (pop_private* priv,
-              GError**     error)
-{
-    GString* msg;
-
-    /* TODO the results of this will be used
-     * to determine capabilities for e.g CRAM-MD5
-     */
-    if ((msg = pop_readstring (priv, ".\r\n", error)))
-        g_string_free (msg, TRUE);
-
-    return *error ? FALSE : TRUE;
-}
-
-static gboolean
 pop_statread (pop_private* priv,
               GError**     error)
 {
@@ -272,7 +256,6 @@ pop_run (pop_private* priv,
         pop_item items[] =
         {
              { NULL,          NULL,              NULL,          NULL         },
-             { "CAPA\r\n",    NULL,              NULL,          pop_caparead },
              { "USER %s\r\n", account->user,     NULL,          NULL         },
              { "PASS %s\r\n", account->password, pop_passwrite, NULL         },
              { "STAT\r\n",    NULL,              NULL,          pop_statread },
@@ -328,7 +311,10 @@ pop_calculate_new (pop_private*    priv,
         for (i = 1; i <= total_messages; ++i)
         {
             if (!pop_write (priv, error, "UIDL %" G_GINT64_FORMAT "\r\n", i))
-                return -1;
+            {
+                messages = -1;
+                break;
+            }
 
             msg = pop_readstring (priv, "\r\n", error);
             success = *error ? FALSE : TRUE;
@@ -351,6 +337,8 @@ pop_calculate_new (pop_private*    priv,
     }
     if (messages != -1)
         messages = mailtc_uid_table_remove_old (uid_table);
+    else
+        mailtc_socket_disconnect (priv->sock);
 
     return messages;
 }
@@ -382,16 +370,13 @@ pop_get_messages (mtc_config*  config,
         return -1;
     if (!pop_run (priv, POP_CMD_NULL, error))
         return -1;
-    if (!pop_run (priv, POP_CMD_CAPA, error))
-        return -1;
     if (!pop_run (priv, POP_CMD_USER, error))
         return -1;
     if (!pop_run (priv, POP_CMD_PASS, error))
         return -1;
     if (!pop_run (priv, POP_CMD_STAT, error))
         return -1;
-    if ((nmails = pop_calculate_new (priv, MAILTC_UID_TABLE (account->priv),
-                                     error)) == -1)
+    if ((nmails = pop_calculate_new (priv, MAILTC_UID_TABLE (account->priv), error)) == -1)
         return -1;
     if (!pop_run (priv, POP_CMD_QUIT, error))
         return -1;
