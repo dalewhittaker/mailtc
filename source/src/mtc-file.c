@@ -314,6 +314,7 @@ mailtc_load_config (mtc_config* config,
     GSList* list;
     mtc_account* account;
     mtc_plugin* plugin;
+    gboolean success;
     gchar* colourstring;
     gchar* plugin_name;
     gchar* filename;
@@ -351,6 +352,7 @@ mailtc_load_config (mtc_config* config,
         {
             for (i = 0; i < n; i++)
             {
+                success = FALSE;
                 key_group = g_strdup_printf ("account%u", i);
                 if (!g_key_file_has_group (key_file, key_group))
                 {
@@ -413,14 +415,15 @@ mailtc_load_config (mtc_config* config,
                     account->password &&
                     account->plugin)
                 {
-                    /* TODO error check */
                     if (plugin->add_account)
-                        (*plugin->add_account) (config, account, error);
-
-                    config->accounts = g_slist_append (config->accounts, account);
+                        success = (*plugin->add_account) (config, account, error);
+                    else
+                        success = TRUE;
                 }
+                if (success)
+                    config->accounts = g_slist_append (config->accounts, account);
                 else
-                    g_free (account);
+                    mailtc_free_account (account, error);
 
                 g_free (key_group);
             }

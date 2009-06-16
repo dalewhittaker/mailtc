@@ -377,6 +377,7 @@ mailtc_account_dialog_save (mtc_config*  config,
     g_assert (plugin);
 
     empty = FALSE;
+    changed = FALSE;
 
     if (g_str_equal (name, ""))
     {
@@ -414,6 +415,7 @@ mailtc_account_dialog_save (mtc_config*  config,
     {
         account = g_new0 (mtc_account, 1);
         config->accounts = g_slist_append (config->accounts, account);
+        changed = TRUE;
     }
     else
     {
@@ -426,7 +428,8 @@ mailtc_account_dialog_save (mtc_config*  config,
     }
 
     iport = (guint) g_ascii_strtod (port, NULL);
-    changed = (account->server != server ||
+    changed = (changed ||
+               account->server != server ||
                account->user != user ||
                account->password != password ||
                account->port != iport ||
@@ -442,19 +445,22 @@ mailtc_account_dialog_save (mtc_config*  config,
                                 MAILTC_ENVELOPE (prefs->envelope_account));
     account->protocol = protocol;
 
-   if (changed)
-   {
-        /* TODO error check */
+    if (changed)
+    {
         if (account->plugin && account->plugin->remove_account)
-            (*account->plugin->remove_account) (account, error);
-
-        /* TODO error check */
-        if (plugin->add_account)
-            (*plugin->add_account) (config, account, error);
+        {
+            if (!(*account->plugin->remove_account) (account, error))
+                return -1;
+        }
 
         account->plugin = plugin;
-    }
 
+        if (plugin->add_account)
+        {
+            if (!(*plugin->add_account) (config, account, error))
+                return -1;
+        }
+    }
     return g_slist_index (config->accounts, account);
 }
 

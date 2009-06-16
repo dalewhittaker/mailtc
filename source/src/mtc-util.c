@@ -232,9 +232,8 @@ mailtc_free_account (mtc_account* account,
     {
         plugin = account->plugin;
 
-        /* TODO error check */
         if (plugin && plugin->remove_account)
-            (*plugin->remove_account) (account, NULL);
+            (*plugin->remove_account) (account, error);
 
         g_free (account->name);
         g_free (account->server);
@@ -249,6 +248,7 @@ mailtc_free_config (mtc_config* config,
                     GError**    error)
 {
     gboolean success;
+    GSList* list;
 
     success = TRUE;
     if (config)
@@ -263,9 +263,13 @@ mailtc_free_config (mtc_config* config,
         if (config->icon_colour)
             gdk_color_free (config->icon_colour);
 
-        g_slist_foreach (config->accounts,
-                         (GFunc)mailtc_free_account,
-                         error);
+        list = config->accounts;
+
+        while (list)
+        {
+            mailtc_free_account ((mtc_account*) list->data, error);
+            list = g_slist_next (list);
+        }
         g_slist_free (config->accounts);
 
         success = mailtc_unload_plugins (config, error);
