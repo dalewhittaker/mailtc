@@ -142,9 +142,11 @@ pop_read (pop_private* priv,
     GString* msg;
 
     if ((msg = pop_readstring (priv, "\r\n", error)))
+    {
         g_string_free (msg, TRUE);
-
-    return *error ? FALSE : TRUE;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static gboolean
@@ -156,9 +158,8 @@ pop_statread (pop_private* priv,
     gchar** total;
     gchar* stotal;
 
-    msg = pop_readstring (priv, "\r\n", error);
-    success = *error ? FALSE : TRUE;
-    if (success)
+    success = FALSE;
+    if ((msg = pop_readstring (priv, "\r\n", error)))
     {
         if (msg->str)
         {
@@ -170,17 +171,11 @@ pop_statread (pop_private* priv,
                     stotal = g_strdup (total[1]);
                     priv->total = g_ascii_strtoll (stotal, NULL, 10);
                     g_free (stotal);
+                    success = TRUE;
                 }
-                else
-                    success = FALSE;
-
-                g_strfreev (total);
             }
-            else
-                success = FALSE;
-
-            g_string_free (msg, TRUE);
         }
+        g_string_free (msg, TRUE);
     }
     return success;
 }
@@ -297,49 +292,44 @@ pop_calculate_new (pop_private*    priv,
     gchar* pstart;
     gchar* uidl;
     gint64 i;
-    gint64 total_messages;
     gint64 messages;
     gboolean success;
 
     mailtc_uid_table_age (uid_table);
-    messages = 0;
-    if (priv->total)
+    if (!priv->total)
+        return 0;
+
+    for (i = 1; i <= priv->total; ++i)
     {
-        total_messages = priv->total;
-        priv->total = 0;
+        success = FALSE;
+        if (!pop_write (priv, error, "UIDL %" G_GINT64_FORMAT "\r\n", i))
+            break;
 
-        for (i = 1; i <= total_messages; ++i)
+        if ((msg = pop_readstring (priv, "\r\n", error)))
         {
-            if (!pop_write (priv, error, "UIDL %" G_GINT64_FORMAT "\r\n", i))
+            if (msg->str)
             {
-                messages = -1;
-                break;
-            }
-
-            msg = pop_readstring (priv, "\r\n", error);
-            success = *error ? FALSE : TRUE;
-            if (success)
-            {
-                if (msg->str)
+                if ((pstart = g_strrstr (msg->str, " ")) &&
+                    (pstart < (msg->str + msg->len) - 1))
                 {
-                    if (!(pstart = g_strrstr (msg->str, " ")) ||
-                        (pstart >= (msg->str + msg->len) - 1))
-                        success = FALSE;
-                    else
-                    {
-                        uidl = g_strdup (pstart + 1);
-                        mailtc_uid_table_add (uid_table, g_strchomp (uidl));
-                    }
-                    g_string_free (msg, TRUE);
+                    uidl = g_strdup (pstart + 1);
+                    mailtc_uid_table_add (uid_table, g_strchomp (uidl));
+                    success = TRUE;
                 }
             }
+            g_string_free (msg, TRUE);
         }
+        if (!success)
+            break;
     }
-    if (messages != -1)
+    if (success)
         messages = mailtc_uid_table_remove_old (uid_table);
     else
+    {
+        messages = -1;
         mailtc_socket_disconnect (priv->sock);
-
+    }
+    priv->total = 0;
     return messages;
 }
 
@@ -401,6 +391,7 @@ static gboolean
 pop_remove_account (mtc_account* account,
                     GError**     error)
 {
+    (void) error;
     g_return_val_if_fail (account && account->plugin, FALSE);
 
     if (account->priv && MAILTC_IS_UID_TABLE (account->priv))
@@ -408,7 +399,6 @@ pop_remove_account (mtc_account* account,
         g_object_unref (MAILTC_UID_TABLE (account->priv));
         account->priv = NULL;
     }
-    /* TODO return an error? */
     return TRUE;
 }
 

@@ -163,10 +163,7 @@ mailtc_server_init (UniqueApp*  app,
                 mailtc_warning ("No accounts found.\nPlease enter a mail account");
         }
         else
-        {
-            mailtc_gerror (error);
             return FALSE;
-        }
 
         mode = MAILTC_MODE_CONFIG;
     }
