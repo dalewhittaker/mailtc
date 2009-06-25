@@ -235,6 +235,8 @@ mailtc_free_account (mtc_account* account,
         if (plugin && plugin->remove_account)
             (*plugin->remove_account) (account, error);
 
+        if (account->icon_colour)
+            gdk_color_free (account->icon_colour);
         g_free (account->name);
         g_free (account->server);
         g_free (account->user);
