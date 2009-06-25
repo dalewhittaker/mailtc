@@ -89,6 +89,7 @@ mailtc_parse_config (int*     argc,
         g_free (entries);
         return MAILTC_MODE_ERROR;
     }
+    g_option_context_free (context);
     g_free (entries);
 
     if (version)
@@ -152,15 +153,19 @@ mailtc_server_init (UniqueApp*  app,
     g_signal_connect (app, "message-received",
             G_CALLBACK (mailtc_message_received_cb), NULL);
 
-    if (!mailtc_load_plugins (config, error) ||
-        !mailtc_load_config (config, error))
+    if (!mailtc_load_plugins (config, error))
+        return FALSE;
+
+    if (!mailtc_load_config (config, error))
     {
         if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
             g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
-            g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND))
+            g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND) ||
+            g_error_matches (*error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
         {
             if (mode != MAILTC_MODE_CONFIG)
                 mailtc_warning ("No accounts found.\nPlease enter a mail account");
+            g_clear_error (error);
         }
         else
             return FALSE;
@@ -248,7 +253,8 @@ mailtc_terminate (mtc_config* config,
     }
     if (config && config->log)
     {
-        status_error = (g_io_channel_shutdown (config->log, TRUE, error) == G_IO_STATUS_ERROR);
+        status_error = (g_io_channel_shutdown (config->log, TRUE,
+                                *error ? NULL : error) == G_IO_STATUS_ERROR);
         if (!status_error)
         {
             g_io_channel_unref (config->log);
@@ -267,7 +273,7 @@ mailtc_cleanup (mtc_config* config,
 {
     gboolean success;
 
-    success = mailtc_free_config (config, error);
+    success = mailtc_free_config (config, *error ? NULL : error);
 
 #if HAVE_OPENSSL
     ERR_free_strings();
@@ -325,9 +331,11 @@ main (int argc,
     else if (mode == MAILTC_MODE_ERROR)
         report_error = TRUE;
 
-    if (report_error ||
-        !mailtc_terminate (config, &error) ||
-        !mailtc_cleanup (config, &error))
+    if (report_error)
+        mailtc_gerror (&error);
+    if (!mailtc_terminate (config, &error))
+        mailtc_gerror (&error);
+    if (!mailtc_cleanup (config, &error))
         mailtc_gerror (&error);
 
     mailtc_message ("theend");

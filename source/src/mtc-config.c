@@ -142,10 +142,14 @@ mailtc_button_plugin_clicked_cb (GtkWidget*  button,
                                  mtc_config* config)
 {
     GtkWidget* dialog_plugin;
+    GtkTreeModel* model;
+    GtkTreeIter iter;
     mtc_prefs* prefs;
     mtc_plugin* plugin;
     const gchar* authors[2];
-    gint active;
+    gint plgindex;
+    gint index;
+    gboolean exists;
 
     (void) button;
 
@@ -166,10 +170,15 @@ mailtc_button_plugin_clicked_cb (GtkWidget*  button,
             prefs->dialog_plugin = dialog_plugin;
         }
 
-        active = gtk_combo_box_get_active (GTK_COMBO_BOX (prefs->combo_plugin));
-        g_assert (active > -1);
+        model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+        g_assert (GTK_IS_TREE_MODEL (model));
+        exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &iter);
+        g_assert (exists);
 
-        plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, active);
+        gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
+                            COMBO_INDEX_COLUMN, &index, -1);
+        g_assert (index > -1);
+        plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, plgindex);
         g_assert (plugin);
 
         authors[0] = plugin->author;
@@ -894,7 +903,7 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
 
     g_return_if_fail (GTK_IS_TREE_VIEW (tree_view));
 
-    if (GTK_IS_BUTTON (button))
+    if (button && GTK_IS_BUTTON (button))
     {
         selected = FALSE;
         selection = gtk_tree_view_get_selection (tree_view);
@@ -904,6 +913,14 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
                 selected = TRUE;
         gtk_widget_set_sensitive (button, selected);
     }
+}
+
+static void
+mailtc_tree_view_destroy_cb (GtkWidget* widget,
+                             GtkButton* button)
+{
+    g_signal_handlers_disconnect_by_func (widget,
+            mailtc_cursor_or_cols_changed_cb, button);
 }
 
 static GtkWidget*
@@ -984,8 +1001,11 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
                       mailtc_cursor_or_cols_changed_cb, button_remove,
                       "signal::columns-changed",
                       mailtc_cursor_or_cols_changed_cb, button_remove,
+                      "signal::destroy",
+                      mailtc_tree_view_destroy_cb, button_remove,
+                      "signal::destroy",
+                      mailtc_tree_view_destroy_cb, button_edit,
                       NULL);
-
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_edit);
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_remove);
 

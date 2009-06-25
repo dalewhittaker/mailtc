@@ -323,7 +323,6 @@ mailtc_load_config (mtc_config* config,
     guint i;
     guint n;
 
-    *error = NULL;
     n = 0;
     filename = mailtc_file (config, CONFIG_NAME);
 
@@ -331,9 +330,7 @@ mailtc_load_config (mtc_config* config,
         g_chmod (filename, S_IRUSR | S_IWUSR);
 
     key_file = g_key_file_new ();
-    g_key_file_load_from_file (key_file, filename, G_KEY_FILE_NONE, error);
-
-    if (!*error)
+    if (g_key_file_load_from_file (key_file, filename, G_KEY_FILE_NONE, error))
     {
         config->interval = g_key_file_get_integer (key_file, "settings", "interval", error);
         if (!*error)

@@ -168,7 +168,7 @@ mailtc_load_plugins (mtc_config* config,
                               "Error: no plugins found!");
         retval = FALSE;
     }
-    return (retval);
+    return retval;
 }
 
 static void
@@ -184,7 +184,7 @@ mailtc_unload_plugin (mtc_plugin* plugin,
 
     module = (GModule*) plugin->module;
 
-    if (!g_module_close (module) && !(*error))
+    if (!g_module_close (module) && error && !(*error))
     {
         *error = g_error_new (MAILTC_PLUGIN_ERROR,
                               MAILTC_PLUGIN_ERROR_CLOSE,
@@ -210,6 +210,6 @@ mailtc_unload_plugins (mtc_config* config,
     g_slist_free (config->plugins);
     config->plugins = NULL;
 
-    return *error ? FALSE : TRUE;
+    return ((error && *error) ? FALSE : TRUE);
 }
 
