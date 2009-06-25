@@ -903,7 +903,7 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
 
     g_return_if_fail (GTK_IS_TREE_VIEW (tree_view));
 
-    if (button && GTK_IS_BUTTON (button))
+    if (GTK_IS_BUTTON (button))
     {
         selected = FALSE;
         selection = gtk_tree_view_get_selection (tree_view);
