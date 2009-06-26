@@ -72,6 +72,7 @@ mailtc_parse_config (int*     argc,
     gboolean debug;
     gboolean kill;
     gboolean version;
+    gboolean parsed;
 
     configure = debug = kill = version = FALSE;
 
@@ -84,13 +85,12 @@ mailtc_parse_config (int*     argc,
     context = g_option_context_new ("");
     g_option_context_add_main_entries (context, entries, NULL);
     g_option_context_set_ignore_unknown_options (context, FALSE);
-    if (!g_option_context_parse (context, argc, argv, error))
-    {
-        g_free (entries);
-        return MAILTC_MODE_ERROR;
-    }
+    parsed = g_option_context_parse (context, argc, argv, error);
     g_option_context_free (context);
     g_free (entries);
+
+    if (!parsed)
+        return MAILTC_MODE_ERROR;
 
     if (version)
     {
@@ -246,20 +246,23 @@ mailtc_terminate (mtc_config* config,
 
     newconfig = NULL;
 
-    if (config->source_id > 0)
+    if (config)
     {
-        g_source_remove (config->source_id);
-        config->source_id = 0;
-    }
-    if (config && config->log)
-    {
-        status_error = (g_io_channel_shutdown (config->log, TRUE,
-                                *error ? NULL : error) == G_IO_STATUS_ERROR);
-        if (!status_error)
+        if (config->source_id > 0)
         {
-            g_io_channel_unref (config->log);
-            config->log = NULL;
-            newconfig = config;
+            g_source_remove (config->source_id);
+            config->source_id = 0;
+        }
+        if (config->log)
+        {
+            status_error = (g_io_channel_shutdown (config->log, TRUE,
+                                    *error ? NULL : error) == G_IO_STATUS_ERROR);
+            if (!status_error)
+            {
+                g_io_channel_unref (config->log);
+                config->log = NULL;
+                newconfig = config;
+            }
         }
     }
     mailtc_set_log_glib (newconfig);
