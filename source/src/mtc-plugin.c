@@ -124,12 +124,8 @@ mailtc_load_plugins (mtc_config* config,
                      GError**    error)
 {
     GDir* dir;
-    const gchar* filename;
-    gboolean retval;
-    gchar* dirname;
-
-    dirname = LIBDIR;
-    retval = TRUE;
+    gboolean retval = TRUE;
+    gchar* dirname = LIBDIR;
 
     if (!g_module_supported ())
     {
@@ -142,6 +138,8 @@ mailtc_load_plugins (mtc_config* config,
 
     if ((dir = g_dir_open (dirname, 0, error)))
     {
+        const gchar* filename;
+
         while ((filename = g_dir_read_name (dir)))
         {
             if (!g_str_has_suffix (filename, G_MODULE_SUFFIX))

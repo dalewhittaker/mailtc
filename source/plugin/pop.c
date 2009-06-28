@@ -44,7 +44,7 @@ typedef enum
 typedef enum
 {
     POP_PROTOCOL = 0,
-#if HAVE_OPENSSL
+#if HAVE_GNUTLS
     POP_PROTOCOL_SSL,
 #endif
 
@@ -88,12 +88,10 @@ pop_readstring (pop_private* priv,
 {
     GString* msg;
     gchar buf[MAXDATASIZE];
-    gint bytes;
+    gint bytes = 1;
     guint endlen;
-    gboolean err;
+    gboolean err = FALSE;
 
-    err = FALSE;
-    bytes = 1;
     endlen = strlen (endchars);
     msg = g_string_new (NULL);
 
@@ -154,20 +152,21 @@ pop_statread (pop_private* priv,
               GError**     error)
 {
     GString* msg;
-    gboolean success;
-    gchar** total;
-    gchar* stotal;
+    gboolean success = FALSE;
 
-    success = FALSE;
     if ((msg = pop_readstring (priv, "\r\n", error)))
     {
         if (msg->str)
         {
+            gchar** total;
+
             total = g_strsplit (msg->str, " ", 0);
             if (total)
             {
                 if (total[0] && total[1] && total[2])
                 {
+                    gchar* stotal;
+
                     stotal = g_strdup (total[1]);
                     priv->total = g_ascii_strtoll (stotal, NULL, 10);
                     g_free (stotal);
@@ -210,7 +209,6 @@ pop_passwrite (pop_private*  priv,
                ...)
 {
     gchar* msg;
-    gchar* pass;
     va_list list;
     gint len;
 
@@ -220,6 +218,8 @@ pop_passwrite (pop_private*  priv,
 
     if (priv->debug)
     {
+        gchar* pass;
+
         pass = g_strdup (msg);
         g_strcanon (pass + 5, "*\r\n", '*');
         g_print (pass);
@@ -353,7 +353,7 @@ pop_get_messages (mtc_config*  config,
     priv->account = account;
     sock = priv->sock;
 
-#if HAVE_OPENSSL
+#if HAVE_GNUTLS
     mailtc_socket_set_ssl (sock, account->protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
 #endif
     if (!mailtc_socket_connect (sock, account->server, account->port, error))
@@ -471,7 +471,7 @@ plugin_init (void)
 
     plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
     plugin->ports[POP_PROTOCOL] = 110;
-#if HAVE_OPENSSL
+#if HAVE_GNUTLS
     plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
     plugin->ports[POP_PROTOCOL_SSL] = 995;
 #endif

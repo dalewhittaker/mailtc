@@ -61,18 +61,15 @@ mailtc_config_dialog_response_cb (GtkWidget*  dialog,
                                   gint        response_id,
                                   mtc_config* config)
 {
-    const gchar* mail_command;
-    mtc_prefs* prefs;
-    GError* error;
-
-    error = NULL;
-
     if (response_id == GTK_RESPONSE_OK)
     {
-        prefs = config->prefs;
+        mtc_prefs* prefs = config->prefs;
 
         if (prefs)
         {
+            const gchar* mail_command;
+            GError* error = NULL;
+
             config->interval = gtk_spin_button_get_value_as_int (
                                 GTK_SPIN_BUTTON (prefs->spin_interval));
 
@@ -141,15 +138,7 @@ static void
 mailtc_button_plugin_clicked_cb (GtkWidget*  button,
                                  mtc_config* config)
 {
-    GtkWidget* dialog_plugin;
-    GtkTreeModel* model;
-    GtkTreeIter iter;
     mtc_prefs* prefs;
-    mtc_plugin* plugin;
-    const gchar* authors[2];
-    gint plgindex;
-    gint index;
-    gboolean exists;
 
     (void) button;
 
@@ -158,6 +147,15 @@ mailtc_button_plugin_clicked_cb (GtkWidget*  button,
 
     if (prefs)
     {
+        GtkWidget* dialog_plugin;
+        GtkTreeModel* model;
+        GtkTreeIter iter;
+        mtc_plugin* plugin;
+        const gchar* authors[2];
+        gint plgindex;
+        gint index;
+        gboolean exists;
+
         dialog_plugin = prefs->dialog_plugin;
 
         if (!dialog_plugin)
@@ -505,7 +503,7 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
     gint plgindex;
     guint combo_index;
     guint combo_plgindex;
-    gint i;
+    gint i = 0;
 
     g_return_val_if_fail (config && config->prefs, -1);
 
@@ -515,7 +513,6 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
     g_assert (plgindex > -1);
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
-    i = 0;
     while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
     {
         gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &combo_plgindex,
@@ -813,7 +810,7 @@ mailtc_tree_view_get_selected_iter (GtkTreeView*  tree_view,
                                     GtkTreeIter*  iter)
 {
     GtkTreeSelection* selection;
-    guint i;
+    guint i = 0;
 
     selection = gtk_tree_view_get_selection (tree_view);
 
@@ -821,7 +818,6 @@ mailtc_tree_view_get_selected_iter (GtkTreeView*  tree_view,
         !gtk_tree_model_get_iter_first (model, iter))
         return -1;
 
-    i = 0;
     do
     {
         if (gtk_tree_selection_iter_is_selected (selection, iter))
@@ -839,7 +835,6 @@ mailtc_edit_button_clicked_cb (GtkWidget*    button,
     GtkTreeModel* model;
     GtkTreeIter iter;
     mtc_prefs* prefs;
-    mtc_account* account;
     gint index;
 
     g_return_if_fail (config && config->prefs);
@@ -850,6 +845,8 @@ mailtc_edit_button_clicked_cb (GtkWidget*    button,
                                                 model, &iter);
     if (index != -1)
     {
+        mtc_account* account;
+
         account = (mtc_account*) g_slist_nth_data (config->accounts, index);
         g_assert (account);
 
@@ -864,14 +861,10 @@ mailtc_remove_button_clicked_cb (GtkWidget*  button,
     GtkTreeModel* model;
     GtkTreeIter iter;
     mtc_prefs* prefs;
-    mtc_account* account;
-    mtc_plugin* plugin;
     gint index;
-    GError* error;
 
     (void) button;
     g_return_if_fail (config && config->prefs);
-    error = NULL;
 
     prefs = config->prefs;
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
@@ -879,6 +872,10 @@ mailtc_remove_button_clicked_cb (GtkWidget*  button,
                                                 model, &iter);
     if (index != -1)
     {
+        mtc_account* account;
+        mtc_plugin* plugin;
+        GError* error = NULL;
+
         account = (mtc_account*) g_slist_nth_data (config->accounts, index);
         g_assert (account);
         plugin = account->plugin;

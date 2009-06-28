@@ -6,7 +6,7 @@ m4_define([mailtc_version],[1.4.1])
 m4_define([glib_required_version],[2.18.0])
 m4_define([gmodule_required_version],[2.18.0])
 m4_define([gtk_required_version],[2.14.0])
-m4_define([openssl_required_version],[0.9.8])
+m4_define([gnutls_required_version],[2.6.6])
 m4_define([unique_required_version],[1.0.6])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
@@ -23,12 +23,12 @@ GLIB_REQUIRED_VERSION=glib_required_version
 GMODULE_REQUIRED_VERSION=gmodule_required_version
 GTK_REQUIRED_VERSION=gtk_required_version
 UNIQUE_REQUIRED_VERSION=unique_required_version
-OPENSSL_REQUIRED_VERSION=openssl_required_version
+GNUTLS_REQUIRED_VERSION=gnutls_required_version
 
 AC_SUBST(GLIB_REQUIRED_VERSION)
 AC_SUBST(GMODULE_REQUIRED_VERSION)
 AC_SUBST(GTK_REQUIRED_VERSION)
-AC_SUBST(OPENSSL_REQUIRED_VERSION)
+AC_SUBST(GNUTLS_REQUIRED_VERSION)
 AC_SUBST(UNIQUE_REQUIRED_VERSION)
 
 # put .o files in the subdirectory and package as bzip2
@@ -63,21 +63,21 @@ AC_SUBST([UNIQUE_LIBS])
 
 AC_ARG_ENABLE(ssl,
               AC_HELP_STRING([--disable-ssl],
-                             [do not build OpenSSL plugins [default=no]]),
+                             [do not build GNU TLS plugins [default=no]]),
               [],[enable_ssl="yes"])
 if test "$enable_ssl" = "yes" ; then
-    PKG_CHECK_MODULES(OPENSSL,openssl >= $OPENSSL_REQUIRED_VERSION,
+    PKG_CHECK_MODULES(GNUTLS,gnutls >= $GNUTLS_REQUIRED_VERSION,
                       [], [enable_ssl="no"])
     if test "$enable_ssl" = "no" ; then
-        AC_MSG_WARN([Cannot find OpenSSL headers, disabling])
+        AC_MSG_WARN([Cannot find GNU TLS headers, disabling])
     else
-        AC_DEFINE(HAVE_OPENSSL, 1, [Defined if you have OpenSSL support])
-        AC_SUBST([OPENSSL_CFLAGS])
-        AC_SUBST([OPENSSL_LIBS])
+        AC_DEFINE(HAVE_GNUTLS, 1, [Defined if you have GNU TLS support])
+        AC_SUBST([GNUTLS_CFLAGS])
+        AC_SUBST([GNUTLS_LIBS])
     fi
 fi
 
-AM_CONDITIONAL([HAVE_OPENSSL],[test "$enable_ssl" = "yes"])
+AM_CONDITIONAL([HAVE_GNUTLS],[test "$enable_ssl" = "yes"])
 
 AC_MSG_CHECKING([whether to do a debug build])
 AC_ARG_ENABLE(debug,
@@ -101,7 +101,7 @@ mailtc was configured with the following options:
 
 Build configuration:
     Enable debugging : $enable_debug
-    Enable OpenSSL   : $enable_ssl
+    Enable GNU TLS   : $enable_ssl
 
 Now type 'make' to build $PACKAGE $VERSION,
 and then type 'make install' for installation.
