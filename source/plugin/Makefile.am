@@ -32,12 +32,12 @@ endif
 
 INCLUDES = \
         $(GTK_CFLAGS) \
-		$(OPENSSL_CFLAGS) \
+		$(GNUTLS_CFLAGS) \
 		-I$(top_srcdir)/src
 
 LDADD = \
         $(GTK_LIBS) \
-		$(OPENSSL_LIBS)
+		$(GNUTLS_LIBS)
 
 pop_la_SOURCES = \
 		mtc-socket.c \
