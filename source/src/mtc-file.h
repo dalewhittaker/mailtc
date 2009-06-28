@@ -22,13 +22,6 @@
 
 #include "mtc.h"
 
-#if HAVE_OPENSSL
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#endif
-
 G_BEGIN_DECLS
 
 #ifdef MAXPATHLEN

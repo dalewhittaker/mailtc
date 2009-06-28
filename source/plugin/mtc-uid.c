@@ -109,9 +109,7 @@ mailtc_uid_table_set_property (GObject*      object,
                                const GValue* value,
                                GParamSpec*   pspec)
 {
-    MailtcUidTable* uid_table;
-
-    uid_table = MAILTC_UID_TABLE (object);
+    MailtcUidTable* uid_table = MAILTC_UID_TABLE (object);
 
     switch (prop_id)
     {
@@ -130,9 +128,7 @@ mailtc_uid_table_get_property (GObject*    object,
                                GValue*     value,
                                GParamSpec* pspec)
 {
-    MailtcUidTable* uid_table;
-
-    uid_table = MAILTC_UID_TABLE (object);
+    MailtcUidTable* uid_table = MAILTC_UID_TABLE (object);
 
     switch (prop_id)
     {
@@ -214,7 +210,7 @@ mailtc_uid_table_remove_old (MailtcUidTable* uid_table)
 {
     MailtcUidTablePrivate* priv;
     GHashTableIter iter;
-    gint64 n;
+    gint64 n = 0;
     gchar* flags;
 
     g_return_val_if_fail (MAILTC_IS_UID_TABLE (uid_table), -1);
@@ -222,7 +218,6 @@ mailtc_uid_table_remove_old (MailtcUidTable* uid_table)
     priv = uid_table->priv;
     g_hash_table_foreach_remove (priv->uids,
                 (GHRFunc) mailtc_uid_table_remove_func, NULL);
-    n = 0;
 
     g_hash_table_iter_init (&iter, priv->uids);
     while (g_hash_table_iter_next (&iter, NULL, (gpointer*) &flags))

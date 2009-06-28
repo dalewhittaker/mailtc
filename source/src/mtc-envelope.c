@@ -174,15 +174,15 @@ mailtc_envelope_notify_pixbuf_cb (GObject*    object,
                                   GParamSpec* pspec)
 {
     MailtcEnvelope* envelope;
-    GdkPixbuf* pixbuf;
-    gboolean is_envelope;
+    gboolean is_envelope = FALSE;
 
     (void) pspec;
     envelope = MAILTC_ENVELOPE (object);
-    is_envelope = FALSE;
 
     if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF)
     {
+        GdkPixbuf* pixbuf;
+
         pixbuf = gtk_image_get_pixbuf (GTK_IMAGE (envelope));
         if (pixbuf)
         {
@@ -199,7 +199,6 @@ mailtc_envelope_set_envelope_colour (MailtcEnvelope* envelope,
                                      GdkColor*       colour)
 {
     MailtcEnvelopePrivate* priv;
-    GdkColor dflcolour;
     GdkPixbuf* pixbuf;
 
     g_return_if_fail (MAILTC_IS_ENVELOPE (envelope));
@@ -228,6 +227,8 @@ mailtc_envelope_set_envelope_colour (MailtcEnvelope* envelope,
     }
     else
     {
+        GdkColor dflcolour;
+
         dflcolour.red = dflcolour.green = dflcolour.blue = 65535;
         envelope->colour = gdk_color_copy (&dflcolour);
     }

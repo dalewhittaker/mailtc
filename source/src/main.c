@@ -28,6 +28,10 @@
 #include <unique/unique.h>
 #include <signal.h>
 
+#if HAVE_GNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 #define LOG_NAME "log"
 
 /*
@@ -200,18 +204,18 @@ static gboolean
 mailtc_initialise (mtc_config* config,
                    GError**    error)
 {
-    gchar* filename;
-    gchar* str_time;
-    gchar* str_init;
-    gsize bytes;
 
-#if HAVE_OPENSSL
-    SSL_load_error_strings ();
-    SSL_library_init ();
+#if HAVE_GNUTLS
+    gnutls_global_init ();
 #endif
 
     if (config)
     {
+        gchar* filename;
+        gchar* str_time;
+        gchar* str_init;
+        gsize bytes;
+
         filename = mailtc_file (config, LOG_NAME);
         if (g_file_test (filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))
             g_remove (filename);
@@ -241,10 +245,7 @@ static gboolean
 mailtc_terminate (mtc_config* config,
                   GError**    error)
 {
-    mtc_config* newconfig;
-    gboolean status_error;
-
-    newconfig = NULL;
+    mtc_config* newconfig = NULL;
 
     if (config)
     {
@@ -255,6 +256,8 @@ mailtc_terminate (mtc_config* config,
         }
         if (config->log)
         {
+            gboolean status_error;
+
             status_error = (g_io_channel_shutdown (config->log, TRUE,
                                     *error ? NULL : error) == G_IO_STATUS_ERROR);
             if (!status_error)
@@ -278,9 +281,8 @@ mailtc_cleanup (mtc_config* config,
 
     success = mailtc_free_config (config, *error ? NULL : error);
 
-#if HAVE_OPENSSL
-    ERR_free_strings();
-    EVP_cleanup();
+#if HAVE_GNUTLS
+    gnutls_global_deinit ();
 #endif
     return success;
 }
@@ -289,15 +291,10 @@ int
 main (int argc,
       char **argv)
 {
-    UniqueApp* app;
     mtc_mode mode;
-    mtc_config* config;
-    GError* error;
-    gboolean report_error;
-
-    config = NULL;
-    error = NULL;
-    report_error = FALSE;
+    mtc_config* config = NULL;
+    GError* error = NULL;
+    gboolean report_error = FALSE;
 
     g_set_application_name (PACKAGE);
     mailtc_set_log_glib (NULL);
@@ -306,6 +303,8 @@ main (int argc,
 
     if (MAILTC_MODE_UNIQUE (mode))
     {
+        UniqueApp* app;
+
         gtk_init (&argc, &argv);
         app = unique_app_new_with_commands (PACKAGE, NULL,
                                 "kill", MAILTC_MODE_KILL, NULL);

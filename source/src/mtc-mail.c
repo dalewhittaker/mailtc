@@ -24,13 +24,10 @@
 static void
 mailtc_read_mail (mtc_config* config)
 {
-    GSList* list;
-    GError* error;
+    GSList* list = config->accounts;
+    GError* error = NULL;
     mtc_plugin* plugin;
     mtc_account* account;
-
-    error = NULL;
-    list = config->accounts;
 
     while (list)
     {
@@ -70,25 +67,24 @@ mailtc_mark_as_read_cb (MailtcStatusIcon* status_icon,
     mailtc_read_mail (config);
 }
 
-gboolean mailtc_mail_thread (mtc_config* config)
+gboolean
+mailtc_mail_thread (mtc_config* config)
 {
-   MailtcStatusIcon* icon;
-   GSList* list;
-   mtc_account* account;
-   mtc_plugin* plugin;
-   guint id;
-   gint64 messages;
-   GString* err_msg;
-   GError* error;
 
    if (!config->locked)
    {
+        MailtcStatusIcon* icon;
+        mtc_account* account;
+        mtc_plugin* plugin;
+        GSList* list;
+        GError* error = NULL;
+        GString* err_msg = NULL;
+        gint64 messages;
+        guint id = 0;
+
         config->locked = TRUE;
         list = config->accounts;
         icon = MAILTC_STATUS_ICON (config->status_icon);
-        id = 0;
-        error = NULL;
-        err_msg = NULL;
 
         while (list)
         {

@@ -64,12 +64,12 @@ void
 mailtc_log (GIOChannel*  log,
             const gchar* message)
 {
-    gchar* stime;
-    gchar* s;
-    gsize bytes;
-
     if (log)
     {
+        gchar* stime;
+        gchar* s;
+        gsize bytes;
+
         stime = mailtc_current_time ();
         s = g_strdup_printf ("%s : %s\n", stime, message);
         g_free (stime);
@@ -87,17 +87,11 @@ mailtc_gtk_handler (const gchar*   log_domain,
                     mtc_config*    config)
 {
     gchar* s;
-    const gchar* icon;
-    GtkWidget* dialog;
     GtkMessageType msg_type;
-    GtkWidget* toplevel;
-    mtc_prefs* prefs;
+    const gchar* icon = NULL;
 
-    (void)log_domain;
+    (void) log_domain;
 
-    prefs = NULL;
-    toplevel = NULL;
-    icon = NULL;
     s = g_strdup (message);
     g_strchomp (s);
 
@@ -126,6 +120,10 @@ mailtc_gtk_handler (const gchar*   log_domain,
         g_printerr ("%s\n", s);
     else
     {
+        GtkWidget* toplevel;
+        GtkWidget* dialog;
+        mtc_prefs* prefs = NULL;
+
         if (config)
             prefs = config->prefs;
 
@@ -224,13 +222,11 @@ void
 mailtc_free_account (mtc_account* account,
                      GError**     error)
 {
-    mtc_plugin* plugin;
-
     (void) error;
 
     if (account)
     {
-        plugin = account->plugin;
+        mtc_plugin* plugin = account->plugin;
 
         if (plugin && plugin->remove_account)
             (*plugin->remove_account) (account, error);
@@ -249,12 +245,12 @@ gboolean
 mailtc_free_config (mtc_config* config,
                     GError**    error)
 {
-    gboolean success;
-    GSList* list;
+    gboolean success = TRUE;
 
-    success = TRUE;
     if (config)
     {
+        GSList* list;
+
         g_free (config->directory);
         g_free (config->prefs);
         g_free (config->mail_command);
