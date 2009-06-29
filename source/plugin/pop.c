@@ -172,6 +172,7 @@ pop_statread (pop_private* priv,
                     g_free (stotal);
                     success = TRUE;
                 }
+                g_strfreev (total);
             }
         }
         g_string_free (msg, TRUE);

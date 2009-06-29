@@ -133,6 +133,13 @@ mailtc_mail_thread (mtc_config* config)
    return TRUE;
 }
 
+gboolean
+mailtc_mail_thread_once (mtc_config* config)
+{
+    mailtc_mail_thread (config);
+    return FALSE;
+}
+
 void
 mailtc_run_main_loop (mtc_config* config)
 {
@@ -160,7 +167,7 @@ mailtc_run_main_loop (mtc_config* config)
     g_signal_connect (icon, "mark-as-read",
                 G_CALLBACK (mailtc_mark_as_read_cb), config);
 
-    mailtc_mail_thread (config);
+    g_idle_add ((GSourceFunc) mailtc_mail_thread_once, config);
 
     config->source_id = g_timeout_add_seconds (60 * config->interval,
                                                (GSourceFunc) mailtc_mail_thread,

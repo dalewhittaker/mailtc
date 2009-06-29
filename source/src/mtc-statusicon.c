@@ -222,6 +222,7 @@ mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
 {
     g_return_if_fail (MAILTC_IS_STATUS_ICON (status_icon));
 
+    gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
     mailtc_status_icon_add_item (status_icon, NULL, colour);
 }
 
