@@ -1,0 +1,44 @@
+NAME
+        mailtc is a lightweight GTK2 system tray mail checker for Linux desktops
+
+SYNOPSYS
+        mailtc [OPTION]...
+
+DESCRIPTION
+        mailtc is a mail checking utility that displays a new mail icon in the Notification Area/System Tray of a desktop panel.
+        It currently features:
+
+            o Remote checking of POP3 mail
+            o POP3 over SSL/TLS
+            o Ability to check every n minutes
+            o Different icon colours for each individual account.
+
+         mailtc should work on all www.freedesktop.org compliant panels.
+         it requires the GTK2 library (2.14 and above), and a panel.
+
+OPTIONS
+        mailtc -c   - launches mailtc configuration utility
+        mailtc      - launches mailtc to check mail server
+        mailtc -d   - launches mailtc to check mail server in debug mode
+        mailtc -k   - kills any running mailtc process
+
+EXAMPLE USAGE
+        To use mailtc, first run the configuration utility:
+
+            mailtc -c
+
+        Configure your mail details, then to test mailtc, run mailtc (with no parameters) and send an email to the server that mailtc is checking.  After a short delay, a new mail icon should appear in the panel.
+        Add mailtc command to your X or WM startup script for mailtc to run every time your X session is started.
+
+FILES
+        ~/.config/mailtc/config
+            mailtc config and account options
+
+        ~/.config/mailtc/log
+            error log file
+
+        ~/.config/mailtc/<plugin name>
+            plugin specific files
+
+AUTHORS
+        Dale Whittaker <dayul@users.sf.net>

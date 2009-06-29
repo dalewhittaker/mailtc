@@ -2,10 +2,10 @@
 
 LIBTOOLIZE_FLAGS="--force --automake --copy"
 ACLOCAL_FLAGS="-I autotools"
-AUTOMAKE_FLAGS="--foreign --add-missing --copy"
+AUTOMAKE_FLAGS="--add-missing --copy"
 rm -rf ./autom4te.cache
 mkdir -p autotools
-touch README INSTALL
+touch NEWS ChangeLog
 
 aclocal $ACLOCAL_FLAGS || exit $?
 libtoolize $LIBTOOLIZE_FLAGS || exit $?
