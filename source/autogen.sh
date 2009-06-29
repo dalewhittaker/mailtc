@@ -5,7 +5,7 @@ ACLOCAL_FLAGS="-I autotools"
 AUTOMAKE_FLAGS="--add-missing --copy"
 rm -rf ./autom4te.cache
 mkdir -p autotools
-touch NEWS ChangeLog
+touch NEWS
 
 aclocal $ACLOCAL_FLAGS || exit $?
 libtoolize $LIBTOOLIZE_FLAGS || exit $?
