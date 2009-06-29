@@ -1,7 +1,7 @@
 AC_PREREQ(2.57)
 
 m4_define([mailtc_package],[mailtc])
-m4_define([mailtc_version],[1.4.1])
+m4_define([mailtc_version],[1.4.2])
 
 m4_define([glib_required_version],[2.18.0])
 m4_define([gmodule_required_version],[2.18.0])
