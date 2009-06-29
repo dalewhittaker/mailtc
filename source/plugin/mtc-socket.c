@@ -333,10 +333,10 @@ mailtc_socket_data_ready (MailtcSocket* sock,
         return TRUE;
 #endif
 
-	FD_ZERO (&fds);
-	FD_SET (priv->sockfd, &fds);
-	tv.tv_sec = NET_TIMEOUT;
-	tv.tv_usec = 0;
+    FD_ZERO (&fds);
+    FD_SET (priv->sockfd, &fds);
+    tv.tv_sec = NET_TIMEOUT;
+    tv.tv_usec = 0;
 
     n = select ((gint)(priv->sockfd + 1), &fds, NULL, NULL, &tv);
 
