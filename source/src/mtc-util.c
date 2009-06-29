@@ -140,8 +140,8 @@ mailtc_gtk_handler (const gchar*   log_domain,
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
         if (icon)
             gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
-	    gtk_dialog_run (GTK_DIALOG (dialog));
-	    gtk_widget_destroy (dialog);
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
     }
     mailtc_log (config->log, s);
     g_free (s);
@@ -215,7 +215,7 @@ mailtc_run_command (const gchar* command)
                         NULL, NULL, NULL, &error))
         mailtc_gerror (&error);
 
-	g_strfreev (args);
+    g_strfreev (args);
 }
 
 void

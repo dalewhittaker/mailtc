@@ -111,9 +111,9 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
                                MailtcEnvelope* envelope)
 {
     GtkWidget* dialog;
-	GtkWidget *coloursel;
+    GtkWidget *coloursel;
     GdkColor* colour;
-	gint response;
+    gint response;
 
     (void) button;
 
@@ -982,12 +982,12 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     gtk_box_pack_start (GTK_BOX (hbox), button_edit, TRUE, TRUE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), button_remove, TRUE, TRUE, 0);
 
-	g_signal_connect (button_add, "clicked",
+    g_signal_connect (button_add, "clicked",
             G_CALLBACK (mailtc_add_button_clicked_cb), config);
     g_signal_connect (button_edit, "clicked",
             G_CALLBACK (mailtc_edit_button_clicked_cb), config);
-	g_signal_connect (button_remove, "clicked",
-	        G_CALLBACK (mailtc_remove_button_clicked_cb), config);
+    g_signal_connect (button_remove, "clicked",
+            G_CALLBACK (mailtc_remove_button_clicked_cb), config);
 
     g_object_connect (tree_view,
                       "signal::cursor-changed",
