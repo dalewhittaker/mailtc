@@ -276,10 +276,12 @@ mailtc_free_config (mtc_config* config,
     return success;
 }
 
-void
+gboolean
 mailtc_quit (void)
 {
     mailtc_set_log_glib (NULL);
     gtk_main_quit ();
+
+    return FALSE;
 }
 

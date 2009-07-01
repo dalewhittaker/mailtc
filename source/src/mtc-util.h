@@ -62,7 +62,7 @@ gboolean
 mailtc_free_config  (mtc_config*  config,
                      GError**     error);
 
-void
+gboolean
 mailtc_quit         (void);
 
 G_END_DECLS

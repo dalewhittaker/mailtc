@@ -280,6 +280,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
                                        item->nmails,
                                        (item->nmails > 1) ? "messages" : "message");
             tooltip = g_string_append (tooltip, tmp_str);
+            g_free (tmp_str);
 
             /* If colour is already set there is more than one item, show the multi colour. */
             colour = colour ? dflitem->colour : item->colour;

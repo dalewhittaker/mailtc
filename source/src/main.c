@@ -125,19 +125,22 @@ mailtc_message_received_cb (UniqueApp*         app,
                             UniqueMessageData* message_data,
                             guint              time_)
 {
+    UniqueResponse retval = UNIQUE_RESPONSE_OK;
+
     (void) app;
     (void) time_;
     (void) message_data;
 
     switch (command)
     {
-        case MAILTC_MODE_KILL:
-            mailtc_quit ();
+        case UNIQUE_CLOSE:
+            g_idle_add ((GSourceFunc) mailtc_quit, NULL);
             break;
         default:
+            retval = UNIQUE_RESPONSE_PASSTHROUGH;
             ;
     }
-    return UNIQUE_RESPONSE_OK;
+    return retval;
 }
 
 static gboolean
@@ -306,14 +309,13 @@ main (int argc,
         UniqueApp* app;
 
         gtk_init (&argc, &argv);
-        app = unique_app_new_with_commands (PACKAGE, NULL,
-                                "kill", MAILTC_MODE_KILL, NULL);
+        app = unique_app_new (PACKAGE, NULL);
 
         if (mode == MAILTC_MODE_KILL)
         {
             if (unique_app_is_running (app))
             {
-                if (unique_app_send_message (app, MAILTC_MODE_KILL, NULL) != UNIQUE_RESPONSE_OK)
+                if (unique_app_send_message (app, UNIQUE_CLOSE, NULL) != UNIQUE_RESPONSE_OK)
                     mailtc_error ("Error sending kill message.");
             }
         }
