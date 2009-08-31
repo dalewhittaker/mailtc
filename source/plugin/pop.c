@@ -291,7 +291,6 @@ pop_calculate_new (pop_private*    priv,
 {
     GString* msg;
     gchar* pstart;
-    gchar* uidl;
     gint64 i;
     gint64 messages;
     gboolean success;
@@ -313,8 +312,7 @@ pop_calculate_new (pop_private*    priv,
                 if ((pstart = g_strrstr (msg->str, " ")) &&
                     (pstart < (msg->str + msg->len) - 1))
                 {
-                    uidl = g_strdup (pstart + 1);
-                    mailtc_uid_table_add (uid_table, g_strchomp (uidl));
+                    mailtc_uid_table_add (uid_table, pstart + 1);
                     success = TRUE;
                 }
             }

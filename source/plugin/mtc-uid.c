@@ -234,20 +234,25 @@ mailtc_uid_table_add (MailtcUidTable* uid_table,
 {
     MailtcUidTablePrivate* priv;
     gchar* flags;
+    gchar* puidl;
 
     g_return_if_fail (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = uid_table->priv;
 
-    flags = (gchar*) g_hash_table_lookup (priv->uids, g_strchomp (uidl));
+    puidl = g_strchomp (g_strdup (uidl));
+    flags = (gchar*) g_hash_table_lookup (priv->uids, puidl);
     if (!flags)
     {
         flags = g_new (gchar, 1);
         *flags = UIDL_FLAG_NEW;
-        g_hash_table_insert (priv->uids, uidl, flags);
+        g_hash_table_insert (priv->uids, puidl, flags);
     }
     else
+    {
+        g_free (puidl);
         *flags |= UIDL_FLAG_NEW;
+    }
 }
 
 gboolean
