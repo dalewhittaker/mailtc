@@ -198,7 +198,6 @@ mailtc_server_init (UniqueApp*  app,
     signal (SIGQUIT, mailtc_term_handler);
 
     gtk_main ();
-    mailtc_message ("bye");
 
     return TRUE;
 }
@@ -342,7 +341,6 @@ main (int argc,
     if (!mailtc_cleanup (config, &error))
         mailtc_gerror (&error);
 
-    mailtc_message ("theend");
     return report_error ? 1 : 0;
 }
 
