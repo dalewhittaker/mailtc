@@ -29,8 +29,7 @@ mailtc_directory (void)
 {
     gchar* directory;
 
-    /* TODO uncomment this when ready */
-    directory = g_build_filename (/*g_get_home_dir (),*/ ".config", PACKAGE, NULL);
+    directory = g_build_filename (g_get_home_dir (), ".config", PACKAGE, NULL);
     g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     return directory;
