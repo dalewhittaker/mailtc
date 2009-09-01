@@ -50,3 +50,7 @@ pop_la_LDFLAGS = \
 		-avoid-version \
 		-rpath $(plugindir)
 
+EXTRA_DIST = \
+		mtc-socket.h \
+		mtc-uid.h
+
