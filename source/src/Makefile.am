@@ -48,3 +48,14 @@ mailtc_SOURCES = \
 		mtc-statusicon.c \
 		mtc-util.c \
 		main.c
+
+EXTRA_DIST = \
+		mtc.h \
+		mtc-config.h \
+		mtc-envelope.h \
+		mtc-file.h \
+		mtc-mail.h \
+		mtc-plugin.h \
+		mtc-statusicon.h \
+		mtc-util.h
+
