@@ -5,6 +5,7 @@ AM_CPPFLAGS = \
 		-DATK_DISABLE_DEPRECATED \
 		-DG_DISABLE_SINGLE_INCLUDES \
 		-DG_DISABLE_DEPRECATED \
+		-DGTK_DISABLE_SINGLE_INCLUDES \
 		-DGTK_DISABLE_DEPRECATED \
 		-DGDK_PIXBUF_DISABLE_DEPRECATED \
 		-DGDK_DISABLE_DEPRECATED \
@@ -13,9 +14,6 @@ AM_CPPFLAGS = \
 		-DPANGO_DISABLE_DEPRECATED \
 		-DGSEAL_ENABLE \
 		-DLIBDIR=\""$(libdir)/mailtc"\"
-
-# TODO libunique doesn't like this
-# -DGTK_DISABLE_SINGLE_INCLUDES
 
 AM_CFLAGS = \
 		-Wall \
@@ -58,4 +56,3 @@ EXTRA_DIST = \
 		mtc-plugin.h \
 		mtc-statusicon.h \
 		mtc-util.h
-
