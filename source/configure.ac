@@ -1,13 +1,13 @@
 AC_PREREQ(2.57)
 
 m4_define([mailtc_package],[mailtc])
-m4_define([mailtc_version],[1.4.2])
+m4_define([mailtc_version],[1.4.3])
 
 m4_define([glib_required_version],[2.18.0])
 m4_define([gmodule_required_version],[2.18.0])
 m4_define([gtk_required_version],[2.14.0])
 m4_define([gnutls_required_version],[2.6.6])
-m4_define([unique_required_version],[1.0.6])
+m4_define([unique_required_version],[1.1.2])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
 
@@ -63,15 +63,15 @@ AC_SUBST([UNIQUE_LIBS])
 
 AC_ARG_ENABLE(ssl,
               AC_HELP_STRING([--disable-ssl],
-                             [do not build GNU TLS plugins [default=no]]),
+                             [do not build GnuTLS plugins [default=no]]),
               [],[enable_ssl="yes"])
 if test "$enable_ssl" = "yes" ; then
     PKG_CHECK_MODULES(GNUTLS,gnutls >= $GNUTLS_REQUIRED_VERSION,
                       [], [enable_ssl="no"])
     if test "$enable_ssl" = "no" ; then
-        AC_MSG_WARN([Cannot find GNU TLS headers, disabling])
+        AC_MSG_WARN([Cannot find GnuTLS headers, disabling])
     else
-        AC_DEFINE(HAVE_GNUTLS, 1, [Defined if you have GNU TLS support])
+        AC_DEFINE(HAVE_GNUTLS, 1, [Defined if you have GnuTLS support])
         AC_SUBST([GNUTLS_CFLAGS])
         AC_SUBST([GNUTLS_LIBS])
     fi
@@ -101,7 +101,7 @@ mailtc was configured with the following options:
 
 Build configuration:
     Enable debugging : $enable_debug
-    Enable GNU TLS   : $enable_ssl
+    Enable GnuTLS    : $enable_ssl
 
 Now type 'make' to build $PACKAGE $VERSION,
 and then type 'make install' for installation.
