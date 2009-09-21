@@ -22,7 +22,6 @@
 #include <config.h>
 #include <string.h>     /* memset ()                    */
 #include <unistd.h>     /* close ()                     */
-#include <sys/select.h> /* select ()                    */
 #include <sys/types.h>  /* various stuff                */
 #include <netdb.h>      /* network stuff                */
 #include <netinet/in.h> /* net structs                  */
@@ -53,7 +52,7 @@ typedef enum
     MAILTC_SOCKET_ERROR_CONNECT,
     MAILTC_SOCKET_ERROR_SET_OPTIONS,
     MAILTC_SOCKET_ERROR_GET_OPTIONS,
-    MAILTC_SOCKET_ERROR_SELECT,
+    MAILTC_SOCKET_ERROR_POLL,
     MAILTC_SOCKET_ERROR_READ,
     MAILTC_SOCKET_ERROR_WRITE,
 #if HAVE_GNUTLS
@@ -320,8 +319,7 @@ mailtc_socket_data_ready (MailtcSocket* sock,
                           GError**      error)
 {
     MailtcSocketPrivate* priv;
-    fd_set fds;
-    struct timeval tv;
+    GPollFD fds;
     gint n;
 
     g_return_val_if_fail (MAILTC_IS_SOCKET (sock), -1);
@@ -333,26 +331,28 @@ mailtc_socket_data_ready (MailtcSocket* sock,
         return TRUE;
 #endif
 
-    FD_ZERO (&fds);
-    FD_SET (priv->sockfd, &fds);
-    tv.tv_sec = NET_TIMEOUT;
-    tv.tv_usec = 0;
+    memset (&fds, 0, sizeof (fds));
+    fds.fd = priv->sockfd;
+    fds.events = G_IO_IN;
 
-    n = select ((gint)(priv->sockfd + 1), &fds, NULL, NULL, &tv);
+    n = g_poll (&fds, 1, NET_TIMEOUT * 1000);
 
     if (n > 0)
-        return TRUE;
-    else
     {
-        /* n == 0 means timeout */
-        if (n == SOCKET_ERROR && error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_SELECT,
-                                  "Select error on socket.");
-        }
-        return FALSE;
+        if (fds.revents == G_IO_IN)
+            return TRUE;
+
+        n = SOCKET_ERROR;
     }
+
+    /* n == 0 means timeout */
+    if (n == SOCKET_ERROR && error)
+    {
+        *error = g_error_new (MAILTC_SOCKET_ERROR,
+                              MAILTC_SOCKET_ERROR_POLL,
+                              "poll error on socket.");
+    }
+    return FALSE;
 }
 
 gint
