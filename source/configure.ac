@@ -32,7 +32,7 @@ AC_SUBST(GNUTLS_REQUIRED_VERSION)
 AC_SUBST(UNIQUE_REQUIRED_VERSION)
 
 # put .o files in the subdirectory and package as bzip2
-AM_INIT_AUTOMAKE([subdir-objects dist-bzip2])
+AM_INIT_AUTOMAKE([subdir-objects dist-bzip2 no-dist-gzip])
 
 if test -z "$CFLAGS"; then
     CFLAGS=""
