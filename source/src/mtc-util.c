@@ -130,13 +130,12 @@ mailtc_gtk_handler (const gchar*   log_domain,
         toplevel = (prefs && prefs->dialog_config) ?
                     gtk_widget_get_toplevel (prefs->dialog_config) : NULL;
 
-        /* TODO GSEAL_ENABLE macro doesn't like this */
-        dialog = gtk_message_dialog_new (toplevel /*&& GTK_WIDGET_TOPLEVEL (toplevel)*/ ?
+        dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
                                          GTK_WINDOW (toplevel) : NULL,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
                                          msg_type,
                                          GTK_BUTTONS_OK,
-                                         s);
+                                         "%s", s);
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
         if (icon)
             gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
@@ -155,7 +154,7 @@ mailtc_glib_handler (const gchar*   log_domain,
 {
     gchar* s;
 
-    (void)log_domain;
+    (void) log_domain;
 
     s = g_strdup (message);
     g_strchomp (s);
