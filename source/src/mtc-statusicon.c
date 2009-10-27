@@ -59,7 +59,6 @@ enum
 
 static guint signals[LAST_SIGNAL];
 
-#if GTK_CHECK_VERSION (2, 16, 0)
 static gboolean
 mailtc_status_icon_button_press_event_cb (MailtcStatusIcon* status_icon,
                                           GdkEventButton*   event)
@@ -71,24 +70,6 @@ mailtc_status_icon_button_press_event_cb (MailtcStatusIcon* status_icon,
 
     return TRUE;
 }
-#else
-
-static void
-mailtc_status_icon_activate_cb (MailtcStatusIcon* status_icon)
-{
-    g_signal_emit (status_icon, signals[READ_MAIL], 0);
-}
-
-static void
-mailtc_status_icon_popup_menu_cb (MailtcStatusIcon* status_icon,
-                                  guint             button,
-                                  guint             activate_time)
-{
-    (void) button;
-    (void) activate_time;
-    g_signal_emit (status_icon, signals[MARK_AS_READ], 0);
-}
-#endif
 
 static void
 mailtc_status_icon_free_item (MailtcStatusIconItem* item)
@@ -172,16 +153,8 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
                                          g_free,
                                          (GDestroyNotify)mailtc_status_icon_free_item);
 
-#if GTK_CHECK_VERSION (2, 16, 0)
     g_signal_connect (status_icon, "button-press-event",
             G_CALLBACK (mailtc_status_icon_button_press_event_cb), NULL);
-#else
-    g_signal_connect (status_icon, "activate",
-            G_CALLBACK (mailtc_status_icon_activate_cb), NULL);
-    g_signal_connect (status_icon, "popup-menu",
-            G_CALLBACK (mailtc_status_icon_popup_menu_cb), NULL);
-#endif
-
 }
 
 void
@@ -294,11 +267,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     gtk_status_icon_set_from_pixbuf (GTK_STATUS_ICON (status_icon), pixbuf);
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), colour ? TRUE : FALSE);
 
-#if GTK_CHECK_VERSION (2, 16, 0)
     gtk_status_icon_set_tooltip_text (GTK_STATUS_ICON (status_icon), tooltip->str);
-#else
-    gtk_status_icon_set_tooltip (GTK_STATUS_ICON (status_icon), tooltip->str);
-#endif
 
     tooltip = g_string_set_size (tooltip, 0);
 }
