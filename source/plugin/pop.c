@@ -114,7 +114,7 @@ pop_readstring (pop_private* priv,
     if (msg->str)
     {
         if (priv->debug)
-            g_print (msg->str);
+            g_print ("%s", msg->str);
 
         if (!err &&
             (!g_ascii_strncasecmp (msg->str, "-ERR", 4) ||
@@ -195,7 +195,7 @@ pop_write (pop_private*  priv,
     va_end (list);
 
     if (priv->debug)
-        g_print (msg);
+        g_print ("%s", msg);
 
     len = mailtc_socket_write (priv->sock, msg, len, error);
     g_free (msg);
@@ -223,7 +223,7 @@ pop_passwrite (pop_private*  priv,
 
         pass = g_strdup (msg);
         g_strcanon (pass + 5, "*\r\n", '*');
-        g_print (pass);
+        g_print ("%s", pass);
         g_free (pass);
     }
 

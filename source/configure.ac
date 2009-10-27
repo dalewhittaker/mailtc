@@ -5,7 +5,7 @@ m4_define([mailtc_version],[1.4.3])
 
 m4_define([glib_required_version],[2.20.0])
 m4_define([gmodule_required_version],[2.20.0])
-m4_define([gtk_required_version],[2.16.0])
+m4_define([gtk_required_version],[2.18.0])
 m4_define([gnutls_required_version],[2.6.6])
 m4_define([unique_required_version],[1.1.2])
 
