@@ -296,7 +296,7 @@ mailtc_socket_ssl_connect (MailtcSocket* sock,
         err = gnutls_credentials_set (priv->session, GNUTLS_CRD_CERTIFICATE, priv->creds);
     if (err == GNUTLS_E_SUCCESS)
     {
-        gnutls_transport_set_ptr (priv->session, (gnutls_transport_ptr_t) priv->sockfd);
+        gnutls_transport_set_ptr (priv->session, (gnutls_transport_ptr_t) (long) priv->sockfd);
         err = gnutls_handshake (priv->session);
     }
     if (err != GNUTLS_E_SUCCESS)
