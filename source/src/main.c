@@ -160,6 +160,10 @@ mailtc_server_init (UniqueApp*  app,
     g_signal_connect (app, "message-received",
             G_CALLBACK (mailtc_message_received_cb), NULL);
 
+    /* Initialise thread system */
+    if (!g_thread_supported ())
+        g_thread_init (NULL);
+
     if (!mailtc_load_plugins (config, error))
         return FALSE;
 

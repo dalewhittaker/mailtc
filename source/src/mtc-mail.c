@@ -117,6 +117,8 @@ mailtc_mail_thread (mtc_config* config)
                         err_msg = g_string_prepend (err_msg, account->server);
                         config->error_count = 0;
                     }
+                    if (error)
+                        g_clear_error (&error);
                 }
             }
             list = g_slist_next (list);

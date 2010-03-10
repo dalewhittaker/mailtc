@@ -3,8 +3,9 @@ AC_PREREQ(2.57)
 m4_define([mailtc_package],[mailtc])
 m4_define([mailtc_version],[1.4.3])
 
-m4_define([glib_required_version],[2.20.0])
-m4_define([gmodule_required_version],[2.20.0])
+m4_define([glib_required_version],[2.22.0])
+m4_define([gmodule_required_version],[2.22.0])
+m4_define([gthread_required_version],[2.22.0])
 m4_define([gtk_required_version],[2.18.0])
 m4_define([gnutls_required_version],[2.6.6])
 m4_define([unique_required_version],[1.1.2])
@@ -21,12 +22,14 @@ AC_CONFIG_HEADERS([config.h])
 
 GLIB_REQUIRED_VERSION=glib_required_version
 GMODULE_REQUIRED_VERSION=gmodule_required_version
+GTHREAD_REQUIRED_VERSION=gthread_required_version
 GTK_REQUIRED_VERSION=gtk_required_version
 UNIQUE_REQUIRED_VERSION=unique_required_version
 GNUTLS_REQUIRED_VERSION=gnutls_required_version
 
 AC_SUBST(GLIB_REQUIRED_VERSION)
 AC_SUBST(GMODULE_REQUIRED_VERSION)
+AC_SUBST(GTHREAD_REQUIRED_VERSION)
 AC_SUBST(GTK_REQUIRED_VERSION)
 AC_SUBST(GNUTLS_REQUIRED_VERSION)
 AC_SUBST(UNIQUE_REQUIRED_VERSION)
@@ -53,6 +56,7 @@ ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 PKG_PROG_PKG_CONFIG(0,23)
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= $GLIB_REQUIRED_VERSION)
 PKG_CHECK_MODULES(GMODULE,gmodule-2.0 >= $GMODULE_REQUIRED_VERSION)
+PKG_CHECK_MODULES(GTHREAD,gthread-2.0 >= $GTHREAD_REQUIRED_VERSION)
 PKG_CHECK_MODULES(GTK,gtk+-2.0 >= $GTK_REQUIRED_VERSION)
 PKG_CHECK_MODULES(UNIQUE,unique-1.0 >= $UNIQUE_REQUIRED_VERSION)
 
@@ -60,6 +64,7 @@ AC_SUBST([GTK_CFLAGS])
 AC_SUBST([GTK_LIBS])
 AC_SUBST([UNIQUE_CFLAGS])
 AC_SUBST([UNIQUE_LIBS])
+AC_SUBST([GTHREAD_LIBS])
 
 AC_ARG_ENABLE(ssl,
               AC_HELP_STRING([--disable-ssl],
