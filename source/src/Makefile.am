@@ -34,6 +34,7 @@ INCLUDES = \
 
 LDADD = \
 		$(GTK_LIBS) \
+		$(GTHREAD_LIBS) \
 		$(GNUTLS_LIBS) \
 		$(UNIQUE_LIBS)
 
