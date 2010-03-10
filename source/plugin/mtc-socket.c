@@ -20,16 +20,18 @@
 #include "mtc-socket.h"
 
 #include <config.h>
-#include <string.h>     /* memset ()                    */
-#include <unistd.h>     /* close ()                     */
-#include <sys/types.h>  /* various stuff                */
-#include <netdb.h>      /* network stuff                */
-#include <netinet/in.h> /* net structs                  */
-#include <sys/socket.h> /* connect (), send (), recv () */
+#include <string.h> /* memset () */
 
 #if HAVE_GNUTLS
 #include <gnutls/gnutls.h>
 #define MTC_CA_FILE "ca.pem"
+
+/* socket is really non-blocking, as gio only emulates blocking in it's code
+ * so we need to use non-blocking with gnutls calls
+ */
+#define TLS_WHILE_ACTIVE(tlsproc, err) \
+        do { (err) = (tlsproc); } while ((err) != GNUTLS_E_SUCCESS && !gnutls_error_is_fatal (err))
+
 #endif
 
 #ifndef SOCKET_ERROR
@@ -48,15 +50,12 @@
 typedef enum
 {
     MAILTC_SOCKET_ERROR_HOST = 0,
-    MAILTC_SOCKET_ERROR_CREATE,
     MAILTC_SOCKET_ERROR_CONNECT,
-    MAILTC_SOCKET_ERROR_SET_OPTIONS,
-    MAILTC_SOCKET_ERROR_GET_OPTIONS,
     MAILTC_SOCKET_ERROR_POLL,
-    MAILTC_SOCKET_ERROR_READ,
-    MAILTC_SOCKET_ERROR_WRITE,
 #if HAVE_GNUTLS
     MAILTC_SOCKET_ERROR_SSL_CONNECT,
+    MAILTC_SOCKET_ERROR_SSL_READ,
+    MAILTC_SOCKET_ERROR_SSL_WRITE,
 #endif
 
 } MailtcSocketError;
@@ -66,7 +65,9 @@ typedef gint SOCKET;
 struct _MailtcSocketPrivate
 {
     SOCKET sockfd;
-    struct timeval t;
+    GSocket* gsocket;
+    GSocketConnection* connection;
+    GCancellable* cancellable;
 #if HAVE_GNUTLS
     gnutls_session_t session;
     gnutls_certificate_credentials_t creds;
@@ -190,69 +191,13 @@ mailtc_socket_init (MailtcSocket* sock)
     priv = sock->priv;
 
     priv->sockfd = INVALID_SOCKET;
-    priv->t.tv_sec = -1;
-    priv->t.tv_usec = -1;
+    priv->connection = NULL;
+    priv->cancellable = NULL;
+    priv->gsocket = NULL;
 #if HAVE_GNUTLS
     priv->creds = NULL;
     priv->session = NULL;
 #endif
-}
-
-static void
-mailtc_socket_close (MailtcSocket* sock)
-{
-    MailtcSocketPrivate* priv;
-
-    g_return_if_fail (MAILTC_IS_SOCKET (sock));
-
-    priv = sock->priv;
-    if (priv->sockfd != INVALID_SOCKET)
-    {
-        shutdown (priv->sockfd, SHUT_RDWR);
-        close (priv->sockfd);
-        priv->sockfd = INVALID_SOCKET;
-    }
-}
-
-static gboolean
-mailtc_socket_set_timeout (MailtcSocket*   sock,
-                           struct timeval* tnew,
-                           socklen_t       tnewlen,
-                           GError**        error)
-{
-    MailtcSocketPrivate* priv;
-    struct timeval t;
-    socklen_t tlen;
-
-    g_return_val_if_fail (MAILTC_IS_SOCKET (sock), FALSE);
-
-    tlen = sizeof (t);
-    priv = sock->priv;
-    if (getsockopt (priv->sockfd, SOL_SOCKET, SO_RCVTIMEO,
-                    (gchar*) &t, &tlen) == SOCKET_ERROR)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_GET_OPTIONS,
-                                  "Error getting socket options.");
-        }
-        return FALSE;
-    }
-
-    if (setsockopt (priv->sockfd, SOL_SOCKET, SO_RCVTIMEO,
-                    (gchar*) tnew, tnewlen) == SOCKET_ERROR)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_SET_OPTIONS,
-                                  "Error setting socket options.");
-        }
-        return FALSE;
-    }
-    priv->t = t;
-    return TRUE;
 }
 
 #if HAVE_GNUTLS
@@ -267,7 +212,9 @@ mailtc_socket_ssl_disconnect (MailtcSocket* sock)
 
     if (priv->session)
     {
-        gnutls_bye (priv->session, GNUTLS_SHUT_RDWR);
+        gint err = GNUTLS_E_SUCCESS;
+
+        TLS_WHILE_ACTIVE (gnutls_bye (priv->session, GNUTLS_SHUT_RDWR), err);
         gnutls_deinit (priv->session);
         priv->session = NULL;
     }
@@ -285,19 +232,19 @@ mailtc_socket_ssl_connect (MailtcSocket* sock,
     priv = sock->priv;
 
     if (!priv->creds)
-        err = gnutls_certificate_allocate_credentials (&priv->creds);
+        TLS_WHILE_ACTIVE (gnutls_certificate_allocate_credentials (&priv->creds), err);
     if (err == GNUTLS_E_SUCCESS)
         /* TODO sort out certificates */
         /*gnutls_certificate_set_x509_trust_file (priv->creds, MTC_CA_FILE, GNUTLS_X509_FMT_PEM);*/
-        err = gnutls_init (&priv->session, GNUTLS_CLIENT);
+        TLS_WHILE_ACTIVE (gnutls_init (&priv->session, GNUTLS_CLIENT), err);
     if (err == GNUTLS_E_SUCCESS)
-        err = gnutls_priority_set_direct (priv->session, "PERFORMANCE", NULL);
+        TLS_WHILE_ACTIVE (gnutls_priority_set_direct (priv->session, "PERFORMANCE", NULL), err);
     if (err == GNUTLS_E_SUCCESS)
-        err = gnutls_credentials_set (priv->session, GNUTLS_CRD_CERTIFICATE, priv->creds);
+        TLS_WHILE_ACTIVE (gnutls_credentials_set (priv->session, GNUTLS_CRD_CERTIFICATE, priv->creds), err);
     if (err == GNUTLS_E_SUCCESS)
     {
         gnutls_transport_set_ptr (priv->session, (gnutls_transport_ptr_t) (long) priv->sockfd);
-        err = gnutls_handshake (priv->session);
+        TLS_WHILE_ACTIVE (gnutls_handshake (priv->session), err);
     }
     if (err != GNUTLS_E_SUCCESS)
     {
@@ -355,14 +302,14 @@ mailtc_socket_data_ready (MailtcSocket* sock,
     return FALSE;
 }
 
-gint
+gssize
 mailtc_socket_read (MailtcSocket* sock,
                     gchar*        buf,
-                    guint         len,
+                    gsize         len,
                     GError**      error)
 {
     MailtcSocketPrivate* priv;
-    gint bytes;
+    gssize bytes;
 
     g_return_val_if_fail (MAILTC_IS_SOCKET (sock), -1);
 
@@ -372,36 +319,38 @@ mailtc_socket_read (MailtcSocket* sock,
     if (priv->session)
     {
         if ((bytes = gnutls_record_recv (priv->session, buf, len)) < 0)
+        {
             bytes = SOCKET_ERROR;
+            if (error)
+            {
+                *error = g_error_new (MAILTC_SOCKET_ERROR,
+                                      MAILTC_SOCKET_ERROR_SSL_READ,
+                                      "Error reading from socket: %s",
+                                      gnutls_strerror ((int) bytes));
+            }
+        }
     }
     else
 #endif
     {
-        bytes = recv (priv->sockfd, buf, len, 0);
+        bytes = g_socket_receive (priv->gsocket, buf, len, NULL, error);
     }
 
     if (bytes == SOCKET_ERROR)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_READ,
-                                  "Error reading from socket.");
-        }
         return -1;
-    }
+
     *(buf + bytes) = '\0';
     return bytes;
 }
 
-gint
+gssize
 mailtc_socket_write (MailtcSocket* sock,
                      const gchar*  buf,
-                     guint         len,
+                     gsize         len,
                      GError**      error)
 {
     MailtcSocketPrivate* priv;
-    gint bytes;
+    gssize bytes;
 
     g_return_val_if_fail (MAILTC_IS_SOCKET (sock), -1);
 
@@ -411,38 +360,72 @@ mailtc_socket_write (MailtcSocket* sock,
     if (priv->session)
     {
         if ((bytes = gnutls_record_send (priv->session, buf, len)) < 0)
+        {
             bytes = SOCKET_ERROR;
+            if (error)
+            {
+                *error = g_error_new (MAILTC_SOCKET_ERROR,
+                                      MAILTC_SOCKET_ERROR_SSL_WRITE,
+                                      "Error writing to socket: %s",
+                                      gnutls_strerror ((int) bytes));
+            }
+        }
     }
     else
 #endif
     {
-        bytes = send (priv->sockfd, buf, len, 0);
+        bytes = g_socket_send (priv->gsocket, buf, len, NULL, error);
     }
 
-    if (bytes == SOCKET_ERROR)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_WRITE,
-                                  "Error writing to socket.");
-        }
-        return -1;
-    }
-    return bytes;
+    return (bytes != SOCKET_ERROR) ? bytes : -1;
 }
 
 void
 mailtc_socket_disconnect (MailtcSocket* sock)
 {
+    MailtcSocketPrivate* priv;
+
     g_return_if_fail (MAILTC_IS_SOCKET (sock));
 
+    priv = sock->priv;
+
 #if HAVE_GNUTLS
-    if (sock->priv->session)
-        mailtc_socket_ssl_disconnect (sock);
+    mailtc_socket_ssl_disconnect (sock);
 #endif
 
-    mailtc_socket_close (sock);
+    if (G_IS_SOCKET_CONNECTION (priv->connection))
+    {
+        g_tcp_connection_set_graceful_disconnect (G_TCP_CONNECTION (priv->connection), TRUE);
+        g_io_stream_close (G_IO_STREAM (priv->connection), NULL, NULL);
+
+        if (G_IS_CANCELLABLE (priv->cancellable))
+            g_object_unref (priv->cancellable);
+
+        priv->cancellable = NULL;
+
+        g_object_unref (priv->connection);
+
+        priv->connection = NULL;
+        priv->gsocket = NULL;
+        priv->sockfd = INVALID_SOCKET;
+    }
+}
+
+static gpointer
+mailtc_socket_cancel_thread (gpointer data)
+{
+    GCancellable* cancellable;
+
+    g_return_val_if_fail (G_IS_CANCELLABLE (data), NULL);
+
+    cancellable = (GCancellable*) data;
+
+    g_usleep (CONNECT_TIMEOUT * 1000 * 1000);
+
+    g_cancellable_cancel (cancellable);
+    g_object_unref (cancellable);
+
+    return NULL;
 }
 
 gboolean
@@ -452,71 +435,47 @@ mailtc_socket_connect (MailtcSocket* sock,
                        GError**      error)
 {
     MailtcSocketPrivate* priv;
+    GSocket* gsocket;
+    GSocketClient* client;
+    GSocketConnection* connection;
     SOCKET sockfd;
-    struct hostent* he;
-    struct sockaddr_in their_addr;
-    struct timeval tnew;
 
     g_return_val_if_fail (MAILTC_IS_SOCKET (sock), FALSE);
 
     priv = sock->priv;
     mailtc_socket_disconnect (sock);
 
-    if (!(he = gethostbyname (server)))
+    client = g_socket_client_new ();
+
+    if (g_thread_get_initialized ())
     {
-        if (error)
+        priv->cancellable = g_cancellable_new ();
+        g_object_ref_sink (priv->cancellable);
+
+        if (!g_thread_create (mailtc_socket_cancel_thread, priv->cancellable, FALSE, error))
         {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_HOST,
-                                  "Error getting host structure.");
+            g_object_unref (priv->cancellable);
+            return FALSE;
         }
-        return FALSE;
     }
 
-    if ((sockfd = socket (AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_CREATE,
-                                  "Error creating socket.");
-        }
-        return FALSE;
-    }
+    connection = g_socket_client_connect_to_host (client, server, port, priv->cancellable, error);
+    g_object_unref (client);
 
+    if (!connection)
+        return FALSE;
+
+    gsocket = g_socket_connection_get_socket (connection);
+
+    /* we set blocking for now, but this might change */
+    g_socket_set_blocking (gsocket, TRUE);
+
+    /* sockfd is primarily for gnutls, until it is possible to use GIOStreams with it */
+    sockfd = g_socket_get_fd (gsocket);
+
+    priv->connection = connection;
+    priv->gsocket = gsocket;
     priv->sockfd = sockfd;
-    their_addr.sin_family = AF_INET;
-    their_addr.sin_addr = *((struct in_addr*) he->h_addr_list[0]);
-    their_addr.sin_port = g_htons (port);
-    memset (&their_addr.sin_zero, 0, 8);
-
-    tnew.tv_sec = CONNECT_TIMEOUT;
-    tnew.tv_usec = 0;
-
-    if (!mailtc_socket_set_timeout (sock, &tnew,
-                                    sizeof (tnew), error))
-        return FALSE;
-
-    if (connect (sockfd, (struct sockaddr*) &their_addr,
-                 sizeof (struct sockaddr)) == SOCKET_ERROR)
-    {
-        if (error)
-        {
-            *error = g_error_new (MAILTC_SOCKET_ERROR,
-                                  MAILTC_SOCKET_ERROR_CONNECT,
-                                  "Error initialising connection on socket.");
-        }
-        mailtc_socket_close (sock);
-        return FALSE;
-    }
-
-    /* reset the timeout */
-    if (!mailtc_socket_set_timeout (sock, &priv->t,
-                                    sizeof (priv->t), error))
-    {
-        mailtc_socket_close (sock);
-        return FALSE;
-    }
 
 #if HAVE_GNUTLS
     if (sock->ssl)

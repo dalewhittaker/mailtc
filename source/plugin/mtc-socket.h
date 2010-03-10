@@ -52,16 +52,16 @@ gboolean
 mailtc_socket_data_ready (MailtcSocket* sock,
                           GError**      error);
 
-gint
+gssize
 mailtc_socket_read       (MailtcSocket* sock,
                           gchar*        buf,
-                          guint         len,
+                          gsize         len,
                           GError**      error);
 
-gint
+gssize
 mailtc_socket_write      (MailtcSocket* sock,
                           const gchar*  buf,
-                          guint         len,
+                          gsize         len,
                           GError**      error);
 
 GType
