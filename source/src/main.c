@@ -1,5 +1,5 @@
 /* main.c
- * Copyright (C) 2009 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2010 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -98,7 +98,7 @@ mailtc_parse_config (int*     argc,
 
     if (version)
     {
-        g_print ("\n%s %s - Copyright (c) 2009 Dale Whittaker.\n\n", PACKAGE, VERSION);
+        g_print ("\n%s %s - Copyright (c) 2009-2010 Dale Whittaker.\n\n", PACKAGE, VERSION);
         return MAILTC_MODE_VERSION;
     }
 

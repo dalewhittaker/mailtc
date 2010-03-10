@@ -1,5 +1,5 @@
 /* mtc-file.c
- * Copyright (C) 2009 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2010 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -233,7 +233,6 @@ mailtc_load_config (mtc_config* config,
                     while (list)
                     {
                         plugin = (mtc_plugin*) list->data;
-
                         if (g_str_equal (plugin_name, g_module_name (plugin->module)))
                         {
                             account->plugin = plugin;
