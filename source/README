@@ -14,7 +14,7 @@ DESCRIPTION
             o Different icon colours for each individual account.
 
          mailtc should work on all www.freedesktop.org compliant panels.
-         it requires the GTK2 library (2.16 and above), and a panel.
+         it requires the GTK2 library (2.18 and above), and a panel.
 
 OPTIONS
         mailtc -c   - launches mailtc configuration utility
