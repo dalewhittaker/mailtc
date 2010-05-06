@@ -93,10 +93,14 @@ AC_MSG_RESULT([$enable_debug])
 
 AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 
+SHAVE_INIT([],[enable])
+
 AC_CONFIG_FILES([
 src/Makefile
 plugin/Makefile
 Makefile
+shave
+shave-libtool
 ])
 
 AC_OUTPUT

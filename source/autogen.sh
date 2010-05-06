@@ -4,7 +4,6 @@ LIBTOOLIZE_FLAGS="--force --automake --copy"
 ACLOCAL_FLAGS="-I autotools"
 AUTOMAKE_FLAGS="--add-missing --copy"
 rm -rf ./autom4te.cache
-mkdir -p autotools
 touch NEWS
 
 aclocal $ACLOCAL_FLAGS || exit $?
