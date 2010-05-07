@@ -42,7 +42,7 @@ LDADD = \
 pop_la_SOURCES = \
 		mtc-socket.c \
 		mtc-uid.c \
-		pop.c
+		mtc-pop.c
 
 pop_la_LDFLAGS = \
 		-no-undefined \
