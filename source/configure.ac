@@ -37,6 +37,9 @@ AC_SUBST(UNIQUE_REQUIRED_VERSION)
 # put .o files in the subdirectory and package as bzip2
 AM_INIT_AUTOMAKE([subdir-objects dist-bzip2 no-dist-gzip])
 
+# enable silent automake if available
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 if test -z "$CFLAGS"; then
     CFLAGS=""
 fi
@@ -93,14 +96,10 @@ AC_MSG_RESULT([$enable_debug])
 
 AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 
-SHAVE_INIT([],[enable])
-
 AC_CONFIG_FILES([
 src/Makefile
 plugin/Makefile
 Makefile
-shave
-shave-libtool
 ])
 
 AC_OUTPUT
