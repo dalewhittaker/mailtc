@@ -197,7 +197,7 @@ mailtc_load_config (mtc_config* config,
         {
             GSList* list;
             mtc_account* account;
-            mtc_plugin* plugin;
+            mtc_plugin* plugin = NULL;
             guint i;
             gchar* key_group;
             gboolean success;

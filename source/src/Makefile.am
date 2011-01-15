@@ -17,7 +17,7 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 		-Wall \
-		-W
+		-Wextra
 
 if ENABLE_DEBUG
 AM_CPPFLAGS += \

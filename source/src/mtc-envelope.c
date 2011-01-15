@@ -255,7 +255,7 @@ mailtc_envelope_get_envelope_colour (MailtcEnvelope* envelope)
 GdkPixbuf*
 mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope)
 {
-    GdkPixbuf* pixbuf;
+    GdkPixbuf* pixbuf = NULL;
 
     g_return_val_if_fail (MAILTC_IS_ENVELOPE (envelope), NULL);
 
