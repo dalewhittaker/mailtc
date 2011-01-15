@@ -40,10 +40,6 @@ AM_INIT_AUTOMAKE([subdir-objects dist-bzip2 no-dist-gzip])
 # enable silent automake if available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-if test -z "$CFLAGS"; then
-    CFLAGS=""
-fi
-
 # determine a C compiler to use
 AC_PROG_CC
 AM_PROG_CC_STDC
