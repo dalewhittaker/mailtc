@@ -1,5 +1,5 @@
 /* main.c
- * Copyright (C) 2009-2010 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2011 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,6 @@
 #include "mtc-plugin.h"
 #include "mtc-mail.h"
 
-#include <glib/gstdio.h> /* g_remove */
 #include <unique/unique.h>
 #include <signal.h>
 
@@ -223,10 +222,7 @@ mailtc_initialise (mtc_config* config,
         gsize bytes;
 
         filename = mailtc_file (config, LOG_NAME);
-        if (g_file_test (filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))
-            g_remove (filename);
-
-        config->log = g_io_channel_new_file (filename, "a+", error);
+        config->log = g_io_channel_new_file (filename, "w", error);
         mailtc_set_log_glib (config);
         g_free (filename);
 
