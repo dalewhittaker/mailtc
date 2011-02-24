@@ -610,7 +610,6 @@ mailtc_account_dialog_run (GtkWidget*   button,
                 NULL);
 
         prefs->dialog_account = dialog;
-        gtk_dialog_set_has_separator (GTK_DIALOG (dialog), FALSE);
         gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
         gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
 
@@ -1036,7 +1035,6 @@ mailtc_config_dialog (mtc_config* config)
                                           GTK_STOCK_SAVE, GTK_RESPONSE_OK,
                                           GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
                                           NULL);
-    gtk_dialog_set_has_separator (GTK_DIALOG (dialog), FALSE);
     gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
     gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
 
