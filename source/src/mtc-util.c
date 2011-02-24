@@ -1,5 +1,5 @@
 /* mtc-util.c
- * Copyright (C) 2009-2010 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2011 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -181,7 +181,7 @@ mailtc_set_log_glib (mtc_config* config)
                        G_LOG_LEVEL_MASK |
                        G_LOG_FLAG_FATAL |
                        G_LOG_FLAG_RECURSION,
-                       (GLogFunc)mailtc_glib_handler,
+                       (GLogFunc) mailtc_glib_handler,
                        config ? config->log : NULL);
 }
 
@@ -193,7 +193,7 @@ mailtc_set_log_gtk (mtc_config* config)
                        G_LOG_LEVEL_MASK |
                        G_LOG_FLAG_FATAL |
                        G_LOG_FLAG_RECURSION,
-                       (GLogFunc)mailtc_gtk_handler,
+                       (GLogFunc) mailtc_gtk_handler,
                        config);
 }
 

@@ -97,7 +97,7 @@ mailtc_parse_config (int*     argc,
 
     if (version)
     {
-        g_print ("\n%s %s - Copyright (c) 2009-2010 Dale Whittaker.\n\n", PACKAGE, VERSION);
+        g_print ("\n%s %s - Copyright (c) 2009-2011 Dale Whittaker.\n\n", PACKAGE, VERSION);
         return MAILTC_MODE_VERSION;
     }
 
