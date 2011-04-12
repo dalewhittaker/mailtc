@@ -21,7 +21,7 @@
 #include "mtc.h"
 #include "mtc-socket.h"
 #include "mtc-uid.h"
-#include <string.h> /* strlen () */
+#include <string.h> /* strlen (), memset () */
 #include <gmodule.h>
 #include <glib/gprintf.h>
 
@@ -248,15 +248,21 @@ pop_run (pop_private* priv,
         gboolean success;
         pop_write_func pwrite;
         pop_read_func pread;
+        pop_item items[5];
         pop_item* item;
-        pop_item items[] =
-        {
-             { NULL,          NULL,              NULL,          NULL         },
-             { "USER %s\r\n", account->user,     NULL,          NULL         },
-             { "PASS %s\r\n", account->password, pop_passwrite, NULL         },
-             { "STAT\r\n",    NULL,              NULL,          pop_statread },
-             { "QUIT\r\n",    NULL,              NULL,          NULL         }
-        };
+
+        memset (items, 0, sizeof (items));
+
+        items[1].command = "USER %s\r\n";
+        items[2].command = "PASS %s\r\n";
+        items[3].command = "STAT\r\n";
+        items[4].command = "QUIT\r\n";
+
+        items[1].arg = account->user;
+        items[2].arg = account->password;
+
+        items[2].pwrite = pop_passwrite;
+        items[3].pread = pop_statread;
 
         item = &items[index];
         success = TRUE;
