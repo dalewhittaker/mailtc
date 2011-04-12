@@ -102,6 +102,10 @@ typedef struct
     GtkWidget* combo_plugin;
 
     gulong     entry_insert_text_id;
+    gulong     button_edit_columns_changed_id;
+    gulong     button_edit_cursor_changed_id;
+    gulong     button_remove_columns_changed_id;
+    gulong     button_remove_cursor_changed_id;
 
 } mtc_prefs;
 
