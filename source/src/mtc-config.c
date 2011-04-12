@@ -915,10 +915,12 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
 
 static void
 mailtc_tree_view_destroy_cb (GtkWidget* widget,
-                             GtkButton* button)
+                             mtc_prefs* prefs)
 {
-    g_signal_handlers_disconnect_by_func (widget,
-            (gpointer) mailtc_cursor_or_cols_changed_cb, button);
+    g_signal_handler_disconnect (widget, prefs->button_edit_columns_changed_id);
+    g_signal_handler_disconnect (widget, prefs->button_edit_cursor_changed_id);
+    g_signal_handler_disconnect (widget, prefs->button_remove_columns_changed_id);
+    g_signal_handler_disconnect (widget, prefs->button_remove_cursor_changed_id);
 }
 
 static GtkWidget*
@@ -990,20 +992,18 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     g_signal_connect (button_remove, "clicked",
             G_CALLBACK (mailtc_remove_button_clicked_cb), config);
 
-    g_object_connect (tree_view,
-                      "signal::cursor-changed",
-                      mailtc_cursor_or_cols_changed_cb, button_edit,
-                      "signal::columns-changed",
-                      mailtc_cursor_or_cols_changed_cb, button_edit,
-                      "signal::cursor-changed",
-                      mailtc_cursor_or_cols_changed_cb, button_remove,
-                      "signal::columns-changed",
-                      mailtc_cursor_or_cols_changed_cb, button_remove,
-                      "signal::destroy",
-                      mailtc_tree_view_destroy_cb, button_remove,
-                      "signal::destroy",
-                      mailtc_tree_view_destroy_cb, button_edit,
-                      NULL);
+    prefs->button_edit_cursor_changed_id = g_signal_connect (
+            tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_edit);
+    prefs->button_edit_columns_changed_id = g_signal_connect (
+            tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_edit);
+    prefs->button_remove_cursor_changed_id = g_signal_connect (
+            tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_remove);
+    prefs->button_remove_columns_changed_id = g_signal_connect (
+            tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_remove);
+
+    g_signal_connect (tree_view, "destroy",
+            G_CALLBACK (mailtc_tree_view_destroy_cb), prefs);
+
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_edit);
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_remove);
 
