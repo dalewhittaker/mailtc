@@ -101,6 +101,8 @@ typedef struct
     GtkWidget* envelope_account;
     GtkWidget* combo_plugin;
 
+    gulong     entry_insert_text_id;
+
 } mtc_prefs;
 
 typedef struct

@@ -18,7 +18,9 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 		-Wall \
 		-Wextra \
-		-ansi
+		-Wno-overlength-strings \
+		-ansi \
+		-pedantic
 
 if ENABLE_DEBUG
 AM_CPPFLAGS += \

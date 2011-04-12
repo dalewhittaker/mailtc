@@ -475,10 +475,10 @@ static void
 mailtc_port_entry_insert_text_cb (GtkEditable* editable,
                                   gchar*       new_text,
                                   gint         new_text_length,
-                                  gint*        position)
+                                  gint*        position,
+                                  mtc_prefs*   prefs)
 {
-    g_signal_handlers_block_by_func (editable,
-        G_CALLBACK (mailtc_port_entry_insert_text_cb), NULL);
+    g_signal_handler_block (editable, prefs->entry_insert_text_id);
 
     /* NOTE this is only valid for the purpose of entering text.
      * it will need rewriting if the text must be set because
@@ -488,8 +488,7 @@ mailtc_port_entry_insert_text_cb (GtkEditable* editable,
         gtk_editable_insert_text (editable, new_text,
                                   new_text_length, position);
 
-    g_signal_handlers_unblock_by_func (editable,
-        G_CALLBACK (mailtc_port_entry_insert_text_cb), NULL);
+    g_signal_handler_unblock (editable, prefs->entry_insert_text_id);
     g_signal_stop_emission_by_name (editable, "insert-text");
 }
 
@@ -594,6 +593,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     gint result;
     gint index;
     guint plgindex;
+    gulong id;
 
     (void) button;
     g_return_if_fail (config && config->prefs);
@@ -701,8 +701,6 @@ mailtc_account_dialog_run (GtkWidget*   button,
 
         gtk_container_set_border_width (GTK_CONTAINER (table_account), 4);
 
-        g_signal_connect (entry_port, "insert-text",
-                G_CALLBACK (mailtc_port_entry_insert_text_cb), NULL);
         g_signal_connect (dialog, "delete-event",
                 G_CALLBACK (gtk_widget_hide_on_delete), NULL);
         g_signal_connect (dialog, "destroy",
@@ -714,6 +712,10 @@ mailtc_account_dialog_run (GtkWidget*   button,
         g_signal_connect (combo_protocol, "changed",
             G_CALLBACK (mailtc_combo_protocol_changed_cb), config);
 
+        id = g_signal_connect (entry_port, "insert-text",
+                G_CALLBACK (mailtc_port_entry_insert_text_cb), prefs);
+
+        prefs->entry_insert_text_id = id;
         prefs->entry_name = entry_name;
         prefs->entry_server = entry_server;
         prefs->entry_port = entry_port;
@@ -916,7 +918,7 @@ mailtc_tree_view_destroy_cb (GtkWidget* widget,
                              GtkButton* button)
 {
     g_signal_handlers_disconnect_by_func (widget,
-            mailtc_cursor_or_cols_changed_cb, button);
+            (gpointer) mailtc_cursor_or_cols_changed_cb, button);
 }
 
 static GtkWidget*
