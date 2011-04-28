@@ -21,7 +21,7 @@
 #include "mtc.h"
 #include "mtc-socket.h"
 #include "mtc-uid.h"
-#include <string.h> /* strlen (), memset () */
+#include <string.h> /* strlen () */
 #include <gmodule.h>
 #include <glib/gprintf.h>
 
@@ -38,18 +38,13 @@ typedef enum
     POP_CMD_PASS,
     POP_CMD_STAT,
     POP_CMD_QUIT
-
 } pop_command;
 
 typedef enum
 {
     POP_PROTOCOL = 0,
-#if HAVE_GNUTLS
     POP_PROTOCOL_SSL,
-#endif
-
     POP_N_PROTOCOLS
-
 } pop_protocol;
 
 typedef struct _pop_private pop_private;
@@ -88,18 +83,15 @@ pop_readstring (pop_private* priv,
 {
     GString* msg;
     gchar buf[MAXDATASIZE];
-    gint bytes = 1;
+    gint bytes;
     guint endlen;
     gboolean err = FALSE;
 
     endlen = strlen (endchars);
     msg = g_string_new (NULL);
 
-    while (mailtc_socket_data_ready (priv->sock, error))
+    while ((bytes = mailtc_socket_read (priv->sock, buf, (sizeof (buf) - 1), error)) > 0)
     {
-       if ((bytes = mailtc_socket_read (priv->sock, buf, (sizeof (buf) - 1), error)) <= 0)
-           break;
-
        msg = g_string_append (msg, buf);
        if (msg->len >= endlen &&
            !g_ascii_strncasecmp (msg->str + msg->len - endlen,
@@ -358,9 +350,8 @@ pop_get_messages (mtc_config*  config,
     priv->account = account;
     sock = priv->sock;
 
-#if HAVE_GNUTLS
-    mailtc_socket_set_ssl (sock, account->protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
-#endif
+    mailtc_socket_set_tls (sock, account->protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
+
     if (!mailtc_socket_connect (sock, account->server, account->port, error))
         return -1;
     if (!pop_run (priv, POP_CMD_NULL, error))
@@ -459,6 +450,8 @@ plugin_init (void)
 {
     mtc_plugin* plugin;
     pop_private* priv;
+    gboolean tls;
+    guint nprotocols;
 
     plugin = g_new0 (mtc_plugin, 1);
     plugin->compatibility = VERSION;
@@ -471,15 +464,20 @@ plugin_init (void)
     plugin->read_messages = (read_message_func) pop_read_messages;
     plugin->terminate = (terminate_func) pop_terminate;
 
-    plugin->protocols = g_new0 (gchar*, POP_N_PROTOCOLS + 1);
-    plugin->ports = g_new0 (guint, POP_N_PROTOCOLS);
+    tls = mailtc_socket_supports_tls ();
+    nprotocols = tls ? POP_N_PROTOCOLS : POP_N_PROTOCOLS - 1;
+
+    plugin->protocols = g_new0 (gchar*, nprotocols + 1);
+    plugin->ports = g_new0 (guint, nprotocols);
 
     plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
     plugin->ports[POP_PROTOCOL] = 110;
-#if HAVE_GNUTLS
-    plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
-    plugin->ports[POP_PROTOCOL_SSL] = 995;
-#endif
+
+    if (tls)
+    {
+        plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
+        plugin->ports[POP_PROTOCOL_SSL] = 995;
+    }
 
     priv = (pop_private*) g_new0 (pop_private, 1);
     priv->sock = mailtc_socket_new ();

@@ -32,13 +32,11 @@ endif
 
 INCLUDES = \
 		$(GTK_CFLAGS) \
-		$(GNUTLS_CFLAGS) \
 		$(UNIQUE_CFLAGS)
 
 LDADD = \
 		$(GTK_LIBS) \
 		$(GTHREAD_LIBS) \
-		$(GNUTLS_LIBS) \
 		$(UNIQUE_LIBS)
 
 mailtc_SOURCES = \

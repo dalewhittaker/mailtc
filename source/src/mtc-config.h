@@ -22,7 +22,36 @@
 
 #include "mtc.h"
 
+#include <gtk/gtk.h>
+
 G_BEGIN_DECLS
+
+typedef struct _mtc_prefs
+{
+    GtkWidget* dialog_config;
+    GtkWidget* dialog_account;
+    GtkWidget* dialog_plugin;
+    GtkWidget* spin_interval;
+    GtkWidget* entry_command;
+    GtkWidget* envelope_config;
+    GtkWidget* combo_errordlg;
+    GtkWidget* spin_connections;
+    GtkWidget* tree_view;
+    GtkWidget* entry_name;
+    GtkWidget* entry_server;
+    GtkWidget* entry_port;
+    GtkWidget* entry_user;
+    GtkWidget* entry_password;
+    GtkWidget* envelope_account;
+    GtkWidget* combo_plugin;
+
+    gulong     entry_insert_text_id;
+    gulong     button_edit_columns_changed_id;
+    gulong     button_edit_cursor_changed_id;
+    gulong     button_remove_columns_changed_id;
+    gulong     button_remove_cursor_changed_id;
+
+} mtc_prefs;
 
 GtkWidget*
 mailtc_config_dialog (mtc_config* config);
