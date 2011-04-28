@@ -74,8 +74,8 @@ mailtc_uid_table_load (MailtcUidTable* uid_table,
     gchar* uidl;
     gchar* flags;
 
-    g_return_val_if_fail (MAILTC_IS_UID_TABLE (uid_table), FALSE);
-    g_return_val_if_fail (uid_table->filename, FALSE);
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
+    g_assert (uid_table->filename);
 
     if (!g_file_test (uid_table->filename, G_FILE_TEST_EXISTS))
         return TRUE;
@@ -185,7 +185,7 @@ mailtc_uid_table_age (MailtcUidTable* uid_table)
     GHashTableIter iter;
     gchar* flags;
 
-    g_return_if_fail (MAILTC_IS_UID_TABLE (uid_table));
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = uid_table->priv;
 
@@ -213,7 +213,7 @@ mailtc_uid_table_remove_old (MailtcUidTable* uid_table)
     gint64 n = 0;
     gchar* flags;
 
-    g_return_val_if_fail (MAILTC_IS_UID_TABLE (uid_table), -1);
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = uid_table->priv;
     g_hash_table_foreach_remove (priv->uids,
@@ -236,7 +236,7 @@ mailtc_uid_table_add (MailtcUidTable* uid_table,
     gchar* flags;
     gchar* puidl;
 
-    g_return_if_fail (MAILTC_IS_UID_TABLE (uid_table));
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = uid_table->priv;
 
@@ -266,7 +266,7 @@ mailtc_uid_table_mark_read (MailtcUidTable* uid_table,
     gchar* flags;
     gsize bytes;
 
-    g_return_val_if_fail (MAILTC_IS_UID_TABLE (uid_table), FALSE);
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = uid_table->priv;
 

@@ -85,7 +85,7 @@ void
 mailtc_socket_set_tls (MailtcSocket* sock,
                        gboolean      tls)
 {
-    g_return_if_fail (MAILTC_IS_SOCKET (sock));
+    g_assert (MAILTC_IS_SOCKET (sock));
 
     sock->tls = tls;
 }
@@ -167,7 +167,7 @@ mailtc_socket_read (MailtcSocket* sock,
     guint t;
     guint i = 0;
 
-    g_return_val_if_fail (MAILTC_IS_SOCKET (sock), -1);
+    g_assert (MAILTC_IS_SOCKET (sock));
 
     priv = sock->priv;
 
@@ -214,7 +214,7 @@ mailtc_socket_write (MailtcSocket* sock,
     guint t;
     guint i = 0;
 
-    g_return_val_if_fail (MAILTC_IS_SOCKET (sock), -1);
+    g_assert (MAILTC_IS_SOCKET (sock));
 
     priv = sock->priv;
 
@@ -252,7 +252,7 @@ mailtc_socket_disconnect (MailtcSocket* sock)
 {
     MailtcSocketPrivate* priv;
 
-    g_return_if_fail (MAILTC_IS_SOCKET (sock));
+    g_assert (MAILTC_IS_SOCKET (sock));
 
     priv = sock->priv;
 
@@ -281,7 +281,7 @@ mailtc_socket_connect (MailtcSocket* sock,
     GSocketConnection* connection;
     GTlsCertificateFlags flags;
 
-    g_return_val_if_fail (MAILTC_IS_SOCKET (sock), FALSE);
+    g_assert (MAILTC_IS_SOCKET (sock));
 
     priv = sock->priv;
     mailtc_socket_disconnect (sock);

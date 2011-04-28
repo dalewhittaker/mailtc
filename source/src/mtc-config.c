@@ -142,7 +142,7 @@ mailtc_button_plugin_clicked_cb (GtkWidget*  button,
 
     (void) button;
 
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
     prefs = config->prefs;
 
     if (prefs)
@@ -314,7 +314,7 @@ mailtc_account_update_tree_view (mtc_config* config,
     gboolean exists;
     gint n;
 
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
     g_assert (index > -1);
 
     prefs = config->prefs;
@@ -364,7 +364,7 @@ mailtc_account_dialog_save (mtc_config*  config,
     guint iport;
     guint protocol;
 
-    g_return_val_if_fail (config && config->prefs, FALSE);
+    g_assert (config && config->prefs);
     prefs = config->prefs;
 
     name = gtk_entry_get_text (GTK_ENTRY (prefs->entry_name));
@@ -504,7 +504,7 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
     guint combo_plgindex;
     gint i = 0;
 
-    g_return_val_if_fail (config && config->prefs, -1);
+    g_assert (config && config->prefs);
 
     prefs = config->prefs;
 
@@ -536,7 +536,7 @@ mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
     gchar* port;
     gboolean exists;
 
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
 
     port = NULL;
     prefs = config->prefs;
@@ -596,7 +596,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     gulong id;
 
     (void) button;
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
 
     prefs = config->prefs;
     if (!prefs->dialog_account)
@@ -838,7 +838,7 @@ mailtc_edit_button_clicked_cb (GtkWidget*    button,
     mtc_prefs* prefs;
     gint index;
 
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
 
     prefs = config->prefs;
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
@@ -865,7 +865,7 @@ mailtc_remove_button_clicked_cb (GtkWidget*  button,
     gint index;
 
     (void) button;
-    g_return_if_fail (config && config->prefs);
+    g_assert (config && config->prefs);
 
     prefs = config->prefs;
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
@@ -899,7 +899,7 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
     GtkTreeIter iter;
     gboolean selected;
 
-    g_return_if_fail (GTK_IS_TREE_VIEW (tree_view));
+    g_assert (GTK_IS_TREE_VIEW (tree_view));
 
     if (GTK_IS_BUTTON (button))
     {
@@ -941,7 +941,7 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     mtc_account* account;
     mtc_prefs* prefs;
 
-    g_return_val_if_fail (config && config->prefs, NULL);
+    g_assert (config && config->prefs, NULL);
     prefs = config->prefs;
     list = config->accounts;
 

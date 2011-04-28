@@ -38,7 +38,7 @@ static gint
 mailtc_plugin_compare (mtc_plugin* a,
                        mtc_plugin* b)
 {
-    g_return_val_if_fail (a && b && a->name && b->name, 0);
+    g_assert (a && b && a->name && b->name);
 
     return g_ascii_strcasecmp (a->name, b->name);
 }

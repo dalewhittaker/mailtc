@@ -166,7 +166,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     MailtcStatusIconItem* item;
     gint* index;
 
-    g_return_if_fail (MAILTC_IS_STATUS_ICON (status_icon));
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     priv = status_icon->priv;
     item = g_new0 (MailtcStatusIconItem, 1);
@@ -193,7 +193,7 @@ void
 mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
                                        const GdkColor*   colour)
 {
-    g_return_if_fail (MAILTC_IS_STATUS_ICON (status_icon));
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
     mailtc_status_icon_add_item (status_icon, NULL, colour);
@@ -215,7 +215,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     GdkColor* colour;
     gint index;
 
-    g_return_if_fail (MAILTC_IS_STATUS_ICON (status_icon));
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     colour = NULL;
     pixbuf = NULL;
@@ -279,7 +279,7 @@ mailtc_status_icon_clear (MailtcStatusIcon* status_icon)
     MailtcStatusIconItem* item;
     GHashTableIter iter;
 
-    g_return_if_fail (MAILTC_IS_STATUS_ICON (status_icon));
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     priv = status_icon->priv;
 
