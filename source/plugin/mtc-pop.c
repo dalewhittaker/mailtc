@@ -61,22 +61,26 @@ struct _pop_private
 {
     MailtcSocket* sock;
     mtc_account* account;
+    GString* msg;
     gboolean debug;
     gint64 total;
 };
 
-static GString*
-pop_readstring (pop_private* priv,
-                GError**     error)
+static gboolean
+pop_read (pop_private* priv,
+          GError**     error)
 {
     GString* msg;
     gchar buf[MAXDATASIZE];
     gint bytes;
     gchar* endchars = "\r\n";
     guint endlen = 2;
-    gboolean err = FALSE;
+    gboolean success = TRUE;
 
-    msg = g_string_new (NULL);
+    g_assert (priv && priv->msg);
+
+    msg = priv->msg;
+    g_string_set_size (msg, 0);
 
     while ((bytes = mailtc_socket_read (priv->sock, buf, (sizeof (buf) - 1), error)) > 0)
     {
@@ -90,52 +94,38 @@ pop_readstring (pop_private* priv,
     }
 
     if (bytes == -1)
-        err = TRUE;
+        success = FALSE;
     if (msg->str)
     {
         if (priv->debug)
             g_print ("%s", msg->str);
 
-        if (!err &&
+        if (success &&
             (!g_ascii_strncasecmp (msg->str, "-ERR", 4) ||
              (msg->len >= endlen && g_ascii_strncasecmp (msg->str + msg->len - endlen,
                                                          endchars, endlen) != 0)))
         {
-            err = TRUE;
+            success = FALSE;
         }
     }
 
-    if (err)
-    {
-        g_string_free (msg, TRUE);
-        msg = NULL;
-    }
-    return msg;
-}
-
-static gboolean
-pop_read (pop_private* priv,
-          GError**     error)
-{
-    GString* msg;
-
-    if ((msg = pop_readstring (priv, error)))
-    {
-        g_string_free (msg, TRUE);
-        return TRUE;
-    }
-    return FALSE;
+    return success;
 }
 
 static gboolean
 pop_statread (pop_private* priv,
               GError**     error)
 {
-    GString* msg;
     gboolean success = FALSE;
 
-    if ((msg = pop_readstring (priv, error)))
+    g_assert (priv);
+
+    if (pop_read (priv, error))
     {
+        GString* msg = priv->msg;
+
+        g_assert (msg);
+
         if (msg->str)
         {
             gchar** total;
@@ -155,7 +145,6 @@ pop_statread (pop_private* priv,
                 g_strfreev (total);
             }
         }
-        g_string_free (msg, TRUE);
     }
     return success;
 }
@@ -170,7 +159,8 @@ pop_write (pop_private*  priv,
     gssize len;
     va_list list;
 
-    msg = g_string_new (NULL);
+    g_assert (priv && priv->msg);
+    msg = priv->msg;
 
     va_start (list, buf);
     g_string_vprintf (msg, buf, list);
@@ -180,7 +170,6 @@ pop_write (pop_private*  priv,
         g_print ("%s", msg->str);
 
     len = mailtc_socket_write (priv->sock, msg->str, msg->len, error);
-    g_string_free (msg, TRUE);
 
     return (len == -1) ? FALSE : TRUE;
 }
@@ -191,11 +180,12 @@ pop_passwrite (pop_private*  priv,
                gchar*        buf,
                ...)
 {
-    GString* msg;
     gssize len;
     va_list list;
+    GString* msg;
 
-    msg = g_string_new (NULL);
+    g_assert (priv && priv->msg);
+    msg = priv->msg;
 
     va_start (list, buf);
     g_string_vprintf (msg, buf, list);
@@ -212,7 +202,6 @@ pop_passwrite (pop_private*  priv,
     }
 
     len = mailtc_socket_write (priv->sock, msg->str, msg->len, error);
-    g_string_free (msg, TRUE);
 
     return (len == -1) ? FALSE : TRUE;
 }
@@ -224,7 +213,8 @@ pop_run (pop_private* priv,
 {
     mtc_account* account;
 
-    g_return_val_if_fail (priv, FALSE);
+    g_assert (priv);
+
     account = priv->account;
 
     if (account)
@@ -298,11 +288,12 @@ pop_calculate_new (pop_private*    priv,
                    MailtcUidTable* uid_table,
                    GError**        error)
 {
-    GString* msg;
     gchar* pstart;
     gint64 i;
     gint64 messages;
     gboolean success;
+
+    g_assert (priv);
 
     mailtc_uid_table_age (uid_table);
     if (!priv->total)
@@ -314,8 +305,12 @@ pop_calculate_new (pop_private*    priv,
         if (!pop_write (priv, error, "UIDL %" G_GINT64_FORMAT "\r\n", i))
             break;
 
-        if ((msg = pop_readstring (priv, error)))
+        if (pop_read (priv, error))
         {
+            GString* msg = priv->msg;
+
+            g_assert (msg);
+
             if (msg->str)
             {
                 if ((pstart = g_strrstr (msg->str, " ")) &&
@@ -325,7 +320,6 @@ pop_calculate_new (pop_private*    priv,
                     success = TRUE;
                 }
             }
-            g_string_free (msg, TRUE);
         }
         if (!success)
             break;
@@ -351,10 +345,10 @@ pop_get_messages (mtc_config*  config,
     pop_private* priv;
     gint64 nmails;
 
-    g_return_val_if_fail (account && account->plugin, -1);
-    g_return_val_if_fail (MAILTC_IS_UID_TABLE (account->priv), -1);
+    g_assert (account && account->plugin);
+    g_assert (MAILTC_IS_UID_TABLE (account->priv));
     plugin = account->plugin;
-    g_return_val_if_fail (plugin->priv, -1);
+    g_assert (plugin->priv);
 
     priv = (pop_private*) plugin->priv;
     priv->debug = config->debug;
@@ -388,8 +382,8 @@ pop_read_messages (mtc_config*  config,
                    GError**     error)
 {
     (void) config;
-    g_return_val_if_fail (account, FALSE);
-    g_return_val_if_fail (account && MAILTC_IS_UID_TABLE (account->priv), FALSE);
+    g_assert (account);
+    g_assert (account && MAILTC_IS_UID_TABLE (account->priv));
 
     return mailtc_uid_table_mark_read (MAILTC_UID_TABLE (account->priv), error);
 }
@@ -399,7 +393,7 @@ pop_remove_account (mtc_account* account,
                     GError**     error)
 {
     (void) error;
-    g_return_val_if_fail (account && account->plugin, FALSE);
+    g_assert (account && account->plugin);
 
     if (account->priv && MAILTC_IS_UID_TABLE (account->priv))
     {
@@ -420,7 +414,7 @@ pop_add_account (mtc_config*  config,
     gchar* filename;
 
     (void) config;
-    g_return_val_if_fail (account && account->plugin, FALSE);
+    g_assert (account && account->plugin);
 
     if (account->priv)
     {
@@ -448,9 +442,10 @@ pop_terminate (mtc_plugin* plugin)
 {
     pop_private* priv;
 
-    g_return_if_fail (plugin && plugin->priv);
+    g_assert (plugin && plugin->priv);
 
     priv = (pop_private*) plugin->priv;
+    g_string_free (priv->msg, TRUE);
     g_object_unref (priv->sock);
     g_free (priv);
     plugin->priv = NULL;
@@ -492,6 +487,7 @@ plugin_init (void)
 
     priv = (pop_private*) g_new0 (pop_private, 1);
     priv->sock = mailtc_socket_new ();
+    priv->msg = g_string_new (NULL);
     plugin->priv = priv;
 
     return plugin;
