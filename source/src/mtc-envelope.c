@@ -158,7 +158,7 @@ const guint8 envelope_data[] =
   "\217\0\0\0\21\3\0\0\0\16\0\0\0\10\0\0\0\2\202\0\0\0\0\1\0\0\0\1\221\0"
   "\0\0\2\1\0\0\0\1\227\0\0\0\0"};
 
-    g_return_val_if_fail (MAILTC_IS_ENVELOPE (envelope), NULL);
+    g_assert (MAILTC_IS_ENVELOPE (envelope));
     if (!envelope->priv->data)
         envelope->priv->data = g_memdup (envelope_data, sizeof (envelope_data));
 
@@ -201,7 +201,7 @@ mailtc_envelope_set_envelope_colour (MailtcEnvelope* envelope,
     MailtcEnvelopePrivate* priv;
     GdkPixbuf* pixbuf;
 
-    g_return_if_fail (MAILTC_IS_ENVELOPE (envelope));
+    g_assert (MAILTC_IS_ENVELOPE (envelope));
 
     priv = envelope->priv;
     if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF &&
@@ -246,8 +246,8 @@ mailtc_envelope_set_envelope_colour (MailtcEnvelope* envelope,
 GdkColor*
 mailtc_envelope_get_envelope_colour (MailtcEnvelope* envelope)
 {
-    g_return_val_if_fail (MAILTC_IS_ENVELOPE (envelope), NULL);
-    g_return_val_if_fail (envelope->colour, NULL);
+    g_assert (MAILTC_IS_ENVELOPE (envelope));
+    g_assert (envelope->colour);
 
     return gdk_color_copy (envelope->colour);
 }
@@ -257,7 +257,7 @@ mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope)
 {
     GdkPixbuf* pixbuf = NULL;
 
-    g_return_val_if_fail (MAILTC_IS_ENVELOPE (envelope), NULL);
+    g_assert (MAILTC_IS_ENVELOPE (envelope));
 
     if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF)
         pixbuf = gtk_image_get_pixbuf (GTK_IMAGE (envelope));
