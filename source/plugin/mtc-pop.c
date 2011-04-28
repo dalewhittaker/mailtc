@@ -21,9 +21,7 @@
 #include "mtc.h"
 #include "mtc-socket.h"
 #include "mtc-uid.h"
-#include <string.h> /* strlen () */
 #include <gmodule.h>
-#include <glib/gprintf.h>
 
 #define PLUGIN_NAME "POP"
 #define PLUGIN_AUTHOR "Dale Whittaker ("PACKAGE_BUGREPORT")"
@@ -59,15 +57,6 @@ typedef gboolean
                    gchar*       buf,
                    ...);
 
-typedef struct
-{
-    gchar* command;
-    gpointer arg;
-    pop_write_func pwrite;
-    pop_read_func pread;
-
-} pop_item;
-
 struct _pop_private
 {
     MailtcSocket* sock;
@@ -78,16 +67,15 @@ struct _pop_private
 
 static GString*
 pop_readstring (pop_private* priv,
-                gchar*       endchars,
                 GError**     error)
 {
     GString* msg;
     gchar buf[MAXDATASIZE];
     gint bytes;
-    guint endlen;
+    gchar* endchars = "\r\n";
+    guint endlen = 2;
     gboolean err = FALSE;
 
-    endlen = strlen (endchars);
     msg = g_string_new (NULL);
 
     while ((bytes = mailtc_socket_read (priv->sock, buf, (sizeof (buf) - 1), error)) > 0)
@@ -131,7 +119,7 @@ pop_read (pop_private* priv,
 {
     GString* msg;
 
-    if ((msg = pop_readstring (priv, "\r\n", error)))
+    if ((msg = pop_readstring (priv, error)))
     {
         g_string_free (msg, TRUE);
         return TRUE;
@@ -146,7 +134,7 @@ pop_statread (pop_private* priv,
     GString* msg;
     gboolean success = FALSE;
 
-    if ((msg = pop_readstring (priv, "\r\n", error)))
+    if ((msg = pop_readstring (priv, error)))
     {
         if (msg->str)
         {
@@ -178,19 +166,21 @@ pop_write (pop_private*  priv,
            gchar*        buf,
            ...)
 {
-    gchar* msg;
+    GString* msg;
+    gssize len;
     va_list list;
-    gint len;
+
+    msg = g_string_new (NULL);
 
     va_start (list, buf);
-    len = g_vasprintf (&msg, buf, list);
+    g_string_vprintf (msg, buf, list);
     va_end (list);
 
     if (priv->debug)
-        g_print ("%s", msg);
+        g_print ("%s", msg->str);
 
-    len = mailtc_socket_write (priv->sock, msg, len, error);
-    g_free (msg);
+    len = mailtc_socket_write (priv->sock, msg->str, msg->len, error);
+    g_string_free (msg, TRUE);
 
     return (len == -1) ? FALSE : TRUE;
 }
@@ -201,26 +191,28 @@ pop_passwrite (pop_private*  priv,
                gchar*        buf,
                ...)
 {
-    gchar* msg;
+    GString* msg;
+    gssize len;
     va_list list;
-    gint len;
+
+    msg = g_string_new (NULL);
 
     va_start (list, buf);
-    len = g_vasprintf (&msg, buf, list);
+    g_string_vprintf (msg, buf, list);
     va_end (list);
 
     if (priv->debug)
     {
         gchar* pass;
 
-        pass = g_strdup (msg);
+        pass = g_strdup (msg->str);
         g_strcanon (pass + 5, "*\r\n", '*');
         g_print ("%s", pass);
         g_free (pass);
     }
 
-    len = mailtc_socket_write (priv->sock, msg, len, error);
-    g_free (msg);
+    len = mailtc_socket_write (priv->sock, msg->str, msg->len, error);
+    g_string_free (msg, TRUE);
 
     return (len == -1) ? FALSE : TRUE;
 }
@@ -238,40 +230,59 @@ pop_run (pop_private* priv,
     if (account)
     {
         gboolean success;
+        gchar* command;
+        gpointer arg;
         pop_write_func pwrite;
         pop_read_func pread;
-        pop_item items[5];
-        pop_item* item;
 
-        memset (items, 0, sizeof (items));
+        switch (index)
+        {
+            case 0:
+                command = NULL;
+                arg = NULL;
+                pread = pop_read;
+                pwrite = pop_write;
+                break;
+            case 1:
+                command = "USER %s\r\n";
+                arg = account->user;
+                pread = pop_read;
+                pwrite = pop_write;
+                break;
+            case 2:
+                command = "PASS %s\r\n";
+                arg = account->password;
+                pread = pop_read;
+                pwrite = pop_passwrite;
+                break;
+            case 3:
+                command = "STAT\r\n";
+                arg = NULL;
+                pread = pop_statread;
+                pwrite = pop_write;
+                break;
+            case 4:
+                command = "QUIT\r\n";
+                arg = NULL;
+                pread = pop_read;
+                pwrite = pop_write;
+                break;
+            default:
+                return FALSE;
+        }
 
-        items[1].command = "USER %s\r\n";
-        items[2].command = "PASS %s\r\n";
-        items[3].command = "STAT\r\n";
-        items[4].command = "QUIT\r\n";
-
-        items[1].arg = account->user;
-        items[2].arg = account->password;
-
-        items[2].pwrite = pop_passwrite;
-        items[3].pread = pop_statread;
-
-        item = &items[index];
         success = TRUE;
 
-        if (item->command)
+        if (command)
         {
-            pwrite = item->pwrite ? item->pwrite : pop_write;
-            if (item->arg)
-                success = (*pwrite) (priv, error, item->command, item->arg);
+            if (arg)
+                success = (*pwrite) (priv, error, command, arg);
             else
-                success = (*pwrite) (priv, error, item->command);
+                success = (*pwrite) (priv, error, command);
         }
         if (success)
-        {
-            pread = item->pread ? item->pread : pop_read;
             success = (*pread) (priv, error);
-        }
+
         if (!success || *error)
         {
             mailtc_socket_disconnect (priv->sock);
@@ -303,7 +314,7 @@ pop_calculate_new (pop_private*    priv,
         if (!pop_write (priv, error, "UIDL %" G_GINT64_FORMAT "\r\n", i))
             break;
 
-        if ((msg = pop_readstring (priv, "\r\n", error)))
+        if ((msg = pop_readstring (priv, error)))
         {
             if (msg->str)
             {
