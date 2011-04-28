@@ -27,10 +27,6 @@
 #include <unique/unique.h>
 #include <signal.h>
 
-#if HAVE_GNUTLS
-#include <gnutls/gnutls.h>
-#endif
-
 #define LOG_NAME "log"
 
 /*
@@ -209,11 +205,6 @@ static gboolean
 mailtc_initialise (mtc_config* config,
                    GError**    error)
 {
-
-#if HAVE_GNUTLS
-    gnutls_global_init ();
-#endif
-
     if (config)
     {
         gchar* filename;
@@ -279,14 +270,7 @@ static gboolean
 mailtc_cleanup (mtc_config* config,
                 GError**    error)
 {
-    gboolean success;
-
-    success = mailtc_free_config (config, *error ? NULL : error);
-
-#if HAVE_GNUTLS
-    gnutls_global_deinit ();
-#endif
-    return success;
+    return mailtc_free_config (config, *error ? NULL : error);
 }
 
 int

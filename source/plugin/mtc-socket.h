@@ -20,7 +20,7 @@
 #ifndef __MAILTC_SOCKET_H__
 #define __MAILTC_SOCKET_H__
 
-#include <gtk/gtk.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -35,40 +35,39 @@ typedef struct _MailtcSocket        MailtcSocket;
 typedef struct _MailtcSocketClass   MailtcSocketClass;
 typedef struct _MailtcSocketPrivate MailtcSocketPrivate;
 
-void
-mailtc_socket_set_ssl    (MailtcSocket* sock,
-                          gboolean      ssl);
-
 gboolean
-mailtc_socket_connect    (MailtcSocket* sock,
-                          gchar*        server,
-                          guint         port,
-                          GError**      error);
+mailtc_socket_supports_tls (void);
 
 void
-mailtc_socket_disconnect (MailtcSocket* sock);
+mailtc_socket_set_tls      (MailtcSocket* sock,
+                            gboolean      tls);
 
 gboolean
-mailtc_socket_data_ready (MailtcSocket* sock,
-                          GError**      error);
+mailtc_socket_connect      (MailtcSocket* sock,
+                            gchar*        server,
+                            guint         port,
+                            GError**      error);
+
+void
+mailtc_socket_disconnect   (MailtcSocket* sock);
 
 gssize
-mailtc_socket_read       (MailtcSocket* sock,
-                          gchar*        buf,
-                          gsize         len,
-                          GError**      error);
+mailtc_socket_read         (MailtcSocket* sock,
+                            gchar*        buf,
+                            gsize         len,
+                            GError**      error);
 
 gssize
-mailtc_socket_write      (MailtcSocket* sock,
-                          const gchar*  buf,
-                          gsize         len,
-                          GError**      error);
+mailtc_socket_write        (MailtcSocket* sock,
+                            const gchar*  buf,
+                            gsize         len,
+                            GError**      error);
 
 GType
-mailtc_socket_get_type   (void);
+mailtc_socket_get_type     (void);
 
 MailtcSocket*
-mailtc_socket_new        (void);
+mailtc_socket_new          (void);
 
 G_END_DECLS
 

@@ -20,7 +20,7 @@
 #include "mtc-file.h"
 #include "mtc-util.h"
 #include <glib/gstdio.h>
-#include <string.h>
+#include <string.h> /* strlen () */
 
 #define CONFIG_NAME "config"
 

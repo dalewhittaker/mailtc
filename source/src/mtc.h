@@ -21,9 +21,13 @@
 #define __MAILTC_H__
 
 #include <config.h>
-#include <gtk/gtk.h>
+#include <glib-object.h>
+#include <gio/gio.h>
+#include <gdk/gdk.h> /* GdkColor */
 
 G_BEGIN_DECLS
+
+struct _mtc_prefs;
 
 typedef gboolean
 (*add_account_func) (gconstpointer config,
@@ -84,49 +88,22 @@ typedef struct
 
 typedef struct
 {
-    GtkWidget* dialog_config;
-    GtkWidget* dialog_account;
-    GtkWidget* dialog_plugin;
-    GtkWidget* spin_interval;
-    GtkWidget* entry_command;
-    GtkWidget* envelope_config;
-    GtkWidget* combo_errordlg;
-    GtkWidget* spin_connections;
-    GtkWidget* tree_view;
-    GtkWidget* entry_name;
-    GtkWidget* entry_server;
-    GtkWidget* entry_port;
-    GtkWidget* entry_user;
-    GtkWidget* entry_password;
-    GtkWidget* envelope_account;
-    GtkWidget* combo_plugin;
+    gchar*              directory;
+    GIOChannel*         log;
+    guint               source_id;
+    struct _mtc_prefs*  prefs;
+    GObject*            status_icon;
 
-    gulong     entry_insert_text_id;
-    gulong     button_edit_columns_changed_id;
-    gulong     button_edit_cursor_changed_id;
-    gulong     button_remove_columns_changed_id;
-    gulong     button_remove_cursor_changed_id;
+    gboolean            locked;
+    gint                interval;
+    gchar*              mail_command;
+    GdkColor*           icon_colour;
+    gint                net_error;
+    gint                error_count;
+    gboolean            debug;
 
-} mtc_prefs;
-
-typedef struct
-{
-    gchar*      directory;
-    GIOChannel* log;
-    guint       source_id;
-    mtc_prefs*  prefs;
-    GObject*    status_icon;
-
-    gboolean    locked;
-    gint        interval;
-    gchar*      mail_command;
-    GdkColor*   icon_colour;
-    gint        net_error;
-    gint        error_count;
-    gboolean    debug;
-
-    GSList*     accounts;
-    GSList*     plugins;
+    GSList*             accounts;
+    GSList*             plugins;
 
 } mtc_config;
 

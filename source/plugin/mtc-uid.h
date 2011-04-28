@@ -20,7 +20,7 @@
 #ifndef __MAILTC_UID_H__
 #define __MAILTC_UID_H__
 
-#include <gtk/gtk.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 

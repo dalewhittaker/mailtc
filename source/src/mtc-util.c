@@ -18,6 +18,7 @@
  */
 
 #include "mtc-util.h"
+#include "mtc-config.h"
 #include "mtc-plugin.h"
 #include "mtc-statusicon.h"
 
