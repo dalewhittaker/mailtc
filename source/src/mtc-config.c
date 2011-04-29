@@ -941,7 +941,7 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     mtc_account* account;
     mtc_prefs* prefs;
 
-    g_assert (config && config->prefs, NULL);
+    g_assert (config && config->prefs);
     prefs = config->prefs;
     list = config->accounts;
 
