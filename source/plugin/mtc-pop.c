@@ -227,31 +227,31 @@ pop_run (pop_private* priv,
 
         switch (index)
         {
-            case 0:
+            case POP_CMD_NULL:
                 command = NULL;
                 arg = NULL;
                 pread = pop_read;
                 pwrite = pop_write;
                 break;
-            case 1:
+            case POP_CMD_USER:
                 command = "USER %s\r\n";
                 arg = account->user;
                 pread = pop_read;
                 pwrite = pop_write;
                 break;
-            case 2:
+            case POP_CMD_PASS:
                 command = "PASS %s\r\n";
                 arg = account->password;
                 pread = pop_read;
                 pwrite = pop_passwrite;
                 break;
-            case 3:
+            case POP_CMD_STAT:
                 command = "STAT\r\n";
                 arg = NULL;
                 pread = pop_statread;
                 pwrite = pop_write;
                 break;
-            case 4:
+            case POP_CMD_QUIT:
                 command = "QUIT\r\n";
                 arg = NULL;
                 pread = pop_read;
