@@ -67,7 +67,7 @@ mailtc_mark_as_read_cb (MailtcStatusIcon* status_icon,
     mailtc_read_mail (config);
 }
 
-gboolean
+static gboolean
 mailtc_mail_thread (mtc_config* config)
 {
 
@@ -135,7 +135,7 @@ mailtc_mail_thread (mtc_config* config)
    return TRUE;
 }
 
-gboolean
+static gboolean
 mailtc_mail_thread_once (mtc_config* config)
 {
     mailtc_mail_thread (config);
