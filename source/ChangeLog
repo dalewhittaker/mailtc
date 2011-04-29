@@ -3,3 +3,7 @@ Rewrite mailtc completely from scratch.
 The aim of this release is to keep things as minimal as possible and remove
 unwanted features, in addition to tidying up/improving the code.
 
+1.4.3:
+Port GnuTLS code to GIO (gtls).
+Clean up code.
+
