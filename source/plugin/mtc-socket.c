@@ -22,9 +22,8 @@
 #include <gio/gio.h>
 #include <config.h>
 
-#define TIMEOUT_CONNECT 5
-#define TIMEOUT_NET 15
-#define TIMEOUT_FREQ 10
+#define TIMEOUT_NET 5
+#define TIMEOUT_FREQ 100
 
 #define MAILTC_SOCKET_ERROR g_quark_from_string("MAILTC_SOCKET_ERROR")
 
@@ -288,7 +287,7 @@ mailtc_socket_connect (MailtcSocket* sock,
 
     client = g_socket_client_new ();
 
-    g_socket_client_set_timeout (client, TIMEOUT_CONNECT);
+    g_socket_client_set_timeout (client, TIMEOUT_NET);
     g_socket_client_set_tls (client, sock->tls);
 
     /* Following flags are used to allow self-signed certificates */
