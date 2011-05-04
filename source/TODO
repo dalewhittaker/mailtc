@@ -1,4 +1,5 @@
-Use GSocketClient/GSocketConnection etc (GIO) once glib 2.22 is stable.
-Config file encryption.
-Threading.
+- Automated testing
+- IMAP
+- Config file encryption.
+- Threading.
 
