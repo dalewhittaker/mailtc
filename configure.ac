@@ -6,7 +6,7 @@ m4_define([mailtc_version],[1.4.3])
 m4_define([glib_required_version],[2.28.0])
 m4_define([gmodule_required_version],[2.28.0])
 m4_define([gthread_required_version],[2.28.0])
-m4_define([gtk_required_version],[2.18.0])
+m4_define([gtk_required_version],[2.24.0])
 m4_define([unique_required_version],[1.1.2])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
@@ -74,6 +74,7 @@ AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 AC_CONFIG_FILES([
 src/Makefile
 plugin/Makefile
+tests/Makefile
 Makefile
 ])
 

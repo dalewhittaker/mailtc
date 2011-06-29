@@ -224,10 +224,10 @@ mailtc_config_dialog_page_general (mtc_prefs* prefs)
     gtk_entry_set_max_length (GTK_ENTRY (entry_command), MAILTC_PATH_LENGTH);
 
     label_errordlg = gtk_label_new ("Show network error dialog:");
-    combo_errordlg = gtk_combo_box_new_text ();
-    gtk_combo_box_append_text (GTK_COMBO_BOX (combo_errordlg), "Never");
-    gtk_combo_box_append_text (GTK_COMBO_BOX (combo_errordlg), "Always");
-    gtk_combo_box_append_text (GTK_COMBO_BOX (combo_errordlg), "Every");
+    combo_errordlg = gtk_combo_box_text_new ();
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Never");
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Always");
+    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Every");
 
     adj_connections = (GtkAdjustment*)gtk_adjustment_new (2.0, 2.0, 5.0, 1.0, 1.0, 0.0);
     spin_connections = gtk_spin_button_new (adj_connections, 1.0, 0);
