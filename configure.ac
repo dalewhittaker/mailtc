@@ -74,7 +74,6 @@ AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 AC_CONFIG_FILES([
 src/Makefile
 plugin/Makefile
-tests/Makefile
 Makefile
 ])
 
