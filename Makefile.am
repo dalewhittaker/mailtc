@@ -1,2 +1,3 @@
 SUBDIRS = plugin \
-		  src
+		  src \
+		  tests

@@ -45,7 +45,7 @@ AC_PROG_INSTALL
 AC_C_CONST
 AC_HEADER_STDC
 AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT
 LIBTOOL="$LIBTOOL --silent"
 ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 
@@ -74,6 +74,7 @@ AM_CONDITIONAL([ENABLE_DEBUG],[test "$enable_debug" = "yes"])
 AC_CONFIG_FILES([
 src/Makefile
 plugin/Makefile
+tests/Makefile
 Makefile
 ])
 
