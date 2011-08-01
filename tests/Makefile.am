@@ -16,6 +16,7 @@ AM_CPPFLAGS = \
         -DGDK_MULTIHEAD_SAFE \
         -DPANGO_DISABLE_DEPRECATED \
 		-DGSEAL_ENABLE \
+        -DPLUGINDIR=\""$(top_srcdir)/plugin/.libs"\" \
         -DDEBUG
 
 AM_CFLAGS = \
@@ -26,7 +27,8 @@ AM_CFLAGS = \
         -ggdb
 
 INCLUDES = \
-        $(GTK_CFLAGS)
+        $(GTK_CFLAGS) \
+		-I$(top_srcdir)/src
 
 LDADD = \
         $(GTK_LIBS)
