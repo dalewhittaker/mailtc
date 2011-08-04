@@ -53,6 +53,13 @@ typedef void
 
 typedef struct
 {
+    gchar* name;
+    guint  port;
+
+} mtc_protocol;
+
+typedef struct
+{
     gpointer            module;
     gpointer            priv;
     gchar*              directory;
@@ -61,8 +68,8 @@ typedef struct
     gchar*              name;
     gchar*              author;
     gchar*              description;
-    gchar**             protocols;
-    guint*              ports;
+
+    GArray*             protocols;
 
     add_account_func    add_account;
     remove_account_func remove_account;

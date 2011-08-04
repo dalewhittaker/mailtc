@@ -311,6 +311,7 @@ mailtc_account_update_tree_view (mtc_config* config,
     GtkTreeIter combo_iter;
     mtc_prefs* prefs;
     mtc_account* account;
+    mtc_protocol* protocol;
     gboolean exists;
     gint n;
 
@@ -337,9 +338,11 @@ mailtc_account_update_tree_view (mtc_config* config,
     exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &combo_iter);
     g_assert (exists);
 
+    protocol = &g_array_index (account->plugin->protocols, mtc_protocol, account->protocol);
+    g_assert (protocol);
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
                         TREEVIEW_ACCOUNT_COLUMN, account->name,
-                        TREEVIEW_PROTOCOL_COLUMN, account->plugin->protocols[account->protocol], -1);
+                        TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
 }
 
 static gint
@@ -552,8 +555,13 @@ mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
     plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, plgindex);
     g_assert (plugin);
 
-    if (plugin->ports[index])
-        port = g_strdup_printf ("%u", plugin->ports[index]);
+    if ((guint) index < plugin->protocols->len)
+    {
+        mtc_protocol* protocol;
+
+        protocol = &g_array_index (plugin->protocols, mtc_protocol, index);
+        port = g_strdup_printf ("%u", protocol->port);
+    }
 
     gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port ? port : "");
     g_free (port);
@@ -589,6 +597,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     GSList* plglist;
     mtc_prefs* prefs;
     mtc_plugin* plugin;
+    mtc_protocol* protocol;
     gchar* port;
     gint result;
     gint index;
@@ -647,10 +656,11 @@ mailtc_account_dialog_run (GtkWidget*   button,
         while (plglist)
         {
             plugin = (mtc_plugin* ) plglist->data;
-            for (index = 0; (guint) index < g_strv_length (plugin->protocols); index++)
+            for (index = 0; (guint) index < plugin->protocols->len; index++)
             {
+                protocol = &g_array_index (plugin->protocols, mtc_protocol, index);
                 gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
-                                                   COMBO_PROTOCOL_COLUMN, plugin->protocols[index],
+                                                   COMBO_PROTOCOL_COLUMN, protocol->name,
                                                    COMBO_PLUGIN_COLUMN, plgindex,
                                                    COMBO_INDEX_COLUMN, index, -1);
             }
@@ -764,8 +774,13 @@ mailtc_account_dialog_run (GtkWidget*   button,
         if (plglist)
         {
             plugin = (mtc_plugin* ) plglist->data;
-            if (plugin && plugin->ports)
-                port = g_strdup_printf ("%u", plugin->ports[0]);
+            if (plugin && plugin->protocols && plugin->protocols->len >= 1)
+            {
+                mtc_protocol* protocol;
+
+                protocol = &g_array_index (plugin->protocols, mtc_protocol, 0);
+                port = g_strdup_printf ("%u", protocol->port);
+            }
         }
         gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), 0);
         mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account), NULL);
@@ -939,6 +954,7 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     GtkWidget* button_remove;
     GSList* list;
     mtc_account* account;
+    mtc_protocol* protocol;
     mtc_prefs* prefs;
 
     g_assert (config && config->prefs);
@@ -970,9 +986,11 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
     while (list)
     {
         account = (mtc_account*) list->data;
+        protocol = &g_array_index (account->plugin->protocols, mtc_protocol, account->protocol);
+        g_assert (protocol);
         gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
                                            TREEVIEW_ACCOUNT_COLUMN, account->name,
-                                           TREEVIEW_PROTOCOL_COLUMN, account->plugin->protocols[account->protocol], -1);
+                                           TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
         list = g_slist_next (list);
     }
 

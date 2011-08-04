@@ -456,8 +456,11 @@ plugin_init (void)
 {
     mtc_plugin* plugin;
     pop_private* priv;
-    gboolean tls;
-    guint nprotocols;
+    mtc_protocol protocols[] =
+    {
+        { "POP",  110 },
+        { "POPS", 995 }
+    };
 
     plugin = g_new0 (mtc_plugin, 1);
     plugin->compatibility = VERSION;
@@ -470,20 +473,10 @@ plugin_init (void)
     plugin->read_messages = (read_message_func) pop_read_messages;
     plugin->terminate = (terminate_func) pop_terminate;
 
-    tls = mailtc_socket_supports_tls ();
-    nprotocols = tls ? POP_N_PROTOCOLS : POP_N_PROTOCOLS - 1;
-
-    plugin->protocols = g_new0 (gchar*, nprotocols + 1);
-    plugin->ports = g_new0 (guint, nprotocols);
-
-    plugin->protocols[POP_PROTOCOL] = g_strdup ("POP");
-    plugin->ports[POP_PROTOCOL] = 110;
-
-    if (tls)
-    {
-        plugin->protocols[POP_PROTOCOL_SSL] = g_strdup ("POP (SSL)");
-        plugin->ports[POP_PROTOCOL_SSL] = 995;
-    }
+    plugin->protocols = g_array_new (TRUE, FALSE, sizeof (mtc_protocol));
+    g_array_append_val (plugin->protocols, protocols[0]);
+    if (mailtc_socket_supports_tls ())
+        g_array_append_val (plugin->protocols, protocols[1]);
 
     priv = (pop_private*) g_new0 (pop_private, 1);
     priv->sock = mailtc_socket_new ();

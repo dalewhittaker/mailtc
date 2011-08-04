@@ -36,6 +36,7 @@ typedef struct
 {
     guint command;
     guint protocol;
+    guint port;
     GString* msg;
     GSocketConnection* connection;
     GMainLoop* loop;
@@ -220,8 +221,7 @@ run_plugin_thread (server_data* data)
     plugin = plugin_init ();
     g_assert (plugin);
     g_assert (g_str_equal (VERSION, plugin->compatibility));
-    g_assert (plugin->protocols[data->protocol]);
-    g_assert (plugin->ports[data->protocol]);
+    g_assert (data->protocol < plugin->protocols->len);
 
     plugin->module = module;
 
@@ -230,7 +230,7 @@ run_plugin_thread (server_data* data)
     account->plugin = plugin;
     account->name = "test";
     account->server = "localhost";
-    account->port = plugin->ports[account->protocol];
+    account->port = data->port;
     account->user = "testuser";
     account->password = "abc123";
 
@@ -272,9 +272,8 @@ run_plugin_thread (server_data* data)
     g_assert (success);
 
     g_free (account);
-    g_strfreev (plugin->protocols);
+    g_array_free (plugin->protocols, TRUE);
     g_free (plugin->directory);
-    g_free (plugin->ports);
     g_free (plugin);
 
     g_slist_free (config->accounts);
@@ -301,12 +300,14 @@ test_pop_protocol (guint protocol)
     GSocketAddress* sock_address;
     GError* error = NULL;
     guint ports[] = { POP_PORT, POPS_PORT };
+    guint port;
     server_data data;
 
+    port = ports[protocol];
     g_print ("\n");
     service = g_socket_service_new ();
     address = g_inet_address_new_from_string ("127.0.0.1");
-    sock_address = g_inet_socket_address_new (address, ports[protocol]);
+    sock_address = g_inet_socket_address_new (address, port);
     if (!g_socket_listener_add_address (G_SOCKET_LISTENER (service), sock_address,
             G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &error))
     {
@@ -325,6 +326,7 @@ test_pop_protocol (guint protocol)
     g_assert (loop);
     data.loop = loop;
     data.protocol = protocol;
+    data.port = port;
 
     g_idle_add ((GSourceFunc) run_plugin, &data);
     g_main_loop_run (loop);
