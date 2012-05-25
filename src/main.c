@@ -35,6 +35,7 @@
 typedef enum
 {
     MAILTC_MODE_VERSION = 0,
+    MAILTC_MODE_HELP,
     MAILTC_MODE_ERROR,
     MAILTC_MODE_NORMAL = 4,
     MAILTC_MODE_DEBUG,
@@ -67,33 +68,63 @@ mailtc_parse_config (int*     argc,
 {
     GOptionContext* context;
     GOptionEntry *entries;
+    GString* hstr;
     gboolean configure;
     gboolean debug;
     gboolean kill;
     gboolean version;
+    gboolean help;
     gboolean parsed;
 
-    configure = debug = kill = version = FALSE;
+    configure = debug = kill = version = help = FALSE;
+    hstr = NULL;
 
     entries = g_new0 (GOptionEntry, 5);
     mailtc_set_option_entry (&entries[0], "configure", 'c', "Configure mail details.", &configure);
     mailtc_set_option_entry (&entries[1], "debug", 'd', "Run in network debug mode.", &debug);
     mailtc_set_option_entry (&entries[2], "kill", 'k', "Kill all running " PACKAGE " processes.", &kill);
     mailtc_set_option_entry (&entries[3], "version", 'v', "Display program version.", &version);
+    mailtc_set_option_entry (&entries[4], "help", 'h', "Show help options.", &help);
 
     context = g_option_context_new ("");
+    g_option_context_set_help_enabled (context, FALSE);
     g_option_context_add_main_entries (context, entries, NULL);
     g_option_context_set_ignore_unknown_options (context, FALSE);
     parsed = g_option_context_parse (context, argc, argv, error);
+
+    if (help)
+    {
+        guint i;
+
+        hstr = g_string_sized_new (512);
+        g_string_append (hstr, "Usage:\n  ");
+        g_string_append (hstr, g_get_prgname ());
+        g_string_append (hstr, " <option>\n\nOptions:\n");
+
+        for (i = 0; i < 5; i++)
+        {
+            g_string_append_printf (hstr, "  -%c, --%-14s%s\n",
+                    entries[i].short_name, entries[i].long_name, entries[i].description);
+        }
+        g_string_append (hstr, "\n");
+    }
+
     g_option_context_free (context);
     g_free (entries);
 
     if (!parsed)
         return MAILTC_MODE_ERROR;
 
+    if (hstr)
+    {
+        g_print ("%s", hstr->str);
+        g_string_free (hstr, TRUE);
+        return MAILTC_MODE_HELP;
+    }
+
     if (version)
     {
-        g_print ("\n%s %s - Copyright (c) 2009-2011 Dale Whittaker.\n\n", PACKAGE, VERSION);
+        g_print ("\n%s %s - Copyright (c) 2009-2012 Dale Whittaker.\n\n", PACKAGE, VERSION);
         return MAILTC_MODE_VERSION;
     }
 

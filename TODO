@@ -1,4 +1,6 @@
-- Automated testing
-- IMAP
+- Automated testing.
+- IMAP.
 - Config file encryption.
-- Threading.
+- GObjectification and Extension rework.
+- Port to GTK 3.
+
