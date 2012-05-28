@@ -1,11 +1,10 @@
-this release
-- Copyrights
-- libunique removal
+This release
 - valgrind/testing etc
 
+Next release
+- GObjectification and Extension rework.
 - Automated testing.
 - IMAP.
-- Config file encryption.
-- GObjectification and Extension rework.
 - Port to GTK 3.
+- Config file encryption.
 
