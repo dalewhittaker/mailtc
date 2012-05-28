@@ -1,3 +1,8 @@
+this release
+- Copyrights
+- libunique removal
+- valgrind/testing etc
+
 - Automated testing.
 - IMAP.
 - Config file encryption.

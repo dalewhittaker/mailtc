@@ -75,6 +75,7 @@ mailtc_save_config (mtc_config* config,
     gchar* filename;
     gchar* key_group;
     gchar* password;
+    gchar* plugin_name;
     guint i;
 
     *error = NULL;
@@ -102,9 +103,11 @@ mailtc_save_config (mtc_config* config,
         g_key_file_set_string (key_file, key_group, "server", account->server);
         g_key_file_set_integer (key_file, key_group, "port", account->port);
         g_key_file_set_string (key_file, key_group, "user", account->user);
-        g_key_file_set_string (key_file, key_group, "plugin",
-                               g_module_name (account->plugin->module));
         g_key_file_set_integer (key_file, key_group, "protocol", account->protocol);
+
+        plugin_name = g_path_get_basename (g_module_name (account->plugin->module));
+        g_key_file_set_string (key_file, key_group, "plugin", plugin_name);
+        g_free (plugin_name);
 
         colour = gdk_color_to_string (account->icon_colour);
         g_key_file_set_string (key_file, key_group, "iconcolour", colour + 1);
@@ -226,6 +229,7 @@ mailtc_load_config (mtc_config* config,
                 if (!*error)
                 {
                     gchar* plugin_name;
+                    gchar* module_name;
 
                     plugin_name = g_key_file_get_string (key_file, key_group, "plugin", error);
 
@@ -233,11 +237,14 @@ mailtc_load_config (mtc_config* config,
                     while (list)
                     {
                         plugin = (mtc_plugin*) list->data;
-                        if (g_str_equal (plugin_name, g_module_name (plugin->module)))
-                        {
+
+                        module_name = g_path_get_basename (g_module_name (plugin->module));
+                        if (g_str_equal (plugin_name, module_name))
                             account->plugin = plugin;
+
+                        g_free (module_name);
+                        if (account->plugin)
                             break;
-                        }
                         list = g_slist_next (list);
                     }
                     g_free (plugin_name);
