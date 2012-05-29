@@ -1,5 +1,5 @@
 /* mtc-socket.c
- * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2011 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -292,7 +292,13 @@ mailtc_socket_connect (MailtcSocket* sock,
 
     /* Following flags are used to allow self-signed certificates */
     flags = g_socket_client_get_tls_validation_flags (client);
-    flags &= ~(G_TLS_CERTIFICATE_UNKNOWN_CA | G_TLS_CERTIFICATE_BAD_IDENTITY);
+    flags &= ~(G_TLS_CERTIFICATE_UNKNOWN_CA |
+               G_TLS_CERTIFICATE_NOT_ACTIVATED |
+               /*G_TLS_CERTIFICATE_EXPIRED |*/
+               G_TLS_CERTIFICATE_REVOKED |
+               G_TLS_CERTIFICATE_INSECURE /*|
+               G_TLS_CERTIFICATE_BAD_IDENTITY*/);
+    flags = 0;
     g_socket_client_set_tls_validation_flags (client, flags);
 
     connection = g_socket_client_connect_to_host (
