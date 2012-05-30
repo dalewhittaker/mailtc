@@ -2,6 +2,7 @@ This release
 - valgrind/testing etc
 
 Next release
+- remove g_thread_init and gthread from Makefiles (glib 2.32)
 - GObjectification and Extension rework.
 - Automated testing.
 - IMAP.

@@ -7,7 +7,6 @@ m4_define([glib_required_version],[2.28.0])
 m4_define([gmodule_required_version],[2.28.0])
 m4_define([gthread_required_version],[2.28.0])
 m4_define([gtk_required_version],[2.24.0])
-m4_define([unique_required_version],[1.1.2])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
 
@@ -23,13 +22,11 @@ GLIB_REQUIRED_VERSION=glib_required_version
 GMODULE_REQUIRED_VERSION=gmodule_required_version
 GTHREAD_REQUIRED_VERSION=gthread_required_version
 GTK_REQUIRED_VERSION=gtk_required_version
-UNIQUE_REQUIRED_VERSION=unique_required_version
 
 AC_SUBST(GLIB_REQUIRED_VERSION)
 AC_SUBST(GMODULE_REQUIRED_VERSION)
 AC_SUBST(GTHREAD_REQUIRED_VERSION)
 AC_SUBST(GTK_REQUIRED_VERSION)
-AC_SUBST(UNIQUE_REQUIRED_VERSION)
 
 # put .o files in the subdirectory and package as bzip2
 AM_INIT_AUTOMAKE([subdir-objects dist-bzip2 no-dist-gzip])
@@ -54,12 +51,9 @@ PKG_CHECK_MODULES(GLIB,glib-2.0 >= $GLIB_REQUIRED_VERSION)
 PKG_CHECK_MODULES(GMODULE,gmodule-2.0 >= $GMODULE_REQUIRED_VERSION)
 PKG_CHECK_MODULES(GTHREAD,gthread-2.0 >= $GTHREAD_REQUIRED_VERSION)
 PKG_CHECK_MODULES(GTK,gtk+-2.0 >= $GTK_REQUIRED_VERSION)
-PKG_CHECK_MODULES(UNIQUE,unique-1.0 >= $UNIQUE_REQUIRED_VERSION)
 
 AC_SUBST([GTK_CFLAGS])
 AC_SUBST([GTK_LIBS])
-AC_SUBST([UNIQUE_CFLAGS])
-AC_SUBST([UNIQUE_LIBS])
 AC_SUBST([GTHREAD_LIBS])
 
 AC_MSG_CHECKING([whether to do a debug build])

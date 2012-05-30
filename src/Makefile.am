@@ -31,15 +31,14 @@ AM_CFLAGS += \
 endif
 
 INCLUDES = \
-		$(GTK_CFLAGS) \
-		$(UNIQUE_CFLAGS)
+		$(GTK_CFLAGS)
 
 LDADD = \
 		$(GTK_LIBS) \
-		$(GTHREAD_LIBS) \
-		$(UNIQUE_LIBS)
+		$(GTHREAD_LIBS)
 
 mailtc_SOURCES = \
+		mtc-application.c \
 		mtc-config.c \
 		mtc-envelope.c \
 		mtc-file.c \
@@ -51,6 +50,7 @@ mailtc_SOURCES = \
 
 EXTRA_DIST = \
 		mtc.h \
+		mtc-application.h \
 		mtc-config.h \
 		mtc-envelope.h \
 		mtc-file.h \
