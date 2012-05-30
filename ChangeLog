@@ -5,5 +5,7 @@ unwanted features, in addition to tidying up/improving the code.
 
 1.4.3:
 Port GnuTLS code to GIO (gtls).
+Port libunique to GApplication.
+Add initial support for unit tests.
 Clean up code.
 
