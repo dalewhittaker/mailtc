@@ -1,5 +1,5 @@
 /* mtc-envelope.c
- * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2011 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -111,9 +111,9 @@ mailtc_envelope_create_pixbuf (MailtcEnvelope* envelope)
 #pragma align 4 (my_pixbuf)
 #endif
 #ifdef __GNUC__
-const guint8 envelope_data[] __attribute__ ((__aligned__ (4))) = 
+static const guint8 envelope_data[] __attribute__ ((__aligned__ (4))) = 
 #else
-const guint8 envelope_data[] = 
+static const guint8 envelope_data[] = 
 #endif
 { ""
   /* Pixbuf magic (0x47646b50) */
