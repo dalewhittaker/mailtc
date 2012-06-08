@@ -19,6 +19,7 @@ AM_CFLAGS = \
 		-Wall \
 		-Wextra \
 		-Wno-overlength-strings \
+		-Wno-format \
 		-ansi \
 		-pedantic
 

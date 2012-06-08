@@ -154,14 +154,12 @@ service_incoming_cb (GSocketService*    service,
     GIOChannel* channel;
     gboolean success;
     gint fd;
-    GPollableOutputStream* ostream;
 
     (void) service;
     (void) source_object;
 
     g_object_ref (connection);
 
-    ostream = G_POLLABLE_OUTPUT_STREAM (g_io_stream_get_output_stream (G_IO_STREAM (connection)));
     socket = g_socket_connection_get_socket (connection);
     fd = g_socket_get_fd (socket);
     channel = g_io_channel_unix_new (fd);

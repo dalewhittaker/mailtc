@@ -65,9 +65,6 @@ static void
 mailtc_socket_finalize (GObject* object)
 {
     MailtcSocket* sock = MAILTC_SOCKET (object);
-    MailtcSocketPrivate* priv;
-
-    priv = sock->priv;
 
     mailtc_socket_disconnect (sock);
 

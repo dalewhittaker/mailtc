@@ -306,7 +306,6 @@ mailtc_account_update_tree_view (mtc_config* config,
                                  gint        index)
 {
     GtkTreeModel* model;
-    GtkTreeModel* combo_model;
     GtkTreeIter iter;
     GtkTreeIter combo_iter;
     mtc_prefs* prefs;
@@ -334,7 +333,6 @@ mailtc_account_update_tree_view (mtc_config* config,
 
     account = g_slist_nth_data (config->accounts, index);
 
-    combo_model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
     exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &combo_iter);
     g_assert (exists);
 

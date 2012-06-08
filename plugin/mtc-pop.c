@@ -291,7 +291,7 @@ pop_calculate_new (pop_private*    priv,
     gchar* pstart;
     gint64 i;
     gint64 messages;
-    gboolean success;
+    gboolean success = TRUE;
 
     g_assert (priv);
 
