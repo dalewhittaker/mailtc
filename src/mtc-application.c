@@ -50,6 +50,7 @@ typedef enum
 struct _MailtcApplicationPrivate
 {
     gboolean is_running;
+    guint source_id;
 };
 
 struct _MailtcApplication
@@ -69,9 +70,14 @@ G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
 static void
 mailtc_application_finalize (GObject* object)
 {
-    MailtcApplication* app = MAILTC_APPLICATION (object);
+    MailtcApplication* app;
+    MailtcApplicationPrivate* priv;
 
-    app->priv->is_running = FALSE;
+    app = MAILTC_APPLICATION (object);
+    priv = app->priv;
+
+    priv->is_running = FALSE;
+    priv->source_id = 0;
 
     G_OBJECT_CLASS (mailtc_application_parent_class)->finalize (object);
 }
@@ -166,10 +172,15 @@ mailtc_application_term_handler (gint signal)
 }
 
 static gboolean
-mailtc_application_server_init (mtc_mode    mode,
-                                mtc_config* config,
-                                GError**    error)
+mailtc_application_server_init (MailtcApplication* app,
+                                mtc_mode           mode,
+                                mtc_config*        config,
+                                GError**           error)
 {
+    MailtcApplicationPrivate* priv;
+
+    g_assert (MAILTC_IS_APPLICATION (app));
+
     mailtc_set_log_gtk (config);
 
     /* Initialise thread system */
@@ -196,12 +207,14 @@ mailtc_application_server_init (mtc_mode    mode,
         mode = MAILTC_MODE_CONFIG;
     }
 
+    priv = app->priv;
+
     switch (mode)
     {
         case MAILTC_MODE_DEBUG:
             config->debug = TRUE;
         case MAILTC_MODE_NORMAL:
-            mailtc_run_main_loop (config);
+            priv->source_id = mailtc_run_main_loop (config);
             break;
 
         case MAILTC_MODE_CONFIG:
@@ -259,18 +272,25 @@ mailtc_application_initialise (mtc_config* config,
 }
 
 static gboolean
-mailtc_application_terminate (mtc_config* config,
-                              GError**    error)
+mailtc_application_terminate (MailtcApplication* app,
+                              mtc_config*        config,
+                              GError**           error)
 {
     mtc_config* newconfig = NULL;
+    MailtcApplicationPrivate* priv;
 
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    priv = app->priv;
+
+    if (priv->source_id > 0)
+    {
+        g_source_remove (priv->source_id);
+        priv->source_id = 0;
+    }
+ 
     if (config)
     {
-        if (config->source_id > 0)
-        {
-            g_source_remove (config->source_id);
-            config->source_id = 0;
-        }
         if (config->log)
         {
             gboolean status_error;
@@ -301,6 +321,7 @@ static int
 mailtc_application_command_line_cb (GApplication*            app,
                                     GApplicationCommandLine* cmdline)
 {
+    MailtcApplication* mtcapp;
     MailtcApplicationPrivate* priv;
     mtc_mode mode;
     gchar** args;
@@ -316,7 +337,8 @@ mailtc_application_command_line_cb (GApplication*            app,
 
     g_application_hold (app);
 
-    priv = MAILTC_APPLICATION (app)->priv;
+    mtcapp = MAILTC_APPLICATION (app);
+    priv = mtcapp->priv;
 
     is_running = priv->is_running;
     priv->is_running = TRUE;
@@ -359,12 +381,12 @@ mailtc_application_command_line_cb (GApplication*            app,
                 {
                     gtk_init (&argc, &args);
 
-                    if (!mailtc_application_server_init (mode, config, &error) && error)
+                    if (!mailtc_application_server_init (mtcapp, mode, config, &error) && error)
                         report_error = TRUE;
                 }
                 if (report_error)
                     mailtc_gerror (&error);
-                if (!mailtc_application_terminate (config, &error))
+                if (!mailtc_application_terminate (mtcapp, config, &error))
                     mailtc_gerror (&error);
                 if (!mailtc_application_cleanup (config, &error))
                     mailtc_gerror (&error);
@@ -434,8 +456,12 @@ mailtc_application_class_init (MailtcApplicationClass* class)
 static void
 mailtc_application_init (MailtcApplication* app)
 {
-    app->priv = G_TYPE_INSTANCE_GET_PRIVATE (app, MAILTC_TYPE_APPLICATION, MailtcApplicationPrivate);
-    app->priv->is_running = FALSE;
+    MailtcApplicationPrivate* priv;
+
+    priv = app->priv = G_TYPE_INSTANCE_GET_PRIVATE (app, MAILTC_TYPE_APPLICATION, MailtcApplicationPrivate);
+
+    priv->is_running = FALSE;
+    priv->source_id = 0;
 
     g_signal_connect (app, "command-line",
         G_CALLBACK (mailtc_application_command_line_cb), NULL);

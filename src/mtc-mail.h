@@ -24,7 +24,7 @@
 
 G_BEGIN_DECLS
 
-void
+guint
 mailtc_run_main_loop (mtc_config* config);
 
 G_END_DECLS

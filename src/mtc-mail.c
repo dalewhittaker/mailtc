@@ -142,7 +142,7 @@ mailtc_mail_thread_once (mtc_config* config)
     return FALSE;
 }
 
-void
+guint
 mailtc_run_main_loop (mtc_config* config)
 {
     MailtcStatusIcon* icon;
@@ -171,8 +171,8 @@ mailtc_run_main_loop (mtc_config* config)
 
     g_idle_add ((GSourceFunc) mailtc_mail_thread_once, config);
 
-    config->source_id = g_timeout_add_seconds (60 * config->interval,
-                                               (GSourceFunc) mailtc_mail_thread,
-                                               config);
+    return g_timeout_add_seconds (60 * config->interval,
+                                  (GSourceFunc) mailtc_mail_thread,
+                                  config);
 }
 

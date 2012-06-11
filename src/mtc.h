@@ -97,7 +97,6 @@ typedef struct
 {
     gchar*              directory;
     GIOChannel*         log;
-    guint               source_id;
     struct _mtc_prefs*  prefs;
     GObject*            status_icon;
 
