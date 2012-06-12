@@ -336,8 +336,8 @@ pop_calculate_new (pop_private*    priv,
 }
 
 static gint64
-pop_get_messages (mtc_config*  config,
-                  mtc_account* account,
+pop_get_messages (mtc_account* account,
+                  gboolean     debug,
                   GError**     error)
 {
     MailtcSocket* sock;
@@ -351,7 +351,7 @@ pop_get_messages (mtc_config*  config,
     g_assert (plugin->priv);
 
     priv = (pop_private*) plugin->priv;
-    priv->debug = config->debug;
+    priv->debug = debug;
     priv->account = account;
     sock = priv->sock;
 
@@ -377,11 +377,9 @@ pop_get_messages (mtc_config*  config,
 }
 
 static gboolean
-pop_read_messages (mtc_config*  config,
-                   mtc_account* account,
+pop_read_messages (mtc_account* account,
                    GError**     error)
 {
-    (void) config;
     g_assert (account);
     g_assert (account && MAILTC_IS_UID_TABLE (account->priv));
 
@@ -404,8 +402,7 @@ pop_remove_account (mtc_account* account,
 }
 
 static gboolean
-pop_add_account (mtc_config*  config,
-                 mtc_account* account,
+pop_add_account (mtc_account* account,
                  GError**     error)
 {
     mtc_plugin* plugin;
@@ -413,7 +410,6 @@ pop_add_account (mtc_config*  config,
     gchar* hash;
     gchar* filename;
 
-    (void) config;
     g_assert (account && account->plugin);
 
     if (account->priv)

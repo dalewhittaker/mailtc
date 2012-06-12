@@ -277,7 +277,7 @@ mailtc_load_config (mtc_config* config,
                     account->plugin)
                 {
                     if (plugin->add_account)
-                        success = (*plugin->add_account) (config, account, error);
+                        success = (*plugin->add_account) (account, error);
                     else
                         success = TRUE;
                 }

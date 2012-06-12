@@ -247,11 +247,11 @@ run_plugin_thread (server_data* data)
     g_dir_close (dir);
 
     g_assert (plugin->add_account);
-    success = (*plugin->add_account) (config, account, &error);
+    success = (*plugin->add_account) (account, &error);
     g_assert (success);
 
     g_assert (plugin->get_messages);
-    messages = (*plugin->get_messages) (config, account, &error);
+    messages = (*plugin->get_messages) (account, config->debug, &error);
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {

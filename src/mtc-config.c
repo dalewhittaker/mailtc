@@ -461,7 +461,7 @@ mailtc_account_dialog_save (mtc_config*  config,
 
         if (plugin->add_account)
         {
-            if (!(*plugin->add_account) (config, account, error))
+            if (!(*plugin->add_account) (account, error))
                 return -1;
         }
     }

@@ -22,12 +22,11 @@
 #include "mtc-util.h"
 
 static void
-mailtc_read_mail (mtc_config* config)
+mailtc_read_mail (GSList* list)
 {
-    GSList* list = config->accounts;
-    GError* error = NULL;
     mtc_plugin* plugin;
     mtc_account* account;
+    GError* error = NULL;
 
     while (list)
     {
@@ -36,7 +35,7 @@ mailtc_read_mail (mtc_config* config)
 
         if (plugin->read_messages)
         {
-            if (!(*plugin->read_messages) (config, account, &error))
+            if (!(*plugin->read_messages) (account, &error))
                 mailtc_gerror (&error);
         }
         list = g_slist_next (list);
@@ -54,17 +53,17 @@ mailtc_read_mail_cb (MailtcStatusIcon* status_icon,
     if (config->mail_command && *(config->mail_command))
         mailtc_run_command (config->mail_command);
 
-    mailtc_read_mail (config);
+    mailtc_read_mail (config->accounts);
 }
 
 static void
 mailtc_mark_as_read_cb (MailtcStatusIcon* status_icon,
-                        mtc_config*       config)
+                        GSList*           list)
 {
     (void) status_icon;
 
     mailtc_status_icon_clear (status_icon);
-    mailtc_read_mail (config);
+    mailtc_read_mail (list);
 }
 
 static gboolean
@@ -93,7 +92,7 @@ mailtc_mail_thread (mtc_config* config)
 
             if (plugin->get_messages)
             {
-                messages = (*plugin->get_messages) (config, account, &error);
+                messages = (*plugin->get_messages) (account, config->debug, &error);
                 if (messages >= 0 && !error)
                 {
                     mailtc_status_icon_update (icon, id++, messages);
@@ -167,7 +166,7 @@ mailtc_run_main_loop (mtc_config* config)
     g_signal_connect (icon, "read-mail",
                 G_CALLBACK (mailtc_read_mail_cb), config);
     g_signal_connect (icon, "mark-as-read",
-                G_CALLBACK (mailtc_mark_as_read_cb), config);
+                G_CALLBACK (mailtc_mark_as_read_cb), config->accounts);
 
     g_idle_add ((GSourceFunc) mailtc_mail_thread_once, config);
 

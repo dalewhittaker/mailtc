@@ -30,26 +30,24 @@ G_BEGIN_DECLS
 struct _mtc_prefs;
 
 typedef gboolean
-(*add_account_func) (gconstpointer config,
-                     gconstpointer account,
-                     GError**      error);
+(*add_account_func)    (gconstpointer account,
+                        GError**      error);
 
 typedef gboolean
 (*remove_account_func) (gconstpointer account,
                         GError**      error);
 
 typedef gint64
-(*get_message_func) (gconstpointer config,
-                     gconstpointer account,
-                     GError**      error);
+(*get_message_func)    (gconstpointer account,
+                        gboolean      debug,
+                        GError**      error);
 
 typedef gboolean
-(*read_message_func) (gconstpointer config,
-                      gconstpointer account,
-                      GError**      error);
+(*read_message_func)   (gconstpointer account,
+                        GError**      error);
 
 typedef void
-(*terminate_func) (gpointer);
+(*terminate_func)      (gpointer plugin);
 
 typedef struct
 {
