@@ -42,8 +42,7 @@ mailtc_load_config (mtc_config*  config,
                     GError**     error);
 
 gchar*
-mailtc_file        (mtc_config*  config,
-                    const gchar* filename);
+mailtc_directory    (void);
 
 G_END_DECLS
 

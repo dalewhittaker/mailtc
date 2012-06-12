@@ -23,9 +23,7 @@
 #include <glib/gstdio.h>
 #include <string.h> /* strlen () */
 
-#define CONFIG_NAME "config"
-
-static gchar*
+gchar*
 mailtc_directory (void)
 {
     gchar* directory;
@@ -36,35 +34,6 @@ mailtc_directory (void)
     return directory;
 }
 
-gchar*
-mailtc_file (mtc_config*  config,
-             const gchar* filename)
-{
-    gchar* directory;
-    gchar* absfilename;
-
-    if (!config || !config->directory)
-    {
-        directory = mailtc_directory ();
-        if (!directory)
-        {
-            mailtc_error ("Failed to create " PACKAGE  " directory");
-            return NULL;
-        }
-        if (config)
-            config->directory = directory;
-    }
-    else
-        directory = config->directory;
-
-    absfilename = g_build_filename (directory, filename, NULL);
-
-    if (!config)
-        g_free (directory);
-
-    return absfilename;
-}
-
 gboolean
 mailtc_save_config (mtc_config* config,
                     GError**    error)
@@ -73,9 +42,9 @@ mailtc_save_config (mtc_config* config,
     GSList* list;
     mtc_account* account;
     gchar* colour;
-    gchar* filename;
     gchar* key_group;
     gchar* password;
+    const gchar* filename;
     const gchar* module_name;
     guint i;
 
@@ -83,7 +52,7 @@ mailtc_save_config (mtc_config* config,
     list = config->accounts;
     i = 0;
 
-    filename = mailtc_file (config, CONFIG_NAME);
+    filename = config->file;
 
     if (g_file_test (filename, G_FILE_TEST_EXISTS))
         g_chmod (filename, S_IRUSR | S_IWUSR);
@@ -141,7 +110,6 @@ mailtc_save_config (mtc_config* config,
     if (g_file_test (filename, G_FILE_TEST_EXISTS))
         g_chmod (filename, S_IRUSR);
 
-    g_free (filename);
     return (*error) ? FALSE : TRUE;
 }
 
@@ -171,10 +139,10 @@ mailtc_load_config (mtc_config* config,
                     GError**    error)
 {
     GKeyFile* key_file;
-    gchar* filename;
+    const gchar* filename;
     gchar* colourstring;
 
-    filename = mailtc_file (config, CONFIG_NAME);
+    filename = config->file;
 
     if (g_file_test (filename, G_FILE_TEST_EXISTS))
         g_chmod (filename, S_IRUSR | S_IWUSR);
@@ -295,7 +263,6 @@ mailtc_load_config (mtc_config* config,
     if (g_file_test (filename, G_FILE_TEST_EXISTS))
         g_chmod (filename, S_IRUSR);
 
-    g_free (filename);
     return (*error) ? FALSE : TRUE;
 }
 

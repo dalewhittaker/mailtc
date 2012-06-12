@@ -45,10 +45,11 @@ typedef enum
 /* Flag to mask modes that require GApplication */
 #define MAILTC_MODE_UNIQUE(mode) (((mode) & 0xFC) == 0x04)
 
-#define MAILTC_APPLICATION_ID       "org." PACKAGE
-#define MAILTC_APPLICATION_LOG_NAME "log"
+#define MAILTC_APPLICATION_ID          "org." PACKAGE
+#define MAILTC_APPLICATION_LOG_NAME    "log"
+#define MAILTC_APPLICATION_CONFIG_NAME "config"
 
-#define MAILTC_APPLICATION_ERROR g_quark_from_string ("MAILTC_APPLICATION_ERROR")
+#define MAILTC_APPLICATION_ERROR        g_quark_from_string ("MAILTC_APPLICATION_ERROR")
 
 typedef enum
 {
@@ -62,6 +63,7 @@ struct _MailtcApplicationPrivate
     gboolean is_running;
     guint source_id;
     GPtrArray* modules;
+    gchar* directory;
 };
 
 struct _MailtcApplication
@@ -77,6 +79,36 @@ struct _MailtcApplicationClass
 };
 
 G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
+
+static gchar*
+mailtc_application_file (MailtcApplication* app,
+                         const gchar*       filename)
+{
+    MailtcApplicationPrivate* priv;
+    gchar* directory;
+    gchar* absfilename;
+
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    priv = app->priv;
+
+    if (!priv->directory)
+    {
+        directory = mailtc_directory ();
+        if (!directory)
+        {
+            mailtc_error ("Failed to create " PACKAGE  " directory");
+            return NULL;
+        }
+        priv->directory = directory;
+    }
+    else
+        directory = priv->directory;
+
+    absfilename = g_build_filename (directory, filename, NULL);
+
+    return absfilename;
+}
 
 static void
 mailtc_application_unload_module (mtc_plugin* plugin,
@@ -180,7 +212,7 @@ mailtc_application_load_modules (MailtcApplication* app,
                         retval = FALSE;
                     }
 
-                    plugin->directory = mailtc_file (NULL, filename);
+                    plugin->directory = mailtc_application_file (app, filename);
                     g_assert (plugin->directory);
                     g_mkdir_with_parents (plugin->directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
                 }
@@ -370,8 +402,9 @@ mailtc_application_server_init (MailtcApplication* app,
 }
 
 static gboolean
-mailtc_application_initialise (mtc_config* config,
-                               GError**    error)
+mailtc_application_initialise (MailtcApplication* app,
+                               mtc_config*        config,
+                               GError**           error)
 {
     if (config)
     {
@@ -380,7 +413,11 @@ mailtc_application_initialise (mtc_config* config,
         gchar* str_init;
         gsize bytes;
 
-        filename = mailtc_file (config, MAILTC_APPLICATION_LOG_NAME);
+        g_assert (MAILTC_IS_APPLICATION (app));
+
+        config->file = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
+
+        filename = mailtc_application_file (app, MAILTC_APPLICATION_LOG_NAME);
         config->log = g_io_channel_new_file (filename, "w", error);
         mailtc_set_log_glib (config);
         g_free (filename);
@@ -514,7 +551,7 @@ mailtc_application_command_line_cb (GApplication*            app,
             else
             {
                 config = g_new0 (mtc_config, 1);
-                if (!mailtc_application_initialise (config, &error))
+                if (!mailtc_application_initialise (mtcapp, config, &error))
                     report_error = TRUE;
                 else
                 {
@@ -590,6 +627,7 @@ mailtc_application_finalize (GObject* object)
 
     priv->is_running = FALSE;
     priv->source_id = 0;
+    g_free (priv->directory);
 
     mailtc_application_unload_modules (app, NULL);
 
@@ -618,6 +656,7 @@ mailtc_application_init (MailtcApplication* app)
 
     priv->is_running = FALSE;
     priv->source_id = 0;
+    priv->directory = NULL;
 
     g_signal_connect (app, "command-line",
         G_CALLBACK (mailtc_application_command_line_cb), NULL);

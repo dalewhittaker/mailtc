@@ -184,6 +184,7 @@ run_plugin_thread (server_data* data)
     mtc_plugin* plugin;
     mtc_plugin* (*plugin_init) (void);
     GDir* dir;
+    gchar* directory;
     const gchar* filename;
     gchar* fullname;
     GModule* module;
@@ -239,9 +240,9 @@ run_plugin_thread (server_data* data)
 #endif
     config->debug = TRUE;
 
-    config->directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
-    g_assert (config->directory);
-    plugin->directory = g_build_filename (config->directory, filename, NULL);
+    directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
+    g_assert (directory);
+    plugin->directory = g_build_filename (directory, filename, NULL);
     g_assert (plugin->directory);
     g_mkdir_with_parents (plugin->directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     g_dir_close (dir);
@@ -266,7 +267,7 @@ run_plugin_thread (server_data* data)
     (*plugin->terminate) (plugin);
 
     g_assert (g_remove (plugin->directory) == 0);
-    g_assert (g_remove (config->directory) == 0);
+    g_assert (g_remove (directory) == 0);
     g_assert (g_remove (CONFIGDIR) == 0);
 
     success = g_module_close (module);
@@ -282,7 +283,7 @@ run_plugin_thread (server_data* data)
 #if 0
     g_slist_free (config->plugins);
 #endif
-    g_free (config->directory);
+    g_free (directory);
     g_free (config);
 
     return NULL;

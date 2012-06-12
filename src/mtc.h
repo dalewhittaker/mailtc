@@ -93,7 +93,7 @@ typedef struct
 
 typedef struct
 {
-    gchar*              directory;
+    gchar*              file;
     GIOChannel*         log;
     struct _mtc_prefs*  prefs;
     GObject*            status_icon;

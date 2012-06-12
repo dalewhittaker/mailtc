@@ -250,7 +250,7 @@ mailtc_free_config (mtc_config* config,
     {
         GSList* list;
 
-        g_free (config->directory);
+        g_free (config->file);
         g_free (config->prefs);
         g_free (config->mail_command);
 
