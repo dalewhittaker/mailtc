@@ -18,6 +18,7 @@
  */
 
 #include "mtc-file.h"
+#include "mtc-module.h"
 #include "mtc-util.h"
 #include <glib/gstdio.h>
 #include <string.h> /* strlen () */
@@ -75,7 +76,7 @@ mailtc_save_config (mtc_config* config,
     gchar* filename;
     gchar* key_group;
     gchar* password;
-    gchar* plugin_name;
+    const gchar* module_name;
     guint i;
 
     *error = NULL;
@@ -105,9 +106,8 @@ mailtc_save_config (mtc_config* config,
         g_key_file_set_string (key_file, key_group, "user", account->user);
         g_key_file_set_integer (key_file, key_group, "protocol", account->protocol);
 
-        plugin_name = g_path_get_basename (g_module_name (account->plugin->module));
-        g_key_file_set_string (key_file, key_group, "plugin", plugin_name);
-        g_free (plugin_name);
+        module_name = mailtc_module_get_name (account->plugin->module);
+        g_key_file_set_string (key_file, key_group, "plugin", module_name);
 
         colour = gdk_color_to_string (account->icon_colour);
         g_key_file_set_string (key_file, key_group, "iconcolour", colour + 1);
@@ -155,9 +155,9 @@ mailtc_string_to_colour (const gchar* colourstring)
         guint64 colourval;
 
         colourval = g_ascii_strtoull (colourstring, NULL, 16);
-        colour.red = (guint16)((colourval >> 32) & 0xFFFF);
-        colour.green = (guint16)((colourval >> 16) & 0xFFFF);
-        colour.blue = (guint16)(colourval & 0xFFFF);
+        colour.red = (guint16) ((colourval >> 32) & 0xFFFF);
+        colour.green = (guint16) ((colourval >> 16) & 0xFFFF);
+        colour.blue = (guint16) (colourval & 0xFFFF);
     }
     else
         colour.red = colour.green = colour.blue = 0xFFFF;
@@ -167,6 +167,7 @@ mailtc_string_to_colour (const gchar* colourstring)
 
 gboolean
 mailtc_load_config (mtc_config* config,
+                    GPtrArray*  plugins,
                     GError**    error)
 {
     GKeyFile* key_file;
@@ -198,10 +199,10 @@ mailtc_load_config (mtc_config* config,
             n = g_key_file_get_integer (key_file, "settings", "naccounts", error);
         if (!*error)
         {
-            GSList* list;
             mtc_account* account;
             mtc_plugin* plugin = NULL;
             guint i;
+            guint j;
             gchar* key_group;
             gboolean success;
 
@@ -229,23 +230,20 @@ mailtc_load_config (mtc_config* config,
                 if (!*error)
                 {
                     gchar* plugin_name;
-                    gchar* module_name;
+                    const gchar* module_name;
 
                     plugin_name = g_key_file_get_string (key_file, key_group, "plugin", error);
 
-                    list = config->plugins;
-                    while (list)
+                    for (j = 0; j < plugins->len; j++)
                     {
-                        plugin = (mtc_plugin*) list->data;
+                        plugin = (mtc_plugin*) g_ptr_array_index (plugins, j);
 
-                        module_name = g_path_get_basename (g_module_name (plugin->module));
+                        module_name = mailtc_module_get_name (plugin->module);
                         if (g_str_equal (plugin_name, module_name))
+                        {
                             account->plugin = plugin;
-
-                        g_free (module_name);
-                        if (account->plugin)
                             break;
-                        list = g_slist_next (list);
+                        }
                     }
                     g_free (plugin_name);
                 }

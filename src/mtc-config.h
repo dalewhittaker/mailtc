@@ -45,6 +45,8 @@ typedef struct _mtc_prefs
     GtkWidget* envelope_account;
     GtkWidget* combo_plugin;
 
+    GPtrArray* plugins;
+
     gulong     entry_insert_text_id;
     gulong     button_edit_columns_changed_id;
     gulong     button_edit_cursor_changed_id;
@@ -54,7 +56,8 @@ typedef struct _mtc_prefs
 } mtc_prefs;
 
 GtkWidget*
-mailtc_config_dialog (mtc_config* config);
+mailtc_config_dialog (mtc_config* config,
+                      GPtrArray*  plugins);
 
 G_END_DECLS
 

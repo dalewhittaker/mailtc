@@ -19,7 +19,6 @@
 
 #include "mtc-util.h"
 #include "mtc-config.h"
-#include "mtc-plugin.h"
 #include "mtc-statusicon.h"
 
 gchar*
@@ -269,8 +268,6 @@ mailtc_free_config (mtc_config* config,
             list = g_slist_next (list);
         }
         g_slist_free (config->accounts);
-
-        success = mailtc_unload_plugins (config, error);
         g_free (config);
     }
     return success;

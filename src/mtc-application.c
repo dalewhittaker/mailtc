@@ -22,10 +22,11 @@
 #include "mtc-config.h"
 #include "mtc-util.h"
 #include "mtc-file.h"
-#include "mtc-plugin.h"
+#include "mtc-module.h"
 #include "mtc-mail.h"
 
 #include <gtk/gtk.h>
+#include <glib/gstdio.h>
 #include <signal.h>
 
 /*
@@ -47,10 +48,20 @@ typedef enum
 #define MAILTC_APPLICATION_ID       "org." PACKAGE
 #define MAILTC_APPLICATION_LOG_NAME "log"
 
+#define MAILTC_APPLICATION_ERROR g_quark_from_string ("MAILTC_APPLICATION_ERROR")
+
+typedef enum
+{
+    MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY = 0,
+    MAILTC_APPLICATION_ERROR_MODULE_COMPATIBILITY,
+    MAILTC_APPLICATION_ERROR_MODULE_EMPTY
+} MailtcApplicationError;
+
 struct _MailtcApplicationPrivate
 {
     gboolean is_running;
     guint source_id;
+    GPtrArray* modules;
 };
 
 struct _MailtcApplication
@@ -68,19 +79,138 @@ struct _MailtcApplicationClass
 G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
 
 static void
-mailtc_application_finalize (GObject* object)
+mailtc_application_unload_module (mtc_plugin* plugin,
+                                  GError**    error)
 {
-    MailtcApplication* app;
+    g_assert (plugin);
+
+    if (plugin->terminate)
+        (*plugin->terminate) (plugin);
+
+    mailtc_module_unload (MAILTC_MODULE (plugin->module), error);
+
+    g_array_free (plugin->protocols, TRUE);
+    g_free (plugin->directory);
+    g_free (plugin);
+}
+
+static gboolean
+mailtc_application_unload_modules (MailtcApplication* app,
+                                   GError**           error)
+{
     MailtcApplicationPrivate* priv;
 
-    app = MAILTC_APPLICATION (object);
+    g_assert (MAILTC_IS_APPLICATION (app));
+
     priv = app->priv;
 
-    priv->is_running = FALSE;
-    priv->source_id = 0;
-
-    G_OBJECT_CLASS (mailtc_application_parent_class)->finalize (object);
+    if (priv->modules)
+    {
+        g_ptr_array_foreach (priv->modules,
+                (GFunc) mailtc_application_unload_module,
+                error);
+        g_ptr_array_unref (priv->modules);
+        priv->modules = NULL;
+    }
+    return ((error && *error) ? FALSE : TRUE);
 }
+
+static gboolean
+mailtc_application_load_modules (MailtcApplication* app,
+                                 GError**           error)
+{
+    MailtcApplicationPrivate* priv;
+    GDir* dir;
+    gchar* dirname = LIBDIR;
+    gboolean retval = TRUE;
+
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    if (!mailtc_module_supported (error))
+        return FALSE;
+
+    priv = app->priv;
+
+    if ((dir = g_dir_open (dirname, 0, error)))
+    {
+        MailtcModule* module;
+        GPtrArray* modules;
+        mtc_plugin* plugin;
+        mtc_plugin* (*plugin_init) (void);
+        const gchar* filename;
+        gchar* fullname;
+
+        modules = g_ptr_array_new ();
+
+        while ((filename = g_dir_read_name (dir)))
+        {
+            if (!mailtc_module_filename (filename))
+                continue;
+
+            fullname = g_build_filename (dirname, filename, NULL);
+
+            module = mailtc_module_new ();
+            if (!mailtc_module_load (module, fullname, error) ||
+                !mailtc_module_symbol (module, "plugin_init", (gpointer*) &plugin_init, error))
+            {
+                g_object_unref (module);
+                retval = FALSE;
+            }
+            else
+            {
+                plugin = plugin_init ();
+                if (plugin)
+                {
+                    if (g_str_equal (VERSION, plugin->compatibility))
+                    {
+                        plugin->module = module;
+                        g_ptr_array_add (modules, plugin);
+                    }
+                    else
+                    {
+                        if (error && !*error)
+                        {
+                            *error = g_error_new (MAILTC_APPLICATION_ERROR,
+                                                  MAILTC_APPLICATION_ERROR_MODULE_COMPATIBILITY,
+                                                  "Error: plugin %s has incompatible version",
+                                                  fullname);
+                        }
+                        g_free (plugin);
+                        g_object_unref (module);
+                        retval = FALSE;
+                    }
+
+                    plugin->directory = mailtc_file (NULL, filename);
+                    g_assert (plugin->directory);
+                    g_mkdir_with_parents (plugin->directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+                }
+
+            }
+            g_free (fullname);
+        }
+
+        priv->modules = modules;
+        g_dir_close (dir);
+    }
+    else
+    {
+        *error = g_error_new (MAILTC_APPLICATION_ERROR,
+                              MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY,
+                              "Error opening module directory %s",
+                              dirname);
+        return FALSE;
+    }
+
+    if (!priv->modules && retval)
+    {
+        *error = g_error_new (MAILTC_APPLICATION_ERROR,
+                              MAILTC_APPLICATION_ERROR_MODULE_EMPTY,
+                              "Error: no modules found!");
+        retval = FALSE;
+    }
+    return retval;
+}
+
 
 static void
 mailtc_application_set_option_entry (GOptionEntry* entry,
@@ -187,10 +317,12 @@ mailtc_application_server_init (MailtcApplication* app,
     if (!g_thread_supported ())
         g_thread_init (NULL);
 
-    if (!mailtc_load_plugins (config, error))
+    if (!mailtc_application_load_modules (app, error))
         return FALSE;
 
-    if (!mailtc_load_config (config, error))
+    priv = app->priv;
+
+    if (!mailtc_load_config (config, priv->modules, error))
     {
         if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
             g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
@@ -207,7 +339,6 @@ mailtc_application_server_init (MailtcApplication* app,
         mode = MAILTC_MODE_CONFIG;
     }
 
-    priv = app->priv;
 
     switch (mode)
     {
@@ -218,7 +349,7 @@ mailtc_application_server_init (MailtcApplication* app,
             break;
 
         case MAILTC_MODE_CONFIG:
-            mailtc_config_dialog (config);
+            mailtc_config_dialog (config, priv->modules);
             break;
 
         default:
@@ -288,7 +419,7 @@ mailtc_application_terminate (MailtcApplication* app,
         g_source_remove (priv->source_id);
         priv->source_id = 0;
     }
- 
+
     if (config)
     {
         if (config->log)
@@ -311,10 +442,18 @@ mailtc_application_terminate (MailtcApplication* app,
 }
 
 static gboolean
-mailtc_application_cleanup (mtc_config* config,
-                            GError**    error)
+mailtc_application_cleanup (MailtcApplication* app,
+                            mtc_config*        config,
+                            GError**           error)
 {
-    return mailtc_free_config (config, *error ? NULL : error);
+    gboolean success = TRUE;
+
+    if (!mailtc_free_config (config, *error ? NULL : error))
+        success = FALSE;
+    if (!mailtc_application_unload_modules (app, *error ? NULL : error))
+        success = FALSE;
+
+    return success;
 }
 
 static int
@@ -388,7 +527,7 @@ mailtc_application_command_line_cb (GApplication*            app,
                     mailtc_gerror (&error);
                 if (!mailtc_application_terminate (mtcapp, config, &error))
                     mailtc_gerror (&error);
-                if (!mailtc_application_cleanup (config, &error))
+                if (!mailtc_application_cleanup (mtcapp, config, &error))
                     mailtc_gerror (&error);
             }
         }
@@ -438,6 +577,23 @@ mailtc_application_local_cmdline (GApplication* app,
     *exit_status = 0;
 
     return (mode == MAILTC_MODE_HELP) ? TRUE : FALSE;
+}
+
+static void
+mailtc_application_finalize (GObject* object)
+{
+    MailtcApplication* app;
+    MailtcApplicationPrivate* priv;
+
+    app = MAILTC_APPLICATION (object);
+    priv = app->priv;
+
+    priv->is_running = FALSE;
+    priv->source_id = 0;
+
+    mailtc_application_unload_modules (app, NULL);
+
+    G_OBJECT_CLASS (mailtc_application_parent_class)->finalize (object);
 }
 
 static void

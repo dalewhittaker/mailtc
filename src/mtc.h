@@ -109,7 +109,6 @@ typedef struct
     gboolean            debug;
 
     GSList*             accounts;
-    GSList*             plugins;
 
 } mtc_config;
 

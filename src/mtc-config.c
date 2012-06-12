@@ -175,8 +175,8 @@ mailtc_button_plugin_clicked_cb (GtkWidget*  button,
 
         gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
                             COMBO_INDEX_COLUMN, &index, -1);
-        g_assert (index > -1);
-        plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, plgindex);
+        g_assert (index > -1 && (guint) plgindex < prefs->plugins->len);
+        plugin = (mtc_plugin*) g_ptr_array_index (prefs->plugins, plgindex);
         g_assert (plugin);
 
         authors[0] = plugin->author;
@@ -381,7 +381,8 @@ mailtc_account_dialog_save (mtc_config*  config,
 
     gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &active,
                         COMBO_INDEX_COLUMN, &protocol, -1);
-    plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, active);
+    g_assert (active > -1 && (guint) active < prefs->plugins->len);
+    plugin = (mtc_plugin*) g_ptr_array_index (prefs->plugins, active);
     g_assert (plugin);
 
     empty = FALSE;
@@ -500,7 +501,8 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
     GtkTreeModel* model;
     GtkTreeIter iter;
     mtc_prefs* prefs;
-    gint plgindex;
+    guint len;
+    guint plgindex;
     guint combo_index;
     guint combo_plgindex;
     gint i = 0;
@@ -509,8 +511,14 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
 
     prefs = config->prefs;
 
-    plgindex = g_slist_index (config->plugins, account->plugin);
-    g_assert (plgindex > -1);
+    len = prefs->plugins->len;
+
+    for (plgindex = 0; plgindex < len; plgindex++)
+    {
+        if (g_ptr_array_index (prefs->plugins, plgindex) == account->plugin)
+            break;
+    }
+    g_assert (plgindex < len);
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
     while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
@@ -518,7 +526,7 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
         gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &combo_plgindex,
                             COMBO_INDEX_COLUMN, &combo_index, -1);
 
-        if ((guint) plgindex == combo_plgindex && account->protocol == combo_index)
+        if (plgindex == combo_plgindex && account->protocol == combo_index)
             return (i - 1);
     }
     return -1;
@@ -549,8 +557,9 @@ mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
 
     gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
                         COMBO_INDEX_COLUMN, &index, -1);
-    g_assert (index > -1);
-    plugin = (mtc_plugin*) g_slist_nth_data (config->plugins, plgindex);
+    g_assert (index > -1 && (guint) plgindex < prefs->plugins->len);
+
+    plugin = (mtc_plugin*) g_ptr_array_index (prefs->plugins, plgindex);
     g_assert (plugin);
 
     if ((guint) index < plugin->protocols->len)
@@ -592,7 +601,6 @@ mailtc_account_dialog_run (GtkWidget*   button,
     GtkListStore* store;
     GtkCellRenderer* renderer;
     GError* error;
-    GSList* plglist;
     mtc_prefs* prefs;
     mtc_plugin* plugin;
     mtc_protocol* protocol;
@@ -649,11 +657,10 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_protocol), renderer, TRUE);
         gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_protocol), renderer, "text", 0, NULL);
 
-        plglist = config->plugins;
-        plgindex = 0;
-        while (plglist)
+        for (plgindex = 0; (guint) plgindex < prefs->plugins->len; plgindex++)
         {
-            plugin = (mtc_plugin* ) plglist->data;
+            plugin = (mtc_plugin*) g_ptr_array_index (prefs->plugins, plgindex);
+
             for (index = 0; (guint) index < plugin->protocols->len; index++)
             {
                 protocol = &g_array_index (plugin->protocols, mtc_protocol, index);
@@ -662,8 +669,6 @@ mailtc_account_dialog_run (GtkWidget*   button,
                                                    COMBO_PLUGIN_COLUMN, plgindex,
                                                    COMBO_INDEX_COLUMN, index, -1);
             }
-            plglist = g_slist_next (plglist);
-            plgindex++;
         }
 
         button_plugin = gtk_button_new_with_label ("Plugin Information...");
@@ -768,10 +773,10 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_server), "");
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_user), "");
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), "");
-        plglist = config->plugins;
-        if (plglist)
+
+        if (prefs->plugins && prefs->plugins->len > 0)
         {
-            plugin = (mtc_plugin* ) plglist->data;
+            plugin = (mtc_plugin*) g_ptr_array_index (prefs->plugins, 0);
             if (plugin && plugin->protocols && plugin->protocols->len >= 1)
             {
                 mtc_protocol* protocol;
@@ -1037,7 +1042,8 @@ mailtc_config_dialog_page_accounts (mtc_config* config)
 }
 
 GtkWidget*
-mailtc_config_dialog (mtc_config* config)
+mailtc_config_dialog (mtc_config* config,
+                      GPtrArray*  plugins)
 {
     GtkWidget* dialog;
     GtkWidget* notebook;
@@ -1058,6 +1064,7 @@ mailtc_config_dialog (mtc_config* config)
 
     prefs = g_new0 (mtc_prefs, 1);
     prefs->dialog_config = dialog;
+    prefs->plugins = plugins; /* FIXME */
     config->prefs = prefs;
 
     notebook = gtk_notebook_new ();

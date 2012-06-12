@@ -38,6 +38,7 @@ mailtc_save_config (mtc_config*  config,
 
 gboolean
 mailtc_load_config (mtc_config*  config,
+                    GPtrArray*   plugins,
                     GError**     error);
 
 gchar*

@@ -44,7 +44,7 @@ mailtc_SOURCES = \
 		mtc-envelope.c \
 		mtc-file.c \
 		mtc-mail.c \
-		mtc-plugin.c \
+		mtc-module.c \
 		mtc-statusicon.c \
 		mtc-util.c \
 		main.c
@@ -56,6 +56,6 @@ EXTRA_DIST = \
 		mtc-envelope.h \
 		mtc-file.h \
 		mtc-mail.h \
-		mtc-plugin.h \
+		mtc-module.h \
 		mtc-statusicon.h \
 		mtc-util.h

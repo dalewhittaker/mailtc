@@ -233,7 +233,10 @@ run_plugin_thread (server_data* data)
     account->password = "abc123";
 
     config->accounts = g_slist_prepend (config->accounts, (gpointer) account);
+    /* FIXME */
+#if 0
     config->plugins = g_slist_prepend (config->plugins, (gpointer) plugin);
+#endif
     config->debug = TRUE;
 
     config->directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
@@ -275,7 +278,10 @@ run_plugin_thread (server_data* data)
     g_free (plugin);
 
     g_slist_free (config->accounts);
+    /* FIXME */
+#if 0
     g_slist_free (config->plugins);
+#endif
     g_free (config->directory);
     g_free (config);
 
