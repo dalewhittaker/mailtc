@@ -136,14 +136,9 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
 
 static void
 mailtc_button_plugin_clicked_cb (GtkWidget*  button,
-                                 mtc_config* config)
+                                 mtc_prefs*  prefs)
 {
-    mtc_prefs* prefs;
-
     (void) button;
-
-    g_assert (config && config->prefs);
-    prefs = config->prefs;
 
     if (prefs)
     {
@@ -495,21 +490,18 @@ mailtc_port_entry_insert_text_cb (GtkEditable* editable,
 }
 
 static gint
-mailtc_combo_get_protocol_index (mtc_config*  config,
+mailtc_combo_get_protocol_index (mtc_prefs*   prefs,
                                  mtc_account* account)
 {
     GtkTreeModel* model;
     GtkTreeIter iter;
-    mtc_prefs* prefs;
     guint len;
     guint plgindex;
     guint combo_index;
     guint combo_plgindex;
     gint i = 0;
 
-    g_assert (config && config->prefs);
-
-    prefs = config->prefs;
+    g_assert (prefs);
 
     len = prefs->plugins->len;
 
@@ -534,21 +526,19 @@ mailtc_combo_get_protocol_index (mtc_config*  config,
 
 static void
 mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
-                                  mtc_config*  config)
+                                  mtc_prefs*   prefs)
 {
     GtkTreeModel* model;
     GtkTreeIter iter;
-    mtc_prefs* prefs;
     mtc_plugin* plugin;
     gint plgindex;
     gint index;
     gchar* port;
     gboolean exists;
 
-    g_assert (config && config->prefs);
+    g_assert (prefs);
 
     port = NULL;
-    prefs = config->prefs;
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (combo));
     g_assert (GTK_IS_TREE_MODEL (model));
@@ -721,9 +711,9 @@ mailtc_account_dialog_run (GtkWidget*   button,
         g_signal_connect (button_icon, "clicked",
                 G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
         g_signal_connect (button_plugin, "clicked",
-                G_CALLBACK (mailtc_button_plugin_clicked_cb), config);
+                G_CALLBACK (mailtc_button_plugin_clicked_cb), prefs);
         g_signal_connect (combo_protocol, "changed",
-            G_CALLBACK (mailtc_combo_protocol_changed_cb), config);
+            G_CALLBACK (mailtc_combo_protocol_changed_cb), prefs);
 
         id = g_signal_connect (entry_port, "insert-text",
                 G_CALLBACK (mailtc_port_entry_insert_text_cb), prefs);
@@ -761,7 +751,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), account->password);
         gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port);
 
-        index = mailtc_combo_get_protocol_index (config, account);
+        index = mailtc_combo_get_protocol_index (prefs, account);
         g_assert (index > -1);
         gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), index);
         mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account),
