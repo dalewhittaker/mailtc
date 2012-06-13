@@ -31,8 +31,10 @@ G_BEGIN_DECLS
 typedef struct
 {
     mtc_config* config;
-    GPtrArray*  accounts;
+    GPtrArray* accounts;
     gboolean debug;
+    gboolean locked;
+    gint error_count;
 } mtc_run_params;
 
 guint

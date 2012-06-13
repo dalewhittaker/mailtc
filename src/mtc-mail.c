@@ -75,7 +75,7 @@ mailtc_mail_thread (mtc_run_params* params)
 {
     mtc_config* config = params->config;
 
-    if (!config->locked)
+    if (!params->locked)
     {
         MailtcStatusIcon* icon;
         mtc_account* account;
@@ -87,7 +87,7 @@ mailtc_mail_thread (mtc_run_params* params)
         guint i;
         guint id = 0;
 
-        config->locked = TRUE;
+        params->locked = TRUE;
         accounts = params->accounts;
         icon = MAILTC_STATUS_ICON (config->status_icon);
 
@@ -104,12 +104,12 @@ mailtc_mail_thread (mtc_run_params* params)
                 if (messages >= 0 && !error)
                 {
                     mailtc_status_icon_update (icon, id++, messages);
-                    config->error_count = 0;
+                    params->error_count = 0;
                 }
                 else
                 {
-                    config->error_count++;
-                    if (config->net_error > 0 && config->net_error == config->error_count)
+                    params->error_count++;
+                    if (config->net_error > 0 && config->net_error == params->error_count)
                     {
                         if (error)
                         {
@@ -122,7 +122,7 @@ mailtc_mail_thread (mtc_run_params* params)
 
                         err_msg = g_string_prepend (err_msg, "\n");
                         err_msg = g_string_prepend (err_msg, account->server);
-                        config->error_count = 0;
+                        params->error_count = 0;
                     }
                     if (error)
                         g_clear_error (&error);
@@ -136,7 +136,7 @@ mailtc_mail_thread (mtc_run_params* params)
                             "Please check the " PACKAGE " log for the error.", err_msg->str);
             g_string_free (err_msg, TRUE);
         }
-        config->locked = FALSE;
+        params->locked = FALSE;
     }
     return TRUE;
 }
@@ -162,7 +162,7 @@ mailtc_run_main_loop (mtc_run_params* params)
 
     icon = mailtc_status_icon_new ();
     config->status_icon = G_OBJECT (icon);
-    config->locked = FALSE;
+    params->locked = FALSE;
 
     mailtc_status_icon_set_default_colour (icon, config->icon_colour);
 

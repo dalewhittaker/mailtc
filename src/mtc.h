@@ -98,12 +98,10 @@ typedef struct
     struct _mtc_prefs*  prefs;
     GObject*            status_icon;
 
-    gboolean            locked;
     gint                interval;
     gchar*              mail_command;
     GdkColor*           icon_colour;
     gint                net_error;
-    gint                error_count;
 
 } mtc_config;
 
