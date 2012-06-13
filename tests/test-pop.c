@@ -179,7 +179,6 @@ service_incoming_cb (GSocketService*    service,
 static gpointer
 run_plugin_thread (server_data* data)
 {
-    mtc_config* config;
     mtc_account* account;
     mtc_plugin* plugin;
     mtc_plugin* (*plugin_init) (void);
@@ -192,7 +191,6 @@ run_plugin_thread (server_data* data)
     gint messages;
     GError* error = NULL;
 
-    config = g_new0 (mtc_config, 1);
     dir = g_dir_open (PLUGINDIR, 0, &error);
     g_assert (dir);
 
@@ -233,8 +231,6 @@ run_plugin_thread (server_data* data)
     account->user = "testuser";
     account->password = "abc123";
 
-    config->debug = TRUE;
-
     directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
     g_assert (directory);
     plugin->directory = g_build_filename (directory, filename, NULL);
@@ -247,7 +243,7 @@ run_plugin_thread (server_data* data)
     g_assert (success);
 
     g_assert (plugin->get_messages);
-    messages = (*plugin->get_messages) (account, config->debug, &error);
+    messages = (*plugin->get_messages) (account, TRUE, &error);
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {
@@ -274,7 +270,6 @@ run_plugin_thread (server_data* data)
     g_free (plugin);
 
     g_free (directory);
-    g_free (config);
 
     return NULL;
 }

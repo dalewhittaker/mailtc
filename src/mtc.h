@@ -104,7 +104,6 @@ typedef struct
     GdkColor*           icon_colour;
     gint                net_error;
     gint                error_count;
-    gboolean            debug;
 
 } mtc_config;
 

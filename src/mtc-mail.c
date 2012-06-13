@@ -100,7 +100,7 @@ mailtc_mail_thread (mtc_run_params* params)
 
             if (plugin->get_messages)
             {
-                messages = (*plugin->get_messages) (account, config->debug, &error);
+                messages = (*plugin->get_messages) (account, params->debug, &error);
                 if (messages >= 0 && !error)
                 {
                     mailtc_status_icon_update (icon, id++, messages);

@@ -364,6 +364,7 @@ mailtc_application_server_init (MailtcApplication* app,
 {
     MailtcApplicationPrivate* priv;
     mtc_run_params* params;
+    gboolean debug = FALSE;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
@@ -401,11 +402,12 @@ mailtc_application_server_init (MailtcApplication* app,
     switch (mode)
     {
         case MAILTC_MODE_DEBUG:
-            config->debug = TRUE;
+            debug = TRUE;
         case MAILTC_MODE_NORMAL:
             params = g_new (mtc_run_params, 1); /* FIXME */
             params->config = config;
             params->accounts = priv->accounts;
+            params->debug = debug;
             priv->source_id = mailtc_run_main_loop (params);
             g_free (params);
             break;

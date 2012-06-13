@@ -32,6 +32,7 @@ typedef struct
 {
     mtc_config* config;
     GPtrArray*  accounts;
+    gboolean debug;
 } mtc_run_params;
 
 guint
