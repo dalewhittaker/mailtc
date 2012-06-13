@@ -33,13 +33,15 @@ G_BEGIN_DECLS
 #endif
 
 gboolean
-mailtc_save_config (mtc_config*  config,
-                    GError**     error);
+mailtc_save_config (mtc_config* config,
+                    GPtrArray*  accounts,
+                    GError**    error);
 
 gboolean
-mailtc_load_config (mtc_config*  config,
-                    GPtrArray*   plugins,
-                    GError**     error);
+mailtc_load_config (mtc_config* config,
+                    GPtrArray*  plugins,
+                    GPtrArray*  accounts,
+                    GError**    error);
 
 gchar*
 mailtc_directory    (void);

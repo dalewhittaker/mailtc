@@ -53,7 +53,8 @@ typedef enum
 
 typedef enum
 {
-    MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY = 0,
+    MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0,
+    MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY,
     MAILTC_APPLICATION_ERROR_MODULE_COMPATIBILITY,
     MAILTC_APPLICATION_ERROR_MODULE_EMPTY
 } MailtcApplicationError;
@@ -63,6 +64,7 @@ struct _MailtcApplicationPrivate
     gboolean is_running;
     guint source_id;
     GPtrArray* modules;
+    GPtrArray* accounts;
     gchar* directory;
 };
 
@@ -108,6 +110,27 @@ mailtc_application_file (MailtcApplication* app,
     absfilename = g_build_filename (directory, filename, NULL);
 
     return absfilename;
+}
+
+static gboolean
+mailtc_application_free_accounts (MailtcApplication* app,
+                                  GError**           error)
+{
+    MailtcApplicationPrivate* priv;
+
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    priv = app->priv;
+
+    if (priv->accounts)
+    {
+        g_ptr_array_foreach (priv->accounts,
+                (GFunc) mailtc_free_account,
+                error);
+        g_ptr_array_unref (priv->accounts);
+        priv->accounts = NULL;
+    }
+    return ((error && *error) ? FALSE : TRUE);
 }
 
 static void
@@ -340,6 +363,7 @@ mailtc_application_server_init (MailtcApplication* app,
                                 GError**           error)
 {
     MailtcApplicationPrivate* priv;
+    mtc_run_params* params;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
@@ -354,7 +378,9 @@ mailtc_application_server_init (MailtcApplication* app,
 
     priv = app->priv;
 
-    if (!mailtc_load_config (config, priv->modules, error))
+    priv->accounts = g_ptr_array_new ();
+
+    if (!mailtc_load_config (config, priv->modules, priv->accounts, error))
     {
         if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
             g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
@@ -377,15 +403,24 @@ mailtc_application_server_init (MailtcApplication* app,
         case MAILTC_MODE_DEBUG:
             config->debug = TRUE;
         case MAILTC_MODE_NORMAL:
-            priv->source_id = mailtc_run_main_loop (config);
+            params = g_new (mtc_run_params, 1); /* FIXME */
+            params->config = config;
+            params->accounts = priv->accounts;
+            priv->source_id = mailtc_run_main_loop (params);
+            g_free (params);
             break;
 
         case MAILTC_MODE_CONFIG:
-            mailtc_config_dialog (config, priv->modules);
+            mailtc_config_dialog (config, priv->modules, priv->accounts);
             break;
 
         default:
-            /* FIXME some kind of error? */
+            if (error)
+            {
+                *error = g_error_new (MAILTC_APPLICATION_ERROR,
+                                      MAILTC_APPLICATION_ERROR_INVALID_OPTION,
+                                      "Error: invalid option");
+            }
             return FALSE;
     }
 
@@ -486,6 +521,8 @@ mailtc_application_cleanup (MailtcApplication* app,
     gboolean success = TRUE;
 
     if (!mailtc_free_config (config, *error ? NULL : error))
+        success = FALSE;
+    if (!mailtc_application_free_accounts (app, *error ? NULL : error))
         success = FALSE;
     if (!mailtc_application_unload_modules (app, *error ? NULL : error))
         success = FALSE;
@@ -629,6 +666,7 @@ mailtc_application_finalize (GObject* object)
     priv->source_id = 0;
     g_free (priv->directory);
 
+    mailtc_application_free_accounts (app, NULL);
     mailtc_application_unload_modules (app, NULL);
 
     G_OBJECT_CLASS (mailtc_application_parent_class)->finalize (object);
@@ -656,6 +694,8 @@ mailtc_application_init (MailtcApplication* app)
 
     priv->is_running = FALSE;
     priv->source_id = 0;
+    priv->modules = NULL;
+    priv->accounts = NULL;
     priv->directory = NULL;
 
     g_signal_connect (app, "command-line",

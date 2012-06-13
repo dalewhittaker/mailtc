@@ -36,10 +36,10 @@ mailtc_directory (void)
 
 gboolean
 mailtc_save_config (mtc_config* config,
+                    GPtrArray*  accounts,
                     GError**    error)
 {
     GKeyFile* key_file;
-    GSList* list;
     mtc_account* account;
     gchar* colour;
     gchar* key_group;
@@ -49,7 +49,6 @@ mailtc_save_config (mtc_config* config,
     guint i;
 
     *error = NULL;
-    list = config->accounts;
     i = 0;
 
     filename = config->file;
@@ -65,10 +64,10 @@ mailtc_save_config (mtc_config* config,
     g_key_file_set_string (key_file, "settings", "iconcolour", colour + 1);
     g_free (colour);
 
-    while (list)
+    for (i = 0; i < accounts->len; i++)
     {
-        account = (mtc_account*) list->data;
-        key_group = g_strdup_printf ("account%u", i++);
+        account = g_ptr_array_index (accounts, i);
+        key_group = g_strdup_printf ("account%u", i);
         g_key_file_set_string (key_file, key_group, "name", account->name);
         g_key_file_set_string (key_file, key_group, "server", account->server);
         g_key_file_set_integer (key_file, key_group, "port", account->port);
@@ -89,8 +88,6 @@ mailtc_save_config (mtc_config* config,
 
         if (*error)
             break;
-
-        list = g_slist_next (list);
     }
     g_key_file_set_integer (key_file, "settings", "naccounts", i);
 
@@ -136,6 +133,7 @@ mailtc_string_to_colour (const gchar* colourstring)
 gboolean
 mailtc_load_config (mtc_config* config,
                     GPtrArray*  plugins,
+                    GPtrArray*  accounts,
                     GError**    error)
 {
     GKeyFile* key_file;
@@ -250,7 +248,7 @@ mailtc_load_config (mtc_config* config,
                         success = TRUE;
                 }
                 if (success)
-                    config->accounts = g_slist_append (config->accounts, account);
+                    g_ptr_array_add (accounts, account);
                 else
                     mailtc_free_account (account, error);
 

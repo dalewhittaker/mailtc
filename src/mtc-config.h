@@ -46,6 +46,7 @@ typedef struct _mtc_prefs
     GtkWidget* combo_plugin;
 
     GPtrArray* plugins;
+    GPtrArray* accounts;
 
     gulong     entry_insert_text_id;
     gulong     button_edit_columns_changed_id;
@@ -57,7 +58,8 @@ typedef struct _mtc_prefs
 
 GtkWidget*
 mailtc_config_dialog (mtc_config* config,
-                      GPtrArray*  plugins);
+                      GPtrArray*  plugins,
+                      GPtrArray*  accounts);
 
 G_END_DECLS
 

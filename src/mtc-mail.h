@@ -24,8 +24,18 @@
 
 G_BEGIN_DECLS
 
+/* FIXME
+ *
+ * This stuct is here only temporarily, to aid removal of mtc_config.
+ */
+typedef struct
+{
+    mtc_config* config;
+    GPtrArray*  accounts;
+} mtc_run_params;
+
 guint
-mailtc_run_main_loop (mtc_config* config);
+mailtc_run_main_loop (mtc_run_params* params);
 
 G_END_DECLS
 

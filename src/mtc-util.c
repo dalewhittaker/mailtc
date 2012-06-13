@@ -221,8 +221,6 @@ void
 mailtc_free_account (mtc_account* account,
                      GError**     error)
 {
-    (void) error;
-
     if (account)
     {
         mtc_plugin* plugin = account->plugin;
@@ -246,10 +244,10 @@ mailtc_free_config (mtc_config* config,
 {
     gboolean success = TRUE;
 
+    (void) error;
+
     if (config)
     {
-        GSList* list;
-
         g_free (config->file);
         g_free (config->prefs);
         g_free (config->mail_command);
@@ -260,14 +258,6 @@ mailtc_free_config (mtc_config* config,
         if (config->icon_colour)
             gdk_color_free (config->icon_colour);
 
-        list = config->accounts;
-
-        while (list)
-        {
-            mailtc_free_account ((mtc_account*) list->data, error);
-            list = g_slist_next (list);
-        }
-        g_slist_free (config->accounts);
         g_free (config);
     }
     return success;

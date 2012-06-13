@@ -106,8 +106,6 @@ typedef struct
     gint                error_count;
     gboolean            debug;
 
-    GSList*             accounts;
-
 } mtc_config;
 
 G_END_DECLS
