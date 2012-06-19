@@ -151,7 +151,7 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
     priv->items = g_hash_table_new_full (g_int_hash,
                                          g_int_equal,
                                          g_free,
-                                         (GDestroyNotify)mailtc_status_icon_free_item);
+                                         (GDestroyNotify) mailtc_status_icon_free_item);
 
     g_signal_connect (status_icon, "button-press-event",
             G_CALLBACK (mailtc_status_icon_button_press_event_cb), NULL);

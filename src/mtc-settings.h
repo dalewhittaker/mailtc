@@ -39,8 +39,9 @@ GType
 mailtc_settings_get_type   (void);
 
 MailtcSettings*
-mailtc_settings_new        (gchar*   filename,
-                            GError** error);
+mailtc_settings_new        (gchar*     filename,
+                            GPtrArray* modules,
+                            GError**   error);
 
 G_END_DECLS
 
