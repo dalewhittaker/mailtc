@@ -20,7 +20,7 @@
 #ifndef __MAILTC_SETTINGS_H__
 #define __MAILTC_SETTINGS_H__
 
-#include <glib-object.h>
+#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 
@@ -35,13 +35,46 @@ typedef struct _MailtcSettings        MailtcSettings;
 typedef struct _MailtcSettingsClass   MailtcSettingsClass;
 typedef struct _MailtcSettingsPrivate MailtcSettingsPrivate;
 
+void
+mailtc_settings_set_command    (MailtcSettings* settings,
+                                const gchar*    command);
+
+const gchar*
+mailtc_settings_get_command    (MailtcSettings* settings);
+
+void
+mailtc_settings_set_interval   (MailtcSettings* settings,
+                                guint           interval);
+
+guint
+mailtc_settings_get_interval   (MailtcSettings* settings);
+
+void
+mailtc_settings_set_neterror   (MailtcSettings* settings,
+                                guint           neterror);
+
+guint
+mailtc_settings_get_neterror   (MailtcSettings* settings);
+
+void
+mailtc_settings_set_iconcolour (MailtcSettings* settings,
+                                const GdkColor* colour);
+
+void
+mailtc_settings_get_iconcolour (MailtcSettings* settings,
+                                GdkColor*       colour);
+
+gboolean
+mailtc_settings_write          (MailtcSettings* settings,
+                                GError**        error);
+
 GType
-mailtc_settings_get_type   (void);
+mailtc_settings_get_type       (void);
 
 MailtcSettings*
-mailtc_settings_new        (gchar*     filename,
-                            GPtrArray* modules,
-                            GError**   error);
+mailtc_settings_new            (gchar*          filename,
+                                GPtrArray*      modules,
+                                GError**        error);
 
 G_END_DECLS
 

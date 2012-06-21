@@ -18,9 +18,17 @@
  */
 
 #include "mtc-config.h"
+#include "mtc.h"
 #include "mtc-envelope.h"
-#include "mtc-file.h"
 #include "mtc-util.h"
+
+#ifdef MAXPATHLEN
+#define MAILTC_PATH_LENGTH MAXPATHLEN
+#elif defined (PATH_MAX)
+#define MAILTC_PATH_LENGTH PATH_MAX
+#else
+#define MAILTC_PATH_LENGTH 2048
+#endif
 
 enum
 {
@@ -59,36 +67,37 @@ mailtc_config_dialog_delete_event_cb (GtkWidget* widget,
 static void
 mailtc_config_dialog_response_cb (GtkWidget*  dialog,
                                   gint        response_id,
-                                  mtc_config* config)
+                                  mtc_prefs*  prefs)
 {
     if (response_id == GTK_RESPONSE_OK)
     {
-        mtc_prefs* prefs = config->prefs;
-
         if (prefs)
         {
-            const gchar* mail_command;
+            MailtcSettings* settings;
+            guint net_error;
+            GdkColor* icon_colour;
             GError* error = NULL;
 
-            config->interval = gtk_spin_button_get_value_as_int (
-                                GTK_SPIN_BUTTON (prefs->spin_interval));
+            settings = prefs->settings;
 
-            mail_command = gtk_entry_get_text (GTK_ENTRY (prefs->entry_command));
-            if (mail_command)
-            {
-                g_free (config->mail_command);
-                config->mail_command = g_strdup (mail_command);
-            }
-            if (config->icon_colour)
-                gdk_color_free (config->icon_colour);
+            mailtc_settings_set_interval (settings,
+                    (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (prefs->spin_interval)));
 
-            config->icon_colour = mailtc_envelope_get_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config));
+            mailtc_settings_set_command (settings,
+                            gtk_entry_get_text (GTK_ENTRY (prefs->entry_command)));
 
-            config->net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (prefs->combo_errordlg));
-            if (config->net_error > 1)
-                config->net_error = gtk_spin_button_get_value_as_int (
-                                    GTK_SPIN_BUTTON (prefs->spin_connections));
-            if (!mailtc_save_config (config, prefs->accounts, &error))
+            /* FIXME maybe shouldn't dynamically allocate this colour so we can avoid the free */
+            icon_colour = mailtc_envelope_get_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config));
+            mailtc_settings_set_iconcolour (settings, icon_colour);
+            gdk_color_free (icon_colour);
+
+            net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (prefs->combo_errordlg));
+            if (net_error > 1)
+                net_error = (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (prefs->spin_connections));
+
+            mailtc_settings_set_neterror (settings, net_error);
+
+            if (!mailtc_settings_write (settings, &error))
                 mailtc_gerror (&error);
         }
     }
@@ -380,27 +389,27 @@ mailtc_account_dialog_save (mtc_prefs*   prefs,
     empty = FALSE;
     changed = FALSE;
 
-    if (g_str_equal (name, ""))
+    if (!g_strcmp0 (name, ""))
     {
         msg = "name";
         empty = TRUE;
     }
-    else if (g_str_equal (server, ""))
+    else if (!g_strcmp0 (server, ""))
     {
         msg = "server";
         empty = TRUE;
     }
-    else if (g_str_equal (port, ""))
+    else if (!g_strcmp0 (port, ""))
     {
         msg = "port";
         empty = TRUE;
     }
-    else if (g_str_equal (user, ""))
+    else if (!g_strcmp0 (user, ""))
     {
         msg = "user";
         empty = TRUE;
     }
-    else if (g_str_equal (password, ""))
+    else if (!g_strcmp0 (password, ""))
     {
         msg = "password";
         empty = TRUE;
@@ -1022,9 +1031,7 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
 }
 
 GtkWidget*
-mailtc_config_dialog (mtc_config* config,
-                      GPtrArray*  plugins,
-                      GPtrArray*  accounts)
+mailtc_config_dialog (MailtcSettings* settings)
 {
     GtkWidget* dialog;
     GtkWidget* notebook;
@@ -1032,6 +1039,9 @@ mailtc_config_dialog (mtc_config* config,
     GtkWidget* label_general;
     GtkWidget* page_accounts;
     GtkWidget* label_accounts;
+    GdkColor colour;
+    guint u;
+    const gchar* str;
     mtc_prefs* prefs;
 
     dialog = gtk_dialog_new_with_buttons (PACKAGE " Configuration",
@@ -1043,11 +1053,11 @@ mailtc_config_dialog (mtc_config* config,
     gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
     gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
 
+    g_assert (MAILTC_IS_SETTINGS (settings));
     prefs = g_new0 (mtc_prefs, 1);
     prefs->dialog_config = dialog;
-    prefs->plugins = plugins; /* FIXME */
-    prefs->accounts = accounts; /* FIXME */
-    config->prefs = prefs;
+    prefs->settings = settings; /* FIXME */
+    g_object_get (settings, "modules", &prefs->plugins, "accounts", &prefs->accounts, NULL); /* FIXME */
 
     notebook = gtk_notebook_new ();
     gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);
@@ -1057,16 +1067,14 @@ mailtc_config_dialog (mtc_config* config,
     page_general = mailtc_config_dialog_page_general (prefs);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), page_general, label_general);
 
-    if (config->mail_command)
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_command), config->mail_command);
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_interval),
-                               (gdouble) config->interval);
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_connections),
-                               (gdouble) config->net_error);
-    gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_errordlg),
-                              (config->net_error > 2) ? 2 : config->net_error);
-    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config),
-                                         config->icon_colour);
+    str = mailtc_settings_get_command (settings);
+    gtk_entry_set_text (GTK_ENTRY (prefs->entry_command), str ? str : "");
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_interval), (gdouble) mailtc_settings_get_interval (settings));
+    u = mailtc_settings_get_neterror (settings);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_connections), (gdouble) u);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_errordlg), (u > 2) ? 2 : u);
+    mailtc_settings_get_iconcolour (settings, &colour);
+    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config), &colour);
 
     label_accounts = gtk_label_new ("Mail Accounts");
     page_accounts = mailtc_config_dialog_page_accounts (prefs);
@@ -1079,7 +1087,7 @@ mailtc_config_dialog (mtc_config* config,
     g_signal_connect (dialog, "delete-event",
             G_CALLBACK (mailtc_config_dialog_delete_event_cb), NULL);
     g_signal_connect (dialog, "response",
-            G_CALLBACK (mailtc_config_dialog_response_cb), config);
+            G_CALLBACK (mailtc_config_dialog_response_cb), prefs);
 
     gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), notebook, FALSE, 0, 0);
 

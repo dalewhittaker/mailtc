@@ -20,7 +20,7 @@
 #ifndef __MAILTC_CONFIG_H__
 #define __MAILTC_CONFIG_H__
 
-#include "mtc.h"
+#include "mtc-settings.h"
 
 #include <gtk/gtk.h>
 
@@ -45,6 +45,7 @@ typedef struct _mtc_prefs
     GtkWidget* envelope_account;
     GtkWidget* combo_plugin;
 
+    MailtcSettings* settings;
     GPtrArray* plugins;
     GPtrArray* accounts;
 
@@ -57,9 +58,7 @@ typedef struct _mtc_prefs
 } mtc_prefs;
 
 GtkWidget*
-mailtc_config_dialog (mtc_config* config,
-                      GPtrArray*  plugins,
-                      GPtrArray*  accounts);
+mailtc_config_dialog (MailtcSettings* settings);
 
 G_END_DECLS
 

@@ -21,6 +21,8 @@
 #include "mtc-config.h"
 #include "mtc-statusicon.h"
 
+#include <glib/gstdio.h>
+
 gchar*
 mailtc_current_time (void)
 {
@@ -78,6 +80,17 @@ mailtc_log (GIOChannel*  log,
         g_io_channel_flush (log, NULL);
         g_free (s);
     }
+}
+
+gchar*
+mailtc_directory (void)
+{
+    gchar* directory;
+
+    directory = g_build_filename (g_get_user_config_dir (), PACKAGE, NULL);
+    g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    return directory;
 }
 
 static void

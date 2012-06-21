@@ -45,6 +45,10 @@ mailtc_gerror_warn  (GError**     error);
 void
 mailtc_log          (GIOChannel*  log,
                      const gchar* message);
+
+gchar*
+mailtc_directory    (void);
+
 void
 mailtc_set_log_glib (mtc_config*  config);
 
