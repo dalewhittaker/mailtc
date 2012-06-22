@@ -19,11 +19,12 @@
 
 #include <config.h>
 #include "mtc-application.h"
-#include "mtc-config.h"
+#include "mtc-configdialog.h"
 #include "mtc-util.h"
 #include "mtc-module.h"
 #include "mtc-mail.h"
 #include "mtc-settings.h"
+#include "mtc-statusicon.h" /* FIXME */
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
@@ -61,10 +62,12 @@ typedef enum
 
 struct _MailtcApplicationPrivate
 {
+    MailtcSettings* settings;
+    GtkWidget* dialog_config;
+    GIOChannel* log;
+    GPtrArray* modules;
     gboolean is_running;
     guint source_id;
-    GPtrArray* modules;
-    MailtcSettings* settings;
     gchar* directory;
 };
 
@@ -81,6 +84,136 @@ struct _MailtcApplicationClass
 };
 
 G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
+
+static void
+mailtc_application_glib_handler (const gchar*   log_domain,
+                                 GLogLevelFlags log_level,
+                                 const gchar*   message,
+                                 GIOChannel*    log)
+{
+    gchar* s;
+
+    (void) log_domain;
+
+    s = g_strdup (message);
+    g_strchomp (s);
+
+    switch (log_level & G_LOG_LEVEL_MASK)
+    {
+        case G_LOG_LEVEL_MESSAGE:
+        case G_LOG_LEVEL_INFO:
+        case G_LOG_LEVEL_DEBUG:
+            g_print ("%s\n", s);
+            break;
+        default:
+            g_printerr ("%s\n", s);
+    }
+    mailtc_log (log, s);
+    g_free (s);
+}
+
+void
+mailtc_application_set_log_glib (MailtcApplication* app)
+{
+    GIOChannel* log = NULL;
+
+    if (app)
+    {
+        g_assert (MAILTC_IS_APPLICATION (app));
+
+        log = app->priv->log;
+    }
+
+    g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR);
+    g_log_set_handler (NULL,
+                       G_LOG_LEVEL_MASK |
+                       G_LOG_FLAG_FATAL |
+                       G_LOG_FLAG_RECURSION,
+                       (GLogFunc) mailtc_application_glib_handler,
+                       log);
+}
+
+static void
+mailtc_application_gtk_handler (const gchar*              log_domain,
+                                GLogLevelFlags            log_level,
+                                const gchar*              message,
+                                MailtcApplicationPrivate* priv)
+{
+    gchar* s;
+    GtkMessageType msg_type;
+    const gchar* icon = NULL;
+
+    (void) log_domain;
+
+    s = g_strdup (message);
+    g_strchomp (s);
+
+    switch (log_level & G_LOG_LEVEL_MASK)
+    {
+        case G_LOG_LEVEL_ERROR:
+            msg_type = GTK_MESSAGE_QUESTION;
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            msg_type = GTK_MESSAGE_ERROR;
+            icon = GTK_STOCK_DIALOG_ERROR;
+            break;
+        case G_LOG_LEVEL_WARNING:
+            msg_type = GTK_MESSAGE_WARNING;
+            icon = GTK_STOCK_DIALOG_WARNING;
+            break;
+        case G_LOG_LEVEL_INFO:
+            msg_type = GTK_MESSAGE_INFO;
+            icon = GTK_STOCK_DIALOG_INFO;
+            break;
+        default:
+            msg_type = GTK_MESSAGE_OTHER;
+    }
+
+    if (msg_type == GTK_MESSAGE_QUESTION)
+        g_printerr ("%s\n", s);
+    else
+    {
+        GtkWidget* toplevel;
+        GtkWidget* dialog;
+
+        toplevel = (priv && priv->dialog_config) ?
+                    gtk_widget_get_toplevel (priv->dialog_config) : NULL;
+
+        dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
+                                         GTK_WINDOW (toplevel) : NULL,
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         msg_type,
+                                         GTK_BUTTONS_OK,
+                                         "%s", s);
+        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
+        if (icon)
+            gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+    }
+    mailtc_log (priv ? priv->log : NULL, s);
+    g_free (s);
+}
+
+void
+mailtc_application_set_log_gtk (MailtcApplication* app)
+{
+    MailtcApplicationPrivate* priv = NULL;
+
+    if (app)
+    {
+        g_assert (MAILTC_IS_APPLICATION (app));
+
+        priv = app->priv;
+    }
+    g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR);
+    g_log_set_handler (NULL,
+                       G_LOG_LEVEL_MASK |
+                       G_LOG_FLAG_FATAL |
+                       G_LOG_FLAG_RECURSION,
+                       (GLogFunc) mailtc_application_gtk_handler,
+                       priv);
+}
 
 static gchar*
 mailtc_application_file (MailtcApplication* app,
@@ -338,16 +471,16 @@ mailtc_application_term_handler (gint signal)
 static gboolean
 mailtc_application_server_init (MailtcApplication* app,
                                 mtc_mode           mode,
-                                mtc_config*        config,
                                 GError**           error)
 {
     MailtcApplicationPrivate* priv;
     mtc_run_params* params;
+    gchar* filename;
     gboolean debug = FALSE;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
-    mailtc_set_log_gtk (config);
+    mailtc_application_set_log_gtk (app);
 
     /* Initialise thread system */
     if (!g_thread_supported ())
@@ -358,7 +491,10 @@ mailtc_application_server_init (MailtcApplication* app,
 
     priv = app->priv;
 
-    priv->settings = mailtc_settings_new (config->file, priv->modules, error);
+    filename = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
+    priv->settings = mailtc_settings_new (filename, priv->modules, error);
+    g_free (filename);
+
     if (!priv->settings)
     {
         if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
@@ -383,16 +519,25 @@ mailtc_application_server_init (MailtcApplication* app,
             debug = TRUE;
         case MAILTC_MODE_NORMAL:
             params = g_new (mtc_run_params, 1); /* FIXME */
-            params->config = config;
+            params->app = app;
+            params->settings = priv->settings;
             /* FIXME */
             g_object_get (priv->settings, "accounts", &params->accounts, NULL);
             params->debug = debug;
             priv->source_id = mailtc_run_main_loop (params);
+
+            /* FIXME do something here. */
+            if (MAILTC_IS_STATUS_ICON (params->status_icon))
+                g_object_unref (params->status_icon);
+
             g_free (params);
             break;
 
         case MAILTC_MODE_CONFIG:
-            mailtc_config_dialog (priv->settings);
+            priv->dialog_config = mailtc_config_dialog_new (priv->settings);
+
+            g_signal_connect (priv->dialog_config, "destroy",
+                    G_CALLBACK (gtk_widget_destroyed), &priv->dialog_config);
             break;
 
         default:
@@ -419,48 +564,45 @@ mailtc_application_server_init (MailtcApplication* app,
 
 static gboolean
 mailtc_application_initialise (MailtcApplication* app,
-                               mtc_config*        config,
                                GError**           error)
 {
-    if (config)
-    {
-        gchar* filename;
-        gchar* str_time;
-        gchar* str_init;
-        gsize bytes;
+    MailtcApplicationPrivate* priv;
+    gchar* filename;
+    gchar* str_time;
+    gchar* str_init;
+    gsize bytes;
 
-        g_assert (MAILTC_IS_APPLICATION (app));
+    g_assert (MAILTC_IS_APPLICATION (app));
 
-        config->file = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
+    priv = app->priv;
 
-        filename = mailtc_application_file (app, MAILTC_APPLICATION_LOG_NAME);
-        config->log = g_io_channel_new_file (filename, "w", error);
-        mailtc_set_log_glib (config);
-        g_free (filename);
+    filename = mailtc_application_file (app, MAILTC_APPLICATION_LOG_NAME);
+    priv->log = g_io_channel_new_file (filename, "w", error);
+    mailtc_application_set_log_glib (app);
+    g_free (filename);
 
-        if (*error)
-            return FALSE;
+    if (*error)
+        return FALSE;
 
-        str_time = mailtc_current_time ();
-        str_init = g_strdup_printf ("\n*******************************************\n"
-                                    PACKAGE " started %s\n\n"
-                                    "*******************************************\n",
-                                    str_time);
+    str_time = mailtc_current_time ();
+    str_init = g_strdup_printf ("\n*******************************************\n"
+                                PACKAGE " started %s\n\n"
+                                "*******************************************\n",
+                                str_time);
 
-        g_free (str_time);
-        g_io_channel_write_chars (config->log, str_init, -1, &bytes, NULL);
-        g_io_channel_flush (config->log, NULL);
-        g_free (str_init);
-    }
+    g_free (str_time);
+    g_io_channel_write_chars (priv->log, str_init, -1, &bytes, NULL);
+    g_io_channel_flush (priv->log, NULL);
+    g_free (str_init);
+
     return TRUE;
 }
 
 static gboolean
 mailtc_application_terminate (MailtcApplication* app,
-                              mtc_config*        config,
                               GError**           error)
 {
-    mtc_config* newconfig = NULL;
+    MailtcApplication* newapp = NULL;
     MailtcApplicationPrivate* priv;
 
     g_assert (MAILTC_IS_APPLICATION (app));
@@ -472,47 +614,37 @@ mailtc_application_terminate (MailtcApplication* app,
         g_source_remove (priv->source_id);
         priv->source_id = 0;
     }
-
-    if (config)
+    if (priv->log)
     {
-        if (config->log)
-        {
-            gboolean status_error;
+        gboolean status_error;
 
-            status_error = (g_io_channel_shutdown (config->log, TRUE,
-                                    *error ? NULL : error) == G_IO_STATUS_ERROR);
-            if (!status_error)
-            {
-                g_io_channel_unref (config->log);
-                config->log = NULL;
-                newconfig = config;
-            }
+        status_error = (g_io_channel_shutdown (priv->log, TRUE,
+                                *error ? NULL : error) == G_IO_STATUS_ERROR);
+        if (!status_error)
+        {
+            g_io_channel_unref (priv->log);
+            priv->log = NULL;
+            newapp = app;
         }
     }
-    mailtc_set_log_glib (newconfig);
+    mailtc_application_set_log_glib (newapp);
 
-    return newconfig ? TRUE : FALSE;
+    return newapp ? TRUE : FALSE;
 }
 
 static gboolean
 mailtc_application_cleanup (MailtcApplication* app,
-                            mtc_config*        config,
                             GError**           error)
 {
-    gboolean success = TRUE;
-
     g_assert (MAILTC_IS_APPLICATION (app));
-
-    if (!mailtc_free_config (config, *error ? NULL : error))
-        success = FALSE;
 
     g_object_unref (app->priv->settings);
     app->priv->settings = NULL;
 
     if (!mailtc_application_unload_modules (app, *error ? NULL : error))
-        success = FALSE;
+        return FALSE;
 
-    return success;
+    return TRUE;
 }
 
 static int
@@ -528,7 +660,6 @@ mailtc_application_command_line_cb (GApplication*            app,
     gint i;
     gboolean is_running;
     gboolean report_error = FALSE;
-    mtc_config* config = NULL;
     GError* error = NULL;
 
     g_assert (g_application_get_is_registered (app));
@@ -572,21 +703,20 @@ mailtc_application_command_line_cb (GApplication*            app,
             }
             else
             {
-                config = g_new0 (mtc_config, 1);
-                if (!mailtc_application_initialise (mtcapp, config, &error))
+                if (!mailtc_application_initialise (mtcapp, &error))
                     report_error = TRUE;
                 else
                 {
                     gtk_init (&argc, &args);
 
-                    if (!mailtc_application_server_init (mtcapp, mode, config, &error) && error)
+                    if (!mailtc_application_server_init (mtcapp, mode, &error) && error)
                         report_error = TRUE;
                 }
                 if (report_error)
                     mailtc_gerror (&error);
-                if (!mailtc_application_terminate (mtcapp, config, &error))
+                if (!mailtc_application_terminate (mtcapp, &error))
                     mailtc_gerror (&error);
-                if (!mailtc_application_cleanup (mtcapp, config, &error))
+                if (!mailtc_application_cleanup (mtcapp, &error))
                     mailtc_gerror (&error);
             }
         }
@@ -653,6 +783,8 @@ mailtc_application_finalize (GObject* object)
 
     if (priv->settings)
         g_object_unref (priv->settings);
+    if (priv->log)
+        g_io_channel_unref (priv->log);
 
     mailtc_application_unload_modules (app, NULL);
 
@@ -684,6 +816,8 @@ mailtc_application_init (MailtcApplication* app)
     priv->modules = NULL;
     priv->settings = NULL;
     priv->directory = NULL;
+    priv->dialog_config = NULL;
+    priv->log = NULL;
 
     g_signal_connect (app, "command-line",
         G_CALLBACK (mailtc_application_command_line_cb), NULL);
@@ -695,7 +829,7 @@ MailtcApplication*
 mailtc_application_new (void)
 {
     g_set_application_name (PACKAGE);
-    mailtc_set_log_glib (NULL);
+    mailtc_application_set_log_glib (NULL);
 
     g_type_init ();
 

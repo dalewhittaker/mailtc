@@ -27,8 +27,6 @@
 
 G_BEGIN_DECLS
 
-struct _mtc_prefs;
-
 typedef gboolean
 (*add_account_func)    (gconstpointer account,
                         GError**      error);
@@ -90,20 +88,6 @@ typedef struct
     guint       protocol;
 
 } mtc_account;
-
-typedef struct
-{
-    gchar*              file;
-    GIOChannel*         log;
-    struct _mtc_prefs*  prefs;
-    GObject*            status_icon;
-
-    gint                interval;
-    gchar*              mail_command;
-    GdkColor*           icon_colour;
-    gint                net_error;
-
-} mtc_config;
 
 G_END_DECLS
 

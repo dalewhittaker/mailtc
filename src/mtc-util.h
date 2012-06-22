@@ -50,20 +50,10 @@ gchar*
 mailtc_directory    (void);
 
 void
-mailtc_set_log_glib (mtc_config*  config);
-
-void
-mailtc_set_log_gtk  (mtc_config*  config);
-
-void
 mailtc_run_command  (const gchar* command);
 
 void
 mailtc_free_account (mtc_account* account,
-                     GError**     error);
-
-gboolean
-mailtc_free_config  (mtc_config*  config,
                      GError**     error);
 
 gboolean

@@ -48,14 +48,16 @@ static void
 mailtc_read_mail_cb (MailtcStatusIcon* status_icon,
                      mtc_run_params*   params)
 {
-    mtc_config* config = params->config;
+    const gchar* command;
 
     (void) status_icon;
 
     mailtc_status_icon_clear (status_icon);
 
-    if (config->mail_command && *(config->mail_command))
-        mailtc_run_command (config->mail_command);
+    command = mailtc_settings_get_command (params->settings);
+
+    if (command)
+        mailtc_run_command (command);
 
     mailtc_read_mail (params->accounts);
 }
@@ -73,8 +75,6 @@ mailtc_mark_as_read_cb (MailtcStatusIcon* status_icon,
 static gboolean
 mailtc_mail_thread (mtc_run_params* params)
 {
-    mtc_config* config = params->config;
-
     if (!params->locked)
     {
         MailtcStatusIcon* icon;
@@ -84,12 +84,14 @@ mailtc_mail_thread (mtc_run_params* params)
         GError* error = NULL;
         GString* err_msg = NULL;
         gint64 messages;
+        guint net_error;
         guint i;
         guint id = 0;
 
         params->locked = TRUE;
         accounts = params->accounts;
-        icon = MAILTC_STATUS_ICON (config->status_icon);
+        icon = MAILTC_STATUS_ICON (params->status_icon);
+        net_error = mailtc_settings_get_neterror (params->settings);
 
         for (i = 0; i < accounts->len; i++)
         {
@@ -109,13 +111,13 @@ mailtc_mail_thread (mtc_run_params* params)
                 else
                 {
                     params->error_count++;
-                    if (config->net_error > 0 && config->net_error == params->error_count)
+                    if (net_error == params->error_count)
                     {
                         if (error)
                         {
-                            mailtc_set_log_glib (config);
+                            mailtc_application_set_log_glib (params->app);
                             mailtc_gerror (&error);
-                            mailtc_set_log_gtk (config);
+                            mailtc_application_set_log_gtk (params->app);
                         }
                         if (!err_msg)
                             err_msg = g_string_new (NULL);
@@ -152,19 +154,21 @@ guint
 mailtc_run_main_loop (mtc_run_params* params)
 {
     MailtcStatusIcon* icon;
+    MailtcSettings* settings;
     GPtrArray* accounts;
-    mtc_config* config;
+    GdkColor icon_colour;
     mtc_account* account;
     guint i;
 
-    config = params->config;
+    settings = params->settings;
     accounts = params->accounts;
 
     icon = mailtc_status_icon_new ();
-    config->status_icon = G_OBJECT (icon);
+    params->status_icon = G_OBJECT (icon);
     params->locked = FALSE;
 
-    mailtc_status_icon_set_default_colour (icon, config->icon_colour);
+    mailtc_settings_get_iconcolour (settings, &icon_colour);
+    mailtc_status_icon_set_default_colour (icon, &icon_colour);
 
     for (i = 0; i < accounts->len; i++)
     {
@@ -179,7 +183,7 @@ mailtc_run_main_loop (mtc_run_params* params)
 
     g_idle_add ((GSourceFunc) mailtc_mail_thread_once, params);
 
-    return g_timeout_add_seconds (60 * config->interval,
+    return g_timeout_add_seconds (60 * mailtc_settings_get_interval (settings),
                                   (GSourceFunc) mailtc_mail_thread,
                                   params);
 }

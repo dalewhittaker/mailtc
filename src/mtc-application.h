@@ -36,10 +36,16 @@ typedef struct _MailtcApplicationClass   MailtcApplicationClass;
 typedef struct _MailtcApplicationPrivate MailtcApplicationPrivate;
 
 GType
-mailtc_application_get_type   (void);
+mailtc_application_get_type     (void);
 
 MailtcApplication*
-mailtc_application_new        (void);
+mailtc_application_new          (void);
+
+void
+mailtc_application_set_log_glib (MailtcApplication* app);
+
+void
+mailtc_application_set_log_gtk  (MailtcApplication* app);
 
 G_END_DECLS
 

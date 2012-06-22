@@ -22,6 +22,9 @@
 
 #include "mtc.h"
 
+#include "mtc-application.h" /* FIXME */
+#include "mtc-settings.h" /* FIXME */
+
 G_BEGIN_DECLS
 
 /* FIXME
@@ -30,11 +33,13 @@ G_BEGIN_DECLS
  */
 typedef struct
 {
-    mtc_config* config;
+    MailtcApplication* app;
+    MailtcSettings* settings;
+    GObject*  status_icon;
     GPtrArray* accounts;
     gboolean debug;
     gboolean locked;
-    gint error_count;
+    guint error_count;
 } mtc_run_params;
 
 guint

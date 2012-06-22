@@ -1,4 +1,4 @@
-/* mtc-config.c
+/* mtc-configdialog.c
  * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "mtc-config.h"
+#include "mtc-configdialog.h"
 #include "mtc.h"
 #include "mtc-envelope.h"
 #include "mtc-util.h"
@@ -47,6 +47,52 @@ enum
     N_COMBO_COLUMNS
 };
 
+struct _MailtcConfigDialogPrivate
+{
+    GtkWidget* dialog_account;
+    GtkWidget* dialog_plugin;
+    GtkWidget* spin_interval;
+    GtkWidget* entry_command;
+    GtkWidget* envelope_config;
+    GtkWidget* combo_errordlg;
+    GtkWidget* spin_connections;
+    GtkWidget* tree_view;
+    GtkWidget* entry_name;
+    GtkWidget* entry_server;
+    GtkWidget* entry_port;
+    GtkWidget* entry_user;
+    GtkWidget* entry_password;
+    GtkWidget* envelope_account;
+    GtkWidget* combo_plugin;
+
+    gulong entry_insert_text_id;
+    gulong button_edit_columns_changed_id;
+    gulong button_edit_cursor_changed_id;
+    gulong button_remove_columns_changed_id;
+    gulong button_remove_cursor_changed_id;
+};
+
+struct _MailtcConfigDialog
+{
+    GtkDialog parent_instance;
+
+    MailtcConfigDialogPrivate* priv;
+    MailtcSettings* settings;
+};
+
+struct _MailtcConfigDialogClass
+{
+    GtkDialogClass parent_class;
+};
+
+G_DEFINE_TYPE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_DIALOG)
+
+enum
+{
+    PROP_0,
+    PROP_SETTINGS
+};
+
 static void
 mailtc_config_dialog_destroy_cb (GtkWidget* widget)
 {
@@ -65,41 +111,42 @@ mailtc_config_dialog_delete_event_cb (GtkWidget* widget,
 }
 
 static void
-mailtc_config_dialog_response_cb (GtkWidget*  dialog,
-                                  gint        response_id,
-                                  mtc_prefs*  prefs)
+mailtc_config_dialog_response_cb (GtkWidget* dialog,
+                                  gint       response_id)
 {
     if (response_id == GTK_RESPONSE_OK)
     {
-        if (prefs)
-        {
-            MailtcSettings* settings;
-            guint net_error;
-            GdkColor* icon_colour;
-            GError* error = NULL;
+        MailtcConfigDialogPrivate* priv;
+        MailtcSettings* settings;
+        guint net_error;
+        GdkColor* icon_colour;
+        GError* error = NULL;
 
-            settings = prefs->settings;
+        g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
-            mailtc_settings_set_interval (settings,
-                    (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (prefs->spin_interval)));
+        g_object_get (dialog, "settings", &settings, NULL); /* FIXME */
 
-            mailtc_settings_set_command (settings,
-                            gtk_entry_get_text (GTK_ENTRY (prefs->entry_command)));
+        priv = MAILTC_CONFIG_DIALOG (dialog)->priv;
 
-            /* FIXME maybe shouldn't dynamically allocate this colour so we can avoid the free */
-            icon_colour = mailtc_envelope_get_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config));
-            mailtc_settings_set_iconcolour (settings, icon_colour);
-            gdk_color_free (icon_colour);
+        mailtc_settings_set_interval (settings,
+                (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->spin_interval)));
 
-            net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (prefs->combo_errordlg));
-            if (net_error > 1)
-                net_error = (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (prefs->spin_connections));
+        mailtc_settings_set_command (settings,
+                        gtk_entry_get_text (GTK_ENTRY (priv->entry_command)));
 
-            mailtc_settings_set_neterror (settings, net_error);
+        /* FIXME maybe shouldn't dynamically allocate this colour so we can avoid the free */
+        icon_colour = mailtc_envelope_get_envelope_colour (MAILTC_ENVELOPE (priv->envelope_config));
+        mailtc_settings_set_iconcolour (settings, icon_colour);
+        gdk_color_free (icon_colour);
 
-            if (!mailtc_settings_write (settings, &error))
-                mailtc_gerror (&error);
-        }
+        net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->combo_errordlg));
+        if (net_error > 1)
+            net_error = (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->spin_connections));
+
+        mailtc_settings_set_neterror (settings, net_error);
+
+        if (!mailtc_settings_write (settings, &error))
+            mailtc_gerror (&error);
     }
     else if (response_id == GTK_RESPONSE_CLOSE)
         gtk_widget_destroy (dialog);
@@ -144,61 +191,66 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
 }
 
 static void
-mailtc_button_plugin_clicked_cb (GtkWidget*  button,
-                                 mtc_prefs*  prefs)
+mailtc_button_plugin_clicked_cb (GtkWidget*          button,
+                                 MailtcConfigDialog* dialog_config)
 {
+    MailtcConfigDialogPrivate* priv;
+    GtkWidget* dialog_plugin;
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    GPtrArray* modules;
+    mtc_plugin* plugin;
+    const gchar* authors[2];
+    gint plgindex;
+    gint index;
+    gboolean exists;
+
     (void) button;
 
-    if (prefs)
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
+
+    priv = dialog_config->priv;
+    dialog_plugin = priv->dialog_plugin;
+
+    if (!dialog_plugin)
     {
-        GtkWidget* dialog_plugin;
-        GtkTreeModel* model;
-        GtkTreeIter iter;
-        mtc_plugin* plugin;
-        const gchar* authors[2];
-        gint plgindex;
-        gint index;
-        gboolean exists;
+        dialog_plugin = gtk_about_dialog_new ();
 
-        dialog_plugin = prefs->dialog_plugin;
+        g_signal_connect (dialog_plugin, "delete-event",
+                G_CALLBACK (gtk_widget_hide_on_delete), NULL);
 
-        if (!dialog_plugin)
-        {
-            dialog_plugin = gtk_about_dialog_new ();
-
-            g_signal_connect (dialog_plugin, "delete-event",
-                    G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-
-            prefs->dialog_plugin = dialog_plugin;
-        }
-
-        model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
-        g_assert (GTK_IS_TREE_MODEL (model));
-        exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &iter);
-        g_assert (exists);
-
-        gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
-                            COMBO_INDEX_COLUMN, &index, -1);
-        g_assert (index > -1 && (guint) plgindex < prefs->plugins->len);
-        plugin = g_ptr_array_index (prefs->plugins, plgindex);
-        g_assert (plugin);
-
-        authors[0] = plugin->author;
-        authors[1] = NULL;
-
-        gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (dialog_plugin), plugin->name);
-        gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (dialog_plugin), plugin->compatibility);
-        gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (dialog_plugin), plugin->description);
-        gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (dialog_plugin), authors);
-
-        gtk_dialog_run (GTK_DIALOG (dialog_plugin));
-        gtk_widget_hide (dialog_plugin);
+        priv->dialog_plugin = dialog_plugin;
     }
+
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->combo_plugin));
+    g_assert (GTK_IS_TREE_MODEL (model));
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (priv->combo_plugin), &iter);
+    g_assert (exists);
+
+    gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
+                        COMBO_INDEX_COLUMN, &index, -1);
+    g_object_get (dialog_config->settings, "modules", &modules, NULL); /* FIXME */
+    g_assert (index > -1 && (guint) plgindex < modules->len);
+    plugin = g_ptr_array_index (modules, plgindex);
+    g_assert (plugin);
+    g_ptr_array_unref (modules);
+
+    authors[0] = plugin->author;
+    authors[1] = NULL;
+
+    gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (dialog_plugin), plugin->name);
+    gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (dialog_plugin), plugin->compatibility);
+    gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (dialog_plugin), plugin->description);
+    gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (dialog_plugin), authors);
+
+    gtk_dialog_run (GTK_DIALOG (dialog_plugin));
+    gtk_widget_hide (dialog_plugin);
 }
 
 static GtkWidget*
-mailtc_config_dialog_page_general (mtc_prefs* prefs)
+mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkWidget* table_general;
     GtkWidget* label_interval;
     GtkAdjustment* adj_interval;
@@ -218,6 +270,8 @@ mailtc_config_dialog_page_general (mtc_prefs* prefs)
     GtkSizeGroup* label_group;
     GtkSizeGroup* label_input;
     GtkWidget* align;
+
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
     label_interval = gtk_label_new ("Interval in minutes for mail check:");
     adj_interval = (GtkAdjustment*)gtk_adjustment_new (1.0, 1.0, 60.0, 1.0, 5.0, 0.0);
@@ -294,11 +348,12 @@ mailtc_config_dialog_page_general (mtc_prefs* prefs)
     g_signal_connect (button_icon, "clicked",
             G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
 
-    prefs->spin_interval = spin_interval;
-    prefs->entry_command = entry_command;
-    prefs->envelope_config = envelope_icon;
-    prefs->combo_errordlg = combo_errordlg;
-    prefs->spin_connections = spin_connections;
+    priv = dialog->priv;
+    priv->spin_interval = spin_interval;
+    priv->entry_command = entry_command;
+    priv->envelope_config = envelope_icon;
+    priv->combo_errordlg = combo_errordlg;
+    priv->spin_connections = spin_connections;
 
     gtk_widget_show_all (table_general);
 
@@ -306,21 +361,25 @@ mailtc_config_dialog_page_general (mtc_prefs* prefs)
 }
 
 static void
-mailtc_account_update_tree_view (mtc_prefs* prefs,
-                                 gint       index)
+mailtc_account_update_tree_view (MailtcConfigDialog* dialog,
+                                 gint                index)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkTreeModel* model;
     GtkTreeIter iter;
     GtkTreeIter combo_iter;
+    GPtrArray* accounts;
     mtc_account* account;
     mtc_protocol* protocol;
     gboolean exists;
     gint n;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
     g_assert (index > -1);
 
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
+    priv = dialog->priv;
+
+    model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->tree_view));
     n = gtk_tree_model_iter_n_children (model, NULL);
     if (index < n)
     {
@@ -333,10 +392,11 @@ mailtc_account_update_tree_view (mtc_prefs* prefs,
     else
         gtk_list_store_append (GTK_LIST_STORE (model), &iter);
 
-    account = g_ptr_array_index (prefs->accounts, index);
+    g_object_get (dialog->settings, "accounts", &accounts, NULL); /* FIXME */
+    account = g_ptr_array_index (accounts, index);
     g_assert (account);
 
-    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &combo_iter);
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (priv->combo_plugin), &combo_iter);
     g_assert (exists);
 
     protocol = &g_array_index (account->plugin->protocols, mtc_protocol, account->protocol);
@@ -344,16 +404,20 @@ mailtc_account_update_tree_view (mtc_prefs* prefs,
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
                         TREEVIEW_ACCOUNT_COLUMN, account->name,
                         TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
+    g_object_unref (accounts);
 }
 
 static gint
-mailtc_account_dialog_save (mtc_prefs*   prefs,
-                            mtc_account* account,
-                            GError**     error)
+mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
+                            mtc_account*        account,
+                            GError**            error)
 {
+    MailtcConfigDialogPrivate* priv;
     mtc_plugin* plugin;
     GtkTreeModel* model;
     GtkTreeIter iter;
+    GPtrArray* modules;
+    GPtrArray* accounts;
     const gchar* name;
     const gchar* server;
     const gchar* user;
@@ -367,24 +431,28 @@ mailtc_account_dialog_save (mtc_prefs*   prefs,
     guint iport;
     guint protocol;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
 
-    name = gtk_entry_get_text (GTK_ENTRY (prefs->entry_name));
-    server = gtk_entry_get_text (GTK_ENTRY (prefs->entry_server));
-    port = gtk_entry_get_text (GTK_ENTRY (prefs->entry_port));
-    user = gtk_entry_get_text (GTK_ENTRY (prefs->entry_user));
-    password = gtk_entry_get_text (GTK_ENTRY (prefs->entry_password));
+    priv = dialog_config->priv;
 
-    model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+    name = gtk_entry_get_text (GTK_ENTRY (priv->entry_name));
+    server = gtk_entry_get_text (GTK_ENTRY (priv->entry_server));
+    port = gtk_entry_get_text (GTK_ENTRY (priv->entry_port));
+    user = gtk_entry_get_text (GTK_ENTRY (priv->entry_user));
+    password = gtk_entry_get_text (GTK_ENTRY (priv->entry_password));
+
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->combo_plugin));
     g_assert (GTK_IS_TREE_MODEL (model));
-    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (prefs->combo_plugin), &iter);
+    exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (priv->combo_plugin), &iter);
     g_assert (exists);
 
     gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &active,
                         COMBO_INDEX_COLUMN, &protocol, -1);
-    g_assert (active > -1 && (guint) active < prefs->plugins->len);
-    plugin = g_ptr_array_index (prefs->plugins, active);
+    g_object_get (dialog_config->settings, "modules", &modules, NULL); /* FIXME */
+    g_assert (active > -1 && (guint) active < modules->len);
+    plugin = g_ptr_array_index (modules, active);
     g_assert (plugin);
+    g_ptr_array_unref (modules);
 
     empty = FALSE;
     changed = FALSE;
@@ -421,10 +489,12 @@ mailtc_account_dialog_save (mtc_prefs*   prefs,
         return -1;
     }
 
+    g_object_get (dialog_config->settings, "accounts", &accounts, NULL); /* FIXME */
+
     if (!account)
     {
         account = g_new0 (mtc_account, 1);
-        g_ptr_array_add (prefs->accounts, account);
+        g_ptr_array_add (accounts, account);
         changed = TRUE;
     }
     else
@@ -452,7 +522,7 @@ mailtc_account_dialog_save (mtc_prefs*   prefs,
     account->password = g_strdup (password);
     account->port = iport;
     account->icon_colour = mailtc_envelope_get_envelope_colour (
-                                MAILTC_ENVELOPE (prefs->envelope_account));
+                                MAILTC_ENVELOPE (priv->envelope_account));
     account->protocol = protocol;
 
     if (changed)
@@ -472,22 +542,27 @@ mailtc_account_dialog_save (mtc_prefs*   prefs,
         }
     }
 
-    for (active = 0; (guint) active < prefs->accounts->len; active++)
+    for (active = 0; (guint) active < accounts->len; active++)
     {
-        if (g_ptr_array_index (prefs->accounts, active) == account)
+        if (g_ptr_array_index (accounts, active) == account)
+        {
+            g_ptr_array_unref (accounts);
             return active;
+        }
     }
+    g_ptr_array_unref (accounts);
     return -1;
 }
 
 static void
-mailtc_port_entry_insert_text_cb (GtkEditable* editable,
-                                  gchar*       new_text,
-                                  gint         new_text_length,
-                                  gint*        position,
-                                  mtc_prefs*   prefs)
+mailtc_port_entry_insert_text_cb (GtkEditable*               editable,
+                                  gchar*                     new_text,
+                                  gint                       new_text_length,
+                                  gint*                      position,
+                                  MailtcConfigDialogPrivate* priv)
 {
-    g_signal_handler_block (editable, prefs->entry_insert_text_id);
+    g_assert (priv);
+    g_signal_handler_block (editable, priv->entry_insert_text_id);
 
     /* NOTE this is only valid for the purpose of entering text.
      * it will need rewriting if the text must be set because
@@ -497,34 +572,40 @@ mailtc_port_entry_insert_text_cb (GtkEditable* editable,
         gtk_editable_insert_text (editable, new_text,
                                   new_text_length, position);
 
-    g_signal_handler_unblock (editable, prefs->entry_insert_text_id);
+    g_signal_handler_unblock (editable, priv->entry_insert_text_id);
     g_signal_stop_emission_by_name (editable, "insert-text");
 }
 
 static gint
-mailtc_combo_get_protocol_index (mtc_prefs*   prefs,
-                                 mtc_account* account)
+mailtc_combo_get_protocol_index (MailtcConfigDialog* dialog_config,
+                                 mtc_account*        account)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkTreeModel* model;
     GtkTreeIter iter;
+    GPtrArray* modules;
     guint len;
     guint plgindex;
     guint combo_index;
     guint combo_plgindex;
     gint i = 0;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
 
-    len = prefs->plugins->len;
+    priv = dialog_config->priv;
+
+    g_object_get (dialog_config->settings, "modules", &modules, NULL); /* FIXME */
+    len = modules->len;
 
     for (plgindex = 0; plgindex < len; plgindex++)
     {
-        if (g_ptr_array_index (prefs->plugins, plgindex) == account->plugin)
+        if (g_ptr_array_index (modules, plgindex) == account->plugin)
             break;
     }
+    g_ptr_array_unref (modules);
     g_assert (plgindex < len);
 
-    model = gtk_combo_box_get_model (GTK_COMBO_BOX (prefs->combo_plugin));
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->combo_plugin));
     while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
     {
         gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &combo_plgindex,
@@ -537,19 +618,22 @@ mailtc_combo_get_protocol_index (mtc_prefs*   prefs,
 }
 
 static void
-mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
-                                  mtc_prefs*   prefs)
+mailtc_combo_protocol_changed_cb (GtkComboBox*        combo,
+                                  MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkTreeModel* model;
     GtkTreeIter iter;
+    GPtrArray* modules;
     mtc_plugin* plugin;
     gint plgindex;
     gint index;
     gchar* port;
     gboolean exists;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
+    priv = dialog->priv;
     port = NULL;
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (combo));
@@ -557,11 +641,12 @@ mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
     exists = gtk_combo_box_get_active_iter (GTK_COMBO_BOX  (combo), &iter);
     g_assert (exists);
 
+    g_object_get (dialog->settings, "modules", &modules, NULL); /* FIXME */
     gtk_tree_model_get (model, &iter, COMBO_PLUGIN_COLUMN, &plgindex,
                         COMBO_INDEX_COLUMN, &index, -1);
-    g_assert (index > -1 && (guint) plgindex < prefs->plugins->len);
+    g_assert (index > -1 && (guint) plgindex < modules->len);
 
-    plugin = g_ptr_array_index (prefs->plugins, plgindex);
+    plugin = g_ptr_array_index (modules, plgindex);
     g_assert (plugin);
 
     if ((guint) index < plugin->protocols->len)
@@ -571,16 +656,18 @@ mailtc_combo_protocol_changed_cb (GtkComboBox* combo,
         protocol = &g_array_index (plugin->protocols, mtc_protocol, index);
         port = g_strdup_printf ("%u", protocol->port);
     }
+    g_ptr_array_unref (modules);
 
-    gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port ? port : "");
+    gtk_entry_set_text (GTK_ENTRY (priv->entry_port), port ? port : "");
     g_free (port);
 }
 
 static void
-mailtc_account_dialog_run (GtkWidget*   button,
-                           mtc_prefs*   prefs,
-                           mtc_account* account)
+mailtc_account_dialog_run (GtkWidget*          button,
+                           MailtcConfigDialog* dialog_config,
+                           mtc_account*        account)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkWidget* dialog;
     GtkWidget* table_account;
     GtkWidget* label_name;
@@ -602,6 +689,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
     GtkWidget* button_icon;
     GtkListStore* store;
     GtkCellRenderer* renderer;
+    GPtrArray* modules;
     GError* error;
     mtc_plugin* plugin;
     mtc_protocol* protocol;
@@ -612,19 +700,21 @@ mailtc_account_dialog_run (GtkWidget*   button,
     gulong id;
 
     (void) button;
-    g_assert (prefs);
 
-    if (!prefs->dialog_account)
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
+    priv = dialog_config->priv;
+
+    if (!priv->dialog_account)
     {
         dialog = gtk_dialog_new_with_buttons (
                 PACKAGE " Configuration",
-                GTK_WINDOW (prefs->dialog_config),
+                GTK_WINDOW (dialog_config),
                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
                 GTK_STOCK_OK, GTK_RESPONSE_OK,
                 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                 NULL);
 
-        prefs->dialog_account = dialog;
+        priv->dialog_account = dialog;
         gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
         gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
 
@@ -657,9 +747,10 @@ mailtc_account_dialog_run (GtkWidget*   button,
         gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_protocol), renderer, TRUE);
         gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_protocol), renderer, "text", 0, NULL);
 
-        for (plgindex = 0; (guint) plgindex < prefs->plugins->len; plgindex++)
+        g_object_get (dialog_config->settings, "modules", &modules, NULL); /* FIXME */
+        for (plgindex = 0; (guint) plgindex < modules->len; plgindex++)
         {
-            plugin = g_ptr_array_index (prefs->plugins, plgindex);
+            plugin = g_ptr_array_index (modules, plgindex);
 
             for (index = 0; (guint) index < plugin->protocols->len; index++)
             {
@@ -670,6 +761,7 @@ mailtc_account_dialog_run (GtkWidget*   button,
                                                    COMBO_INDEX_COLUMN, index, -1);
             }
         }
+        g_ptr_array_unref (modules);
 
         button_plugin = gtk_button_new_with_label ("Plugin Information...");
 
@@ -717,32 +809,32 @@ mailtc_account_dialog_run (GtkWidget*   button,
         g_signal_connect (dialog, "delete-event",
                 G_CALLBACK (gtk_widget_hide_on_delete), NULL);
         g_signal_connect (dialog, "destroy",
-                G_CALLBACK (gtk_widget_destroyed), &prefs->dialog_account);
+                G_CALLBACK (gtk_widget_destroyed), &priv->dialog_account);
         g_signal_connect (button_icon, "clicked",
                 G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
         g_signal_connect (button_plugin, "clicked",
-                G_CALLBACK (mailtc_button_plugin_clicked_cb), prefs);
+                G_CALLBACK (mailtc_button_plugin_clicked_cb), dialog_config);
         g_signal_connect (combo_protocol, "changed",
-            G_CALLBACK (mailtc_combo_protocol_changed_cb), prefs);
+            G_CALLBACK (mailtc_combo_protocol_changed_cb), dialog_config);
 
         id = g_signal_connect (entry_port, "insert-text",
-                G_CALLBACK (mailtc_port_entry_insert_text_cb), prefs);
+                G_CALLBACK (mailtc_port_entry_insert_text_cb), priv);
 
-        prefs->entry_insert_text_id = id;
-        prefs->entry_name = entry_name;
-        prefs->entry_server = entry_server;
-        prefs->entry_port = entry_port;
-        prefs->entry_user = entry_user;
-        prefs->entry_password = entry_password;
-        prefs->envelope_account = envelope_icon;
-        prefs->combo_plugin = combo_protocol;
+        priv->entry_insert_text_id = id;
+        priv->entry_name = entry_name;
+        priv->entry_server = entry_server;
+        priv->entry_port = entry_port;
+        priv->entry_user = entry_user;
+        priv->entry_password = entry_password;
+        priv->envelope_account = envelope_icon;
+        priv->combo_plugin = combo_protocol;
 
         gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))),
                             table_account, FALSE, 0, 0);
         gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
     }
     else
-        dialog = prefs->dialog_account;
+        dialog = priv->dialog_account;
 
     port = NULL;
     if (account)
@@ -755,28 +847,31 @@ mailtc_account_dialog_run (GtkWidget*   button,
                   account->plugin);
 
         port = g_strdup_printf ("%u", account->port);
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_name), account->name);
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_server), account->server);
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_user), account->user);
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), account->password);
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port);
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_name), account->name);
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_server), account->server);
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_user), account->user);
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_password), account->password);
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_port), port);
 
-        index = mailtc_combo_get_protocol_index (prefs, account);
+        index = mailtc_combo_get_protocol_index (dialog_config, account);
         g_assert (index > -1);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), index);
-        mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account),
+        gtk_combo_box_set_active (GTK_COMBO_BOX (priv->combo_plugin), index);
+        mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (priv->envelope_account),
                                              account->icon_colour);
     }
     else
     {
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_name), "");
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_server), "");
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_user), "");
-        gtk_entry_set_text (GTK_ENTRY (prefs->entry_password), "");
+        GPtrArray* modules;
 
-        if (prefs->plugins && prefs->plugins->len > 0)
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_name), "");
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_server), "");
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_user), "");
+        gtk_entry_set_text (GTK_ENTRY (priv->entry_password), "");
+
+        g_object_get (dialog_config->settings, "modules", &modules, NULL); /* FIXME */
+        if (modules && modules->len > 0)
         {
-            plugin = g_ptr_array_index (prefs->plugins, 0);
+            plugin = g_ptr_array_index (modules, 0);
             if (plugin && plugin->protocols && plugin->protocols->len >= 1)
             {
                 mtc_protocol* protocol;
@@ -785,11 +880,12 @@ mailtc_account_dialog_run (GtkWidget*   button,
                 port = g_strdup_printf ("%u", protocol->port);
             }
         }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_plugin), 0);
-        mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_account), NULL);
+        g_ptr_array_unref (modules);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (priv->combo_plugin), 0);
+        mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (priv->envelope_account), NULL);
     }
 
-    gtk_entry_set_text (GTK_ENTRY (prefs->entry_port), port ? port : "");
+    gtk_entry_set_text (GTK_ENTRY (priv->entry_port), port ? port : "");
     g_free (port);
 
     gtk_widget_show_all (dialog);
@@ -802,9 +898,9 @@ mailtc_account_dialog_run (GtkWidget*   button,
         switch (result)
         {
             case GTK_RESPONSE_OK:
-                index = mailtc_account_dialog_save (prefs, account, &error);
+                index = mailtc_account_dialog_save (dialog_config, account, &error);
                 if (index != -1)
-                    mailtc_account_update_tree_view (prefs, index);
+                    mailtc_account_update_tree_view (dialog_config, index);
                 else
                     mailtc_gerror (&error);
             break;
@@ -817,10 +913,10 @@ mailtc_account_dialog_run (GtkWidget*   button,
 }
 
 static void
-mailtc_add_button_clicked_cb (GtkWidget* button,
-                              mtc_prefs* prefs)
+mailtc_add_button_clicked_cb (GtkWidget*          button,
+                              MailtcConfigDialog* dialog)
 {
-    mailtc_account_dialog_run (button, prefs, NULL);
+    mailtc_account_dialog_run (button, dialog, NULL);
 }
 
 static gint
@@ -848,52 +944,64 @@ mailtc_tree_view_get_selected_iter (GtkTreeView*  tree_view,
 }
 
 static void
-mailtc_edit_button_clicked_cb (GtkWidget* button,
-                               mtc_prefs* prefs)
+mailtc_edit_button_clicked_cb (GtkWidget*          button,
+                               MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkTreeModel* model;
     GtkTreeIter iter;
     gint index;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
-    index = mailtc_tree_view_get_selected_iter (GTK_TREE_VIEW (prefs->tree_view),
-                                                model, &iter);
+    priv = dialog->priv;
+
+    model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->tree_view));
+    index = mailtc_tree_view_get_selected_iter (GTK_TREE_VIEW (priv->tree_view), model, &iter);
     if (index != -1)
     {
+        GPtrArray* accounts;
         mtc_account* account;
 
-        account = g_ptr_array_index (prefs->accounts, index);
+        g_object_get (dialog->settings, "accounts", &accounts, NULL); /* FIXME */
+        account = g_ptr_array_index (accounts, index);
         g_assert (account);
 
-        mailtc_account_dialog_run (button, prefs, account);
+        mailtc_account_dialog_run (button, dialog, account);
+        g_ptr_array_unref (accounts);
     }
 }
 
 static void
 mailtc_remove_button_clicked_cb (GtkWidget* button,
-                                 mtc_prefs* prefs)
+                                 MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkTreeModel* model;
     GtkTreeIter iter;
     gint index;
 
     (void) button;
-    g_assert (prefs);
 
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW (prefs->tree_view));
-    index = mailtc_tree_view_get_selected_iter (GTK_TREE_VIEW (prefs->tree_view),
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+
+    priv = dialog->priv;
+
+    model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->tree_view));
+    index = mailtc_tree_view_get_selected_iter (GTK_TREE_VIEW (priv->tree_view),
                                                 model, &iter);
     if (index != -1)
     {
+        GPtrArray* accounts;
         mtc_account* account;
         GError* error = NULL;
 
-        account = g_ptr_array_remove_index (prefs->accounts, index);
+        g_object_get (dialog->settings, "accounts", &accounts, NULL); /* FIXME */
+        account = g_ptr_array_remove_index (accounts, index);
         g_assert (account && account->plugin);
 
         mailtc_free_account (account, &error);
+        g_ptr_array_unref (accounts);
         if (error)
             mailtc_gerror (&error);
         gtk_list_store_remove (GTK_LIST_STORE (model), &iter);
@@ -924,18 +1032,20 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
 }
 
 static void
-mailtc_tree_view_destroy_cb (GtkWidget* widget,
-                             mtc_prefs* prefs)
+mailtc_tree_view_destroy_cb (GtkWidget*                 widget,
+                             MailtcConfigDialogPrivate* priv)
 {
-    g_signal_handler_disconnect (widget, prefs->button_edit_columns_changed_id);
-    g_signal_handler_disconnect (widget, prefs->button_edit_cursor_changed_id);
-    g_signal_handler_disconnect (widget, prefs->button_remove_columns_changed_id);
-    g_signal_handler_disconnect (widget, prefs->button_remove_cursor_changed_id);
+    g_assert (priv);
+    g_signal_handler_disconnect (widget, priv->button_edit_columns_changed_id);
+    g_signal_handler_disconnect (widget, priv->button_edit_cursor_changed_id);
+    g_signal_handler_disconnect (widget, priv->button_remove_columns_changed_id);
+    g_signal_handler_disconnect (widget, priv->button_remove_cursor_changed_id);
 }
 
 static GtkWidget*
-mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
+mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
     GtkWidget* table_accounts;
     GtkWidget* tree_view;
     GtkWidget* tree_scroll;
@@ -947,11 +1057,14 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
     GtkWidget* button_add;
     GtkWidget* button_edit;
     GtkWidget* button_remove;
+    GPtrArray* accounts;
     guint i;
     mtc_account* account;
     mtc_protocol* protocol;
 
-    g_assert (prefs);
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+
+    priv = dialog->priv;
 
     store = gtk_list_store_new (N_TREEVIEW_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
     tree_view = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
@@ -975,9 +1088,10 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
     gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (tree_scroll),
                                 GTK_SHADOW_IN);
 
-    for (i = 0; i < prefs->accounts->len; i++)
+    g_object_get (dialog->settings, "accounts", &accounts, NULL); /* FIXME */
+    for (i = 0; i < accounts->len; i++)
     {
-        account = g_ptr_array_index (prefs->accounts, i);
+        account = g_ptr_array_index (accounts, i);
         g_assert (account);
         protocol = &g_array_index (account->plugin->protocols, mtc_protocol, account->protocol);
         g_assert (protocol);
@@ -985,6 +1099,7 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
                                            TREEVIEW_ACCOUNT_COLUMN, account->name,
                                            TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
     }
+    g_ptr_array_unref (accounts);
 
     button_edit = gtk_button_new_from_stock (GTK_STOCK_PROPERTIES);
     button_add = gtk_button_new_from_stock (GTK_STOCK_ADD);
@@ -996,28 +1111,28 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
     gtk_box_pack_start (GTK_BOX (hbox), button_remove, TRUE, TRUE, 0);
 
     g_signal_connect (button_add, "clicked",
-            G_CALLBACK (mailtc_add_button_clicked_cb), prefs);
+            G_CALLBACK (mailtc_add_button_clicked_cb), dialog);
     g_signal_connect (button_edit, "clicked",
-            G_CALLBACK (mailtc_edit_button_clicked_cb), prefs);
+            G_CALLBACK (mailtc_edit_button_clicked_cb), dialog);
     g_signal_connect (button_remove, "clicked",
-            G_CALLBACK (mailtc_remove_button_clicked_cb), prefs);
+            G_CALLBACK (mailtc_remove_button_clicked_cb), dialog);
 
-    prefs->button_edit_cursor_changed_id = g_signal_connect (
+    priv->button_edit_cursor_changed_id = g_signal_connect (
             tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_edit);
-    prefs->button_edit_columns_changed_id = g_signal_connect (
+    priv->button_edit_columns_changed_id = g_signal_connect (
             tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_edit);
-    prefs->button_remove_cursor_changed_id = g_signal_connect (
+    priv->button_remove_cursor_changed_id = g_signal_connect (
             tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_remove);
-    prefs->button_remove_columns_changed_id = g_signal_connect (
+    priv->button_remove_columns_changed_id = g_signal_connect (
             tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_remove);
 
     g_signal_connect (tree_view, "destroy",
-            G_CALLBACK (mailtc_tree_view_destroy_cb), prefs);
+            G_CALLBACK (mailtc_tree_view_destroy_cb), priv);
 
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_edit);
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_remove);
 
-    prefs->tree_view = tree_view;
+    priv->tree_view = tree_view;
 
     table_accounts = gtk_table_new (2, 1, FALSE);
     gtk_table_attach (GTK_TABLE (table_accounts), tree_scroll, 0, 1, 0, 1,
@@ -1030,74 +1145,157 @@ mailtc_config_dialog_page_accounts (mtc_prefs* prefs)
     return table_accounts;
 }
 
-GtkWidget*
-mailtc_config_dialog (MailtcSettings* settings)
+static void
+mailtc_config_dialog_set_property (GObject*      object,
+                                   guint         prop_id,
+                                   const GValue* value,
+                                   GParamSpec*   pspec)
 {
-    GtkWidget* dialog;
+    MailtcConfigDialog* dialog = MAILTC_CONFIG_DIALOG (object);
+
+    switch (prop_id)
+    {
+        case PROP_SETTINGS:
+            dialog->settings = g_value_get_object (value);
+            break;
+
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
+static void
+mailtc_config_dialog_get_property (GObject*    object,
+                                   guint       prop_id,
+                                   GValue*     value,
+                                   GParamSpec* pspec)
+{
+    MailtcConfigDialog* dialog = MAILTC_CONFIG_DIALOG (object);
+
+    switch (prop_id)
+    {
+        case PROP_SETTINGS:
+            g_value_set_object (value, dialog->settings);
+            break;
+
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
+static void
+mailtc_config_dialog_finalize (GObject* object)
+{
+    MailtcConfigDialog* dialog = MAILTC_CONFIG_DIALOG (object);
+
+    if (MAILTC_IS_SETTINGS (dialog->settings))
+    {
+        g_object_unref (dialog->settings);
+        dialog->settings = NULL;
+    }
+    G_OBJECT_CLASS (mailtc_config_dialog_parent_class)->finalize (object);
+}
+
+static void
+mailtc_config_dialog_class_init (MailtcConfigDialogClass* class)
+{
+    GObjectClass* gobject_class;
+
+    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class->finalize = mailtc_config_dialog_finalize;
+    gobject_class->set_property = mailtc_config_dialog_set_property;
+    gobject_class->get_property = mailtc_config_dialog_get_property;
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_SETTINGS,
+                                     g_param_spec_object (
+                                     "settings",
+                                     "Settings",
+                                     "The settings",
+                                     MAILTC_TYPE_SETTINGS,
+                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    g_type_class_add_private (class, sizeof (MailtcConfigDialogPrivate));
+}
+
+static void
+mailtc_config_dialog_init (MailtcConfigDialog* dialog)
+{
     GtkWidget* notebook;
     GtkWidget* page_general;
     GtkWidget* label_general;
     GtkWidget* page_accounts;
     GtkWidget* label_accounts;
-    GdkColor colour;
-    guint u;
-    const gchar* str;
-    mtc_prefs* prefs;
 
-    dialog = gtk_dialog_new_with_buttons (PACKAGE " Configuration",
-                                          NULL,
-                                          GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                          GTK_STOCK_SAVE, GTK_RESPONSE_OK,
-                                          GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
-                                          NULL);
+    dialog->priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog, MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogPrivate);
+    dialog->settings = NULL;
+
+    gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
+    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+    gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), TRUE);
     gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
     gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
-
-    g_assert (MAILTC_IS_SETTINGS (settings));
-    prefs = g_new0 (mtc_prefs, 1);
-    prefs->dialog_config = dialog;
-    prefs->settings = settings; /* FIXME */
-    g_object_get (settings, "modules", &prefs->plugins, "accounts", &prefs->accounts, NULL); /* FIXME */
+    gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+                            GTK_STOCK_SAVE, GTK_RESPONSE_OK,
+                            GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+                            NULL);
 
     notebook = gtk_notebook_new ();
     gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);
     gtk_container_set_border_width (GTK_CONTAINER (notebook), 6);
 
     label_general = gtk_label_new ("General");
-    page_general = mailtc_config_dialog_page_general (prefs);
+    page_general = mailtc_config_dialog_page_general (dialog);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), page_general, label_general);
 
-    str = mailtc_settings_get_command (settings);
-    gtk_entry_set_text (GTK_ENTRY (prefs->entry_command), str ? str : "");
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_interval), (gdouble) mailtc_settings_get_interval (settings));
-    u = mailtc_settings_get_neterror (settings);
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (prefs->spin_connections), (gdouble) u);
-    gtk_combo_box_set_active (GTK_COMBO_BOX (prefs->combo_errordlg), (u > 2) ? 2 : u);
-    mailtc_settings_get_iconcolour (settings, &colour);
-    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (prefs->envelope_config), &colour);
-
     label_accounts = gtk_label_new ("Mail Accounts");
-    page_accounts = mailtc_config_dialog_page_accounts (prefs);
+    page_accounts = mailtc_config_dialog_page_accounts (dialog);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), page_accounts, label_accounts);
 
-    g_signal_connect (dialog, "destroy",
-            G_CALLBACK (gtk_widget_destroyed), &prefs->dialog_config);
     g_signal_connect_after (dialog, "destroy",
             G_CALLBACK (mailtc_config_dialog_destroy_cb), NULL);
     g_signal_connect (dialog, "delete-event",
             G_CALLBACK (mailtc_config_dialog_delete_event_cb), NULL);
     g_signal_connect (dialog, "response",
-            G_CALLBACK (mailtc_config_dialog_response_cb), prefs);
+            G_CALLBACK (mailtc_config_dialog_response_cb), NULL);
 
     gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), notebook, FALSE, 0, 0);
 
     gtk_widget_show (label_general);
     gtk_widget_show (label_accounts);
     gtk_widget_show (notebook);
-    gtk_widget_show (dialog);
-
-    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-
-    return dialog;
 }
 
+GtkWidget*
+mailtc_config_dialog_new (MailtcSettings* settings)
+{
+    MailtcConfigDialog* dialog;
+    MailtcConfigDialogPrivate* priv;
+    const gchar* str;
+    guint u;
+    GdkColor colour;
+
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    /* FIXME probably settings needs counted up somewhere, then counted down */
+    dialog = g_object_new (MAILTC_TYPE_CONFIG_DIALOG, "settings", settings, NULL);
+    priv = dialog->priv;
+
+    /* FIXME i think this should probably be in a 'constructed' function */
+    str = mailtc_settings_get_command (settings);
+    gtk_entry_set_text (GTK_ENTRY (priv->entry_command), str ? str : "");
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->spin_interval), (gdouble) mailtc_settings_get_interval (settings));
+    u = mailtc_settings_get_neterror (settings);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->spin_connections), (gdouble) u);
+    gtk_combo_box_set_active (GTK_COMBO_BOX (priv->combo_errordlg), (u > 2) ? 2 : u);
+
+    mailtc_settings_get_iconcolour (settings, &colour);
+    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (priv->envelope_config), &colour);
+
+    gtk_widget_show (GTK_WIDGET (dialog));
+    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+
+    return GTK_WIDGET (dialog);
+}
