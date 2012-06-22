@@ -161,6 +161,8 @@ mailtc_run_main_loop (mtc_run_params* params)
     guint i;
 
     settings = params->settings;
+    /* FIXME */
+    g_object_get (settings, "accounts", &params->accounts, NULL);
     accounts = params->accounts;
 
     icon = mailtc_status_icon_new ();

@@ -518,11 +518,12 @@ mailtc_application_server_init (MailtcApplication* app,
         case MAILTC_MODE_DEBUG:
             debug = TRUE;
         case MAILTC_MODE_NORMAL:
+            /* FIXME i guess all the stuff here should be properties
+             * so that code in mtc-mail can use it.
+             */
             params = g_new (mtc_run_params, 1); /* FIXME */
             params->app = app;
             params->settings = priv->settings;
-            /* FIXME */
-            g_object_get (priv->settings, "accounts", &params->accounts, NULL);
             params->debug = debug;
             priv->source_id = mailtc_run_main_loop (params);
 
@@ -604,6 +605,7 @@ mailtc_application_terminate (MailtcApplication* app,
 {
     MailtcApplication* newapp = NULL;
     MailtcApplicationPrivate* priv;
+    gboolean success = TRUE;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
@@ -629,22 +631,19 @@ mailtc_application_terminate (MailtcApplication* app,
     }
     mailtc_application_set_log_glib (newapp);
 
-    return newapp ? TRUE : FALSE;
-}
+    if (!newapp)
+        success = FALSE;
 
-static gboolean
-mailtc_application_cleanup (MailtcApplication* app,
-                            GError**           error)
-{
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    g_object_unref (app->priv->settings);
-    app->priv->settings = NULL;
+    if (priv->settings)
+    {
+        g_object_unref (priv->settings);
+        priv->settings = NULL;
+    }
 
     if (!mailtc_application_unload_modules (app, *error ? NULL : error))
-        return FALSE;
+        success = FALSE;
 
-    return TRUE;
+    return success;
 }
 
 static int
@@ -714,11 +713,10 @@ mailtc_application_command_line_cb (GApplication*            app,
                 }
                 if (report_error)
                     mailtc_gerror (&error);
+
                 if (!mailtc_application_terminate (mtcapp, &error))
                     mailtc_gerror (&error);
-                if (!mailtc_application_cleanup (mtcapp, &error))
-                    mailtc_gerror (&error);
-            }
+           }
         }
     }
 

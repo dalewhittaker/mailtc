@@ -18,7 +18,7 @@
  */
 
 #include "mtc-util.h"
-#include "mtc-application.h" /* FIXME */
+#include "mtc-application.h"
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
@@ -137,7 +137,6 @@ mailtc_free_account (mtc_account* account,
 gboolean
 mailtc_quit (void)
 {
-    /* FIXME should go in mtc-application.c ? */
     mailtc_application_set_log_glib (NULL);
     gtk_main_quit ();
 

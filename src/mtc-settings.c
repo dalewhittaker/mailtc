@@ -595,6 +595,54 @@ mailtc_settings_get_iconcolour (MailtcSettings* settings,
     colour->blue = iconcolour->blue;
 }
 
+static void
+mailtc_settings_set_accounts (MailtcSettings* settings,
+                              GPtrArray*      accounts)
+{
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    if (accounts != settings->accounts)
+    {
+        if (settings->accounts)
+            g_ptr_array_unref (settings->accounts);
+
+        settings->accounts = accounts ? g_ptr_array_ref (accounts) : NULL;
+        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_ACCOUNTS);
+    }
+}
+
+GPtrArray*
+mailtc_settings_get_accounts (MailtcSettings* settings)
+{
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    return settings->accounts ? g_ptr_array_ref (settings->accounts) : NULL;
+}
+
+static void
+mailtc_settings_set_modules (MailtcSettings* settings,
+                             GPtrArray*      modules)
+{
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    if (modules != settings->modules)
+    {
+        if (settings->modules)
+            g_ptr_array_unref (settings->modules);
+
+        settings->modules = modules ? g_ptr_array_ref (modules) : NULL;
+        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_MODULES);
+    }
+}
+
+GPtrArray*
+mailtc_settings_get_modules (MailtcSettings* settings)
+{
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    return settings->modules;
+}
+
 static gboolean
 mailtc_settings_free_accounts (MailtcSettings* settings,
                                GError**        error)
@@ -641,11 +689,11 @@ mailtc_settings_set_property (GObject*      object,
             break;
 
         case PROP_ACCOUNTS:
-            settings->accounts = g_value_dup_boxed (value);
+            mailtc_settings_set_accounts (settings, g_value_get_boxed (value));
             break;
 
         case PROP_MODULES:
-            settings->modules = g_value_dup_boxed (value);
+            mailtc_settings_set_modules (settings, g_value_get_boxed (value));
             break;
 
         default:
@@ -711,24 +759,19 @@ mailtc_settings_finalize (GObject* object)
     settings = MAILTC_SETTINGS (object);
     priv = settings->priv;
 
-    g_ptr_array_unref (settings->modules);
-    settings->modules = NULL;
     /* FIXME error is ignored */
     mailtc_settings_free_accounts (settings, NULL);
+
+    if (settings->modules)
+        g_ptr_array_unref (settings->modules);
+
     g_free (settings->command);
-    settings->command = NULL;
     g_free (settings->filename);
-    settings->filename = NULL;
 
     g_clear_error (&priv->error);
-    priv->error = NULL;
 
     if (priv->key_file)
-    {
         g_key_file_free (priv->key_file);
-        priv->key_file = NULL;
-
-    }
 
     G_OBJECT_CLASS (mailtc_settings_parent_class)->finalize (object);
 }

@@ -68,6 +68,12 @@ gboolean
 mailtc_settings_write          (MailtcSettings* settings,
                                 GError**        error);
 
+GPtrArray*
+mailtc_settings_get_accounts   (MailtcSettings* settings);
+
+GPtrArray*
+mailtc_settings_get_modules    (MailtcSettings* settings);
+
 GType
 mailtc_settings_get_type       (void);
 
