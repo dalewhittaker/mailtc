@@ -22,7 +22,6 @@
 
 #include <config.h>
 #include <glib-object.h>
-#include <gio/gio.h>
 #include <gdk/gdk.h> /* GdkColor */
 
 G_BEGIN_DECLS

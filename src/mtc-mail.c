@@ -46,20 +46,26 @@ mailtc_read_mail (GPtrArray* accounts)
 
 static void
 mailtc_read_mail_cb (MailtcStatusIcon* status_icon,
-                     mtc_run_params*   params)
+                     MailtcSettings*   settings)
 {
+    GPtrArray* accounts;
     const gchar* command;
 
     (void) status_icon;
 
     mailtc_status_icon_clear (status_icon);
 
-    command = mailtc_settings_get_command (params->settings);
+    command = mailtc_settings_get_command (settings);
 
     if (command)
         mailtc_run_command (command);
 
-    mailtc_read_mail (params->accounts);
+    accounts = mailtc_settings_get_accounts (settings);
+    if (accounts)
+    {
+        mailtc_read_mail (accounts);
+        g_ptr_array_unref (accounts);
+    }
 }
 
 static void
@@ -77,21 +83,26 @@ mailtc_mail_thread (mtc_run_params* params)
 {
     if (!params->locked)
     {
+        MailtcSettings* settings;
         MailtcStatusIcon* icon;
         mtc_account* account;
         mtc_plugin* plugin;
         GPtrArray* accounts;
         GError* error = NULL;
         GString* err_msg = NULL;
+        gboolean debug;
         gint64 messages;
         guint net_error;
         guint i;
         guint id = 0;
 
         params->locked = TRUE;
-        accounts = params->accounts;
         icon = MAILTC_STATUS_ICON (params->status_icon);
-        net_error = mailtc_settings_get_neterror (params->settings);
+        settings = mailtc_application_get_settings (params->app);
+        debug = mailtc_application_get_debug (params->app);
+        net_error = mailtc_settings_get_neterror (settings);
+        accounts = mailtc_settings_get_accounts (settings);
+        g_assert (accounts);
 
         for (i = 0; i < accounts->len; i++)
         {
@@ -102,7 +113,7 @@ mailtc_mail_thread (mtc_run_params* params)
 
             if (plugin->get_messages)
             {
-                messages = (*plugin->get_messages) (account, params->debug, &error);
+                messages = (*plugin->get_messages) (account, debug, &error);
                 if (messages >= 0 && !error)
                 {
                     mailtc_status_icon_update (icon, id++, messages);
@@ -131,6 +142,7 @@ mailtc_mail_thread (mtc_run_params* params)
                 }
             }
         }
+        g_ptr_array_unref (accounts);
 
         if (err_msg)
         {
@@ -160,10 +172,9 @@ mailtc_run_main_loop (mtc_run_params* params)
     mtc_account* account;
     guint i;
 
-    settings = params->settings;
-    /* FIXME */
-    g_object_get (settings, "accounts", &params->accounts, NULL);
-    accounts = params->accounts;
+    settings = mailtc_application_get_settings (params->app);
+    accounts = mailtc_settings_get_accounts (settings);
+    g_assert (accounts);
 
     icon = mailtc_status_icon_new ();
     params->status_icon = G_OBJECT (icon);
@@ -177,9 +188,10 @@ mailtc_run_main_loop (mtc_run_params* params)
         account = g_ptr_array_index (accounts, i);
         mailtc_status_icon_add_item (icon, account->name, account->icon_colour);
     }
+    g_ptr_array_unref (accounts);
 
     g_signal_connect (icon, "read-mail",
-                G_CALLBACK (mailtc_read_mail_cb), params);
+                G_CALLBACK (mailtc_read_mail_cb), settings);
     g_signal_connect (icon, "mark-as-read",
                 G_CALLBACK (mailtc_mark_as_read_cb), accounts);
 

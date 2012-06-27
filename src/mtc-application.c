@@ -23,8 +23,7 @@
 #include "mtc-util.h"
 #include "mtc-module.h"
 #include "mtc-mail.h"
-#include "mtc-settings.h"
-#include "mtc-statusicon.h" /* FIXME */
+#include "mtc-statusicon.h"
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
@@ -60,9 +59,15 @@ typedef enum
     MAILTC_APPLICATION_ERROR_MODULE_EMPTY
 } MailtcApplicationError;
 
+enum
+{
+    PROP_0,
+    PROP_DEBUG,
+    PROP_SETTINGS
+};
+
 struct _MailtcApplicationPrivate
 {
-    MailtcSettings* settings;
     GtkWidget* dialog_config;
     GIOChannel* log;
     GPtrArray* modules;
@@ -76,6 +81,8 @@ struct _MailtcApplication
     GApplication parent_instance;
 
     MailtcApplicationPrivate* priv;
+    MailtcSettings* settings;
+    gboolean debug;
 };
 
 struct _MailtcApplicationClass
@@ -474,9 +481,9 @@ mailtc_application_server_init (MailtcApplication* app,
                                 GError**           error)
 {
     MailtcApplicationPrivate* priv;
+    MailtcSettings* settings;
     mtc_run_params* params;
     gchar* filename;
-    gboolean debug = FALSE;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
@@ -492,10 +499,10 @@ mailtc_application_server_init (MailtcApplication* app,
     priv = app->priv;
 
     filename = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
-    priv->settings = mailtc_settings_new (filename, priv->modules, error);
+    settings = mailtc_settings_new (filename, priv->modules, error);
     g_free (filename);
 
-    if (!priv->settings)
+    if (!settings)
     {
         if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
             g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
@@ -513,18 +520,18 @@ mailtc_application_server_init (MailtcApplication* app,
         mode = MAILTC_MODE_CONFIG;
     }
 
+    mailtc_application_set_settings (app, settings);
+
     switch (mode)
     {
         case MAILTC_MODE_DEBUG:
-            debug = TRUE;
+            mailtc_application_set_debug (app, TRUE);
         case MAILTC_MODE_NORMAL:
             /* FIXME i guess all the stuff here should be properties
              * so that code in mtc-mail can use it.
              */
             params = g_new (mtc_run_params, 1); /* FIXME */
             params->app = app;
-            params->settings = priv->settings;
-            params->debug = debug;
             priv->source_id = mailtc_run_main_loop (params);
 
             /* FIXME do something here. */
@@ -535,7 +542,7 @@ mailtc_application_server_init (MailtcApplication* app,
             break;
 
         case MAILTC_MODE_CONFIG:
-            priv->dialog_config = mailtc_config_dialog_new (priv->settings);
+            priv->dialog_config = mailtc_config_dialog_new (settings);
 
             g_signal_connect (priv->dialog_config, "destroy",
                     G_CALLBACK (gtk_widget_destroyed), &priv->dialog_config);
@@ -634,10 +641,10 @@ mailtc_application_terminate (MailtcApplication* app,
     if (!newapp)
         success = FALSE;
 
-    if (priv->settings)
+    if (app->settings)
     {
-        g_object_unref (priv->settings);
-        priv->settings = NULL;
+        g_object_unref (app->settings);
+        app->settings = NULL;
     }
 
     if (!mailtc_application_unload_modules (app, *error ? NULL : error))
@@ -766,6 +773,95 @@ mailtc_application_local_cmdline (GApplication* app,
     return (mode == MAILTC_MODE_HELP) ? TRUE : FALSE;
 }
 
+void
+mailtc_application_set_debug (MailtcApplication* app,
+                              gboolean           debug)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    if (debug != app->debug)
+    {
+        app->debug = debug;
+        g_object_notify (G_OBJECT (app), "debug");
+    }
+}
+
+gboolean
+mailtc_application_get_debug (MailtcApplication* app)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    return app->debug;
+}
+
+void
+mailtc_application_set_settings (MailtcApplication* app,
+                                 MailtcSettings*    settings)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    if (settings != app->settings)
+    {
+        if (app->settings)
+            g_object_unref (app->settings);
+
+        app->settings = settings ? g_object_ref (settings) : NULL;
+        g_object_notify (G_OBJECT (app), "settings");
+    }
+}
+
+MailtcSettings*
+mailtc_application_get_settings (MailtcApplication* app)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    return app->settings ? g_object_ref (app->settings) : NULL;
+}
+
+static void
+mailtc_application_set_property (GObject*      object,
+                                 guint         prop_id,
+                                 const GValue* value,
+                                 GParamSpec*   pspec)
+{
+    MailtcApplication* app = MAILTC_APPLICATION (object);
+
+    switch (prop_id)
+    {
+        case PROP_DEBUG:
+            mailtc_application_set_debug (app, g_value_get_boolean (value));
+            break;
+        case PROP_SETTINGS:
+            mailtc_application_set_settings (app, g_value_get_object (value));
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
+static void
+mailtc_application_get_property (GObject*    object,
+                                 guint       prop_id,
+                                 GValue*     value,
+                                 GParamSpec* pspec)
+{
+    MailtcApplication* app = MAILTC_APPLICATION (object);
+
+    switch (prop_id)
+    {
+        case PROP_DEBUG:
+            g_value_set_boolean (value, mailtc_application_get_debug (app));
+            break;
+        case PROP_SETTINGS:
+            g_value_set_object (value, mailtc_application_get_settings (app));
+            break;
+        default:
+            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+            break;
+    }
+}
+
 static void
 mailtc_application_finalize (GObject* object)
 {
@@ -775,12 +871,13 @@ mailtc_application_finalize (GObject* object)
     app = MAILTC_APPLICATION (object);
     priv = app->priv;
 
+    app->debug = FALSE;
     priv->is_running = FALSE;
     priv->source_id = 0;
     g_free (priv->directory);
 
-    if (priv->settings)
-        g_object_unref (priv->settings);
+    if (app->settings)
+        g_object_unref (app->settings);
     if (priv->log)
         g_io_channel_unref (priv->log);
 
@@ -793,11 +890,34 @@ static void
 mailtc_application_class_init (MailtcApplicationClass* class)
 {
     GObjectClass* gobject_class;
+    GParamFlags flags;
 
     gobject_class = G_OBJECT_CLASS (class);
+    gobject_class->set_property = mailtc_application_set_property;
+    gobject_class->get_property = mailtc_application_get_property;
     gobject_class->finalize = mailtc_application_finalize;
 
     G_APPLICATION_CLASS (class)->local_command_line = mailtc_application_local_cmdline;
+
+    flags = G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT;
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_DEBUG,
+                                     g_param_spec_boolean (
+                                     "debug",
+                                     "Debug",
+                                     "Whether to enable debugging messages",
+                                     FALSE,
+                                     flags));
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_SETTINGS,
+                                     g_param_spec_object (
+                                     "settings",
+                                     "Settings",
+                                     "The settings",
+                                     MAILTC_TYPE_SETTINGS,
+                                     flags));
 
     g_type_class_add_private (class, sizeof (MailtcApplicationPrivate));
 }
@@ -809,10 +929,12 @@ mailtc_application_init (MailtcApplication* app)
 
     priv = app->priv = G_TYPE_INSTANCE_GET_PRIVATE (app, MAILTC_TYPE_APPLICATION, MailtcApplicationPrivate);
 
+    app->debug = FALSE;
+    app->settings = NULL;
+
     priv->is_running = FALSE;
     priv->source_id = 0;
     priv->modules = NULL;
-    priv->settings = NULL;
     priv->directory = NULL;
     priv->dialog_config = NULL;
     priv->log = NULL;

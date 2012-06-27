@@ -20,6 +20,8 @@
 #ifndef __MAILTC_APPLICATION_H__
 #define __MAILTC_APPLICATION_H__
 
+#include "mtc-settings.h"
+
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
@@ -40,6 +42,21 @@ mailtc_application_get_type     (void);
 
 MailtcApplication*
 mailtc_application_new          (void);
+
+void
+mailtc_application_set_debug    (MailtcApplication* app,
+                                 gboolean           debug);
+
+gboolean
+mailtc_application_get_debug    (MailtcApplication* app);
+
+void
+mailtc_application_set_settings (MailtcApplication* app,
+                                 MailtcSettings*    settings);
+
+MailtcSettings*
+mailtc_application_get_settings (MailtcApplication* app);
+
 
 void
 mailtc_application_set_log_glib (MailtcApplication* app);
