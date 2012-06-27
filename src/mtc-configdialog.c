@@ -139,7 +139,6 @@ mailtc_config_dialog_response_cb (GtkWidget* dialog,
         mailtc_settings_set_command (settings,
                         gtk_entry_get_text (GTK_ENTRY (priv->entry_command)));
 
-        /* FIXME maybe shouldn't dynamically allocate this colour so we can avoid the free */
         icon_colour = mailtc_envelope_get_envelope_colour (MAILTC_ENVELOPE (priv->envelope_config));
         mailtc_settings_set_iconcolour (settings, icon_colour);
         gdk_color_free (icon_colour);

@@ -28,6 +28,10 @@
 #include <glib/gstdio.h>
 #include <signal.h>
 
+#define MAILTC_APPLICATION_PROPERTY_DEBUG       "debug"
+#define MAILTC_APPLICATION_PROPERTY_SETTINGS    "settings"
+#define MAILTC_APPLICATION_PROPERTY_STATUS_ICON "statusicon"
+
 /*
  * See MAILTC_MODE_UNIQUE below.
  */
@@ -776,7 +780,7 @@ mailtc_application_set_debug (MailtcApplication* app,
     if (debug != app->debug)
     {
         app->debug = debug;
-        g_object_notify (G_OBJECT (app), "debug");
+        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_DEBUG);
     }
 }
 
@@ -800,7 +804,7 @@ mailtc_application_set_settings (MailtcApplication* app,
             g_object_unref (app->settings);
 
         app->settings = settings ? g_object_ref (settings) : NULL;
-        g_object_notify (G_OBJECT (app), "settings");
+        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_SETTINGS);
     }
 }
 
@@ -824,7 +828,7 @@ mailtc_application_set_status_icon (MailtcApplication* app,
             g_object_unref (app->statusicon);
 
         app->statusicon = statusicon ? g_object_ref (statusicon) : NULL;
-        g_object_notify (G_OBJECT (app), "statusicon");
+        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_STATUS_ICON);
     }
 }
 
@@ -930,7 +934,7 @@ mailtc_application_class_init (MailtcApplicationClass* class)
     g_object_class_install_property (gobject_class,
                                      PROP_DEBUG,
                                      g_param_spec_boolean (
-                                     "debug",
+                                     MAILTC_APPLICATION_PROPERTY_DEBUG,
                                      "Debug",
                                      "Whether to enable debugging messages",
                                      FALSE,
@@ -939,7 +943,7 @@ mailtc_application_class_init (MailtcApplicationClass* class)
     g_object_class_install_property (gobject_class,
                                      PROP_SETTINGS,
                                      g_param_spec_object (
-                                     "settings",
+                                     MAILTC_APPLICATION_PROPERTY_SETTINGS,
                                      "Settings",
                                      "The settings",
                                      MAILTC_TYPE_SETTINGS,
@@ -948,7 +952,7 @@ mailtc_application_class_init (MailtcApplicationClass* class)
     g_object_class_install_property (gobject_class,
                                      PROP_STATUS_ICON,
                                      g_param_spec_object (
-                                     "statusicon",
+                                     MAILTC_APPLICATION_PROPERTY_STATUS_ICON,
                                      "Statusicon",
                                      "The status icon",
                                      MAILTC_TYPE_STATUS_ICON,
