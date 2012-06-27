@@ -21,6 +21,7 @@
 #define __MAILTC_APPLICATION_H__
 
 #include "mtc-settings.h"
+#include "mtc-statusicon.h"
 
 #include <gio/gio.h>
 
@@ -38,31 +39,37 @@ typedef struct _MailtcApplicationClass   MailtcApplicationClass;
 typedef struct _MailtcApplicationPrivate MailtcApplicationPrivate;
 
 GType
-mailtc_application_get_type     (void);
+mailtc_application_get_type        (void);
 
 MailtcApplication*
-mailtc_application_new          (void);
+mailtc_application_new             (void);
 
 void
-mailtc_application_set_debug    (MailtcApplication* app,
-                                 gboolean           debug);
+mailtc_application_set_debug       (MailtcApplication* app,
+                                    gboolean           debug);
 
 gboolean
-mailtc_application_get_debug    (MailtcApplication* app);
+mailtc_application_get_debug       (MailtcApplication* app);
 
 void
-mailtc_application_set_settings (MailtcApplication* app,
-                                 MailtcSettings*    settings);
+mailtc_application_set_settings    (MailtcApplication* app,
+                                    MailtcSettings*    settings);
 
 MailtcSettings*
-mailtc_application_get_settings (MailtcApplication* app);
-
-
-void
-mailtc_application_set_log_glib (MailtcApplication* app);
+mailtc_application_get_settings    (MailtcApplication* app);
 
 void
-mailtc_application_set_log_gtk  (MailtcApplication* app);
+mailtc_application_set_status_icon (MailtcApplication* app,
+                                    MailtcStatusIcon*  statusicon);
+
+MailtcStatusIcon*
+mailtc_application_get_status_icon (MailtcApplication* app);
+
+void
+mailtc_application_set_log_glib    (MailtcApplication* app);
+
+void
+mailtc_application_set_log_gtk     (MailtcApplication* app);
 
 G_END_DECLS
 

@@ -22,24 +22,12 @@
 
 #include "mtc.h"
 
-#include "mtc-application.h" /* FIXME */
+#include "mtc-application.h"
 
 G_BEGIN_DECLS
 
-/* FIXME
- *
- * This stuct is here only temporarily, to aid removal of mtc_config.
- */
-typedef struct
-{
-    MailtcApplication* app;
-    GObject* status_icon;
-    gboolean locked;
-    guint error_count;
-} mtc_run_params;
-
 guint
-mailtc_run_main_loop (mtc_run_params* params);
+mailtc_run_main_loop (MailtcApplication* app);
 
 G_END_DECLS
 

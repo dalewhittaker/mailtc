@@ -23,7 +23,6 @@
 #include "mtc-util.h"
 #include "mtc-module.h"
 #include "mtc-mail.h"
-#include "mtc-statusicon.h"
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
@@ -63,7 +62,8 @@ enum
 {
     PROP_0,
     PROP_DEBUG,
-    PROP_SETTINGS
+    PROP_SETTINGS,
+    PROP_STATUS_ICON
 };
 
 struct _MailtcApplicationPrivate
@@ -82,6 +82,7 @@ struct _MailtcApplication
 
     MailtcApplicationPrivate* priv;
     MailtcSettings* settings;
+    MailtcStatusIcon* statusicon;
     gboolean debug;
 };
 
@@ -482,7 +483,6 @@ mailtc_application_server_init (MailtcApplication* app,
 {
     MailtcApplicationPrivate* priv;
     MailtcSettings* settings;
-    mtc_run_params* params;
     gchar* filename;
 
     g_assert (MAILTC_IS_APPLICATION (app));
@@ -527,18 +527,7 @@ mailtc_application_server_init (MailtcApplication* app,
         case MAILTC_MODE_DEBUG:
             mailtc_application_set_debug (app, TRUE);
         case MAILTC_MODE_NORMAL:
-            /* FIXME i guess all the stuff here should be properties
-             * so that code in mtc-mail can use it.
-             */
-            params = g_new (mtc_run_params, 1); /* FIXME */
-            params->app = app;
-            priv->source_id = mailtc_run_main_loop (params);
-
-            /* FIXME do something here. */
-            if (MAILTC_IS_STATUS_ICON (params->status_icon))
-                g_object_unref (params->status_icon);
-
-            g_free (params);
+            priv->source_id = mailtc_run_main_loop (app);
             break;
 
         case MAILTC_MODE_CONFIG:
@@ -622,6 +611,11 @@ mailtc_application_terminate (MailtcApplication* app,
     {
         g_source_remove (priv->source_id);
         priv->source_id = 0;
+    }
+    if (app->statusicon)
+    {
+        g_object_unref (app->statusicon);
+        app->statusicon = NULL;
     }
     if (priv->log)
     {
@@ -818,6 +812,30 @@ mailtc_application_get_settings (MailtcApplication* app)
     return app->settings ? g_object_ref (app->settings) : NULL;
 }
 
+void
+mailtc_application_set_status_icon (MailtcApplication* app,
+                                    MailtcStatusIcon*  statusicon)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    if (statusicon != app->statusicon)
+    {
+        if (app->statusicon)
+            g_object_unref (app->statusicon);
+
+        app->statusicon = statusicon ? g_object_ref (statusicon) : NULL;
+        g_object_notify (G_OBJECT (app), "statusicon");
+    }
+}
+
+MailtcStatusIcon*
+mailtc_application_get_status_icon (MailtcApplication* app)
+{
+    g_assert (MAILTC_IS_APPLICATION (app));
+
+    return app->statusicon ? g_object_ref (app->statusicon) : NULL;
+}
+
 static void
 mailtc_application_set_property (GObject*      object,
                                  guint         prop_id,
@@ -833,6 +851,9 @@ mailtc_application_set_property (GObject*      object,
             break;
         case PROP_SETTINGS:
             mailtc_application_set_settings (app, g_value_get_object (value));
+            break;
+        case PROP_STATUS_ICON:
+            mailtc_application_set_status_icon (app, g_value_get_object (value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -856,6 +877,9 @@ mailtc_application_get_property (GObject*    object,
         case PROP_SETTINGS:
             g_value_set_object (value, mailtc_application_get_settings (app));
             break;
+        case PROP_STATUS_ICON:
+            g_value_set_object (value, mailtc_application_get_status_icon (app));
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -876,6 +900,8 @@ mailtc_application_finalize (GObject* object)
     priv->source_id = 0;
     g_free (priv->directory);
 
+    if (app->statusicon)
+        g_object_unref (app->statusicon);
     if (app->settings)
         g_object_unref (app->settings);
     if (priv->log)
@@ -919,6 +945,15 @@ mailtc_application_class_init (MailtcApplicationClass* class)
                                      MAILTC_TYPE_SETTINGS,
                                      flags));
 
+    g_object_class_install_property (gobject_class,
+                                     PROP_STATUS_ICON,
+                                     g_param_spec_object (
+                                     "statusicon",
+                                     "Statusicon",
+                                     "The status icon",
+                                     MAILTC_TYPE_STATUS_ICON,
+                                     flags));
+
     g_type_class_add_private (class, sizeof (MailtcApplicationPrivate));
 }
 
@@ -931,6 +966,7 @@ mailtc_application_init (MailtcApplication* app)
 
     app->debug = FALSE;
     app->settings = NULL;
+    app->statusicon = NULL;
 
     priv->is_running = FALSE;
     priv->source_id = 0;
