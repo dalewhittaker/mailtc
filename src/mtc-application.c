@@ -199,10 +199,8 @@ mailtc_application_gtk_handler (const gchar*              log_domain,
         for (l = w; l; l = l->next)
         {
             if (MAILTC_IS_CONFIG_DIALOG (l->data))
-            {
-                g_print ("%s\n", G_OBJECT_TYPE_NAME (l->data));
                 dialog = GTK_WIDGET (l->data);
-            }
+
             g_list_free (w);
         }
 
