@@ -22,7 +22,6 @@
 #include "mtc-configdialog.h"
 #include "mtc-util.h"
 #include "mtc-module.h"
-#include "mtc-mail.h"
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
@@ -32,9 +31,15 @@
 #define MAILTC_APPLICATION_PROPERTY_SETTINGS    "settings"
 #define MAILTC_APPLICATION_PROPERTY_STATUS_ICON "statusicon"
 
-/*
- * See MAILTC_MODE_UNIQUE below.
- */
+#define MAILTC_APPLICATION_ID          "org." PACKAGE
+#define MAILTC_APPLICATION_LOG_NAME    "log"
+#define MAILTC_APPLICATION_CONFIG_NAME "config"
+
+#define MAILTC_APPLICATION_ERROR        g_quark_from_string ("MAILTC_APPLICATION_ERROR")
+
+/* Flag to mask modes that require GApplication */
+#define MAILTC_MODE_UNIQUE(mode) (((mode) & 0xFC) == 0x04)
+
 typedef enum
 {
     MAILTC_MODE_HELP = 0,
@@ -43,16 +48,7 @@ typedef enum
     MAILTC_MODE_DEBUG,
     MAILTC_MODE_CONFIG,
     MAILTC_MODE_KILL
-} mtc_mode;
-
-/* Flag to mask modes that require GApplication */
-#define MAILTC_MODE_UNIQUE(mode) (((mode) & 0xFC) == 0x04)
-
-#define MAILTC_APPLICATION_ID          "org." PACKAGE
-#define MAILTC_APPLICATION_LOG_NAME    "log"
-#define MAILTC_APPLICATION_CONFIG_NAME "config"
-
-#define MAILTC_APPLICATION_ERROR        g_quark_from_string ("MAILTC_APPLICATION_ERROR")
+} MailtcMode;
 
 typedef enum
 {
@@ -70,13 +66,19 @@ enum
     PROP_STATUS_ICON
 };
 
+enum
+{
+    SIGNAL_CONFIGURE,
+    SIGNAL_RUN,
+    SIGNAL_TERMINATE,
+    LAST_SIGNAL
+};
+
 struct _MailtcApplicationPrivate
 {
-    GtkWidget* dialog_config;
     GIOChannel* log;
     GPtrArray* modules;
     gboolean is_running;
-    guint source_id;
     gchar* directory;
 };
 
@@ -94,6 +96,8 @@ struct _MailtcApplicationClass
 {
     GApplicationClass parent_class;
 };
+
+static guint signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
 
@@ -149,7 +153,7 @@ static void
 mailtc_application_gtk_handler (const gchar*              log_domain,
                                 GLogLevelFlags            log_level,
                                 const gchar*              message,
-                                MailtcApplicationPrivate* priv)
+                                GIOChannel*               log)
 {
     gchar* s;
     GtkMessageType msg_type;
@@ -185,11 +189,24 @@ mailtc_application_gtk_handler (const gchar*              log_domain,
         g_printerr ("%s\n", s);
     else
     {
+        GList* l;
+        GList* w;
         GtkWidget* toplevel;
-        GtkWidget* dialog;
+        GtkWidget* dialog = NULL;
 
-        toplevel = (priv && priv->dialog_config) ?
-                    gtk_widget_get_toplevel (priv->dialog_config) : NULL;
+        w = gtk_window_list_toplevels ();
+
+        for (l = w; l; l = l->next)
+        {
+            if (MAILTC_IS_CONFIG_DIALOG (l->data))
+            {
+                g_print ("%s\n", G_OBJECT_TYPE_NAME (l->data));
+                dialog = GTK_WIDGET (l->data);
+            }
+            g_list_free (w);
+        }
+
+        toplevel = dialog ? gtk_widget_get_toplevel (dialog) : NULL;
 
         dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
                                          GTK_WINDOW (toplevel) : NULL,
@@ -203,20 +220,20 @@ mailtc_application_gtk_handler (const gchar*              log_domain,
         gtk_dialog_run (GTK_DIALOG (dialog));
         gtk_widget_destroy (dialog);
     }
-    mailtc_log (priv ? priv->log : NULL, s);
+    mailtc_log (log, s);
     g_free (s);
 }
 
 void
 mailtc_application_set_log_gtk (MailtcApplication* app)
 {
-    MailtcApplicationPrivate* priv = NULL;
+    GIOChannel* log = NULL;
 
     if (app)
     {
         g_assert (MAILTC_IS_APPLICATION (app));
 
-        priv = app->priv;
+        log = app->priv->log;
     }
     g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR);
     g_log_set_handler (NULL,
@@ -224,7 +241,7 @@ mailtc_application_set_log_gtk (MailtcApplication* app)
                        G_LOG_FLAG_FATAL |
                        G_LOG_FLAG_RECURSION,
                        (GLogFunc) mailtc_application_gtk_handler,
-                       priv);
+                       log);
 }
 
 static gchar*
@@ -405,7 +422,7 @@ mailtc_application_set_option_entry (GOptionEntry* entry,
     entry->description = description;
 }
 
-static mtc_mode
+static MailtcMode
 mailtc_application_parse_config (int*     argc,
                                  char***  argv,
                                  GError** error)
@@ -482,7 +499,7 @@ mailtc_application_term_handler (gint signal)
 
 static gboolean
 mailtc_application_server_init (MailtcApplication* app,
-                                mtc_mode           mode,
+                                MailtcMode         mode,
                                 GError**           error)
 {
     MailtcApplicationPrivate* priv;
@@ -531,14 +548,11 @@ mailtc_application_server_init (MailtcApplication* app,
         case MAILTC_MODE_DEBUG:
             mailtc_application_set_debug (app, TRUE);
         case MAILTC_MODE_NORMAL:
-            priv->source_id = mailtc_run_main_loop (app);
+            g_signal_emit (app, signals[SIGNAL_RUN], 0);
             break;
 
         case MAILTC_MODE_CONFIG:
-            priv->dialog_config = mailtc_config_dialog_new (settings);
-
-            g_signal_connect (priv->dialog_config, "destroy",
-                    G_CALLBACK (gtk_widget_destroyed), &priv->dialog_config);
+            g_signal_emit (app, signals[SIGNAL_CONFIGURE], 0);
             break;
 
         default:
@@ -611,11 +625,8 @@ mailtc_application_terminate (MailtcApplication* app,
 
     priv = app->priv;
 
-    if (priv->source_id > 0)
-    {
-        g_source_remove (priv->source_id);
-        priv->source_id = 0;
-    }
+    g_signal_emit (app, signals[SIGNAL_TERMINATE], 0);
+
     if (app->statusicon)
     {
         g_object_unref (app->statusicon);
@@ -657,7 +668,7 @@ mailtc_application_command_line_cb (GApplication*            app,
 {
     MailtcApplication* mtcapp;
     MailtcApplicationPrivate* priv;
-    mtc_mode mode;
+    MailtcMode mode;
     gchar** args;
     gchar** argv;
     gint argc;
@@ -743,7 +754,7 @@ mailtc_application_local_cmdline (GApplication* app,
     gchar **argv;
     gint argc;
     gint i;
-    mtc_mode mode;
+    MailtcMode mode;
     GError* error = NULL;
 
     (void) app;
@@ -901,7 +912,6 @@ mailtc_application_finalize (GObject* object)
 
     app->debug = FALSE;
     priv->is_running = FALSE;
-    priv->source_id = 0;
     g_free (priv->directory);
 
     if (app->statusicon)
@@ -958,6 +968,36 @@ mailtc_application_class_init (MailtcApplicationClass* class)
                                      MAILTC_TYPE_STATUS_ICON,
                                      flags));
 
+    signals[SIGNAL_CONFIGURE] = g_signal_new ("configure",
+                                              G_TYPE_FROM_CLASS (gobject_class),
+                                              G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+                                              0,
+                                              NULL,
+                                              NULL,
+                                              g_cclosure_marshal_VOID__VOID,
+                                              G_TYPE_NONE,
+                                              0);
+
+    signals[SIGNAL_RUN] = g_signal_new ("run",
+                                        G_TYPE_FROM_CLASS (gobject_class),
+                                        G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+                                        0,
+                                        NULL,
+                                        NULL,
+                                        g_cclosure_marshal_VOID__VOID,
+                                        G_TYPE_NONE,
+                                        0);
+
+    signals[SIGNAL_TERMINATE] = g_signal_new ("terminate",
+                                              G_TYPE_FROM_CLASS (gobject_class),
+                                              G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+                                              0,
+                                              NULL,
+                                              NULL,
+                                              g_cclosure_marshal_VOID__VOID,
+                                              G_TYPE_NONE,
+                                              0);
+
     g_type_class_add_private (class, sizeof (MailtcApplicationPrivate));
 }
 
@@ -973,10 +1013,8 @@ mailtc_application_init (MailtcApplication* app)
     app->statusicon = NULL;
 
     priv->is_running = FALSE;
-    priv->source_id = 0;
     priv->modules = NULL;
     priv->directory = NULL;
-    priv->dialog_config = NULL;
     priv->log = NULL;
 
     g_signal_connect (app, "command-line",
