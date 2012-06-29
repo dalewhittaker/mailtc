@@ -18,6 +18,7 @@
  */
 
 #include "mtc-settings.h"
+#include "mtc-account.h"
 #include "mtc-module.h"
 #include "mtc-util.h"
 #include "mtc.h"
@@ -33,15 +34,6 @@
 #define MAILTC_SETTINGS_PROPERTY_INTERVAL    "interval"
 #define MAILTC_SETTINGS_PROPERTY_MODULES     "modules"
 #define MAILTC_SETTINGS_PROPERTY_NET_ERROR   "neterror"
-
-#define MAILTC_ACCOUNT_PROPERTY_NAME         "name"
-#define MAILTC_ACCOUNT_PROPERTY_SERVER       "server"
-#define MAILTC_ACCOUNT_PROPERTY_PORT         "port"
-#define MAILTC_ACCOUNT_PROPERTY_USER         "user"
-#define MAILTC_ACCOUNT_PROPERTY_PASSWORD     "password"
-#define MAILTC_ACCOUNT_PROPERTY_PROTOCOL     "protocol"
-#define MAILTC_ACCOUNT_PROPERTY_MODULE       "plugin"
-#define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR  "iconcolour"
 
 struct _MailtcSettingsPrivate
 {

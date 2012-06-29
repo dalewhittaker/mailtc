@@ -39,6 +39,7 @@ LDADD = \
 		$(GTHREAD_LIBS)
 
 mailtc_SOURCES = \
+		mtc-account.c \
 		mtc-application.c \
 		mtc-configdialog.c \
 		mtc-envelope.c \
@@ -50,6 +51,7 @@ mailtc_SOURCES = \
 
 EXTRA_DIST = \
 		mtc.h \
+		mtc-account.h \
 		mtc-application.h \
 		mtc-configdialog.h \
 		mtc-envelope.h \
