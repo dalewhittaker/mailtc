@@ -30,34 +30,62 @@ G_BEGIN_DECLS
 #define mailtc_fatal g_error
 
 gchar*
-mailtc_current_time (void);
+mailtc_current_time         (void);
 
 void
-mailtc_info         (const gchar* format,
-                     ...);
+mailtc_info                 (const gchar* format,
+                             ...);
 
 void
-mailtc_gerror       (GError**     error);
+mailtc_gerror               (GError**     error);
 
 void
-mailtc_gerror_warn  (GError**     error);
+mailtc_gerror_warn          (GError**     error);
 
 void
-mailtc_log          (GIOChannel*  log,
-                     const gchar* message);
+mailtc_log                  (GIOChannel*  log,
+                             const gchar* message);
 
 gchar*
-mailtc_directory    (void);
+mailtc_directory            (void);
 
 void
-mailtc_run_command  (const gchar* command);
+mailtc_run_command          (const gchar* command);
 
 void
-mailtc_free_account (mtc_account* account,
-                     GError**     error);
+mailtc_free_account         (mtc_account* account,
+                             GError**     error);
 
 gboolean
-mailtc_quit         (void);
+mailtc_quit                 (void);
+
+void
+mailtc_object_set_string    (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             gchar**      value,
+                             const gchar* newvalue);
+
+void
+mailtc_object_set_uint      (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             guint*       value,
+                             const guint  newvalue);
+
+void
+mailtc_object_set_colour    (GObject*        obj,
+                             GType           objtype,
+                             const gchar*    name,
+                             GdkColor*       colour,
+                             const GdkColor* newcolour);
+
+void
+mailtc_object_set_ptr_array (GObject*         obj,
+                             GType            objtype,
+                             const gchar*     name,
+                             GPtrArray**      value,
+                             GPtrArray*       newvalue);
 
 G_END_DECLS
 

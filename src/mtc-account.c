@@ -18,6 +18,7 @@
  */
 
 #include "mtc-account.h"
+#include "mtc-util.h"
 
 #define MAILTC_ACCOUNT_SET_STRING(account,property) \
     mailtc_object_set_string (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
@@ -63,67 +64,6 @@ enum
     PROP_MODULE,
     PROP_ICON_COLOUR
 };
-
-static void
-mailtc_object_set_string (GObject*     obj,
-                          GType        objtype,
-                          const gchar* name,
-                          gchar**      value,
-                          const gchar* newvalue)
-{
-    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
-
-    if (g_strcmp0 (newvalue, *value) != 0)
-    {
-        g_free (*value);
-        *value = g_strdup (newvalue);
-
-        g_object_notify (obj, name);
-    }
-}
-
-static void
-mailtc_object_set_uint (GObject*     obj,
-                        GType        objtype,
-                        const gchar* name,
-                        guint*       value,
-                        const guint  newvalue)
-{
-    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
-
-    if (newvalue != *value)
-    {
-        *value = newvalue;
-
-        g_object_notify (obj, name);
-    }
-}
-
-static void
-mailtc_object_set_colour (GObject*        obj,
-                          GType           objtype,
-                          const gchar*    name,
-                          GdkColor*       colour,
-                          const GdkColor* newcolour)
-{
-    GdkColor defaultcolour;
-
-    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
-
-    if (!newcolour)
-    {
-        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 0xFFFF;
-        newcolour = &defaultcolour;
-    }
-    if (!gdk_color_equal (newcolour, colour))
-    {
-        colour->red = newcolour->red;
-        colour->green = newcolour->green;
-        colour->blue = newcolour->blue;
-
-        g_object_notify (obj, name);
-    }
-}
 
 void
 mailtc_account_set_name (MailtcAccount* account,

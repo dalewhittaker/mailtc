@@ -71,21 +71,21 @@ mailtc_account_set_port       (MailtcAccount* account,
 guint
 mailtc_account_get_port       (MailtcAccount* account);
 
-static void
+void
 mailtc_account_set_user       (MailtcAccount* account,
                                const gchar*   user);
 
 const gchar*
 mailtc_account_get_user       (MailtcAccount* account);
 
-static void
+void
 mailtc_account_set_password   (MailtcAccount* account,
                                const gchar*   password);
 
 const gchar*
 mailtc_account_get_password   (MailtcAccount* account);
 
-static void
+void
 mailtc_account_set_protocol   (MailtcAccount* account,
                                guint          protocol);
 

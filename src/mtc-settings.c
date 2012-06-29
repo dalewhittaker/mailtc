@@ -35,6 +35,23 @@
 #define MAILTC_SETTINGS_PROPERTY_MODULES     "modules"
 #define MAILTC_SETTINGS_PROPERTY_NET_ERROR   "neterror"
 
+#define MAILTC_SETTINGS_SET_STRING(settings,property) \
+    mailtc_object_set_string (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
+                              #property, &settings->property, property)
+
+#define MAILTC_SETTINGS_SET_UINT(settings,property) \
+    mailtc_object_set_uint (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
+                            #property, &settings->property, property)
+
+#define MAILTC_SETTINGS_SET_COLOUR(settings,property) \
+    mailtc_object_set_colour (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
+                            #property, &settings->property, property)
+
+#define MAILTC_SETTINGS_SET_PTR_ARRAY(settings,property) \
+    mailtc_object_set_ptr_array (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
+                                 #property, &settings->property, property)
+
+
 struct _MailtcSettingsPrivate
 {
     GKeyFile* key_file;
@@ -470,30 +487,14 @@ static void
 mailtc_settings_set_filename (MailtcSettings* settings,
                               const gchar*    filename)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (g_strcmp0 (filename, settings->filename) != 0)
-    {
-        g_free (settings->filename);
-        settings->filename = g_strdup (filename);
-
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_FILENAME);
-    }
+    MAILTC_SETTINGS_SET_STRING (settings, filename);
 }
 
 void
 mailtc_settings_set_command (MailtcSettings* settings,
                              const gchar*    command)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (g_strcmp0 (command, settings->command) != 0)
-    {
-        g_free (settings->command);
-        settings->command = g_strdup (command);
-
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_COMMAND);
-    }
+    MAILTC_SETTINGS_SET_STRING (settings, command);
 }
 
 const gchar*
@@ -508,13 +509,7 @@ void
 mailtc_settings_set_interval (MailtcSettings* settings,
                               guint           interval)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (interval != settings->interval)
-    {
-        settings->interval = interval;
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_INTERVAL);
-    }
+    MAILTC_SETTINGS_SET_UINT (settings, interval);
 }
 
 guint
@@ -529,13 +524,7 @@ void
 mailtc_settings_set_neterror (MailtcSettings* settings,
                               guint           neterror)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (neterror != settings->neterror)
-    {
-        settings->neterror = neterror;
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_NET_ERROR);
-    }
+    MAILTC_SETTINGS_SET_UINT (settings, neterror);
 }
 
 guint
@@ -548,59 +537,27 @@ mailtc_settings_get_neterror (MailtcSettings* settings)
 
 void
 mailtc_settings_set_iconcolour (MailtcSettings* settings,
-                                const GdkColor* colour)
+                                const GdkColor* iconcolour)
 {
-    GdkColor defaultcolour;
-    GdkColor* iconcolour;
-
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    iconcolour = &settings->iconcolour;
-
-    if (!colour)
-    {
-        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 0xFFFF;
-        colour = &defaultcolour;
-    }
-    if (!gdk_color_equal (colour, iconcolour))
-    {
-        iconcolour->red = colour->red;
-        iconcolour->green = colour->green;
-        iconcolour->blue = colour->blue;
-
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
-    }
+    MAILTC_SETTINGS_SET_COLOUR (settings, iconcolour);
 }
 
 void
 mailtc_settings_get_iconcolour (MailtcSettings* settings,
-                                GdkColor*       colour)
+                                GdkColor*      iconcolour)
 {
-    GdkColor* iconcolour;
-
     g_assert (MAILTC_IS_SETTINGS (settings));
 
-    iconcolour = &settings->iconcolour;
-
-    colour->red = iconcolour->red;
-    colour->green = iconcolour->green;
-    colour->blue = iconcolour->blue;
+    iconcolour->red = settings->iconcolour.red;
+    iconcolour->green = settings->iconcolour.green;
+    iconcolour->blue = settings->iconcolour.blue;
 }
 
 static void
 mailtc_settings_set_accounts (MailtcSettings* settings,
                               GPtrArray*      accounts)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (accounts != settings->accounts)
-    {
-        if (settings->accounts)
-            g_ptr_array_unref (settings->accounts);
-
-        settings->accounts = accounts ? g_ptr_array_ref (accounts) : NULL;
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_ACCOUNTS);
-    }
+    MAILTC_SETTINGS_SET_PTR_ARRAY (settings, accounts);
 }
 
 GPtrArray*
@@ -615,16 +572,7 @@ static void
 mailtc_settings_set_modules (MailtcSettings* settings,
                              GPtrArray*      modules)
 {
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    if (modules != settings->modules)
-    {
-        if (settings->modules)
-            g_ptr_array_unref (settings->modules);
-
-        settings->modules = modules ? g_ptr_array_ref (modules) : NULL;
-        g_object_notify (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_MODULES);
-    }
+    MAILTC_SETTINGS_SET_PTR_ARRAY (settings, modules);
 }
 
 GPtrArray*
