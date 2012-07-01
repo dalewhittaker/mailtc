@@ -139,6 +139,8 @@ mailtc_settings_string_to_colour (const gchar* str,
 
 static void
 mailtc_settings_keyfile_write_uint (MailtcSettings* settings,
+                                    GObject*        obj,
+                                    const gchar*    key_group,
                                     const gchar*    name)
 {
     GKeyFile* key_file;
@@ -148,13 +150,15 @@ mailtc_settings_keyfile_write_uint (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    g_object_get (G_OBJECT (settings), name, &value, NULL);
+    g_object_get (obj, name, &value, NULL);
 
-    g_key_file_set_integer (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, (gint) value);
+    g_key_file_set_integer (key_file, key_group, name, (gint) value);
 }
 
 static gboolean
 mailtc_settings_keyfile_read_uint (MailtcSettings* settings,
+                                   GObject*        obj,
+                                   const gchar*    key_group,
                                    const gchar*    name,
                                    GError**        error)
 {
@@ -165,17 +169,19 @@ mailtc_settings_keyfile_read_uint (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    value = (guint) g_key_file_get_integer (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, error);
+    value = (guint) g_key_file_get_integer (key_file, key_group, name, error);
     if (error && *error)
         return FALSE;
 
-    g_object_set (G_OBJECT (settings), name, value, NULL);
+    g_object_set (obj, name, value, NULL);
 
     return TRUE;
 }
 
 static void
 mailtc_settings_keyfile_write_string (MailtcSettings* settings,
+                                      GObject*        obj,
+                                      const gchar*    key_group,
                                       const gchar*    name)
 {
     GKeyFile* key_file;
@@ -185,14 +191,16 @@ mailtc_settings_keyfile_write_string (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    g_object_get (G_OBJECT (settings), name, &value, NULL);
+    g_object_get (obj, name, &value, NULL);
 
-    g_key_file_set_string (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, value);
+    g_key_file_set_string (key_file, key_group, name, value);
     g_free (value);
 }
 
 static gboolean
 mailtc_settings_keyfile_read_string (MailtcSettings* settings,
+                                     GObject*        obj,
+                                     const gchar*    key_group,
                                      const gchar*    name,
                                      GError**        error)
 {
@@ -203,18 +211,70 @@ mailtc_settings_keyfile_read_string (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    value = g_key_file_get_string (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, error);
+    value = g_key_file_get_string (key_file, key_group, name, error);
     if (error && *error)
         return FALSE;
 
-    g_object_set (G_OBJECT (settings), name, value, NULL);
+    g_object_set (obj, name, value, NULL);
     g_free (value);
 
     return TRUE;
 }
 
 static void
+mailtc_settings_keyfile_write_base64 (MailtcSettings* settings,
+                                      GObject*        obj,
+                                      const gchar*    key_group,
+                                      const gchar*    name)
+{
+    GKeyFile* key_file;
+    gchar* str;
+    gchar* value = NULL;
+
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    key_file = settings->priv->key_file;
+
+    g_object_get (obj, name, &value, NULL);
+
+    str = g_base64_encode ((const guchar*) value, strlen (value));
+    g_key_file_set_string (key_file, key_group, name, value);
+    g_free (str);
+    g_free (value);
+}
+
+static gboolean
+mailtc_settings_keyfile_read_base64 (MailtcSettings* settings,
+                                     GObject*        obj,
+                                     const gchar*    key_group,
+                                     const gchar*    name,
+                                     GError**        error)
+{
+    GKeyFile* key_file;
+    gchar* str;
+    gchar* value;
+    gsize len;
+
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    key_file = settings->priv->key_file;
+
+    str = g_key_file_get_string (key_file, key_group, name, error);
+    if (error && *error)
+        return FALSE;
+
+    value = (gchar*) g_base64_decode (str, &len);
+    g_object_set (obj, name, value, NULL);
+    g_free (value);
+    g_free (str);
+
+    return TRUE;
+}
+
+static void
 mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
+                                      GObject*        obj,
+                                      const gchar*    key_group,
                                       const gchar*    name)
 {
     GKeyFile* key_file;
@@ -225,10 +285,10 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    g_object_get (G_OBJECT (settings), name, &colour, NULL);
+    g_object_get (obj, name, &colour, NULL);
     value = gdk_color_to_string (colour);
 
-    g_key_file_set_string (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, value);
+    g_key_file_set_string (key_file, key_group, name, value);
 
     g_free (value);
     gdk_color_free (colour);
@@ -236,6 +296,8 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
 
 static gboolean
 mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
+                                     GObject*        obj,
+                                     const gchar*    key_group,
                                      const gchar*    name,
                                      GError**        error)
 {
@@ -247,14 +309,14 @@ mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
 
     key_file = settings->priv->key_file;
 
-    value = g_key_file_get_string (key_file, MAILTC_SETTINGS_GROUP_GLOBAL, name, error);
+    value = g_key_file_get_string (key_file, key_group, name, error);
     if (error && *error)
         return FALSE;
 
     mailtc_settings_string_to_colour (value, &colour);
     g_free (value);
 
-    g_object_set (G_OBJECT (settings), name, &colour, NULL);
+    g_object_set (obj, name, &colour, NULL);
 
     return TRUE;
 }
@@ -262,15 +324,15 @@ mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
 static void
 mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
 {
+    MailtcAccount* account;
     GKeyFile* key_file;
-    mtc_account* account;
     GPtrArray* accounts;
-    gchar* colour;
+    GObject* obj;
     gchar* key_group;
     gchar** groups;
-    gchar* password;
-    const gchar* module_name;
     guint i;
+    const gchar* module_name;
+    const mtc_plugin* plugin;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
     g_assert (settings->modules);
@@ -283,24 +345,21 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
     for (i = 0; i < accounts->len; i++)
     {
         account = g_ptr_array_index (accounts, i);
+        obj = G_OBJECT (account);
         groups[i] = key_group = g_strdup_printf ("account%u", i);
 
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_NAME, account->name);
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_SERVER, account->server);
-        g_key_file_set_integer (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PORT, account->port);
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_USER, account->user);
-        g_key_file_set_integer (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, account->protocol);
+        mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_NAME);
+        mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_SERVER);
+        mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PORT);
+        mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_USER);
+        mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL);
+        mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL);
+        mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR);
+        mailtc_settings_keyfile_write_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD);
 
-        module_name = mailtc_module_get_name (account->plugin->module);
+        plugin = mailtc_account_get_plugin (account);
+        module_name = mailtc_module_get_name (plugin->module);
         g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, module_name);
-
-        colour = gdk_color_to_string (account->icon_colour);
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR, colour + 1);
-        g_free (colour);
-
-        password = g_base64_encode ((const guchar*) account->password, strlen (account->password));
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, password);
-        g_free (password);
         g_free (key_group);
     }
     g_key_file_set_string_list (key_file, key_group, MAILTC_SETTINGS_PROPERTY_ACCOUNTS, (const gchar**) groups, accounts->len);
@@ -327,17 +386,16 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
 
     if (naccounts > 0)
     {
+        MailtcAccount* account;
         GPtrArray* accounts;
         GPtrArray* modules;
-        GdkColor colour;
+        GObject* obj;
         gchar* str;
         const gchar* key_group;
         const gchar* module_name;
         gsize i;
         gsize j;
-        gsize len;
         gboolean success;
-        mtc_account* account;
         mtc_plugin* plugin = NULL;
 
         accounts = g_ptr_array_new ();
@@ -351,18 +409,23 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
             if (!g_key_file_has_group (key_file, key_group))
                 continue;
 
-            account = g_new0 (mtc_account, 1);
+            account = mailtc_account_new ();
+            obj = G_OBJECT (account);
 
-            account->name = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_NAME, error);
-            if (!*error)
-                account->server = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_SERVER, error);
-            if (!*error)
-                account->port = g_key_file_get_integer (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PORT, error);
-            if (!*error)
-                account->user = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_USER, error);
-            if (!*error)
-                account->protocol = g_key_file_get_integer (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, error);
-            if (!*error)
+            success = mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_NAME, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_SERVER, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PORT, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_USER, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR, error);
+            if (success)
+                success = mailtc_settings_keyfile_read_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, error);
+            if (success)
             {
                 str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, error);
 
@@ -373,53 +436,21 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
                     module_name = mailtc_module_get_name (plugin->module);
                     if (!g_strcmp0 (str, module_name))
                     {
-                        account->plugin = plugin;
+                        mailtc_account_set_plugin (account, plugin);
+                        if (plugin->add_account)
+                            success = (*plugin->add_account) (account, error);
                         break;
                     }
                 }
                 g_free (str);
             }
-            if (!*error)
-            {
-                str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR, error);
-                mailtc_settings_string_to_colour (str, &colour);
-                account->icon_colour = gdk_color_copy (&colour);
-                g_free (str);
-            }
-            if (!*error)
-            {
-                str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, error);
-                account->password = (gchar*) g_base64_decode (str, &len);
-                g_free (str);
-
-                if (*error)
-                {
-                    g_free (account->password);
-                    account->password = NULL;
-                }
-            }
-            if (!*error)
-            {
-                g_assert (account->name &&
-                          account->server &&
-                          account->port &&
-                          account->user &&
-                          account->password &&
-                          account->plugin &&
-                          account->icon_colour);
-
-                if (plugin->add_account)
-                    success = (*plugin->add_account) (account, error);
-                else
-                    success = TRUE;
-            }
             if (success)
                 g_ptr_array_add (accounts, account);
             else
-                mailtc_free_account (account, error);
+                g_object_unref (account);
         }
         if (accounts->len > 0)
-            g_object_set (G_OBJECT (settings), MAILTC_SETTINGS_PROPERTY_ACCOUNTS, accounts, NULL);
+            mailtc_settings_set_accounts (settings, accounts);
 
         g_ptr_array_unref (accounts);
     }
@@ -432,14 +463,16 @@ static gboolean
 mailtc_settings_keyfile_read (MailtcSettings* settings,
                               GError**        error)
 {
+    GObject* obj = G_OBJECT (settings);
+    const gchar* key_group = MAILTC_SETTINGS_GROUP_GLOBAL;
 
-    if (!mailtc_settings_keyfile_read_uint (settings, MAILTC_SETTINGS_PROPERTY_INTERVAL, error))
+    if (!mailtc_settings_keyfile_read_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_INTERVAL, error))
         return FALSE;
-    if (!mailtc_settings_keyfile_read_uint (settings, MAILTC_SETTINGS_PROPERTY_NET_ERROR, error))
+    if (!mailtc_settings_keyfile_read_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_NET_ERROR, error))
         return FALSE;
-    if (!mailtc_settings_keyfile_read_string (settings, MAILTC_SETTINGS_PROPERTY_COMMAND, error))
+    if (!mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_COMMAND, error))
         return FALSE;
-    if (!mailtc_settings_keyfile_read_colour (settings, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR, error))
+    if (!mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR, error))
         return FALSE;
 
     return mailtc_settings_keyfile_read_accounts (settings, error);
@@ -452,6 +485,8 @@ mailtc_settings_write (MailtcSettings* settings,
     gchar* data;
     const gchar* filename;
     gboolean success;
+    GObject* obj = G_OBJECT (settings);
+    const gchar* key_group = MAILTC_SETTINGS_GROUP_GLOBAL;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
 
@@ -460,11 +495,10 @@ mailtc_settings_write (MailtcSettings* settings,
     if (g_file_test (filename, G_FILE_TEST_EXISTS))
         g_chmod (filename, S_IRUSR | S_IWUSR);
 
-    mailtc_settings_keyfile_write_uint (settings, MAILTC_SETTINGS_PROPERTY_INTERVAL);
-    mailtc_settings_keyfile_write_uint (settings, MAILTC_SETTINGS_PROPERTY_NET_ERROR);
-    mailtc_settings_keyfile_write_string (settings, MAILTC_SETTINGS_PROPERTY_COMMAND);
-    mailtc_settings_keyfile_write_colour (settings, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
-
+    mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_INTERVAL);
+    mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_NET_ERROR);
+    mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_COMMAND);
+    mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
     mailtc_settings_keyfile_write_accounts (settings);
 
     data = g_key_file_to_data (settings->priv->key_file, NULL, error);
@@ -553,7 +587,7 @@ mailtc_settings_get_iconcolour (MailtcSettings* settings,
     iconcolour->blue = settings->iconcolour.blue;
 }
 
-static void
+void
 mailtc_settings_set_accounts (MailtcSettings* settings,
                               GPtrArray*      accounts)
 {
@@ -583,19 +617,17 @@ mailtc_settings_get_modules (MailtcSettings* settings)
     return settings->modules;
 }
 
-static gboolean
-mailtc_settings_free_accounts (MailtcSettings* settings,
-                               GError**        error)
+static void
+mailtc_settings_free_accounts (MailtcSettings* settings)
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
     if (settings->accounts)
     {
-        g_ptr_array_foreach (settings->accounts, (GFunc) mailtc_free_account, error);
+        g_ptr_array_foreach (settings->accounts, (GFunc) g_object_unref, NULL);
         g_ptr_array_unref (settings->accounts);
         settings->accounts = NULL;
     }
-    return ((error && *error) ? FALSE : TRUE);
 }
 
 static void
@@ -699,8 +731,7 @@ mailtc_settings_finalize (GObject* object)
     settings = MAILTC_SETTINGS (object);
     priv = settings->priv;
 
-    /* FIXME error is ignored */
-    mailtc_settings_free_accounts (settings, NULL);
+    mailtc_settings_free_accounts (settings);
 
     if (settings->modules)
         g_ptr_array_unref (settings->modules);

@@ -20,6 +20,8 @@
 #ifndef __MAILTC_ACCOUNT_H__
 #define __MAILTC_ACCOUNT_H__
 
+#include "mtc.h"
+
 #include <glib-object.h>
 #include <gdk/gdk.h>
 
@@ -99,6 +101,12 @@ mailtc_account_set_iconcolour (MailtcAccount*  account,
 void
 mailtc_account_get_iconcolour (MailtcAccount* account,
                                GdkColor*      iconcolour);
+void
+mailtc_account_set_plugin     (MailtcAccount* account,
+                               mtc_plugin*    plugin);
+
+const mtc_plugin*
+mailtc_account_get_plugin     (MailtcAccount* account);
 
 G_END_DECLS
 

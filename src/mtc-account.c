@@ -43,6 +43,7 @@ struct _MailtcAccount
     gchar* password;
     guint port;
     guint protocol;
+    mtc_plugin* plugin;
 };
 
 struct _MailtcAccountClass
@@ -173,6 +174,26 @@ mailtc_account_get_iconcolour (MailtcAccount* account,
     iconcolour->blue = account->iconcolour.blue;
 }
 
+void
+mailtc_account_set_plugin (MailtcAccount* account,
+                           mtc_plugin*    plugin)
+{
+    g_assert (MAILTC_IS_ACCOUNT (account));
+
+    if (account->plugin && account->plugin->remove_account)
+        (*account->plugin->remove_account) (account, NULL); /* FIXME error is ignored */
+
+    account->plugin = plugin;
+}
+
+const mtc_plugin*
+mailtc_account_get_plugin (MailtcAccount* account)
+{
+    g_assert (MAILTC_IS_ACCOUNT (account));
+
+    return account->plugin;
+}
+
 static void
 mailtc_account_set_property (GObject*      object,
                              guint         prop_id,
@@ -211,7 +232,10 @@ mailtc_account_set_property (GObject*      object,
             mailtc_account_set_iconcolour (account, g_value_get_boxed (value));
             break;
 
-            /* FIXME also need to do module */
+        case PROP_MODULE:
+            mailtc_account_set_plugin (account, g_value_get_pointer (value));
+            break;
+
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -258,7 +282,9 @@ mailtc_account_get_property (GObject*    object,
             g_value_set_boxed (value, &colour);
             break;
 
-            /* FIXME also need to do module */
+        case PROP_MODULE:
+            g_value_set_pointer (value, (gpointer) mailtc_account_get_plugin (account));
+            break;
 
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -270,8 +296,13 @@ static void
 mailtc_account_finalize (GObject* object)
 {
     MailtcAccount* account;
+    mtc_plugin* plugin;
 
     account = MAILTC_ACCOUNT (object);
+
+    plugin = account->plugin;
+    if (plugin && plugin->remove_account)
+        (*plugin->remove_account) (account, NULL); /* FIXME error is ignored */
 
     g_free (account->password);
     g_free (account->user);
@@ -285,14 +316,14 @@ static void
 mailtc_account_class_init (MailtcAccountClass* class)
 {
     GObjectClass* gobject_class;
-    GParamFlags common_flags;
+    GParamFlags flags;
 
     gobject_class = G_OBJECT_CLASS (class);
     gobject_class->finalize = mailtc_account_finalize;
     gobject_class->set_property = mailtc_account_set_property;
     gobject_class->get_property = mailtc_account_get_property;
 
-    common_flags = G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS;
+    flags = G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT;
 
     g_object_class_install_property (gobject_class,
                                      PROP_NAME,
@@ -301,7 +332,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      "Name",
                                      "The account name",
                                      NULL,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_SERVER,
@@ -310,7 +341,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      "Server",
                                      "The account server",
                                      NULL,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_PORT,
@@ -321,7 +352,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      0,
                                      G_MAXUINT,
                                      0,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_USER,
@@ -330,7 +361,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      "User",
                                      "The account user",
                                      NULL,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_PASSWORD,
@@ -339,7 +370,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      "Password",
                                      "The account password",
                                      NULL,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_PORT,
@@ -350,16 +381,25 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      0,
                                      G_MAXUINT,
                                      0,
-                                     common_flags | G_PARAM_CONSTRUCT));
+                                     flags));
 
     g_object_class_install_property (gobject_class,
                                      PROP_ICON_COLOUR,
                                      g_param_spec_boxed (
                                      MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
-                                     "The icon colour",
+                                     "The account icon colour",
                                      GDK_TYPE_COLOR,
-                                     common_flags));
+                                     flags));
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_MODULE,
+                                     g_param_spec_pointer (
+                                     MAILTC_ACCOUNT_PROPERTY_MODULE,
+                                     "Plugin",
+                                     "The account plugin",
+                                     flags));
+
 
 }
 

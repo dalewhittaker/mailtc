@@ -52,10 +52,6 @@ mailtc_directory            (void);
 void
 mailtc_run_command          (const gchar* command);
 
-void
-mailtc_free_account         (mtc_account* account,
-                             GError**     error);
-
 gboolean
 mailtc_quit                 (void);
 

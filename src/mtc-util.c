@@ -113,27 +113,6 @@ mailtc_run_command (const gchar* command)
     g_strfreev (args);
 }
 
-void
-mailtc_free_account (mtc_account* account,
-                     GError**     error)
-{
-    if (account)
-    {
-        mtc_plugin* plugin = account->plugin;
-
-        if (plugin && plugin->remove_account)
-            (*plugin->remove_account) (account, error);
-
-        if (account->icon_colour)
-            gdk_color_free (account->icon_colour);
-        g_free (account->name);
-        g_free (account->server);
-        g_free (account->user);
-        g_free (account->password);
-        g_free (account);
-    }
-}
-
 gboolean
 mailtc_quit (void)
 {

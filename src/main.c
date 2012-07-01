@@ -16,25 +16,27 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+#include "mtc-account.h"
 #include "mtc-application.h"
 #include "mtc-configdialog.h"
+#include "mtc-settings.h"
 #include "mtc-statusicon.h"
 #include "mtc-util.h"
 
 static void
 mailtc_read_mail (GPtrArray* accounts)
 {
-    mtc_plugin* plugin;
-    mtc_account* account;
+    MailtcAccount* account;
+    const mtc_plugin* plugin;
     guint i;
     GError* error = NULL;
 
     for (i = 0; i < accounts->len; i++)
     {
         account = g_ptr_array_index (accounts, i);
-        g_assert (account);
+        g_assert (MAILTC_IS_ACCOUNT (account));
 
-        plugin = (mtc_plugin*) account->plugin;
+        plugin = mailtc_account_get_plugin (account);
 
         if (plugin->read_messages)
         {
@@ -81,8 +83,8 @@ mailtc_mail_thread (MailtcApplication* app)
     {
         MailtcSettings* settings;
         MailtcStatusIcon* statusicon;
-        mtc_account* account;
-        mtc_plugin* plugin;
+        MailtcAccount* account;
+        const mtc_plugin* plugin;
         GPtrArray* accounts;
         GError* error = NULL;
         GString* err_msg = NULL;
@@ -104,9 +106,9 @@ mailtc_mail_thread (MailtcApplication* app)
         for (i = 0; i < accounts->len; i++)
         {
             account = g_ptr_array_index (accounts, i);
-            g_assert (account);
+            g_assert (MAILTC_IS_ACCOUNT (account));
 
-            plugin = (mtc_plugin*) account->plugin;
+            plugin = mailtc_account_get_plugin (account);
 
             error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
 
@@ -133,7 +135,7 @@ mailtc_mail_thread (MailtcApplication* app)
                             err_msg = g_string_new (NULL);
 
                         err_msg = g_string_prepend (err_msg, "\n");
-                        err_msg = g_string_prepend (err_msg, account->server);
+                        err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
                         error_count = 0;
                     }
                     if (error)
@@ -169,9 +171,9 @@ mailtc_run_main_loop (MailtcApplication* app)
 {
     MailtcStatusIcon* statusicon;
     MailtcSettings* settings;
+    MailtcAccount* account;
     GPtrArray* accounts;
     GdkColor icon_colour;
-    mtc_account* account;
     guint i;
 
     settings = mailtc_application_get_settings (app);
@@ -189,7 +191,8 @@ mailtc_run_main_loop (MailtcApplication* app)
     for (i = 0; i < accounts->len; i++)
     {
         account = g_ptr_array_index (accounts, i);
-        mailtc_status_icon_add_item (statusicon, account->name, account->icon_colour);
+        mailtc_account_get_iconcolour (account, &icon_colour);
+        mailtc_status_icon_add_item (statusicon, mailtc_account_get_name (account), &icon_colour);
     }
     g_ptr_array_unref (accounts);
     g_object_unref (statusicon);
