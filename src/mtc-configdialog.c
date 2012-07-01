@@ -433,6 +433,8 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     guint iport;
     guint protocol;
 
+    (void) error;
+
     g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
 
     priv = dialog_config->priv;
@@ -521,21 +523,7 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     gdk_color_free (icon_colour);
 
     if (changed)
-    {
-        if (accplugin && accplugin->remove_account)
-        {
-            if (!(*accplugin->remove_account) (account, error))
-                return -1;
-        }
-
         mailtc_account_set_plugin (account, plugin);
-
-        if (plugin->add_account)
-        {
-            if (!(*plugin->add_account) (account, error))
-                return -1;
-        }
-    }
 
     for (active = 0; (guint) active < priv->accounts->len; active++)
     {

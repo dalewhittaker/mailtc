@@ -184,6 +184,10 @@ mailtc_account_set_plugin (MailtcAccount* account,
         (*account->plugin->remove_account) (account, NULL); /* FIXME error is ignored */
 
     account->plugin = plugin;
+
+    if (plugin && plugin->add_account)
+        (*plugin->add_account) (account, NULL); /* FIXME error is ignored */
+
 }
 
 const mtc_plugin*

@@ -437,8 +437,6 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
                     if (!g_strcmp0 (str, module_name))
                     {
                         mailtc_account_set_plugin (account, plugin);
-                        if (plugin->add_account)
-                            success = (*plugin->add_account) (account, error);
                         break;
                     }
                 }
