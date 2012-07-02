@@ -40,7 +40,7 @@ mailtc_read_mail (GPtrArray* accounts)
 
         if (plugin->read_messages)
         {
-            if (!(*plugin->read_messages) (account, &error))
+            if (!(*plugin->read_messages) (G_OBJECT (account), &error))
                 mailtc_gerror (&error);
         }
     }
@@ -114,7 +114,7 @@ mailtc_mail_thread (MailtcApplication* app)
 
             if (plugin->get_messages)
             {
-                messages = (*plugin->get_messages) (account, debug, &error);
+                messages = (*plugin->get_messages) (G_OBJECT (account), debug, &error);
                 if (messages >= 0 && !error)
                 {
                     mailtc_status_icon_update (statusicon, id++, messages);

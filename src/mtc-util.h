@@ -21,6 +21,7 @@
 #define __MAILTC_UTIL_H__
 
 #include "mtc.h"
+#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 

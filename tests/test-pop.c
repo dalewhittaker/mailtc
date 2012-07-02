@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include "mtc.h"
+#include "mtc-account.h"
 
 #define CONFIGDIR ".config"
 #define POP_PORT 110
@@ -179,7 +180,7 @@ service_incoming_cb (GSocketService*    service,
 static gpointer
 run_plugin_thread (server_data* data)
 {
-    mtc_account* account;
+    MailtcAccount* account;
     mtc_plugin* plugin;
     mtc_plugin* (*plugin_init) (void);
     GDir* dir;
@@ -222,14 +223,14 @@ run_plugin_thread (server_data* data)
 
     plugin->module = module;
 
-    account = g_new0 (mtc_account, 1);
-    account->protocol = data->protocol;
-    account->plugin = plugin;
-    account->name = "test";
-    account->server = "localhost";
-    account->port = data->port;
-    account->user = "testuser";
-    account->password = "abc123";
+    account = mailtc_account_new ();
+    mailtc_account_set_protocol (account, data->protocol);
+    mailtc_account_set_plugin (account, plugin);
+    mailtc_account_set_name (account, "test");
+    mailtc_account_set_server (account, "localhost");
+    mailtc_account_set_port (account, data->port);
+    mailtc_account_set_user (account, "testuser");
+    mailtc_account_set_password (account, "abc123");
 
     directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
     g_assert (directory);
@@ -239,11 +240,11 @@ run_plugin_thread (server_data* data)
     g_dir_close (dir);
 
     g_assert (plugin->add_account);
-    success = (*plugin->add_account) (account, &error);
+    success = (*plugin->add_account) (G_OBJECT (account), &error);
     g_assert (success);
 
     g_assert (plugin->get_messages);
-    messages = (*plugin->get_messages) (account, TRUE, &error);
+    messages = (*plugin->get_messages) (G_OBJECT (account), TRUE, &error);
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {
@@ -264,7 +265,7 @@ run_plugin_thread (server_data* data)
     success = g_module_close (module);
     g_assert (success);
 
-    g_free (account);
+    g_object_unref (account);
     g_array_free (plugin->protocols, TRUE);
     g_free (plugin->directory);
     g_free (plugin);

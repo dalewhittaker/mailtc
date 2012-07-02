@@ -29,6 +29,8 @@
 
 #define MAXDATASIZE 256
 
+#define PLUGIN_PRIVATE "private" /* FIXME this is temporary, use a property. */
+
 typedef enum
 {
     POP_CMD_NULL = 0,
@@ -60,7 +62,7 @@ typedef gboolean
 struct _pop_private
 {
     MailtcSocket* sock;
-    mtc_account* account;
+    GObject* account;
     GString* msg;
     gboolean debug;
     gint64 total;
@@ -211,13 +213,13 @@ pop_run (pop_private* priv,
          pop_command  index,
          GError**     error)
 {
-    mtc_account* account;
+    GObject* account;
 
     g_assert (priv);
 
     account = priv->account;
 
-    if (account)
+    if (G_IS_OBJECT (account))
     {
         gboolean success;
         gchar* command;
@@ -235,13 +237,13 @@ pop_run (pop_private* priv,
                 break;
             case POP_CMD_USER:
                 command = "USER %s\r\n";
-                arg = account->user;
+                g_object_get (account, "user", &arg, NULL);
                 pread = pop_read;
                 pwrite = pop_write;
                 break;
             case POP_CMD_PASS:
                 command = "PASS %s\r\n";
-                arg = account->password;
+                g_object_get (account, "password", &arg, NULL);
                 pread = pop_read;
                 pwrite = pop_passwrite;
                 break;
@@ -266,7 +268,10 @@ pop_run (pop_private* priv,
         if (command)
         {
             if (arg)
+            {
                 success = (*pwrite) (priv, error, command, arg);
+                g_free (arg);
+            }
             else
                 success = (*pwrite) (priv, error, command);
         }
@@ -336,29 +341,45 @@ pop_calculate_new (pop_private*    priv,
 }
 
 static gint64
-pop_get_messages (mtc_account* account,
-                  gboolean     debug,
-                  GError**     error)
+pop_get_messages (GObject* account,
+                  gboolean debug,
+                  GError** error)
 {
     MailtcSocket* sock;
-    mtc_plugin* plugin;
+    MailtcUidTable* uid_table;
     pop_private* priv;
+    const mtc_plugin* plugin;
+    gchar* server;
+    guint port;
+    guint protocol;
     gint64 nmails;
+    gboolean success;
 
-    g_assert (account && account->plugin);
-    g_assert (MAILTC_IS_UID_TABLE (account->priv));
-    plugin = account->plugin;
-    g_assert (plugin->priv);
+    g_assert (G_IS_OBJECT (account));
+
+    g_object_get (account,
+                  "plugin", &plugin,
+                  "server", &server,
+                  "port", &port,
+                  "protocol", &protocol,
+                  NULL);
+    g_assert (plugin && plugin->priv);
+
+    uid_table = g_object_get_data (account, PLUGIN_PRIVATE);
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = (pop_private*) plugin->priv;
     priv->debug = debug;
     priv->account = account;
     sock = priv->sock;
 
-    mailtc_socket_set_tls (sock, account->protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
+    mailtc_socket_set_tls (sock, protocol == POP_PROTOCOL_SSL ? TRUE : FALSE);
 
-    if (!mailtc_socket_connect (sock, account->server, account->port, error))
+    success = mailtc_socket_connect (sock, server, port, error);
+    g_free (server);
+    if (!success)
         return -1;
+
     if (!pop_run (priv, POP_CMD_NULL, error))
         return -1;
     if (!pop_run (priv, POP_CMD_USER, error))
@@ -367,67 +388,95 @@ pop_get_messages (mtc_account* account,
         return -1;
     if (!pop_run (priv, POP_CMD_STAT, error))
         return -1;
-    if ((nmails = pop_calculate_new (priv, MAILTC_UID_TABLE (account->priv), error)) == -1)
+    if ((nmails = pop_calculate_new (priv, uid_table, error)) == -1)
         return -1;
     if (!pop_run (priv, POP_CMD_QUIT, error))
         return -1;
 
     mailtc_socket_disconnect (sock);
+
     return nmails;
 }
 
 static gboolean
-pop_read_messages (mtc_account* account,
-                   GError**     error)
+pop_read_messages (GObject* account,
+                   GError** error)
 {
-    g_assert (account);
-    g_assert (account && MAILTC_IS_UID_TABLE (account->priv));
+    MailtcUidTable* uid_table;
 
-    return mailtc_uid_table_mark_read (MAILTC_UID_TABLE (account->priv), error);
+    g_assert (G_IS_OBJECT (account));
+
+    uid_table = g_object_get_data (account, PLUGIN_PRIVATE);
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
+
+    return mailtc_uid_table_mark_read (uid_table, error);
 }
 
 static gboolean
-pop_remove_account (mtc_account* account,
-                    GError**     error)
+pop_remove_account (GObject* account,
+                    GError** error)
 {
-    (void) error;
-    g_assert (account && account->plugin);
+    MailtcUidTable* uid_table;
+    const mtc_plugin* plugin;
 
-    if (account->priv && MAILTC_IS_UID_TABLE (account->priv))
+    (void) error;
+
+    g_assert (G_IS_OBJECT (account));
+
+    g_object_get (account, "plugin", &plugin, NULL);
+    g_assert (plugin);
+
+    uid_table = g_object_get_data (account, PLUGIN_PRIVATE);
+
+    if (MAILTC_IS_UID_TABLE (uid_table))
     {
-        g_object_unref (MAILTC_UID_TABLE (account->priv));
-        account->priv = NULL;
+        g_object_unref (MAILTC_UID_TABLE (uid_table));
+        g_object_set_data (account, PLUGIN_PRIVATE, NULL);
     }
     return TRUE;
 }
 
 static gboolean
-pop_add_account (mtc_account* account,
-                 GError**     error)
+pop_add_account (GObject* account,
+                 GError** error)
 {
-    mtc_plugin* plugin;
     MailtcUidTable* uid_table;
-    gchar* hash;
+    const mtc_plugin* plugin;
     gchar* filename;
+    gchar* server;
+    gchar* user;
+    gchar* hash;
+    guint port;
 
-    g_assert (account && account->plugin);
+    g_assert (G_IS_OBJECT (account));
 
-    if (account->priv)
+    g_object_get (account,
+                  "plugin", &plugin,
+                  "server", &server,
+                  "port", &port,
+                  "user", &user,
+                  NULL);
+    g_assert (plugin && server && user);
+
+    uid_table = g_object_get_data (account, PLUGIN_PRIVATE);
+    if (MAILTC_IS_UID_TABLE (uid_table))
     {
         if (!pop_remove_account (account, error))
             return FALSE;
     }
 
-    plugin = account->plugin;
-    filename = g_strdup_printf ("%s%u%s", account->server, account->port, account->user);
+    filename = g_strdup_printf ("%s%u%s", server, port, user);
     hash = g_strdup_printf ("%x", g_str_hash (filename));
     g_free (filename);
+    g_free (user);
+    g_free (server);
+
     filename = g_build_filename (plugin->directory, hash, NULL);
     g_free (hash);
 
     uid_table = mailtc_uid_table_new (filename);
     g_free (filename);
-    account->priv = (gpointer) uid_table;
+    g_object_set_data (account, PLUGIN_PRIVATE, uid_table);
 
     return mailtc_uid_table_load (uid_table, error);
 }

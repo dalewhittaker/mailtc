@@ -353,7 +353,6 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PORT);
         mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_USER);
         mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL);
-        mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL);
         mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR);
         mailtc_settings_keyfile_write_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD);
 

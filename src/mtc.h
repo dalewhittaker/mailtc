@@ -22,26 +22,25 @@
 
 #include <config.h>
 #include <glib-object.h>
-#include <gdk/gdk.h> /* GdkColor */
 
 G_BEGIN_DECLS
 
 typedef gboolean
-(*add_account_func)    (gconstpointer account,
-                        GError**      error);
+(*add_account_func)    (GObject* account,
+                        GError** error);
 
 typedef gboolean
-(*remove_account_func) (gconstpointer account,
-                        GError**      error);
+(*remove_account_func) (GObject* account,
+                        GError** error);
 
 typedef gint64
-(*get_message_func)    (gconstpointer account,
-                        gboolean      debug,
-                        GError**      error);
+(*get_message_func)    (GObject* account,
+                        gboolean debug,
+                        GError** error);
 
 typedef gboolean
-(*read_message_func)   (gconstpointer account,
-                        GError**      error);
+(*read_message_func)   (GObject* account,
+                        GError** error);
 
 typedef void
 (*terminate_func)      (gpointer plugin);
@@ -73,20 +72,6 @@ typedef struct
     terminate_func      terminate;
 
 } mtc_plugin;
-
-typedef struct
-{
-    gpointer    priv;
-    gchar*      name;
-    gchar*      server;
-    guint       port;
-    gchar*      user;
-    gchar*      password;
-    GdkColor*   icon_colour;
-    mtc_plugin* plugin;
-    guint       protocol;
-
-} mtc_account;
 
 G_END_DECLS
 

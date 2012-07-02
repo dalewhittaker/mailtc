@@ -178,15 +178,19 @@ void
 mailtc_account_set_plugin (MailtcAccount* account,
                            mtc_plugin*    plugin)
 {
+    GError* error = NULL;
+
     g_assert (MAILTC_IS_ACCOUNT (account));
 
     if (account->plugin && account->plugin->remove_account)
-        (*account->plugin->remove_account) (account, NULL); /* FIXME error is ignored */
+        (*account->plugin->remove_account) (G_OBJECT (account), NULL); /* FIXME error is ignored */
 
     account->plugin = plugin;
 
     if (plugin && plugin->add_account)
-        (*plugin->add_account) (account, NULL); /* FIXME error is ignored */
+        (*plugin->add_account) (G_OBJECT (account), &error); /* FIXME error is ignored */
+
+    g_clear_error (&error);
 
 }
 
@@ -306,7 +310,7 @@ mailtc_account_finalize (GObject* object)
 
     plugin = account->plugin;
     if (plugin && plugin->remove_account)
-        (*plugin->remove_account) (account, NULL); /* FIXME error is ignored */
+        (*plugin->remove_account) (object, NULL); /* FIXME error is ignored */
 
     g_free (account->password);
     g_free (account->user);
@@ -377,7 +381,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      flags));
 
     g_object_class_install_property (gobject_class,
-                                     PROP_PORT,
+                                     PROP_PROTOCOL,
                                      g_param_spec_uint (
                                      MAILTC_ACCOUNT_PROPERTY_PROTOCOL,
                                      "Protocol",
