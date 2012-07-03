@@ -106,10 +106,20 @@ mailtc_settings_initable_init (GInitable*    initable,
 
     if (priv->error)
     {
-        if (error)
-            *error = g_error_copy (priv->error);
+        if (g_error_matches (priv->error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
+            g_error_matches (priv->error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
+            g_error_matches (priv->error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND) ||
+            g_error_matches (priv->error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+        {
+            g_clear_error (&priv->error);
+        }
+        else
+        {
+            if (error)
+                *error = g_error_copy (priv->error);
 
-        return FALSE;
+            return FALSE;
+        }
     }
     return TRUE;
 }

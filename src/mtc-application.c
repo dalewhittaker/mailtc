@@ -522,21 +522,19 @@ mailtc_application_server_init (MailtcApplication* app,
     g_free (filename);
 
     if (!settings)
-    {
-        if (g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND) ||
-            g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND) ||
-            g_error_matches (*error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND) ||
-            g_error_matches (*error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
-        {
-            if (mode != MAILTC_MODE_CONFIG)
-                mailtc_warning ("No accounts found.\nPlease enter a mail account");
-            g_clear_error (error);
-        }
-        else
-            return FALSE;
+        return FALSE;
 
-        /* FIXME if there is no settings, how do we continue? */
-        mode = MAILTC_MODE_CONFIG;
+    if (mode != MAILTC_MODE_CONFIG)
+    {
+        GPtrArray* accounts;
+
+        accounts = mailtc_settings_get_accounts (settings);
+        if (accounts->len == 0)
+        {
+            mailtc_warning ("Incomplete settings found.\nPlease enter configuration settings");
+            mode = MAILTC_MODE_CONFIG;
+            g_object_unref (accounts);
+        }
     }
 
     mailtc_application_set_settings (app, settings);
