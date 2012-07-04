@@ -103,6 +103,10 @@ struct _MailtcApplication
 struct _MailtcApplicationClass
 {
     GApplicationClass parent_class;
+
+    void (*configure) (MailtcApplication* app);
+    void (*run)       (MailtcApplication* app);
+    void (*terminate) (MailtcApplication* app);
 };
 
 static guint signals[LAST_SIGNAL];
@@ -950,8 +954,8 @@ mailtc_application_class_init (MailtcApplicationClass* class)
 
     signals[SIGNAL_CONFIGURE] = g_signal_new ("configure",
                                               G_TYPE_FROM_CLASS (gobject_class),
-                                              G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-                                              0,
+                                              G_SIGNAL_RUN_LAST,
+                                              G_STRUCT_OFFSET (MailtcApplicationClass, configure),
                                               NULL,
                                               NULL,
                                               g_cclosure_marshal_VOID__VOID,
@@ -960,8 +964,8 @@ mailtc_application_class_init (MailtcApplicationClass* class)
 
     signals[SIGNAL_RUN] = g_signal_new ("run",
                                         G_TYPE_FROM_CLASS (gobject_class),
-                                        G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-                                        0,
+                                        G_SIGNAL_RUN_LAST,
+                                        G_STRUCT_OFFSET (MailtcApplicationClass, run),
                                         NULL,
                                         NULL,
                                         g_cclosure_marshal_VOID__VOID,
@@ -970,8 +974,8 @@ mailtc_application_class_init (MailtcApplicationClass* class)
 
     signals[SIGNAL_TERMINATE] = g_signal_new ("terminate",
                                               G_TYPE_FROM_CLASS (gobject_class),
-                                              G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-                                              0,
+                                              G_SIGNAL_RUN_FIRST,
+                                              G_STRUCT_OFFSET (MailtcApplicationClass, terminate),
                                               NULL,
                                               NULL,
                                               g_cclosure_marshal_VOID__VOID,

@@ -38,6 +38,9 @@ struct _MailtcStatusIcon
 struct _MailtcStatusIconClass
 {
     GtkStatusIconClass parent_class;
+
+    void (*read_mail)    (MailtcStatusIcon* status_icon);
+    void (*mark_as_read) (MailtcStatusIcon* status_icon);
 };
 
 G_DEFINE_TYPE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON)
@@ -111,8 +114,8 @@ mailtc_status_icon_class_init (MailtcStatusIconClass* class)
 
     signals[READ_MAIL] = g_signal_new ("read-mail",
                                        G_TYPE_FROM_CLASS (gobject_class),
-                                       G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-                                       0,
+                                       G_SIGNAL_RUN_LAST,
+                                       G_STRUCT_OFFSET (MailtcStatusIconClass, read_mail),
                                        NULL,
                                        NULL,
                                        g_cclosure_marshal_VOID__VOID,
@@ -121,8 +124,8 @@ mailtc_status_icon_class_init (MailtcStatusIconClass* class)
 
     signals[MARK_AS_READ] = g_signal_new ("mark-as-read",
                                           G_TYPE_FROM_CLASS (gobject_class),
-                                          G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-                                          0,
+                                          G_SIGNAL_RUN_LAST,
+                                          G_STRUCT_OFFSET (MailtcStatusIconClass, mark_as_read),
                                           NULL,
                                           NULL,
                                           g_cclosure_marshal_VOID__VOID,
