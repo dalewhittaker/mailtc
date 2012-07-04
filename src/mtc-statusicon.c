@@ -263,7 +263,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
         }
     }
 
-    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (envelope), colour);
+    mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
     pixbuf = mailtc_envelope_get_pixbuf (MAILTC_ENVELOPE (envelope));
     g_assert (pixbuf);
 
@@ -292,7 +292,7 @@ mailtc_status_icon_clear (MailtcStatusIcon* status_icon)
         g_assert (item);
         item->nmails = 0;
     }
-    mailtc_envelope_set_envelope_colour (MAILTC_ENVELOPE (priv->envelope), NULL);
+    mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->envelope), NULL);
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
 }
 

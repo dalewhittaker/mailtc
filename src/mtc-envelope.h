@@ -42,14 +42,15 @@ GtkWidget*
 mailtc_envelope_new        (void);
 
 void
-mailtc_envelope_set_envelope_colour (MailtcEnvelope* envelope,
-                                     GdkColor*       colour);
+mailtc_envelope_set_colour (MailtcEnvelope* envelope,
+                            const GdkColor* colour);
 
-GdkColor*
-mailtc_envelope_get_envelope_colour (MailtcEnvelope* envelope);
+void
+mailtc_envelope_get_colour (MailtcEnvelope* envelope,
+                            GdkColor*       colour);
 
 GdkPixbuf*
-mailtc_envelope_get_pixbuf          (MailtcEnvelope* envelope);
+mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope);
 
 G_END_DECLS
 
