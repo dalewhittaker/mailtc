@@ -37,6 +37,14 @@
 
 #define MAILTC_APPLICATION_ERROR        g_quark_from_string ("MAILTC_APPLICATION_ERROR")
 
+#define MAILTC_APPLICATION_SET_BOOLEAN(app,property) \
+    mailtc_object_set_boolean (G_OBJECT (app), MAILTC_TYPE_APPLICATION, \
+                               #property, &app->property, property)
+
+#define MAILTC_APPLICATION_SET_OBJECT(app,property) \
+    mailtc_object_set_object (G_OBJECT (app), MAILTC_TYPE_APPLICATION, \
+                              #property, (GObject **) (&app->property), G_OBJECT (property))
+
 /* Flag to mask modes that require GApplication */
 #define MAILTC_MODE_UNIQUE(mode) (((mode) & 0xFC) == 0x04)
 
@@ -782,13 +790,7 @@ void
 mailtc_application_set_debug (MailtcApplication* app,
                               gboolean           debug)
 {
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    if (debug != app->debug)
-    {
-        app->debug = debug;
-        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_DEBUG);
-    }
+    MAILTC_APPLICATION_SET_BOOLEAN (app, debug);
 }
 
 gboolean
@@ -803,16 +805,7 @@ void
 mailtc_application_set_settings (MailtcApplication* app,
                                  MailtcSettings*    settings)
 {
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    if (settings != app->settings)
-    {
-        if (app->settings)
-            g_object_unref (app->settings);
-
-        app->settings = settings ? g_object_ref (settings) : NULL;
-        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_SETTINGS);
-    }
+    MAILTC_APPLICATION_SET_OBJECT (app, settings);
 }
 
 MailtcSettings*
@@ -827,16 +820,7 @@ void
 mailtc_application_set_status_icon (MailtcApplication* app,
                                     MailtcStatusIcon*  statusicon)
 {
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    if (statusicon != app->statusicon)
-    {
-        if (app->statusicon)
-            g_object_unref (app->statusicon);
-
-        app->statusicon = statusicon ? g_object_ref (statusicon) : NULL;
-        g_object_notify (G_OBJECT (app), MAILTC_APPLICATION_PROPERTY_STATUS_ICON);
-    }
+    MAILTC_APPLICATION_SET_OBJECT (app, statusicon);
 }
 
 MailtcStatusIcon*
@@ -886,10 +870,10 @@ mailtc_application_get_property (GObject*    object,
             g_value_set_boolean (value, mailtc_application_get_debug (app));
             break;
         case PROP_SETTINGS:
-            g_value_set_object (value, mailtc_application_get_settings (app));
+            g_value_set_object (value, app->settings);
             break;
         case PROP_STATUS_ICON:
-            g_value_set_object (value, mailtc_application_get_status_icon (app));
+            g_value_set_object (value, app->statusicon);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

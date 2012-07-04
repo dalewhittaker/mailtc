@@ -68,7 +68,21 @@ mailtc_object_set_uint      (GObject*     obj,
                              GType        objtype,
                              const gchar* name,
                              guint*       value,
-                             const guint  newvalue);
+                             guint        newvalue);
+
+void
+mailtc_object_set_boolean   (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             gboolean*    value,
+                             gboolean     newvalue);
+
+void
+mailtc_object_set_object    (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             GObject**    value,
+                             GObject*     newvalue);
 
 void
 mailtc_object_set_colour    (GObject*        obj,

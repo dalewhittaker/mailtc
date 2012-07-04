@@ -18,7 +18,12 @@
  */
 
 #include "mtc-module.h"
+#include "mtc-util.h"
 #include <gmodule.h>
+
+#define MAILTC_MODULE_SET_STRING(module,property) \
+    mailtc_object_set_string (G_OBJECT (module), MAILTC_TYPE_MODULE, \
+                              #property, &module->property, property)
 
 #define MAILTC_MODULE_ERROR g_quark_from_string ("MAILTC_MODULE_ERROR")
 
@@ -61,12 +66,7 @@ static void
 mailtc_module_set_name (MailtcModule* module,
                         const gchar*  name)
 {
-    g_assert (MAILTC_IS_MODULE (module));
-
-    g_free (module->name);
-    module->name = g_strdup (name);
-
-    g_object_notify (G_OBJECT (module), "name");
+    MAILTC_MODULE_SET_STRING (module, name);
 }
 
 const gchar*

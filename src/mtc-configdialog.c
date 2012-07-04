@@ -31,6 +31,10 @@
 #define MAILTC_PATH_LENGTH 2048
 #endif
 
+#define MAILTC_CONFIG_DIALOG_SET_OBJECT(dialog,property) \
+    mailtc_object_set_object (G_OBJECT (dialog), MAILTC_TYPE_CONFIG_DIALOG, \
+                              #property, (GObject **) (&dialog->property), G_OBJECT (property))
+
 enum
 {
     TREEVIEW_ACCOUNT_COLUMN = 0,
@@ -1113,25 +1117,26 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 }
 
 static void
+mailtc_config_dialog_set_settings (MailtcConfigDialog* dialog,
+                                   MailtcSettings*     settings)
+{
+    MAILTC_CONFIG_DIALOG_SET_OBJECT (dialog, settings);
+}
+
+static void
 mailtc_config_dialog_set_property (GObject*      object,
                                    guint         prop_id,
                                    const GValue* value,
                                    GParamSpec*   pspec)
 {
     MailtcConfigDialog* dialog;
-    MailtcSettings* settings;
 
     dialog = MAILTC_CONFIG_DIALOG (object);
 
     switch (prop_id)
     {
         case PROP_SETTINGS:
-            settings = g_value_dup_object (value);
-
-            if (dialog->settings)
-                g_object_unref (dialog->settings);
-
-            dialog->settings = settings;
+            mailtc_config_dialog_set_settings (dialog, g_value_get_object (value));
             break;
 
         default:

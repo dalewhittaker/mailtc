@@ -45,7 +45,7 @@
 
 #define MAILTC_SETTINGS_SET_COLOUR(settings,property) \
     mailtc_object_set_colour (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
-                            #property, &settings->property, property)
+                              #property, &settings->property, property)
 
 #define MAILTC_SETTINGS_SET_PTR_ARRAY(settings,property) \
     mailtc_object_set_ptr_array (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \

@@ -30,7 +30,7 @@
 
 #define MAILTC_ACCOUNT_SET_COLOUR(account,property) \
     mailtc_object_set_colour (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
-                            #property, &account->property, property)
+                              #property, &account->property, property)
 
 struct _MailtcAccount
 {

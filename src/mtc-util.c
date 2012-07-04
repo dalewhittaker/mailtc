@@ -145,13 +145,50 @@ mailtc_object_set_uint (GObject*     obj,
                         GType        objtype,
                         const gchar* name,
                         guint*       value,
-                        const guint  newvalue)
+                        guint        newvalue)
 {
     g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
 
     if (newvalue != *value)
     {
         *value = newvalue;
+
+        g_object_notify (obj, name);
+    }
+}
+
+void
+mailtc_object_set_boolean (GObject*     obj,
+                           GType        objtype,
+                           const gchar* name,
+                           gboolean*    value,
+                           gboolean     newvalue)
+{
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (newvalue != *value)
+    {
+        *value = newvalue;
+
+        g_object_notify (obj, name);
+    }
+}
+
+void
+mailtc_object_set_object (GObject*     obj,
+                          GType        objtype,
+                          const gchar* name,
+                          GObject**    value,
+                          GObject*     newvalue)
+{
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (newvalue != *value)
+    {
+        if (*value)
+            g_object_unref (*value);
+
+        *value = newvalue ? g_object_ref (newvalue) : NULL;
 
         g_object_notify (obj, name);
     }
