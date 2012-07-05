@@ -244,7 +244,9 @@ mailtc_configure_cb (MailtcApplication* app)
 
     settings = mailtc_application_get_settings (app);
     dialog = mailtc_config_dialog_new (settings);
+
     g_object_unref (settings);
+    gtk_widget_show (GTK_WIDGET (dialog));
 }
 
 int
