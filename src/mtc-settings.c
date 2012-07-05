@@ -371,7 +371,8 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, module_name);
         g_free (key_group);
     }
-    g_key_file_set_string_list (key_file, key_group, MAILTC_SETTINGS_PROPERTY_ACCOUNTS, (const gchar**) groups, accounts->len);
+    g_key_file_set_string_list (key_file, MAILTC_SETTINGS_GROUP_GLOBAL,
+                                MAILTC_SETTINGS_PROPERTY_ACCOUNTS, (const gchar**) groups, accounts->len);
     g_strfreev (groups);
 }
 

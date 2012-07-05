@@ -1250,7 +1250,6 @@ mailtc_config_dialog_constructed (GObject* object)
     mailtc_settings_get_iconcolour (settings, &colour);
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->envelope_config), &colour);
 
-    gtk_widget_show (GTK_WIDGET (dialog));
     gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
     G_OBJECT_CLASS (mailtc_config_dialog_parent_class)->constructed (object);
