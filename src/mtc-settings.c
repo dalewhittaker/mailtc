@@ -589,9 +589,7 @@ mailtc_settings_get_iconcolour (MailtcSettings* settings,
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
-    iconcolour->red = settings->iconcolour.red;
-    iconcolour->green = settings->iconcolour.green;
-    iconcolour->blue = settings->iconcolour.blue;
+    *iconcolour = settings->iconcolour;
 }
 
 void

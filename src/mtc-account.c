@@ -169,9 +169,7 @@ mailtc_account_get_iconcolour (MailtcAccount* account,
 {
     g_assert (MAILTC_IS_ACCOUNT (account));
 
-    iconcolour->red = account->iconcolour.red;
-    iconcolour->green = account->iconcolour.green;
-    iconcolour->blue = account->iconcolour.blue;
+    *iconcolour = account->iconcolour;
 }
 
 void

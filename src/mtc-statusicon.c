@@ -49,7 +49,7 @@ typedef struct
 {
     gchar* name;
     guint64 nmails;
-    GdkColor* colour;
+    GdkColor colour;
 
 } MailtcStatusIconItem;
 
@@ -78,9 +78,6 @@ static void
 mailtc_status_icon_free_item (MailtcStatusIconItem* item)
 {
     g_assert (item);
-
-    if (item->colour)
-        gdk_color_free (item->colour);
 
     g_free (item->name);
     g_free (item);
@@ -174,8 +171,10 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     priv = status_icon->priv;
     item = g_new0 (MailtcStatusIconItem, 1);
 
-    if (account_colour)
-        item->colour = gdk_color_copy (account_colour);
+    if (!account_colour)
+        item->colour.red = item->colour.green = item->colour.blue = 0xFFFF;
+    else
+        item->colour = *account_colour;
 
     index = g_new (gint, 1);
 
@@ -259,7 +258,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
             g_free (tmp_str);
 
             /* If colour is already set there is more than one item, show the multi colour. */
-            colour = colour ? dflitem->colour : item->colour;
+            colour = colour ? &dflitem->colour : &item->colour;
         }
     }
 

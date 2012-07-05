@@ -212,9 +212,7 @@ mailtc_object_set_colour (GObject*        obj,
     }
     if (!gdk_color_equal (newcolour, colour))
     {
-        colour->red = newcolour->red;
-        colour->green = newcolour->green;
-        colour->blue = newcolour->blue;
+        *colour = *newcolour;
 
         g_object_notify (obj, name);
     }

@@ -184,7 +184,6 @@ mailtc_envelope_notify_pixbuf_cb (GObject*    object,
     (void) pspec;
     envelope = MAILTC_ENVELOPE (object);
 
-    g_print ("notify pixbuf!\n");
     if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF)
     {
         GdkPixbuf* pixbuf;
@@ -214,7 +213,6 @@ mailtc_envelope_notify_colour_cb (GObject*    object,
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
     priv = envelope->priv;
-    g_print ("notify colour!\n");
 
     pixbuf = mailtc_envelope_create_pixbuf (envelope);
     g_assert (pixbuf);
@@ -257,9 +255,7 @@ mailtc_envelope_get_colour (MailtcEnvelope* envelope,
 {
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
-    colour->red = envelope->colour.red;
-    colour->green = envelope->colour.green;
-    colour->blue = envelope->colour.blue;
+    *colour = envelope->colour;
 }
 
 static void
