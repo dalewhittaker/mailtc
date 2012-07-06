@@ -25,7 +25,7 @@
 #define TIMEOUT_NET 5
 #define TIMEOUT_FREQ 100
 
-#define MAILTC_SOCKET_ERROR g_quark_from_string("MAILTC_SOCKET_ERROR")
+#define MAILTC_SOCKET_ERROR g_quark_from_string ("MAILTC_SOCKET_ERROR")
 
 typedef enum
 {
@@ -83,7 +83,11 @@ mailtc_socket_set_tls (MailtcSocket* sock,
 {
     g_assert (MAILTC_IS_SOCKET (sock));
 
-    sock->tls = tls;
+    if (sock->tls != tls)
+    {
+        sock->tls = tls;
+        g_object_notify (G_OBJECT (sock), "tls");
+    }
 }
 
 static void
@@ -133,6 +137,16 @@ mailtc_socket_class_init (MailtcSocketClass* class)
     gobject_class->finalize = mailtc_socket_finalize;
     gobject_class->set_property = mailtc_socket_set_property;
     gobject_class->get_property = mailtc_socket_get_property;
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_TLS,
+                                     g_param_spec_boolean (
+                                     "tls",
+                                     "TLS",
+                                     "Whether to enable TLS",
+                                     FALSE,
+                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
+
     g_type_class_add_private (class, sizeof (MailtcSocketPrivate));
 }
 
@@ -148,8 +162,6 @@ mailtc_socket_init (MailtcSocket* sock)
     priv->connection = NULL;
     priv->istream = NULL;
     priv->ostream = NULL;
-
-    sock->tls = FALSE;
 }
 
 gssize

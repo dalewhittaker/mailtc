@@ -3,7 +3,6 @@ This release
 
 Next release
 - remove g_thread_init and gthread from Makefiles (glib 2.32)
-- GObjectification and Extension rework.
 - Automated testing.
 - IMAP.
 - Port to GTK 3.

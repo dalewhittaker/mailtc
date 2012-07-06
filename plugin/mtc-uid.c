@@ -23,7 +23,6 @@ typedef enum
 {
     UIDL_FLAG_NEW = 1,
     UIDL_FLAG_READ = 2
-
 } uidl_flag;
 
 struct _MailtcUidTablePrivate
@@ -104,6 +103,21 @@ mailtc_uid_table_load (MailtcUidTable* uid_table,
 }
 
 static void
+mailtc_uid_table_set_filename (MailtcUidTable* uid_table,
+                               const gchar*    filename)
+{
+    g_assert (MAILTC_IS_UID_TABLE (uid_table));
+
+    if (g_strcmp0 (uid_table->filename, filename) != 0)
+    {
+        g_free (uid_table->filename);
+
+        uid_table->filename = g_strdup (filename);
+        g_object_notify (G_OBJECT (uid_table), "filename");
+    }
+}
+
+static void
 mailtc_uid_table_set_property (GObject*      object,
                                guint         prop_id,
                                const GValue* value,
@@ -114,7 +128,7 @@ mailtc_uid_table_set_property (GObject*      object,
     switch (prop_id)
     {
         case PROP_FILENAME:
-            uid_table->filename = g_value_dup_string (value);
+            mailtc_uid_table_set_filename (uid_table, g_value_get_string (value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -158,7 +172,7 @@ mailtc_uid_table_class_init (MailtcUidTableClass* class)
                                      "Filename",
                                      "The UID filename",
                                      NULL,
-                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
     g_type_class_add_private (class, sizeof (MailtcUidTablePrivate));
 }
