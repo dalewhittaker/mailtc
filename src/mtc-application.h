@@ -21,7 +21,6 @@
 #define __MAILTC_APPLICATION_H__
 
 #include "mtc-settings.h"
-#include "mtc-statusicon.h"
 
 #include <gio/gio.h>
 
@@ -57,13 +56,6 @@ mailtc_application_set_settings    (MailtcApplication* app,
 
 MailtcSettings*
 mailtc_application_get_settings    (MailtcApplication* app);
-
-void
-mailtc_application_set_status_icon (MailtcApplication* app,
-                                    MailtcStatusIcon*  statusicon);
-
-MailtcStatusIcon*
-mailtc_application_get_status_icon (MailtcApplication* app);
 
 void
 mailtc_application_set_log_glib    (MailtcApplication* app);

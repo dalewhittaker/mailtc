@@ -18,6 +18,7 @@
  */
 #include "mtc-account.h"
 #include "mtc-application.h"
+#include "mtc-checker.h"
 #include "mtc-configdialog.h"
 #include "mtc-settings.h"
 #include "mtc-statusicon.h"
@@ -76,99 +77,96 @@ mailtc_mark_as_read_cb (MailtcStatusIcon* statusicon,
     mailtc_read_mail (accounts);
 }
 
-static gboolean
-mailtc_mail_thread (MailtcApplication* app)
+static void
+mailtc_check_mail_cb (MailtcChecker*     checker,
+                      MailtcApplication* app)
 {
-    if (!GPOINTER_TO_INT (g_object_get_data (G_OBJECT (app), "locked"))) /* FIXME */
+    MailtcSettings* settings;
+    MailtcStatusIcon* statusicon;
+    MailtcAccount* account;
+    const mtc_plugin* plugin;
+    GPtrArray* accounts;
+    GError* error = NULL;
+    GString* err_msg = NULL;
+    gboolean debug;
+    gint64 messages;
+    guint error_count;
+    guint net_error;
+    guint i;
+    guint id = 0;
+
+    statusicon = mailtc_checker_get_status_icon (checker);
+    settings = mailtc_application_get_settings (app);
+    debug = mailtc_application_get_debug (app);
+    net_error = mailtc_settings_get_neterror (settings);
+    accounts = mailtc_settings_get_accounts (settings);
+    g_assert (accounts);
+
+    for (i = 0; i < accounts->len; i++)
     {
-        MailtcSettings* settings;
-        MailtcStatusIcon* statusicon;
-        MailtcAccount* account;
-        const mtc_plugin* plugin;
-        GPtrArray* accounts;
-        GError* error = NULL;
-        GString* err_msg = NULL;
-        gboolean debug;
-        gint64 messages;
-        guint error_count;
-        guint net_error;
-        guint i;
-        guint id = 0;
+        account = g_ptr_array_index (accounts, i);
+        g_assert (MAILTC_IS_ACCOUNT (account));
 
-        g_object_set_data (G_OBJECT (app), "locked", GINT_TO_POINTER (TRUE)); /* FIXME */
-        settings = mailtc_application_get_settings (app);
-        statusicon = mailtc_application_get_status_icon (app);
-        debug = mailtc_application_get_debug (app);
-        net_error = mailtc_settings_get_neterror (settings);
-        accounts = mailtc_settings_get_accounts (settings);
-        g_assert (accounts);
+        plugin = mailtc_account_get_plugin (account);
 
-        for (i = 0; i < accounts->len; i++)
+        error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
+
+        if (plugin->get_messages)
         {
-            account = g_ptr_array_index (accounts, i);
-            g_assert (MAILTC_IS_ACCOUNT (account));
-
-            plugin = mailtc_account_get_plugin (account);
-
-            error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
-
-            if (plugin->get_messages)
+            messages = (*plugin->get_messages) (G_OBJECT (account), debug, &error);
+            if (messages >= 0 && !error)
             {
-                messages = (*plugin->get_messages) (G_OBJECT (account), debug, &error);
-                if (messages >= 0 && !error)
+                mailtc_status_icon_update (statusicon, id++, messages);
+                error_count = 0;
+            }
+            else
+            {
+                error_count++;
+                if (net_error == error_count)
                 {
-                    mailtc_status_icon_update (statusicon, id++, messages);
+                    if (error)
+                    {
+                        mailtc_application_set_log_glib (app);
+                        mailtc_gerror (&error);
+                        mailtc_application_set_log_gtk (app);
+                    }
+                    if (!err_msg)
+                        err_msg = g_string_new (NULL);
+
+                    err_msg = g_string_prepend (err_msg, "\n");
+                    err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
                     error_count = 0;
                 }
-                else
-                {
-                    error_count++;
-                    if (net_error == error_count)
-                    {
-                        if (error)
-                        {
-                            mailtc_application_set_log_glib (app);
-                            mailtc_gerror (&error);
-                            mailtc_application_set_log_gtk (app);
-                        }
-                        if (!err_msg)
-                            err_msg = g_string_new (NULL);
-
-                        err_msg = g_string_prepend (err_msg, "\n");
-                        err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
-                        error_count = 0;
-                    }
-                    if (error)
-                        g_clear_error (&error);
-                }
+                if (error)
+                    g_clear_error (&error);
             }
-            g_object_set_data (G_OBJECT (app), "error_count", GUINT_TO_POINTER (error_count)); /* FIXME */
         }
-        g_ptr_array_unref (accounts);
-        g_object_unref (statusicon);
-        g_object_unref (settings);
-
-        if (err_msg)
-        {
-            mailtc_warning ("There was an error connecting to the following servers:\n\n%s\n"
-                            "Please check the " PACKAGE " log for the error.", err_msg->str);
-            g_string_free (err_msg, TRUE);
-        }
-        g_object_set_data (G_OBJECT (app), "locked", GINT_TO_POINTER (FALSE)); /* FIXME */
+        g_object_set_data (G_OBJECT (app), "error_count", GUINT_TO_POINTER (error_count)); /* FIXME */
     }
-    return TRUE;
+    g_ptr_array_unref (accounts);
+    g_object_unref (statusicon);
+    g_object_unref (settings);
+
+    if (err_msg)
+    {
+        mailtc_warning ("There was an error connecting to the following servers:\n\n%s\n"
+                        "Please check the " PACKAGE " log for the error.", err_msg->str);
+        g_string_free (err_msg, TRUE);
+    }
 }
 
-static gboolean
-mailtc_mail_thread_once (MailtcApplication* app)
+static void
+mailtc_terminate_cb (MailtcApplication* app,
+                     MailtcChecker*     checker)
 {
-    mailtc_mail_thread (app);
-    return FALSE;
+    (void) app;
+    g_object_unref (checker);
 }
 
-static guint
-mailtc_run_main_loop (MailtcApplication* app)
+void
+mailtc_run_cb (MailtcApplication* app)
 {
+    MailtcChecker* checker;
     MailtcStatusIcon* statusicon;
     MailtcSettings* settings;
     MailtcAccount* account;
@@ -180,10 +178,10 @@ mailtc_run_main_loop (MailtcApplication* app)
     accounts = mailtc_settings_get_accounts (settings);
     g_assert (accounts);
 
-    statusicon = mailtc_status_icon_new ();
-    mailtc_application_set_status_icon (app, statusicon);
+    checker = mailtc_checker_new (mailtc_settings_get_interval (settings));
 
-    g_object_set_data (G_OBJECT (app), "locked", GINT_TO_POINTER (FALSE)); /* FIXME */
+    statusicon = mailtc_status_icon_new ();
+    mailtc_checker_set_status_icon (checker, statusicon);
 
     mailtc_settings_get_iconcolour (settings, &icon_colour);
     mailtc_status_icon_set_default_colour (statusicon, &icon_colour);
@@ -198,42 +196,12 @@ mailtc_run_main_loop (MailtcApplication* app)
     g_object_unref (statusicon);
     g_object_unref (settings);
 
-    g_signal_connect (statusicon, "read-mail",
-                G_CALLBACK (mailtc_read_mail_cb), settings);
-    g_signal_connect (statusicon, "mark-as-read",
-                G_CALLBACK (mailtc_mark_as_read_cb), accounts);
+    g_signal_connect (statusicon, "read-mail", G_CALLBACK (mailtc_read_mail_cb), settings);
+    g_signal_connect (statusicon, "mark-as-read", G_CALLBACK (mailtc_mark_as_read_cb), accounts);
+    g_signal_connect (app, "terminate", G_CALLBACK (mailtc_terminate_cb), checker);
+    g_signal_connect (checker, "check", G_CALLBACK (mailtc_check_mail_cb), app);
 
-    g_idle_add ((GSourceFunc) mailtc_mail_thread_once, app);
-
-    return g_timeout_add_seconds (60 * mailtc_settings_get_interval (settings),
-                                  (GSourceFunc) mailtc_mail_thread,
-                                  app);
-}
-
-void
-mailtc_terminate_cb (MailtcApplication* app,
-                     gpointer           user_data)
-{
-
-    guint source_id;
-
-    (void) app;
-
-    source_id = GPOINTER_TO_UINT (user_data);
-
-    if (source_id > 0)
-        g_source_remove (source_id);
-}
-
-void
-mailtc_run_cb (MailtcApplication* app)
-{
-    guint source_id;
-
-    source_id = mailtc_run_main_loop (app);
-
-    g_signal_connect (app, "terminate",
-            G_CALLBACK (mailtc_terminate_cb), GUINT_TO_POINTER (source_id));
+    mailtc_checker_run (checker);
 }
 
 void

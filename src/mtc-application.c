@@ -27,9 +27,8 @@
 #include <glib/gstdio.h>
 #include <signal.h>
 
-#define MAILTC_APPLICATION_PROPERTY_DEBUG       "debug"
-#define MAILTC_APPLICATION_PROPERTY_SETTINGS    "settings"
-#define MAILTC_APPLICATION_PROPERTY_STATUS_ICON "statusicon"
+#define MAILTC_APPLICATION_PROPERTY_DEBUG    "debug"
+#define MAILTC_APPLICATION_PROPERTY_SETTINGS "settings"
 
 #define MAILTC_APPLICATION_ID          "org." PACKAGE
 #define MAILTC_APPLICATION_LOG_NAME    "log"
@@ -70,8 +69,7 @@ enum
 {
     PROP_0,
     PROP_DEBUG,
-    PROP_SETTINGS,
-    PROP_STATUS_ICON
+    PROP_SETTINGS
 };
 
 enum
@@ -96,7 +94,6 @@ struct _MailtcApplication
 
     MailtcApplicationPrivate* priv;
     MailtcSettings* settings;
-    MailtcStatusIcon* statusicon;
     gboolean debug;
 };
 
@@ -635,17 +632,11 @@ mailtc_application_terminate (MailtcApplication* app,
 
     g_signal_emit (app, signals[SIGNAL_TERMINATE], 0);
 
-    if (app->statusicon)
-    {
-        g_object_unref (app->statusicon);
-        app->statusicon = NULL;
-    }
     if (priv->log)
     {
         gboolean status_error;
 
-        status_error = (g_io_channel_shutdown (priv->log, TRUE,
-                                *error ? NULL : error) == G_IO_STATUS_ERROR);
+        status_error = (g_io_channel_shutdown (priv->log, TRUE, *error ? NULL : error) == G_IO_STATUS_ERROR);
         if (!status_error)
         {
             g_io_channel_unref (priv->log);
@@ -820,21 +811,6 @@ mailtc_application_get_settings (MailtcApplication* app)
     return app->settings ? g_object_ref (app->settings) : NULL;
 }
 
-void
-mailtc_application_set_status_icon (MailtcApplication* app,
-                                    MailtcStatusIcon*  statusicon)
-{
-    MAILTC_APPLICATION_SET_OBJECT (app, statusicon);
-}
-
-MailtcStatusIcon*
-mailtc_application_get_status_icon (MailtcApplication* app)
-{
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    return app->statusicon ? g_object_ref (app->statusicon) : NULL;
-}
-
 static void
 mailtc_application_set_property (GObject*      object,
                                  guint         prop_id,
@@ -850,9 +826,6 @@ mailtc_application_set_property (GObject*      object,
             break;
         case PROP_SETTINGS:
             mailtc_application_set_settings (app, g_value_get_object (value));
-            break;
-        case PROP_STATUS_ICON:
-            mailtc_application_set_status_icon (app, g_value_get_object (value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -876,9 +849,6 @@ mailtc_application_get_property (GObject*    object,
         case PROP_SETTINGS:
             g_value_set_object (value, app->settings);
             break;
-        case PROP_STATUS_ICON:
-            g_value_set_object (value, app->statusicon);
-            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
             break;
@@ -898,8 +868,6 @@ mailtc_application_finalize (GObject* object)
     priv->is_running = FALSE;
     g_free (priv->directory);
 
-    if (app->statusicon)
-        g_object_unref (app->statusicon);
     if (app->settings)
         g_object_unref (app->settings);
     if (priv->log)
@@ -941,15 +909,6 @@ mailtc_application_class_init (MailtcApplicationClass* class)
                                      "Settings",
                                      "The settings",
                                      MAILTC_TYPE_SETTINGS,
-                                     flags));
-
-    g_object_class_install_property (gobject_class,
-                                     PROP_STATUS_ICON,
-                                     g_param_spec_object (
-                                     MAILTC_APPLICATION_PROPERTY_STATUS_ICON,
-                                     "Statusicon",
-                                     "The status icon",
-                                     MAILTC_TYPE_STATUS_ICON,
                                      flags));
 
     signals[SIGNAL_CONFIGURE] = g_signal_new ("configure",
@@ -994,7 +953,6 @@ mailtc_application_init (MailtcApplication* app)
 
     app->debug = FALSE;
     app->settings = NULL;
-    app->statusicon = NULL;
 
     priv->is_running = FALSE;
     priv->modules = NULL;

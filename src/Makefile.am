@@ -41,6 +41,7 @@ LDADD = \
 mailtc_SOURCES = \
 		mtc-account.c \
 		mtc-application.c \
+		mtc-checker.c \
 		mtc-configdialog.c \
 		mtc-envelope.c \
 		mtc-module.c \
@@ -53,6 +54,7 @@ EXTRA_DIST = \
 		mtc.h \
 		mtc-account.h \
 		mtc-application.h \
+		mtc-checker.h \
 		mtc-configdialog.h \
 		mtc-envelope.h \
 		mtc-module.h \
