@@ -343,10 +343,9 @@ mailtc_envelope_init (MailtcEnvelope* envelope)
     envelope->priv->pixbuf_is_envelope = FALSE;
 
     g_signal_connect (envelope, "notify::pixbuf",
-        G_CALLBACK (mailtc_envelope_notify_pixbuf_cb), NULL);
-
+            G_CALLBACK (mailtc_envelope_notify_pixbuf_cb), NULL);
     g_signal_connect (envelope, "notify::colour",
-        G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);
+            G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);
 }
 
 GtkWidget*
