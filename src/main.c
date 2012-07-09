@@ -163,7 +163,7 @@ mailtc_terminate_cb (MailtcApplication* app,
     g_object_unref (checker);
 }
 
-void
+static void
 mailtc_run_cb (MailtcApplication* app)
 {
     MailtcChecker* checker;
@@ -204,7 +204,7 @@ mailtc_run_cb (MailtcApplication* app)
     mailtc_checker_run (checker);
 }
 
-void
+static void
 mailtc_configure_cb (MailtcApplication* app)
 {
     MailtcSettings* settings;
