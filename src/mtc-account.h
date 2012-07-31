@@ -34,15 +34,6 @@ G_BEGIN_DECLS
 #define MAILTC_IS_ACCOUNT_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_ACCOUNT))
 #define MAILTC_ACCOUNT_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_ACCOUNT, MailtcAccountClass))
 
-#define MAILTC_ACCOUNT_PROPERTY_NAME        "name"
-#define MAILTC_ACCOUNT_PROPERTY_SERVER      "server"
-#define MAILTC_ACCOUNT_PROPERTY_PORT        "port"
-#define MAILTC_ACCOUNT_PROPERTY_USER        "user"
-#define MAILTC_ACCOUNT_PROPERTY_PASSWORD    "password"
-#define MAILTC_ACCOUNT_PROPERTY_PROTOCOL    "protocol"
-#define MAILTC_ACCOUNT_PROPERTY_EXTENSION   "extension"
-#define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR "iconcolour"
-
 typedef struct _MailtcAccount               MailtcAccount;
 typedef struct _MailtcAccountClass          MailtcAccountClass;
 

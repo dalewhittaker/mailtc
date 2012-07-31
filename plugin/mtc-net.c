@@ -17,8 +17,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include "mailtc.h"
 #include "mtc-net.h"
-#include "mtc-extension.h"
 #include "mtc-socket.h"
 #include "mtc-uid.h"
 
@@ -27,13 +27,6 @@
 #define PLUGIN_NAME "POP"
 #define PLUGIN_AUTHOR "Dale Whittaker ("PACKAGE_BUGREPORT")"
 #define PLUGIN_DESCRIPTION "POP3 network plugin."
-
-/* FIXME should come from mtc.h... */
-#define ACCOUNT_PROPERTY_SERVER   "server"
-#define ACCOUNT_PROPERTY_PORT     "port"
-#define ACCOUNT_PROPERTY_USER     "user"
-#define ACCOUNT_PROPERTY_PASSWORD "password"
-#define ACCOUNT_PROPERTY_PROTOCOL "protocol"
 
 #define ACCOUNT_PRIVATE "account_private" /* FIXME this is temporary, use a property. */
 
@@ -124,8 +117,8 @@ mailtc_net_add_account (MailtcNet* net,
     g_object_get (net, MAILTC_EXTENSION_PROPERTY_DIRECTORY, &directory, NULL);
     g_assert (directory);
 
-    g_object_get (account, ACCOUNT_PROPERTY_SERVER, &server,
-            ACCOUNT_PROPERTY_PORT, &port, ACCOUNT_PROPERTY_USER, &user, NULL);
+    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
+            MAILTC_ACCOUNT_PROPERTY_PORT, &port, MAILTC_ACCOUNT_PROPERTY_USER, &user, NULL);
     g_assert (server && user);
 
     uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
@@ -331,14 +324,14 @@ mailtc_net_run_pop (MailtcNetPrivate* priv,
 
             case POP_CMD_USER:
                 command = "USER %s\r\n";
-                g_object_get (account, ACCOUNT_PROPERTY_USER, &arg, NULL);
+                g_object_get (account, MAILTC_ACCOUNT_PROPERTY_USER, &arg, NULL);
                 pread = mailtc_net_pop_read;
                 pwrite = mailtc_net_pop_write;
                 break;
 
             case POP_CMD_PASS:
                 command = "PASS %s\r\n";
-                g_object_get (account, ACCOUNT_PROPERTY_PASSWORD, &arg, NULL);
+                g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PASSWORD, &arg, NULL);
                 pread = mailtc_net_pop_read;
                 pwrite = mailtc_net_pop_passwrite;
                 break;
@@ -454,8 +447,8 @@ mailtc_net_get_messages (MailtcNet* net,
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    g_object_get (account, ACCOUNT_PROPERTY_SERVER, &server,
-            ACCOUNT_PROPERTY_PORT, &port, ACCOUNT_PROPERTY_PROTOCOL, &protocol, NULL);
+    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
+            MAILTC_ACCOUNT_PROPERTY_PORT, &port, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, &protocol, NULL);
 
     uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
     g_assert (MAILTC_IS_UID_TABLE (uid_table));

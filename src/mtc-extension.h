@@ -20,6 +20,8 @@
 #ifndef __MAILTC_EXTENSION_H__
 #define __MAILTC_EXTENSION_H__
 
+#include "mailtc.h"
+
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -31,55 +33,8 @@ G_BEGIN_DECLS
 #define MAILTC_IS_EXTENSION_CLASS(klass)        (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_EXTENSION))
 #define MAILTC_EXTENSION_GET_CLASS(obj)         (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_EXTENSION, MailtcExtensionClass))
 
-#define MAILTC_DEFINE_TYPE(TN, t_n, t_p)        G_DEFINE_TYPE (TN, t_n, g_type_from_name (#t_p))
-#define MAILTC_DEFINE_EXTENSION(TN, t_n)        MAILTC_DEFINE_TYPE (TN, t_n, MailtcExtension)
-
-#define MAILTC_EXTENSION_SYMBOL_INIT            "extension_init"
-
-#define MAILTC_EXTENSION_PROPERTY_COMPATIBILITY "compatibility"
-#define MAILTC_EXTENSION_PROPERTY_NAME          "name"
-#define MAILTC_EXTENSION_PROPERTY_AUTHOR        "author"
-#define MAILTC_EXTENSION_PROPERTY_DESCRIPTION   "description"
-#define MAILTC_EXTENSION_PROPERTY_DIRECTORY     "directory"
-#define MAILTC_EXTENSION_PROPERTY_MODULE        "module"
-#define MAILTC_EXTENSION_PROPERTY_PROTOCOLS     "protocols"
-
-#define MAILTC_EXTENSION_SIGNAL_ADD_ACCOUNT     "add-account"
-#define MAILTC_EXTENSION_SIGNAL_REMOVE_ACCOUNT  "remove-account"
-#define MAILTC_EXTENSION_SIGNAL_GET_MESSAGES    "get-messages"
-#define MAILTC_EXTENSION_SIGNAL_READ_MESSAGES   "read-messages"
-
 #define MAILTC_EXTENSION_GET_PROTOCOL(extension, i) \
     &g_array_index (mailtc_extension_get_protocols ((extension)), MailtcProtocol, (i))
-
-typedef struct _MailtcExtension
-{
-    GObject parent_instance;
-    /* FIXME these should go in private. */
-    GObject* module; /* FIXME once in private this can be MailtcModule */
-    GArray* protocols;
-    gchar* compatibility;
-    gchar* name;
-    gchar* author;
-    gchar* description;
-    gchar* directory;
-} MailtcExtension;
-
-typedef struct _MailtcExtensionClass
-{
-    GObjectClass parent_class;
-
-    gboolean (*add_account)    (GObject* account);
-    gboolean (*remove_account) (GObject* account);
-    gboolean (*read_messages)  (GObject* account);
-    gint64   (*get_messages)   (GObject* account, gboolean debug);
-} MailtcExtensionClass;
-
-typedef struct
-{
-    gchar* name;
-    guint port;
-} MailtcProtocol;
 
 typedef MailtcExtension*
 (*MailtcExtensionInitFunc)               (void);

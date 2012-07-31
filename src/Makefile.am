@@ -63,6 +63,7 @@ mailtc_SOURCES = \
 		main.c
 
 EXTRA_DIST = \
+		mailtc.h \
 		mtc-marshal.list \
 		mtc-account.h \
 		mtc-application.h \
