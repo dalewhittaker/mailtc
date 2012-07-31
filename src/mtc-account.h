@@ -20,7 +20,7 @@
 #ifndef __MAILTC_ACCOUNT_H__
 #define __MAILTC_ACCOUNT_H__
 
-#include "mtc.h"
+#include "mtc-extension.h"
 
 #include <glib-object.h>
 #include <gdk/gdk.h>
@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 #define MAILTC_ACCOUNT_PROPERTY_USER        "user"
 #define MAILTC_ACCOUNT_PROPERTY_PASSWORD    "password"
 #define MAILTC_ACCOUNT_PROPERTY_PROTOCOL    "protocol"
-#define MAILTC_ACCOUNT_PROPERTY_MODULE      "plugin"
+#define MAILTC_ACCOUNT_PROPERTY_EXTENSION   "extension"
 #define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR "iconcolour"
 
 typedef struct _MailtcAccount               MailtcAccount;
@@ -102,11 +102,11 @@ void
 mailtc_account_get_iconcolour (MailtcAccount* account,
                                GdkColor*      iconcolour);
 void
-mailtc_account_set_plugin     (MailtcAccount* account,
-                               mtc_plugin*    plugin);
+mailtc_account_set_extension  (MailtcAccount*   account,
+                               MailtcExtension* extension);
 
-const mtc_plugin*
-mailtc_account_get_plugin     (MailtcAccount* account);
+MailtcExtension*
+mailtc_account_get_extension  (MailtcAccount* account);
 
 G_END_DECLS
 

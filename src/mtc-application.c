@@ -20,6 +20,7 @@
 #include <config.h>
 #include "mtc-application.h"
 #include "mtc-configdialog.h"
+#include "mtc-extension.h"
 #include "mtc-util.h"
 #include "mtc-module.h"
 
@@ -61,7 +62,6 @@ typedef enum
 {
     MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0,
     MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY,
-    MAILTC_APPLICATION_ERROR_MODULE_COMPATIBILITY,
     MAILTC_APPLICATION_ERROR_MODULE_EMPTY
 } MailtcApplicationError;
 
@@ -282,19 +282,21 @@ mailtc_application_file (MailtcApplication* app,
 }
 
 static void
-mailtc_application_unload_module (mtc_plugin* plugin,
-                                  GError**    error)
+mailtc_application_unload_module (MailtcExtension* extension,
+                                  GError**         error)
 {
-    g_assert (plugin);
+    MailtcModule* module;
 
-    if (plugin->terminate)
-        (*plugin->terminate) (plugin);
+    g_assert (extension);
 
-    mailtc_module_unload (MAILTC_MODULE (plugin->module), error);
+    /* FIXME not sure this is really correct, it wouldn't work if e.g
+     * we had more than one extension per module.
+     */
+    module = MAILTC_MODULE (mailtc_extension_get_module (extension));
+    mailtc_module_unload (module, error);
 
-    g_array_free (plugin->protocols, TRUE);
-    g_free (plugin->directory);
-    g_free (plugin);
+    g_object_unref (module);
+    g_object_unref (extension);
 }
 
 static gboolean
@@ -325,7 +327,6 @@ mailtc_application_load_modules (MailtcApplication* app,
     MailtcApplicationPrivate* priv;
     GDir* dir;
     gchar* dirname = LIBDIR;
-    gboolean retval = TRUE;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
@@ -338,8 +339,9 @@ mailtc_application_load_modules (MailtcApplication* app,
     {
         MailtcModule* module;
         GPtrArray* modules;
-        mtc_plugin* plugin;
-        mtc_plugin* (*plugin_init) (void);
+        MailtcExtension* extension;
+        MailtcExtensionInitFunc extension_init;
+
         const gchar* filename;
         gchar* fullname;
 
@@ -354,45 +356,43 @@ mailtc_application_load_modules (MailtcApplication* app,
 
             module = mailtc_module_new ();
             if (!mailtc_module_load (module, fullname, error) ||
-                !mailtc_module_symbol (module, "plugin_init", (gpointer*) &plugin_init, error))
+                !mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, error))
             {
+                mailtc_gerror (error);
                 g_object_unref (module);
-                retval = FALSE;
             }
             else
             {
-                plugin = plugin_init ();
-                if (plugin)
+                gchar* directory;
+
+                g_type_class_ref (MAILTC_TYPE_EXTENSION);
+
+                extension = extension_init ();
+                if (mailtc_extension_is_valid (extension, error))
                 {
-                    if (g_str_equal (VERSION, plugin->compatibility))
-                    {
-                        plugin->module = module;
-                        g_ptr_array_add (modules, plugin);
-                    }
-                    else
-                    {
-                        if (error && !*error)
-                        {
-                            *error = g_error_new (MAILTC_APPLICATION_ERROR,
-                                                  MAILTC_APPLICATION_ERROR_MODULE_COMPATIBILITY,
-                                                  "Error: plugin %s has incompatible version",
-                                                  fullname);
-                        }
-                        g_free (plugin);
-                        g_object_unref (module);
-                        retval = FALSE;
-                    }
+                    /* FIXME can this be done from inside the extension class (when initialising for example? */
+                    directory = mailtc_application_file (app, filename);
+                    g_assert (directory);
+                    mailtc_extension_set_directory (extension, directory);
+                    g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+                    g_free (directory);
 
-                    plugin->directory = mailtc_application_file (app, filename);
-                    g_assert (plugin->directory);
-                    g_mkdir_with_parents (plugin->directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+                    mailtc_extension_set_module (extension, G_OBJECT (module));
+                    g_ptr_array_add (modules, extension);
                 }
-
+                else
+                {
+                    mailtc_gerror (error);
+                    g_object_unref (module);
+                }
             }
             g_free (fullname);
         }
+        if (modules->len > 0)
+            priv->modules = modules;
+        else
+            g_ptr_array_unref (modules);
 
-        priv->modules = modules;
         g_dir_close (dir);
     }
     else
@@ -404,14 +404,14 @@ mailtc_application_load_modules (MailtcApplication* app,
         return FALSE;
     }
 
-    if (!priv->modules && retval)
+    if (!priv->modules)
     {
         *error = g_error_new (MAILTC_APPLICATION_ERROR,
                               MAILTC_APPLICATION_ERROR_MODULE_EMPTY,
                               "Error: no modules found!");
-        retval = FALSE;
+        return FALSE;
     }
-    return retval;
+    return TRUE;
 }
 
 
@@ -515,14 +515,14 @@ mailtc_application_server_init (MailtcApplication* app,
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
-    mailtc_application_set_log_gtk (app);
-
     /* Initialise thread system */
     if (!g_thread_supported ())
         g_thread_init (NULL);
 
     if (!mailtc_application_load_modules (app, error))
         return FALSE;
+
+    mailtc_application_set_log_gtk (app);
 
     priv = app->priv;
 

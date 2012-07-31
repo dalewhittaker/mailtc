@@ -24,8 +24,11 @@
 #include <stdlib.h> /* atoi () */
 #include <glib.h>
 #include <glib/gstdio.h>
-#include "mtc.h"
+#include <config.h>
+
 #include "mtc-account.h"
+#include "mtc-extension.h"
+#include "mtc-module.h"
 
 #define CONFIGDIR ".config"
 #define POP_PORT 110
@@ -181,15 +184,15 @@ static gpointer
 run_plugin_thread (server_data* data)
 {
     MailtcAccount* account;
-    mtc_plugin* plugin;
-    mtc_plugin* (*plugin_init) (void);
+    MailtcModule* module;
+    MailtcExtension* extension;
+    MailtcExtensionInitFunc extension_init;
     GDir* dir;
     gchar* directory;
+    gchar* edirectory;
     const gchar* filename;
     gchar* fullname;
-    GModule* module;
-    gboolean success;
-    gint messages;
+    gint messages = 0;
     GError* error = NULL;
 
     dir = g_dir_open (PLUGINDIR, 0, &error);
@@ -208,24 +211,30 @@ run_plugin_thread (server_data* data)
     fullname = g_build_filename (PLUGINDIR, filename, NULL);
     g_assert (fullname);
 
-    module = g_module_open (fullname, G_MODULE_BIND_LOCAL);
-    g_free (fullname);
+    module = mailtc_module_new ();
     g_assert (module);
 
-    success = g_module_symbol (module, "plugin_init", (gpointer) &plugin_init);
-    g_assert (success);
-    g_assert (plugin_init);
+    g_assert (mailtc_module_load (module, fullname, &error));
+    g_free (fullname);
 
-    plugin = plugin_init ();
-    g_assert (plugin);
-    g_assert (g_str_equal (VERSION, plugin->compatibility));
+    g_assert (mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, &error));
+    g_assert (extension_init);
+
+    g_type_class_ref (MAILTC_TYPE_EXTENSION);
+
+    extension = extension_init ();
+    g_assert (extension);
+    g_assert (mailtc_extension_is_valid (extension, NULL));
+    /* FIXME */
+#if 0
     g_assert (data->protocol < plugin->protocols->len);
+#endif
 
-    plugin->module = module;
+    mailtc_extension_set_module (extension, G_OBJECT (module));
 
     account = mailtc_account_new ();
     mailtc_account_set_protocol (account, data->protocol);
-    mailtc_account_set_plugin (account, plugin);
+    mailtc_account_set_extension (account, extension);
     mailtc_account_set_name (account, "test");
     mailtc_account_set_server (account, "localhost");
     mailtc_account_set_port (account, data->port);
@@ -234,17 +243,21 @@ run_plugin_thread (server_data* data)
 
     directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
     g_assert (directory);
-    plugin->directory = g_build_filename (directory, filename, NULL);
-    g_assert (plugin->directory);
-    g_mkdir_with_parents (plugin->directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    edirectory = g_build_filename (directory, filename, NULL);
+    g_assert (edirectory);
+    g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    mailtc_extension_set_directory (extension, edirectory);
     g_dir_close (dir);
 
+    /* FIXME */
+#if 0
     g_assert (plugin->add_account);
     success = (*plugin->add_account) (G_OBJECT (account), &error);
     g_assert (success);
 
     g_assert (plugin->get_messages);
     messages = (*plugin->get_messages) (G_OBJECT (account), TRUE, &error);
+#endif
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {
@@ -255,20 +268,25 @@ run_plugin_thread (server_data* data)
     }
 
     /* FIXME we'll want to mark as read too. */
+    /* FIXME */
+#if 0
     g_assert (plugin->terminate);
     (*plugin->terminate) (plugin);
+#endif
 
-    g_assert (g_remove (plugin->directory) == 0);
+    g_assert (g_remove (edirectory) == 0);
     g_assert (g_remove (directory) == 0);
     g_assert (g_remove (CONFIGDIR) == 0);
 
-    success = g_module_close (module);
-    g_assert (success);
+    g_assert (mailtc_module_unload (module, &error));
 
     g_object_unref (account);
+    /* FIXME */
+#if 0
     g_array_free (plugin->protocols, TRUE);
-    g_free (plugin->directory);
-    g_free (plugin);
+#endif
+    g_object_unref (extension);
+    g_object_unref (module);
 
     g_free (directory);
 

@@ -94,7 +94,7 @@ mailtc_uid_table_load (MailtcUidTable* uid_table,
         *flags = UIDL_FLAG_READ;
         g_hash_table_insert (priv->uids, g_strchomp (uidl), flags);
     }
-    if (g_io_channel_shutdown (uidfile, TRUE, *error ? NULL : error) == G_IO_STATUS_ERROR)
+    if (g_io_channel_shutdown (uidfile, TRUE, error && *error ? NULL : error) == G_IO_STATUS_ERROR)
         return FALSE;
 
     g_io_channel_unref (uidfile);

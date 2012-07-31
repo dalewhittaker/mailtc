@@ -19,9 +19,9 @@
 
 #include "mtc-settings.h"
 #include "mtc-account.h"
+#include "mtc-extension.h"
 #include "mtc-module.h"
 #include "mtc-util.h"
-#include "mtc.h"
 
 #include <string.h>
 #include <glib/gstdio.h>
@@ -335,6 +335,8 @@ static void
 mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
 {
     MailtcAccount* account;
+    MailtcModule* module;
+    MailtcExtension* extension;
     GKeyFile* key_file;
     GPtrArray* accounts;
     GObject* obj;
@@ -342,7 +344,6 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
     gchar** groups;
     guint i;
     const gchar* module_name;
-    const mtc_plugin* plugin;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
     g_assert (settings->modules);
@@ -366,9 +367,12 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR);
         mailtc_settings_keyfile_write_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD);
 
-        plugin = mailtc_account_get_plugin (account);
-        module_name = mailtc_module_get_name (plugin->module);
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, module_name);
+        extension = mailtc_account_get_extension (account);
+        module = MAILTC_MODULE (mailtc_extension_get_module (extension));
+        module_name = mailtc_module_get_name (module);
+        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, module_name);
+        g_object_unref (module);
+        g_object_unref (extension);
         g_free (key_group);
     }
     g_key_file_set_string_list (key_file, MAILTC_SETTINGS_GROUP_GLOBAL,
@@ -397,6 +401,8 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
     if (naccounts > 0)
     {
         MailtcAccount* account;
+        MailtcModule* module;
+        MailtcExtension* extension;
         GPtrArray* accounts;
         GPtrArray* modules;
         GObject* obj;
@@ -406,7 +412,6 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
         gsize i;
         gsize j;
         gboolean success;
-        mtc_plugin* plugin = NULL;
 
         accounts = g_ptr_array_new ();
         modules = settings->modules;
@@ -437,19 +442,24 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
                 success = mailtc_settings_keyfile_read_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, error);
             if (success)
             {
-                str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, error);
+                str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, error);
 
                 for (j = 0; j < modules->len; j++)
                 {
-                    plugin = g_ptr_array_index (modules, j);
+                    extension = g_ptr_array_index (modules, j);
 
-                    module_name = mailtc_module_get_name (plugin->module);
+                    module = MAILTC_MODULE (mailtc_extension_get_module (extension));
+                    module_name = mailtc_module_get_name (module);
+                    g_object_unref (module);
+
                     if (!g_strcmp0 (str, module_name))
                     {
-                        mailtc_account_set_plugin (account, plugin);
+                        mailtc_account_set_extension (account, extension);
                         break;
                     }
                 }
+                /* FIXME GError */
+                g_assert (j < modules->len);
                 g_free (str);
             }
             if (success)
@@ -847,7 +857,7 @@ mailtc_settings_class_init (MailtcSettingsClass* class)
                                      g_param_spec_boxed (
                                      MAILTC_SETTINGS_PROPERTY_MODULES,
                                      "Modules",
-                                     "The mail plugin modules",
+                                     "The mail extension modules",
                                      G_TYPE_PTR_ARRAY,
                                      flags));
 

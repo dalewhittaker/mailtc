@@ -42,6 +42,7 @@ LDADD = \
 pop_la_SOURCES = \
 		mtc-socket.c \
 		mtc-uid.c \
+		mtc-net.c \
 		mtc-pop.c
 
 pop_la_LDFLAGS = \
@@ -52,5 +53,6 @@ pop_la_LDFLAGS = \
 
 EXTRA_DIST = \
 		mtc-socket.h \
-		mtc-uid.h
+		mtc-uid.h \
+		mtc-net.h
 

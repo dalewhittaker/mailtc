@@ -20,6 +20,7 @@
 #include "mtc-util.h"
 #include "mtc-application.h"
 
+#include <config.h>
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
 
@@ -219,11 +220,31 @@ mailtc_object_set_colour (GObject*        obj,
 }
 
 void
-mailtc_object_set_ptr_array (GObject*         obj,
-                             GType            objtype,
-                             const gchar*     name,
-                             GPtrArray**      value,
-                             GPtrArray*       newvalue)
+mailtc_object_set_array (GObject*     obj,
+                         GType        objtype,
+                         const gchar* name,
+                         GArray**     value,
+                         GArray*      newvalue)
+{
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (newvalue != *value)
+    {
+        if (*value)
+            g_array_unref (*value);
+
+        *value = newvalue ? g_array_ref (newvalue) : NULL;
+
+        g_object_notify (obj, name);
+    }
+}
+
+void
+mailtc_object_set_ptr_array (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             GPtrArray**  value,
+                             GPtrArray*   newvalue)
 {
     g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
 

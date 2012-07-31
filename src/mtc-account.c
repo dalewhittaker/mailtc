@@ -32,6 +32,10 @@
     mailtc_object_set_colour (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
                               #property, &account->property, property)
 
+#define MAILTC_ACCOUNT_SET_OBJECT(account,property) \
+    mailtc_object_set_object (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
+                              #property, (GObject **) (&account->property), G_OBJECT (property))
+
 struct _MailtcAccount
 {
     GObject parent_instance;
@@ -43,7 +47,7 @@ struct _MailtcAccount
     gchar* password;
     guint port;
     guint protocol;
-    mtc_plugin* plugin;
+    MailtcExtension* extension;
 };
 
 struct _MailtcAccountClass
@@ -62,7 +66,7 @@ enum
     PROP_USER,
     PROP_PASSWORD,
     PROP_PROTOCOL,
-    PROP_MODULE,
+    PROP_EXTENSION,
     PROP_ICON_COLOUR
 };
 
@@ -173,31 +177,30 @@ mailtc_account_get_iconcolour (MailtcAccount* account,
 }
 
 void
-mailtc_account_set_plugin (MailtcAccount* account,
-                           mtc_plugin*    plugin)
+mailtc_account_set_extension (MailtcAccount*   account,
+                              MailtcExtension* extension)
 {
-    GError* error = NULL;
-
     g_assert (MAILTC_IS_ACCOUNT (account));
 
-    if (account->plugin && account->plugin->remove_account)
-        (*account->plugin->remove_account) (G_OBJECT (account), NULL); /* FIXME error is ignored */
+    /* FIXME not really keen on this being here. */
+    /* FIXME GError */
+    if (account->extension)
+        mailtc_extension_remove_account (extension, G_OBJECT (account));
 
-    account->plugin = plugin;
+    MAILTC_ACCOUNT_SET_OBJECT (account, extension);
 
-    if (plugin && plugin->add_account)
-        (*plugin->add_account) (G_OBJECT (account), &error); /* FIXME error is ignored */
-
-    g_clear_error (&error);
-
+    /* FIXME not really keen on this being here. */
+    /* FIXME GError */
+    if (extension)
+        mailtc_extension_add_account (extension, G_OBJECT (account));
 }
 
-const mtc_plugin*
-mailtc_account_get_plugin (MailtcAccount* account)
+MailtcExtension*
+mailtc_account_get_extension (MailtcAccount* account)
 {
     g_assert (MAILTC_IS_ACCOUNT (account));
 
-    return account->plugin;
+    return account->extension ? g_object_ref (account->extension) : NULL;
 }
 
 static void
@@ -238,8 +241,8 @@ mailtc_account_set_property (GObject*      object,
             mailtc_account_set_iconcolour (account, g_value_get_boxed (value));
             break;
 
-        case PROP_MODULE:
-            mailtc_account_set_plugin (account, g_value_get_pointer (value));
+        case PROP_EXTENSION:
+            mailtc_account_set_extension (account, g_value_get_object (value));
             break;
 
         default:
@@ -288,8 +291,8 @@ mailtc_account_get_property (GObject*    object,
             g_value_set_boxed (value, &colour);
             break;
 
-        case PROP_MODULE:
-            g_value_set_pointer (value, (gpointer) mailtc_account_get_plugin (account));
+        case PROP_EXTENSION:
+            g_value_set_object (value, mailtc_account_get_extension (account));
             break;
 
         default:
@@ -302,13 +305,15 @@ static void
 mailtc_account_finalize (GObject* object)
 {
     MailtcAccount* account;
-    mtc_plugin* plugin;
 
     account = MAILTC_ACCOUNT (object);
 
-    plugin = account->plugin;
-    if (plugin && plugin->remove_account)
-        (*plugin->remove_account) (object, NULL); /* FIXME error is ignored */
+    if (account->extension)
+    {
+        /* FIXME GError */
+        mailtc_extension_remove_account (account->extension, G_OBJECT (account));
+        g_object_unref (account->extension);
+    }
 
     g_free (account->password);
     g_free (account->user);
@@ -399,11 +404,12 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      flags));
 
     g_object_class_install_property (gobject_class,
-                                     PROP_MODULE,
-                                     g_param_spec_pointer (
-                                     MAILTC_ACCOUNT_PROPERTY_MODULE,
-                                     "Plugin",
-                                     "The account plugin",
+                                     PROP_EXTENSION,
+                                     g_param_spec_object (
+                                     MAILTC_ACCOUNT_PROPERTY_EXTENSION,
+                                     "Extension",
+                                     "The account extension",
+                                     MAILTC_TYPE_EXTENSION,
                                      flags));
 
 
@@ -412,7 +418,7 @@ mailtc_account_class_init (MailtcAccountClass* class)
 static void
 mailtc_account_init (MailtcAccount* account)
 {
-    (void) account;
+    account->extension = NULL;
 }
 
 MailtcAccount*

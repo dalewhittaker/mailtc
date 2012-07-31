@@ -82,24 +82,27 @@ mailtc_module_unload (MailtcModule* module,
                       GError**      error)
 {
     MailtcModulePrivate* priv;
-    gboolean retval;
+    gboolean retval = TRUE;
 
     g_assert (MAILTC_IS_MODULE (module));
 
     priv = module->priv;
 
-    retval = g_module_close (priv->module);
-
-    if (!retval && error && !*error)
+    if (priv->module)
     {
-        *error = g_error_new (MAILTC_MODULE_ERROR,
-                              MAILTC_MODULE_ERROR_CLOSE,
-                              "Error unloading module: %s: %s",
-                              g_module_name (priv->module),
-                              g_module_error ());
-    }
+        retval = g_module_close (priv->module);
 
-    priv->module = NULL;
+        if (!retval && error && !*error)
+        {
+            *error = g_error_new (MAILTC_MODULE_ERROR,
+                                  MAILTC_MODULE_ERROR_CLOSE,
+                                  "Error unloading module: %s: %s",
+                                  g_module_name (priv->module),
+                                  g_module_error ());
+        }
+
+        priv->module = NULL;
+    }
     return retval;
 }
 

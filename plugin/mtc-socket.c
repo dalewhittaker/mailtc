@@ -174,6 +174,7 @@ mailtc_socket_read (MailtcSocket* sock,
     gssize bytes;
     guint t;
     guint i = 0;
+    GError* error_read = NULL;
 
     g_assert (MAILTC_IS_SOCKET (sock));
 
@@ -184,11 +185,11 @@ mailtc_socket_read (MailtcSocket* sock,
     while (++i < t)
     {
         bytes = g_pollable_input_stream_read_nonblocking (
-                        priv->istream, buf, len, NULL, error);
+                        priv->istream, buf, len, NULL, &error_read);
 
-        if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+        if (g_error_matches (error_read, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
-            g_clear_error (error);
+            g_clear_error (&error_read);
             g_usleep (G_USEC_PER_SEC / TIMEOUT_FREQ);
         }
         else
@@ -221,6 +222,7 @@ mailtc_socket_write (MailtcSocket* sock,
     gssize bytes;
     guint t;
     guint i = 0;
+    GError* error_write = NULL;
 
     g_assert (MAILTC_IS_SOCKET (sock));
 
@@ -231,11 +233,11 @@ mailtc_socket_write (MailtcSocket* sock,
     while (++i < t)
     {
         bytes = g_pollable_output_stream_write_nonblocking (
-                        priv->ostream, buf, len, NULL, error);
+                        priv->ostream, buf, len, NULL, &error_write);
 
-        if (g_error_matches (*error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+        if (g_error_matches (error_write, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
-            g_clear_error (error);
+            g_clear_error (&error_write);
             g_usleep (G_USEC_PER_SEC / TIMEOUT_FREQ);
         }
         else

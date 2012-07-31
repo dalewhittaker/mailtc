@@ -24,11 +24,13 @@
 #include "mtc-statusicon.h"
 #include "mtc-util.h"
 
+#include <config.h>
+
 static void
 mailtc_read_mail (GPtrArray* accounts)
 {
     MailtcAccount* account;
-    const mtc_plugin* plugin;
+    MailtcExtension* extension;
     guint i;
     GError* error = NULL;
 
@@ -37,13 +39,13 @@ mailtc_read_mail (GPtrArray* accounts)
         account = g_ptr_array_index (accounts, i);
         g_assert (MAILTC_IS_ACCOUNT (account));
 
-        plugin = mailtc_account_get_plugin (account);
+        extension = mailtc_account_get_extension (account);
 
-        if (plugin->read_messages)
+        if (!mailtc_extension_read_messages (extension, G_OBJECT (account)))
         {
-            if (!(*plugin->read_messages) (G_OBJECT (account), &error))
-                mailtc_gerror (&error);
+            /* FIXME GError */
         }
+        g_object_unref (extension);
     }
 }
 
@@ -84,7 +86,7 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
     MailtcSettings* settings;
     MailtcStatusIcon* statusicon;
     MailtcAccount* account;
-    const mtc_plugin* plugin;
+    MailtcExtension* extension;
     GPtrArray* accounts;
     GError* error = NULL;
     GString* err_msg = NULL;
@@ -107,40 +109,39 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
         account = g_ptr_array_index (accounts, i);
         g_assert (MAILTC_IS_ACCOUNT (account));
 
-        plugin = mailtc_account_get_plugin (account);
+        extension = mailtc_account_get_extension (account);
 
         error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
 
-        if (plugin->get_messages)
+        /* FIXME GError */
+        messages = mailtc_extension_get_messages (extension, G_OBJECT (account), debug);
+        if (messages >= 0 && !error)
         {
-            messages = (*plugin->get_messages) (G_OBJECT (account), debug, &error);
-            if (messages >= 0 && !error)
+            mailtc_status_icon_update (statusicon, id++, messages);
+            error_count = 0;
+        }
+        else
+        {
+            error_count++;
+            if (net_error == error_count)
             {
-                mailtc_status_icon_update (statusicon, id++, messages);
+                if (error)
+                {
+                    mailtc_application_set_log_glib (app);
+                    mailtc_gerror (&error);
+                    mailtc_application_set_log_gtk (app);
+                }
+                if (!err_msg)
+                    err_msg = g_string_new (NULL);
+
+                err_msg = g_string_prepend (err_msg, "\n");
+                err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
                 error_count = 0;
             }
-            else
-            {
-                error_count++;
-                if (net_error == error_count)
-                {
-                    if (error)
-                    {
-                        mailtc_application_set_log_glib (app);
-                        mailtc_gerror (&error);
-                        mailtc_application_set_log_gtk (app);
-                    }
-                    if (!err_msg)
-                        err_msg = g_string_new (NULL);
-
-                    err_msg = g_string_prepend (err_msg, "\n");
-                    err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
-                    error_count = 0;
-                }
-                if (error)
-                    g_clear_error (&error);
-            }
+            if (error)
+                g_clear_error (&error);
         }
+        g_object_unref (extension);
         g_object_set_data (G_OBJECT (app), "error_count", GUINT_TO_POINTER (error_count)); /* FIXME */
     }
     g_ptr_array_unref (accounts);
