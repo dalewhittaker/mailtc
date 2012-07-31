@@ -28,8 +28,6 @@
 #define PLUGIN_AUTHOR "Dale Whittaker ("PACKAGE_BUGREPORT")"
 #define PLUGIN_DESCRIPTION "POP3 network plugin."
 
-#define ACCOUNT_PRIVATE "account_private" /* FIXME this is temporary, use a property. */
-
 #define MAXDATASIZE 256
 
 typedef gboolean
@@ -84,17 +82,17 @@ static gboolean
 mailtc_net_remove_account (MailtcNet* net,
                            GObject*   account)
 {
-    MailtcUidTable* uid_table;
+    MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
+    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table, NULL);
 
     if (MAILTC_IS_UID_TABLE (uid_table))
     {
         g_object_unref (MAILTC_UID_TABLE (uid_table));
-        g_object_set_data (account, ACCOUNT_PRIVATE, NULL);
+        g_object_set (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, NULL);
     }
     return TRUE;
 }
@@ -103,13 +101,13 @@ static gboolean
 mailtc_net_add_account (MailtcNet* net,
                         GObject*   account)
 {
-    MailtcUidTable* uid_table;
     guint port;
     gchar* filename;
     gchar* hash;
     const gchar* directory = NULL;
     const gchar* server = NULL;
     const gchar* user = NULL;
+    MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
@@ -117,11 +115,14 @@ mailtc_net_add_account (MailtcNet* net,
     g_object_get (net, MAILTC_EXTENSION_PROPERTY_DIRECTORY, &directory, NULL);
     g_assert (directory);
 
-    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
-            MAILTC_ACCOUNT_PROPERTY_PORT, &port, MAILTC_ACCOUNT_PROPERTY_USER, &user, NULL);
+    g_object_get (account,
+                  MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
+                  MAILTC_ACCOUNT_PROPERTY_PORT, &port,
+                  MAILTC_ACCOUNT_PROPERTY_USER, &user,
+                  MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table,
+                  NULL);
     g_assert (server && user);
 
-    uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
     if (MAILTC_IS_UID_TABLE (uid_table))
     {
         if (!mailtc_net_remove_account (net, account)) /* FIXME GError */
@@ -137,7 +138,7 @@ mailtc_net_add_account (MailtcNet* net,
 
     uid_table = mailtc_uid_table_new (filename);
     g_free (filename);
-    g_object_set_data (account, ACCOUNT_PRIVATE, uid_table);
+    g_object_set (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, uid_table, NULL);
 
     return mailtc_uid_table_load (uid_table, NULL); /* FIXME GError */
 }
@@ -146,12 +147,12 @@ static gboolean
 mailtc_net_read_messages  (MailtcNet* net,
                            GObject*   account)
 {
-    MailtcUidTable* uid_table;
+    MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
+    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table, NULL);
     g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     return mailtc_uid_table_mark_read (uid_table, NULL); /* FIXME GError */
@@ -436,21 +437,24 @@ mailtc_net_get_messages (MailtcNet* net,
                          GObject*   account,
                          gboolean   debug)
 {
-    MailtcNetPrivate* priv;
-    MailtcSocket* sock;
-    MailtcUidTable* uid_table;
     gchar* server;
     guint port;
     guint protocol;
     gint64 nmails;
+    MailtcNetPrivate* priv;
+    MailtcSocket* sock;
+    MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
-            MAILTC_ACCOUNT_PROPERTY_PORT, &port, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, &protocol, NULL);
+    g_object_get (account,
+                  MAILTC_ACCOUNT_PROPERTY_SERVER, &server,
+                  MAILTC_ACCOUNT_PROPERTY_PORT, &port,
+                  MAILTC_ACCOUNT_PROPERTY_PROTOCOL, &protocol,
+                  MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table,
+                  NULL);
 
-    uid_table = g_object_get_data (account, ACCOUNT_PRIVATE);
     g_assert (MAILTC_IS_UID_TABLE (uid_table));
 
     priv = net->priv;

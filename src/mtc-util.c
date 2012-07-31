@@ -259,3 +259,19 @@ mailtc_object_set_ptr_array (GObject*     obj,
     }
 }
 
+void
+mailtc_object_set_pointer (GObject*     obj,
+                           GType        objtype,
+                           const gchar* name,
+                           gpointer*    value,
+                           gpointer     newvalue)
+{
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (newvalue != *value)
+    {
+        *value = newvalue;
+
+        g_object_notify (obj, name);
+    }
+}

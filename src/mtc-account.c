@@ -36,6 +36,11 @@
     mailtc_object_set_object (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
                               #property, (GObject **) (&account->property), G_OBJECT (property))
 
+#define MAILTC_ACCOUNT_SET_POINTER(account,property) \
+    mailtc_object_set_pointer (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
+                               #property, &account->property, property)
+
+
 struct _MailtcAccount
 {
     GObject parent_instance;
@@ -47,6 +52,7 @@ struct _MailtcAccount
     gchar* password;
     guint port;
     guint protocol;
+    gpointer private;
     MailtcExtension* extension;
 };
 
@@ -67,7 +73,8 @@ enum
     PROP_PASSWORD,
     PROP_PROTOCOL,
     PROP_EXTENSION,
-    PROP_ICON_COLOUR
+    PROP_ICON_COLOUR,
+    PROP_PRIVATE
 };
 
 void
@@ -203,6 +210,21 @@ mailtc_account_get_extension (MailtcAccount* account)
     return account->extension ? g_object_ref (account->extension) : NULL;
 }
 
+void
+mailtc_account_set_private (MailtcAccount* account,
+                            gpointer       private)
+{
+    MAILTC_ACCOUNT_SET_POINTER (account, private);
+}
+
+gpointer
+mailtc_account_get_private (MailtcAccount* account)
+{
+    g_assert (MAILTC_IS_ACCOUNT (account));
+
+    return account->private;
+}
+
 static void
 mailtc_account_set_property (GObject*      object,
                              guint         prop_id,
@@ -243,6 +265,10 @@ mailtc_account_set_property (GObject*      object,
 
         case PROP_EXTENSION:
             mailtc_account_set_extension (account, g_value_get_object (value));
+            break;
+
+        case PROP_PRIVATE:
+            mailtc_account_set_private (account, g_value_get_pointer (value));
             break;
 
         default:
@@ -293,6 +319,10 @@ mailtc_account_get_property (GObject*    object,
 
         case PROP_EXTENSION:
             g_value_set_object (value, mailtc_account_get_extension (account));
+            break;
+
+        case PROP_PRIVATE:
+            g_value_set_pointer (value, mailtc_account_get_private (account));
             break;
 
         default:
@@ -395,12 +425,11 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      flags));
 
     g_object_class_install_property (gobject_class,
-                                     PROP_ICON_COLOUR,
-                                     g_param_spec_boxed (
-                                     MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR,
-                                     "Iconcolour",
-                                     "The account icon colour",
-                                     GDK_TYPE_COLOR,
+                                     PROP_PRIVATE,
+                                     g_param_spec_pointer (
+                                     MAILTC_ACCOUNT_PROPERTY_PRIVATE,
+                                     "Private",
+                                     "The account private data",
                                      flags));
 
     g_object_class_install_property (gobject_class,
@@ -411,14 +440,13 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      "The account extension",
                                      MAILTC_TYPE_EXTENSION,
                                      flags));
-
-
 }
 
 static void
 mailtc_account_init (MailtcAccount* account)
 {
     account->extension = NULL;
+    account->private = NULL;
 }
 
 MailtcAccount*

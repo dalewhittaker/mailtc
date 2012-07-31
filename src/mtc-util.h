@@ -104,6 +104,13 @@ mailtc_object_set_ptr_array (GObject*     obj,
                              GPtrArray**  value,
                              GPtrArray*   newvalue);
 
+void
+mailtc_object_set_pointer   (GObject*     obj,
+                             GType        objtype,
+                             const gchar* name,
+                             gpointer*    value,
+                             gpointer     newvalue);
+
 G_END_DECLS
 
 #endif /* __MAILTC_UTIL_H__ */
