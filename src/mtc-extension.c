@@ -26,17 +26,34 @@
 
 #define MAILTC_EXTENSION_ERROR g_quark_from_string ("MAILTC_EXTENSION_ERROR")
 
-#define MAILTC_EXTENSION_SET_STRING(extension,property) \
+#define MAILTC_EXTENSION_SET_STRING(extension, property) \
     mailtc_object_set_string (G_OBJECT (extension), MAILTC_TYPE_EXTENSION, \
-                              #property, &extension->property, property)
+                              #property, &extension->priv->property, property)
 
-#define MAILTC_EXTENSION_SET_OBJECT(extension,property) \
+#define MAILTC_EXTENSION_SET_OBJECT(extension, property) \
     mailtc_object_set_object (G_OBJECT (extension), MAILTC_TYPE_EXTENSION, \
-                              #property, (GObject **) (&extension->property), G_OBJECT (property))
+                              #property, (GObject **) (&extension->priv->property), G_OBJECT (property))
+
+#define MAILTC_EXTENSION_GET_OBJECT(extension, property) \
+                                    (extension)->priv->property ? g_object_ref ((extension)->priv->property) : NULL;
 
 #define MAILTC_EXTENSION_SET_ARRAY(extension,property) \
     mailtc_object_set_array (G_OBJECT (extension), MAILTC_TYPE_EXTENSION, \
-                              #property, &extension->property, property)
+                              #property, &extension->priv->property, property)
+
+#define MAILTC_EXTENSION_GET_ARRAY(extension, property) \
+                                    (extension)->priv->property ? g_array_ref ((extension)->priv->property) : NULL;
+
+struct _MailtcExtensionPrivate
+{
+    GArray* protocols;
+    gchar* compatibility;
+    gchar* name;
+    gchar* author;
+    gchar* description;
+    gchar* directory;
+    MailtcModule* module;
+};
 
 typedef enum
 {
@@ -74,105 +91,119 @@ static void
 mailtc_extension_set_compatibility (MailtcExtension* extension,
                                     const gchar*     compatibility)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_STRING (extension, compatibility);
 }
 
 const gchar*
 mailtc_extension_get_compatibility (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->compatibility;
+    return extension->priv->compatibility;
 }
 
 static void
 mailtc_extension_set_name (MailtcExtension* extension,
                            const gchar*     name)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_STRING (extension, name);
 }
 
 const gchar*
 mailtc_extension_get_name (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->name;
+    return extension->priv->name;
 }
 
 static void
 mailtc_extension_set_author (MailtcExtension* extension,
                              const gchar*     author)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_STRING (extension, author);
 }
 
 const gchar*
 mailtc_extension_get_author (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->author;
+    return extension->priv->author;
 }
 
 static void
 mailtc_extension_set_description (MailtcExtension* extension,
                                   const gchar*     description)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_STRING (extension, description);
 }
 
 const gchar*
 mailtc_extension_get_description (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->description;
+    return extension->priv->description;
 }
 
 void
 mailtc_extension_set_directory (MailtcExtension* extension,
                                 const gchar*     directory)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_STRING (extension, directory);
 }
 
 static const gchar*
 mailtc_extension_get_directory (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->directory;
+    return extension->priv->directory;
 }
 
 void
 mailtc_extension_set_module (MailtcExtension* extension,
                              GObject*         module)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_OBJECT (extension, module);
 }
 
 GObject*
 mailtc_extension_get_module (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->module ? g_object_ref (extension->module) : NULL;
+    return MAILTC_EXTENSION_GET_OBJECT (extension, module);
 }
 
 void
 mailtc_extension_set_protocols (MailtcExtension* extension,
                                 GArray*          protocols)
 {
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
+
     MAILTC_EXTENSION_SET_ARRAY (extension, protocols);
 }
 
 GArray*
 mailtc_extension_get_protocols (MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_EXTENSION (extension));
+    g_assert (MAILTC_IS_EXTENSION (extension) && extension->priv);
 
-    return extension->protocols ? g_array_ref (extension->protocols) : NULL;
+    return MAILTC_EXTENSION_GET_ARRAY (extension, protocols);
 }
 
 gboolean
@@ -316,18 +347,22 @@ mailtc_extension_get_messages (MailtcExtension* extension,
 static void
 mailtc_extension_finalize (GObject* object)
 {
-    MailtcExtension* extension = MAILTC_EXTENSION (object);
+    MailtcExtension* extension;
+    MailtcExtensionPrivate* priv;
 
-    if (extension->protocols)
-        g_array_unref (extension->protocols);
-    if (extension->module)
-        g_object_unref (extension->module);
+    extension = MAILTC_EXTENSION (object);
+    priv = extension->priv;
 
-    g_free (extension->directory);
-    g_free (extension->description);
-    g_free (extension->author);
-    g_free (extension->name);
-    g_free (extension->compatibility);
+    if (priv->protocols)
+        g_array_unref (priv->protocols);
+    if (priv->module)
+        g_object_unref (extension->priv->module);
+
+    g_free (priv->directory);
+    g_free (priv->description);
+    g_free (priv->author);
+    g_free (priv->name);
+    g_free (priv->compatibility);
 
     G_OBJECT_CLASS (mailtc_extension_parent_class)->finalize (object);
 }
@@ -541,13 +576,17 @@ mailtc_extension_class_init (MailtcExtensionClass* class)
                                                   G_TYPE_BOOLEAN,
                                                   1,
                                                   MAILTC_TYPE_ACCOUNT);
+
+    g_type_class_add_private (class, sizeof (MailtcExtensionPrivate));
 }
 
 static void
 mailtc_extension_init (MailtcExtension* extension)
 {
-    extension->module = NULL;
-    extension->protocols = NULL;
+    extension->priv = G_TYPE_INSTANCE_GET_PRIVATE (extension, MAILTC_TYPE_EXTENSION, MailtcExtensionPrivate);
+
+    extension->priv->module = NULL;
+    extension->priv->protocols = NULL;
 }
 
 MailtcExtension*

@@ -22,8 +22,6 @@
 
 #include <glib-object.h>
 
-/*G_BEGIN_DECLS*/
-
 #define MAILTC_DEFINE_TYPE(TN, t_n, t_p)        G_DEFINE_TYPE (TN, t_n, g_type_from_name (#t_p))
 #define MAILTC_DEFINE_EXTENSION(TN, t_n)        MAILTC_DEFINE_TYPE (TN, t_n, MailtcExtension)
 
@@ -52,20 +50,24 @@
 #define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR     "iconcolour"
 #define MAILTC_ACCOUNT_PROPERTY_PRIVATE         "private"
 
-typedef struct _MailtcExtension
+typedef struct _MailtcProtocol         MailtcProtocol;
+typedef struct _MailtcExtension        MailtcExtension;
+typedef struct _MailtcExtensionClass   MailtcExtensionClass;
+typedef struct _MailtcExtensionPrivate MailtcExtensionPrivate;
+
+struct _MailtcProtocol
+{
+    gchar* name;
+    guint port;
+};
+
+struct _MailtcExtension
 {
     GObject parent_instance;
-    /* FIXME these should go in private. */
-    GObject* module; /* FIXME once in private this can be MailtcModule */
-    GArray* protocols;
-    gchar* compatibility;
-    gchar* name;
-    gchar* author;
-    gchar* description;
-    gchar* directory;
-} MailtcExtension;
+    struct _MailtcExtensionPrivate* priv;
+};
 
-typedef struct _MailtcExtensionClass
+struct _MailtcExtensionClass
 {
     GObjectClass parent_class;
 
@@ -73,15 +75,7 @@ typedef struct _MailtcExtensionClass
     gboolean (*remove_account) (GObject* account);
     gboolean (*read_messages)  (GObject* account);
     gint64   (*get_messages)   (GObject* account, gboolean debug);
-} MailtcExtensionClass;
-
-typedef struct
-{
-    gchar* name;
-    guint port;
-} MailtcProtocol;
-
-/*G_END_DECLS*/
+};
 
 #endif /* __MAILTC_H__ */
 
