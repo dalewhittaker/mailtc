@@ -187,6 +187,7 @@ run_plugin_thread (server_data* data)
     MailtcModule* module;
     MailtcExtension* extension;
     MailtcExtensionInitFunc extension_init;
+    GArray* protocols;
     GDir* dir;
     gchar* directory;
     gchar* edirectory;
@@ -225,10 +226,9 @@ run_plugin_thread (server_data* data)
     extension = extension_init ();
     g_assert (extension);
     g_assert (mailtc_extension_is_valid (extension, NULL));
-    /* FIXME */
-#if 0
-    g_assert (data->protocol < plugin->protocols->len);
-#endif
+    protocols = mailtc_extension_get_protocols (extension);
+    g_assert (data->protocol < protocols->len);
+    g_object_unref (protocols);
 
     mailtc_extension_set_module (extension, G_OBJECT (module));
 
@@ -249,15 +249,9 @@ run_plugin_thread (server_data* data)
     mailtc_extension_set_directory (extension, edirectory);
     g_dir_close (dir);
 
-    /* FIXME */
-#if 0
-    g_assert (plugin->add_account);
-    success = (*plugin->add_account) (G_OBJECT (account), &error);
-    g_assert (success);
+    g_assert (mailtc_extension_add_account (extension, G_OBJECT (account)));
 
-    g_assert (plugin->get_messages);
-    messages = (*plugin->get_messages) (G_OBJECT (account), TRUE, &error);
-#endif
+    messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE);
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {
@@ -268,11 +262,6 @@ run_plugin_thread (server_data* data)
     }
 
     /* FIXME we'll want to mark as read too. */
-    /* FIXME */
-#if 0
-    g_assert (plugin->terminate);
-    (*plugin->terminate) (plugin);
-#endif
 
     g_assert (g_remove (edirectory) == 0);
     g_assert (g_remove (directory) == 0);
@@ -281,10 +270,6 @@ run_plugin_thread (server_data* data)
     g_assert (mailtc_module_unload (module, &error));
 
     g_object_unref (account);
-    /* FIXME */
-#if 0
-    g_array_free (plugin->protocols, TRUE);
-#endif
     g_object_unref (extension);
     g_object_unref (module);
 
