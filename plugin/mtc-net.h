@@ -20,6 +20,10 @@
 #ifndef __MAILTC_NET_H__
 #define __MAILTC_NET_H__
 
+#include "mailtc.h"
+#include "mtc-socket.h" /* FIXME remove */
+#include "mtc-uid.h"
+
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -35,11 +39,47 @@ typedef struct _MailtcNet        MailtcNet;
 typedef struct _MailtcNetClass   MailtcNetClass;
 typedef struct _MailtcNetPrivate MailtcNetPrivate;
 
+struct _MailtcNet
+{
+    MailtcExtension parent_instance;
+
+    MailtcNetPrivate* priv;
+};
+
+struct _MailtcNetClass
+{
+    MailtcExtensionClass parent_class;
+};
+
 GType
 mailtc_net_get_type     (void);
 
 MailtcNet*
 mailtc_net_new          (void);
+
+gssize
+mailtc_net_read         (MailtcNet*   net,
+                         GString*     msg,
+                         gboolean     debug,
+                         const gchar* endchars,
+                         guint        endlen,
+                         GError**     error);
+
+gssize
+mailtc_net_write        (MailtcNet* net,
+                         GString*   msg,
+                         gboolean   debug,
+                         GError**   error);
+
+void
+mailtc_net_disconnect   (MailtcNet* net);
+
+gboolean
+mailtc_net_connect      (MailtcNet*   net,
+                         const gchar* server,
+                         guint        port,
+                         gboolean     tls,
+                         GError**     error);
 
 G_END_DECLS
 

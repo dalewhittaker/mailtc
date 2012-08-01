@@ -156,11 +156,11 @@ mailtc_uid_table_get_property (GObject*    object,
 }
 
 static void
-mailtc_uid_table_class_init (MailtcUidTableClass* class)
+mailtc_uid_table_class_init (MailtcUidTableClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_uid_table_finalize;
     gobject_class->set_property = mailtc_uid_table_set_property;
     gobject_class->get_property = mailtc_uid_table_get_property;
@@ -174,7 +174,7 @@ mailtc_uid_table_class_init (MailtcUidTableClass* class)
                                      NULL,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
-    g_type_class_add_private (class, sizeof (MailtcUidTablePrivate));
+    g_type_class_add_private (klass, sizeof (MailtcUidTablePrivate));
 }
 
 static void

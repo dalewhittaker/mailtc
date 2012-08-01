@@ -129,11 +129,11 @@ mailtc_socket_get_property (GObject*    object,
 }
 
 static void
-mailtc_socket_class_init (MailtcSocketClass* class)
+mailtc_socket_class_init (MailtcSocketClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_socket_finalize;
     gobject_class->set_property = mailtc_socket_set_property;
     gobject_class->get_property = mailtc_socket_get_property;
@@ -147,7 +147,7 @@ mailtc_socket_class_init (MailtcSocketClass* class)
                                      FALSE,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
-    g_type_class_add_private (class, sizeof (MailtcSocketPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcSocketPrivate));
 }
 
 static void
@@ -282,7 +282,7 @@ mailtc_socket_disconnect (MailtcSocket* sock)
 
 gboolean
 mailtc_socket_connect (MailtcSocket* sock,
-                       gchar*        server,
+                       const gchar*  server,
                        guint         port,
                        GError**      error)
 {

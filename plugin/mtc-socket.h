@@ -44,7 +44,7 @@ mailtc_socket_set_tls      (MailtcSocket* sock,
 
 gboolean
 mailtc_socket_connect      (MailtcSocket* sock,
-                            gchar*        server,
+                            const gchar*  server,
                             guint         port,
                             GError**      error);
 
