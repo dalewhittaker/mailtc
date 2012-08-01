@@ -21,7 +21,6 @@
 #define __MAILTC_NET_H__
 
 #include "mailtc.h"
-#include "mtc-socket.h" /* FIXME remove */
 #include "mtc-uid.h"
 
 #include <glib-object.h>
@@ -80,6 +79,9 @@ mailtc_net_connect      (MailtcNet*   net,
                          guint        port,
                          gboolean     tls,
                          GError**     error);
+
+gboolean
+mailtc_net_supports_tls (void);
 
 G_END_DECLS
 

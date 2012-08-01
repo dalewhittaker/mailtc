@@ -18,6 +18,7 @@
  */
 
 #include "mtc-net.h"
+#include "mtc-socket.h"
 
 #define MAXDATASIZE 256
 
@@ -178,6 +179,12 @@ mailtc_net_connect (MailtcNet*   net,
     mailtc_socket_set_tls (net->priv->sock, tls);
 
     return mailtc_socket_connect (net->priv->sock, server, port, error);
+}
+
+gboolean
+mailtc_net_supports_tls (void)
+{
+    return mailtc_socket_supports_tls ();
 }
 
 static void

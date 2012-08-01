@@ -53,7 +53,7 @@ typedef struct
 {
     MailtcNet parent_instance;
 
-    GString* msg; /* FIXME needs initialising and removin from mtc-net.c */
+    GString* msg;
     gboolean debug;
     gint64 total;
 } MailtcPop;
@@ -423,7 +423,7 @@ mailtc_pop_new (void)
 
     protocol_array = g_array_new (TRUE, FALSE, sizeof (MailtcProtocol));
     g_array_append_val (protocol_array, protocols[0]);
-    if (mailtc_socket_supports_tls ())
+    if (mailtc_net_supports_tls ())
         g_array_append_val (protocol_array, protocols[1]);
 
     pop = g_object_new (MAILTC_TYPE_POP,
