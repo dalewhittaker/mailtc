@@ -22,33 +22,45 @@
 
 #include <glib-object.h>
 
-#define MAILTC_DEFINE_TYPE(TN, t_n, t_p)        G_DEFINE_TYPE (TN, t_n, g_type_from_name (#t_p))
-#define MAILTC_DEFINE_EXTENSION(TN, t_n)        MAILTC_DEFINE_TYPE (TN, t_n, MailtcExtension)
+#define MAILTC_DEFINE_TYPE(TN, t_n, t_p)            G_DEFINE_TYPE (TN, t_n, g_type_from_name (#t_p))
+#define MAILTC_DEFINE_EXTENSION(TN, t_n)            MAILTC_DEFINE_TYPE (TN, t_n, MailtcExtension)
+#define MAILTC_OBJECT_GET_PROPERTY(obj, name, prop) g_object_get (G_OBJECT (obj), name, &prop, NULL)
+#define MAILTC_OBJECT_SET_PROPERTY(obj, name, prop) g_object_set (G_OBJECT (obj), name, prop, NULL)
 
-#define MAILTC_EXTENSION_SYMBOL_INIT            "extension_init"
+#define MAILTC_EXTENSION_SYMBOL_INIT                "extension_init"
 
-#define MAILTC_EXTENSION_PROPERTY_COMPATIBILITY "compatibility"
-#define MAILTC_EXTENSION_PROPERTY_NAME          "name"
-#define MAILTC_EXTENSION_PROPERTY_AUTHOR        "author"
-#define MAILTC_EXTENSION_PROPERTY_DESCRIPTION   "description"
-#define MAILTC_EXTENSION_PROPERTY_DIRECTORY     "directory"
-#define MAILTC_EXTENSION_PROPERTY_MODULE        "module"
-#define MAILTC_EXTENSION_PROPERTY_PROTOCOLS     "protocols"
+#define MAILTC_EXTENSION_PROPERTY_COMPATIBILITY     "compatibility"
+#define MAILTC_EXTENSION_PROPERTY_NAME              "name"
+#define MAILTC_EXTENSION_PROPERTY_AUTHOR            "author"
+#define MAILTC_EXTENSION_PROPERTY_DESCRIPTION       "description"
+#define MAILTC_EXTENSION_PROPERTY_DIRECTORY         "directory"
+#define MAILTC_EXTENSION_PROPERTY_MODULE            "module"
+#define MAILTC_EXTENSION_PROPERTY_PROTOCOLS         "protocols"
 
-#define MAILTC_EXTENSION_SIGNAL_ADD_ACCOUNT     "add-account"
-#define MAILTC_EXTENSION_SIGNAL_REMOVE_ACCOUNT  "remove-account"
-#define MAILTC_EXTENSION_SIGNAL_GET_MESSAGES    "get-messages"
-#define MAILTC_EXTENSION_SIGNAL_READ_MESSAGES   "read-messages"
+#define MAILTC_EXTENSION_SIGNAL_ADD_ACCOUNT         "add-account"
+#define MAILTC_EXTENSION_SIGNAL_REMOVE_ACCOUNT      "remove-account"
+#define MAILTC_EXTENSION_SIGNAL_GET_MESSAGES        "get-messages"
+#define MAILTC_EXTENSION_SIGNAL_READ_MESSAGES       "read-messages"
 
-#define MAILTC_ACCOUNT_PROPERTY_NAME            "name"
-#define MAILTC_ACCOUNT_PROPERTY_SERVER          "server"
-#define MAILTC_ACCOUNT_PROPERTY_PORT            "port"
-#define MAILTC_ACCOUNT_PROPERTY_USER            "user"
-#define MAILTC_ACCOUNT_PROPERTY_PASSWORD        "password"
-#define MAILTC_ACCOUNT_PROPERTY_PROTOCOL        "protocol"
-#define MAILTC_ACCOUNT_PROPERTY_EXTENSION       "extension"
-#define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR     "iconcolour"
-#define MAILTC_ACCOUNT_PROPERTY_PRIVATE         "private"
+#define MAILTC_ACCOUNT_PROPERTY_NAME                "name"
+#define MAILTC_ACCOUNT_PROPERTY_SERVER              "server"
+#define MAILTC_ACCOUNT_PROPERTY_PORT                "port"
+#define MAILTC_ACCOUNT_PROPERTY_USER                "user"
+#define MAILTC_ACCOUNT_PROPERTY_PASSWORD            "password"
+#define MAILTC_ACCOUNT_PROPERTY_PROTOCOL            "protocol"
+#define MAILTC_ACCOUNT_PROPERTY_EXTENSION           "extension"
+#define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR         "iconcolour"
+#define MAILTC_ACCOUNT_PROPERTY_PRIVATE             "private"
+
+#define MAILTC_EXTENSION_GET_DIRECTORY(obj, prop)   MAILTC_OBJECT_GET_PROPERTY (obj, MAILTC_EXTENSION_PROPERTY_DIRECTORY, prop)
+#define MAILTC_EXTENSION_SET_DIRECTORY(obj, prop)   MAILTC_OBJECT_SET_PROPERTY (obj, MAILTC_EXTENSION_PROPERTY_DIRECTORY, prop)
+
+#define MAILTC_ACCOUNT_GET_USER(obj, prop)          MAILTC_OBJECT_GET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_USER, prop)
+#define MAILTC_ACCOUNT_SET_USER(obj, prop)          MAILTC_OBJECT_SET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_USER, prop)
+#define MAILTC_ACCOUNT_GET_PASSWORD(obj, prop)      MAILTC_OBJECT_GET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_PASSWORD, prop)
+#define MAILTC_ACCOUNT_SET_PASSWORD(obj, prop)      MAILTC_OBJECT_SET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_PASSWORD, prop)
+#define MAILTC_ACCOUNT_GET_PRIVATE(obj, prop)       MAILTC_OBJECT_GET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_PRIVATE, prop)
+#define MAILTC_ACCOUNT_SET_PRIVATE(obj, prop)       MAILTC_OBJECT_SET_PROPERTY (obj, MAILTC_ACCOUNT_PROPERTY_PRIVATE, prop)
 
 typedef struct _MailtcProtocol         MailtcProtocol;
 typedef struct _MailtcExtension        MailtcExtension;

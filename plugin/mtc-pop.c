@@ -213,14 +213,14 @@ mailtc_pop_run (MailtcPop*        pop,
 
         case POP_CMD_USER:
             command = "USER %s\r\n";
-            g_object_get (account, MAILTC_ACCOUNT_PROPERTY_USER, &arg, NULL);
+            MAILTC_ACCOUNT_GET_USER (account, arg);
             pread = mailtc_pop_read;
             pwrite = mailtc_pop_write;
             break;
 
         case POP_CMD_PASS:
             command = "PASS %s\r\n";
-            g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PASSWORD, &arg, NULL);
+            MAILTC_ACCOUNT_GET_PASSWORD (account, arg);
             pread = mailtc_pop_read;
             pwrite = mailtc_pop_passwrite;
             break;

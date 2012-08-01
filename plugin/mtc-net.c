@@ -38,12 +38,13 @@ mailtc_net_remove_account (MailtcNet* net,
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table, NULL);
+    MAILTC_ACCOUNT_GET_PRIVATE (account, uid_table);
 
     if (MAILTC_IS_UID_TABLE (uid_table))
     {
         g_object_unref (MAILTC_UID_TABLE (uid_table));
-        g_object_set (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, NULL);
+        uid_table = NULL;
+        MAILTC_ACCOUNT_SET_PRIVATE (account, uid_table);
     }
     return TRUE;
 }
@@ -63,7 +64,7 @@ mailtc_net_add_account (MailtcNet* net,
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    g_object_get (net, MAILTC_EXTENSION_PROPERTY_DIRECTORY, &directory, NULL);
+    MAILTC_EXTENSION_GET_DIRECTORY (net, directory);
     g_assert (directory);
 
     g_object_get (account,
@@ -89,7 +90,7 @@ mailtc_net_add_account (MailtcNet* net,
 
     uid_table = mailtc_uid_table_new (filename);
     g_free (filename);
-    g_object_set (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, uid_table, NULL);
+    MAILTC_ACCOUNT_SET_PRIVATE (account, uid_table);
 
     return mailtc_uid_table_load (uid_table, NULL); /* FIXME GError */
 }
@@ -103,8 +104,7 @@ mailtc_net_read_messages (MailtcNet* net,
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
 
-    g_object_get (account, MAILTC_ACCOUNT_PROPERTY_PRIVATE, &uid_table, NULL);
-    g_assert (MAILTC_IS_UID_TABLE (uid_table));
+    MAILTC_ACCOUNT_GET_PRIVATE (account, uid_table);
 
     return mailtc_uid_table_mark_read (uid_table, NULL); /* FIXME GError */
 }
