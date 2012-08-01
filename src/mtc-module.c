@@ -235,11 +235,11 @@ mailtc_module_finalize (GObject* object)
 }
 
 static void
-mailtc_module_class_init (MailtcModuleClass* class)
+mailtc_module_class_init (MailtcModuleClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_module_finalize;
     gobject_class->set_property = mailtc_module_set_property;
     gobject_class->get_property = mailtc_module_get_property;
@@ -253,7 +253,7 @@ mailtc_module_class_init (MailtcModuleClass* class)
                                      NULL,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
 
-    g_type_class_add_private (class, sizeof (MailtcModulePrivate));
+    g_type_class_add_private (klass, sizeof (MailtcModulePrivate));
 }
 
 static void

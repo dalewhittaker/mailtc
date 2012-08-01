@@ -456,12 +456,12 @@ mailtc_extension_get_property (GObject*    object,
 }
 
 static void
-mailtc_extension_class_init (MailtcExtensionClass* class)
+mailtc_extension_class_init (MailtcExtensionClass* klass)
 {
     GObjectClass* gobject_class;
     GParamFlags flags;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_extension_finalize;
     gobject_class->set_property = mailtc_extension_set_property;
     gobject_class->get_property = mailtc_extension_get_property;
@@ -577,7 +577,7 @@ mailtc_extension_class_init (MailtcExtensionClass* class)
                                                   1,
                                                   MAILTC_TYPE_ACCOUNT);
 
-    g_type_class_add_private (class, sizeof (MailtcExtensionPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcExtensionPrivate));
 }
 
 static void

@@ -879,17 +879,17 @@ mailtc_application_finalize (GObject* object)
 }
 
 static void
-mailtc_application_class_init (MailtcApplicationClass* class)
+mailtc_application_class_init (MailtcApplicationClass* klass)
 {
     GObjectClass* gobject_class;
     GParamFlags flags;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->set_property = mailtc_application_set_property;
     gobject_class->get_property = mailtc_application_get_property;
     gobject_class->finalize = mailtc_application_finalize;
 
-    G_APPLICATION_CLASS (class)->local_command_line = mailtc_application_local_cmdline;
+    G_APPLICATION_CLASS (klass)->local_command_line = mailtc_application_local_cmdline;
 
     flags = G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT;
 
@@ -941,7 +941,7 @@ mailtc_application_class_init (MailtcApplicationClass* class)
                                               G_TYPE_NONE,
                                               0);
 
-    g_type_class_add_private (class, sizeof (MailtcApplicationPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcApplicationPrivate));
 }
 
 static void

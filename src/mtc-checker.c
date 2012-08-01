@@ -247,12 +247,12 @@ mailtc_checker_finalize (GObject* object)
 }
 
 static void
-mailtc_checker_class_init (MailtcCheckerClass* class)
+mailtc_checker_class_init (MailtcCheckerClass* klass)
 {
     GObjectClass* gobject_class;
     GParamFlags flags;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->set_property = mailtc_checker_set_property;
     gobject_class->get_property = mailtc_checker_get_property;
     gobject_class->finalize = mailtc_checker_finalize;
@@ -290,7 +290,7 @@ mailtc_checker_class_init (MailtcCheckerClass* class)
                                           G_TYPE_NONE,
                                           0);
 
-    g_type_class_add_private (class, sizeof (MailtcCheckerPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcCheckerPrivate));
 }
 
 static void

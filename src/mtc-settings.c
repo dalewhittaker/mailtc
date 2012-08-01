@@ -781,12 +781,12 @@ mailtc_settings_constructed (GObject* object)
 }
 
 static void
-mailtc_settings_class_init (MailtcSettingsClass* class)
+mailtc_settings_class_init (MailtcSettingsClass* klass)
 {
     GObjectClass* gobject_class;
     GParamFlags flags;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_settings_finalize;
     gobject_class->constructed = mailtc_settings_constructed;
     gobject_class->set_property = mailtc_settings_set_property;
@@ -861,7 +861,7 @@ mailtc_settings_class_init (MailtcSettingsClass* class)
                                      G_TYPE_PTR_ARRAY,
                                      flags));
 
-    g_type_class_add_private (class, sizeof (MailtcSettingsPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcSettingsPrivate));
 }
 
 static void

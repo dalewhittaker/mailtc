@@ -354,12 +354,12 @@ mailtc_account_finalize (GObject* object)
 }
 
 static void
-mailtc_account_class_init (MailtcAccountClass* class)
+mailtc_account_class_init (MailtcAccountClass* klass)
 {
     GObjectClass* gobject_class;
     GParamFlags flags;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_account_finalize;
     gobject_class->set_property = mailtc_account_set_property;
     gobject_class->get_property = mailtc_account_get_property;
@@ -422,6 +422,15 @@ mailtc_account_class_init (MailtcAccountClass* class)
                                      0,
                                      G_MAXUINT,
                                      0,
+                                     flags));
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_ICON_COLOUR,
+                                     g_param_spec_boxed (
+                                     MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR,
+                                     "Iconcolour",
+                                     "The account icon colour",
+                                     GDK_TYPE_COLOR,
                                      flags));
 
     g_object_class_install_property (gobject_class,

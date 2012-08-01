@@ -102,11 +102,11 @@ mailtc_status_icon_finalize (GObject* object)
 }
 
 static void
-mailtc_status_icon_class_init (MailtcStatusIconClass* class)
+mailtc_status_icon_class_init (MailtcStatusIconClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_status_icon_finalize;
 
     signals[READ_MAIL] = g_signal_new ("read-mail",
@@ -129,7 +129,7 @@ mailtc_status_icon_class_init (MailtcStatusIconClass* class)
                                           G_TYPE_NONE,
                                           0);
 
-    g_type_class_add_private (class, sizeof (MailtcStatusIconPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcStatusIconPrivate));
 }
 
 static void

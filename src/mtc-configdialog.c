@@ -1273,11 +1273,11 @@ mailtc_config_dialog_constructed (GObject* object)
 }
 
 static void
-mailtc_config_dialog_class_init (MailtcConfigDialogClass* class)
+mailtc_config_dialog_class_init (MailtcConfigDialogClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->constructed = mailtc_config_dialog_constructed;
     gobject_class->finalize = mailtc_config_dialog_finalize;
     gobject_class->set_property = mailtc_config_dialog_set_property;
@@ -1292,7 +1292,7 @@ mailtc_config_dialog_class_init (MailtcConfigDialogClass* class)
                                      MAILTC_TYPE_SETTINGS,
                                      G_PARAM_CONSTRUCT | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    g_type_class_add_private (class, sizeof (MailtcConfigDialogPrivate));
+    g_type_class_add_private (klass, sizeof (MailtcConfigDialogPrivate));
 }
 
 static void

@@ -312,11 +312,11 @@ mailtc_envelope_finalize (GObject* object)
 }
 
 static void
-mailtc_envelope_class_init (MailtcEnvelopeClass* class)
+mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 {
     GObjectClass* gobject_class;
 
-    gobject_class = G_OBJECT_CLASS (class);
+    gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->finalize = mailtc_envelope_finalize;
     gobject_class->set_property = mailtc_envelope_set_property;
     gobject_class->get_property = mailtc_envelope_get_property;
@@ -330,7 +330,7 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* class)
                                      GDK_TYPE_COLOR,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 
-    g_type_class_add_private (class, sizeof (MailtcEnvelopePrivate));
+    g_type_class_add_private (klass, sizeof (MailtcEnvelopePrivate));
 }
 
 static void
