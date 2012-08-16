@@ -57,6 +57,7 @@ mailtc_SOURCES = \
 		mtc-extension.c \
 		mtc-marshal.c \
 		mtc-module.c \
+		mtc-modulemanager.c \
 		mtc-settings.c \
 		mtc-statusicon.c \
 		mtc-util.c \
@@ -73,6 +74,7 @@ EXTRA_DIST = \
 		mtc-extension.h \
 		mtc-marshal.h \
 		mtc-module.h \
+		mtc-modulemanager.h \
 		mtc-settings.h \
 		mtc-statusicon.h \
 		mtc-util.h

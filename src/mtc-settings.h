@@ -20,6 +20,8 @@
 #ifndef __MAILTC_SETTINGS_H__
 #define __MAILTC_SETTINGS_H__
 
+#include "mtc-modulemanager.h"
+
 #include <gdk/gdk.h>
 
 G_BEGIN_DECLS
@@ -71,7 +73,7 @@ mailtc_settings_set_accounts   (MailtcSettings* settings,
 GPtrArray*
 mailtc_settings_get_accounts   (MailtcSettings* settings);
 
-GPtrArray*
+MailtcModuleManager*
 mailtc_settings_get_modules    (MailtcSettings* settings);
 
 gboolean
@@ -82,9 +84,9 @@ GType
 mailtc_settings_get_type       (void);
 
 MailtcSettings*
-mailtc_settings_new            (gchar*          filename,
-                                GPtrArray*      modules,
-                                GError**        error);
+mailtc_settings_new            (gchar*               filename,
+                                MailtcModuleManager* modules,
+                                GError**             error);
 
 G_END_DECLS
 

@@ -19,13 +19,11 @@
 
 #include <config.h>
 #include "mtc-application.h"
-#include "mtc-configdialog.h"
-#include "mtc-extension.h"
+#include "mtc-configdialog.h" /* FIXME eventually remove */
 #include "mtc-util.h"
-#include "mtc-module.h"
+#include "mtc-modulemanager.h"
 
 #include <gtk/gtk.h>
-#include <glib/gstdio.h>
 #include <signal.h>
 
 #define MAILTC_APPLICATION_PROPERTY_DEBUG    "debug"
@@ -37,11 +35,11 @@
 
 #define MAILTC_APPLICATION_ERROR        g_quark_from_string ("MAILTC_APPLICATION_ERROR")
 
-#define MAILTC_APPLICATION_SET_BOOLEAN(app,property) \
+#define MAILTC_APPLICATION_SET_BOOLEAN(app, property) \
     mailtc_object_set_boolean (G_OBJECT (app), MAILTC_TYPE_APPLICATION, \
                                #property, &app->property, property)
 
-#define MAILTC_APPLICATION_SET_OBJECT(app,property) \
+#define MAILTC_APPLICATION_SET_OBJECT(app, property) \
     mailtc_object_set_object (G_OBJECT (app), MAILTC_TYPE_APPLICATION, \
                               #property, (GObject **) (&app->property), G_OBJECT (property))
 
@@ -60,9 +58,7 @@ typedef enum
 
 typedef enum
 {
-    MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0,
-    MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY,
-    MAILTC_APPLICATION_ERROR_MODULE_EMPTY
+    MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0
 } MailtcApplicationError;
 
 enum
@@ -83,7 +79,7 @@ enum
 struct _MailtcApplicationPrivate
 {
     GIOChannel* log;
-    GPtrArray* modules;
+    MailtcModuleManager* manager;
     gboolean is_running;
     gchar* directory;
 };
@@ -255,165 +251,15 @@ static gchar*
 mailtc_application_file (MailtcApplication* app,
                          const gchar*       filename)
 {
-    MailtcApplicationPrivate* priv;
     gchar* directory;
-    gchar* absfilename;
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
-    priv = app->priv;
+    directory = app->priv->directory;
+    g_assert (directory);
 
-    if (!priv->directory)
-    {
-        directory = mailtc_directory ();
-        if (!directory)
-        {
-            mailtc_error ("Failed to create " PACKAGE  " directory");
-            return NULL;
-        }
-        priv->directory = directory;
-    }
-    else
-        directory = priv->directory;
-
-    absfilename = g_build_filename (directory, filename, NULL);
-
-    return absfilename;
+    return filename ? g_build_filename (directory, filename, NULL) : g_strdup (directory);
 }
-
-static void
-mailtc_application_unload_module (MailtcExtension* extension,
-                                  GError**         error)
-{
-    MailtcModule* module;
-
-    g_assert (extension);
-
-    /* FIXME not sure this is really correct, it wouldn't work if e.g
-     * we had more than one extension per module.
-     */
-    module = MAILTC_MODULE (mailtc_extension_get_module (extension));
-    mailtc_module_unload (module, error);
-
-    g_object_unref (module);
-    g_object_unref (extension);
-}
-
-static gboolean
-mailtc_application_unload_modules (MailtcApplication* app,
-                                   GError**           error)
-{
-    MailtcApplicationPrivate* priv;
-
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    priv = app->priv;
-
-    if (priv->modules)
-    {
-        g_ptr_array_foreach (priv->modules,
-                (GFunc) mailtc_application_unload_module,
-                error);
-        g_ptr_array_unref (priv->modules);
-        priv->modules = NULL;
-    }
-    return ((error && *error) ? FALSE : TRUE);
-}
-
-static gboolean
-mailtc_application_load_modules (MailtcApplication* app,
-                                 GError**           error)
-{
-    MailtcApplicationPrivate* priv;
-    GDir* dir;
-    gchar* dirname = LIBDIR;
-
-    g_assert (MAILTC_IS_APPLICATION (app));
-
-    if (!mailtc_module_supported (error))
-        return FALSE;
-
-    priv = app->priv;
-
-    if ((dir = g_dir_open (dirname, 0, error)))
-    {
-        MailtcModule* module;
-        GPtrArray* modules;
-        MailtcExtension* extension;
-        MailtcExtensionInitFunc extension_init;
-
-        const gchar* filename;
-        gchar* fullname;
-
-        modules = g_ptr_array_new ();
-
-        while ((filename = g_dir_read_name (dir)))
-        {
-            if (!mailtc_module_filename (filename))
-                continue;
-
-            fullname = g_build_filename (dirname, filename, NULL);
-
-            module = mailtc_module_new ();
-            if (!mailtc_module_load (module, fullname, error) ||
-                !mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, error))
-            {
-                mailtc_gerror (error);
-                g_object_unref (module);
-            }
-            else
-            {
-                gchar* directory;
-
-                g_type_class_ref (MAILTC_TYPE_EXTENSION);
-
-                extension = extension_init ();
-                if (mailtc_extension_is_valid (extension, error))
-                {
-                    /* FIXME can this be done from inside the extension class (when initialising for example? */
-                    directory = mailtc_application_file (app, filename);
-                    g_assert (directory);
-                    mailtc_extension_set_directory (extension, directory);
-                    g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-                    g_free (directory);
-
-                    mailtc_extension_set_module (extension, G_OBJECT (module));
-                    g_ptr_array_add (modules, extension);
-                }
-                else
-                {
-                    mailtc_gerror (error);
-                    g_object_unref (module);
-                }
-            }
-            g_free (fullname);
-        }
-        if (modules->len > 0)
-            priv->modules = modules;
-        else
-            g_ptr_array_unref (modules);
-
-        g_dir_close (dir);
-    }
-    else
-    {
-        *error = g_error_new (MAILTC_APPLICATION_ERROR,
-                              MAILTC_APPLICATION_ERROR_MODULE_DIRECTORY,
-                              "Error opening module directory %s",
-                              dirname);
-        return FALSE;
-    }
-
-    if (!priv->modules)
-    {
-        *error = g_error_new (MAILTC_APPLICATION_ERROR,
-                              MAILTC_APPLICATION_ERROR_MODULE_EMPTY,
-                              "Error: no modules found!");
-        return FALSE;
-    }
-    return TRUE;
-}
-
 
 static void
 mailtc_application_set_option_entry (GOptionEntry* entry,
@@ -510,6 +356,7 @@ mailtc_application_server_init (MailtcApplication* app,
                                 GError**           error)
 {
     MailtcApplicationPrivate* priv;
+    MailtcModuleManager* manager;
     MailtcSettings* settings;
     gchar* filename;
 
@@ -519,15 +366,22 @@ mailtc_application_server_init (MailtcApplication* app,
     if (!g_thread_supported ())
         g_thread_init (NULL);
 
-    if (!mailtc_application_load_modules (app, error))
+    priv = app->priv;
+    if (!(manager = mailtc_module_manager_new (priv->directory, error)))
         return FALSE;
+
+    if (!mailtc_module_manager_load (manager, error))
+    {
+        g_object_unref (manager);
+        return FALSE;
+    }
+
+    priv->manager = manager;
 
     mailtc_application_set_log_gtk (app);
 
-    priv = app->priv;
-
     filename = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
-    settings = mailtc_settings_new (filename, priv->modules, error);
+    settings = mailtc_settings_new (filename, priv->manager, error);
     g_free (filename);
 
     if (!settings)
@@ -547,6 +401,7 @@ mailtc_application_server_init (MailtcApplication* app,
     }
 
     mailtc_application_set_settings (app, settings);
+    g_object_unref (settings);
 
     switch (mode)
     {
@@ -587,6 +442,7 @@ mailtc_application_initialise (MailtcApplication* app,
                                GError**           error)
 {
     MailtcApplicationPrivate* priv;
+    gchar* directory;
     gchar* filename;
     gchar* str_time;
     gchar* str_init;
@@ -595,6 +451,15 @@ mailtc_application_initialise (MailtcApplication* app,
     g_assert (MAILTC_IS_APPLICATION (app));
 
     priv = app->priv;
+
+    directory = mailtc_directory ();
+    if (!directory)
+    {
+        /* FIXME GError */
+        mailtc_error ("Failed to create " PACKAGE  " directory");
+        return FALSE;
+    }
+    priv->directory = directory;
 
     filename = mailtc_application_file (app, MAILTC_APPLICATION_LOG_NAME);
     priv->log = g_io_channel_new_file (filename, "w", error);
@@ -654,10 +519,14 @@ mailtc_application_terminate (MailtcApplication* app,
         g_object_unref (app->settings);
         app->settings = NULL;
     }
+    if (priv->manager)
+    {
+        if (!mailtc_module_manager_unload (priv->manager, *error ? NULL : error))
+            success = FALSE;
 
-    if (!mailtc_application_unload_modules (app, *error ? NULL : error))
-        success = FALSE;
-
+        g_object_unref (priv->manager);
+        priv->manager = NULL;
+    }
     return success;
 }
 
@@ -872,8 +741,8 @@ mailtc_application_finalize (GObject* object)
         g_object_unref (app->settings);
     if (priv->log)
         g_io_channel_unref (priv->log);
-
-    mailtc_application_unload_modules (app, NULL);
+    if (priv->manager)
+        g_object_unref (priv->manager);
 
     G_OBJECT_CLASS (mailtc_application_parent_class)->finalize (object);
 }
@@ -955,7 +824,7 @@ mailtc_application_init (MailtcApplication* app)
     app->settings = NULL;
 
     priv->is_running = FALSE;
-    priv->modules = NULL;
+    priv->manager = NULL;
     priv->directory = NULL;
     priv->log = NULL;
 

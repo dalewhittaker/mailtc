@@ -339,11 +339,7 @@ mailtc_account_finalize (GObject* object)
     account = MAILTC_ACCOUNT (object);
 
     if (account->extension)
-    {
-        /* FIXME GError */
-        mailtc_extension_remove_account (account->extension, G_OBJECT (account));
         g_object_unref (account->extension);
-    }
 
     g_free (account->password);
     g_free (account->user);

@@ -356,7 +356,7 @@ mailtc_extension_finalize (GObject* object)
     if (priv->protocols)
         g_array_unref (priv->protocols);
     if (priv->module)
-        g_object_unref (extension->priv->module);
+        g_object_unref (priv->module);
 
     g_free (priv->directory);
     g_free (priv->description);

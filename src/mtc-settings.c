@@ -19,8 +19,6 @@
 
 #include "mtc-settings.h"
 #include "mtc-account.h"
-#include "mtc-extension.h"
-#include "mtc-module.h"
 #include "mtc-util.h"
 
 #include <string.h>
@@ -35,22 +33,25 @@
 #define MAILTC_SETTINGS_PROPERTY_MODULES     "modules"
 #define MAILTC_SETTINGS_PROPERTY_NET_ERROR   "neterror"
 
-#define MAILTC_SETTINGS_SET_STRING(settings,property) \
+#define MAILTC_SETTINGS_SET_STRING(settings, property) \
     mailtc_object_set_string (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                               #property, &settings->property, property)
 
-#define MAILTC_SETTINGS_SET_UINT(settings,property) \
+#define MAILTC_SETTINGS_SET_UINT(settings, property) \
     mailtc_object_set_uint (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                             #property, &settings->property, property)
 
-#define MAILTC_SETTINGS_SET_COLOUR(settings,property) \
+#define MAILTC_SETTINGS_SET_COLOUR(settings, property) \
     mailtc_object_set_colour (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                               #property, &settings->property, property)
 
-#define MAILTC_SETTINGS_SET_PTR_ARRAY(settings,property) \
+#define MAILTC_SETTINGS_SET_PTR_ARRAY(settings, property) \
     mailtc_object_set_ptr_array (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                                  #property, &settings->property, property)
 
+#define MAILTC_SETTINGS_SET_OBJECT(settings, property) \
+    mailtc_object_set_object (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
+                              #property, (GObject **) (&settings->property), G_OBJECT (property))
 
 struct _MailtcSettingsPrivate
 {
@@ -63,8 +64,8 @@ struct _MailtcSettings
     GObject parent_instance;
 
     MailtcSettingsPrivate* priv;
+    MailtcModuleManager* modules;
     GPtrArray* accounts;
-    GPtrArray* modules;
     GdkColor iconcolour;
     guint interval;
     guint neterror;
@@ -340,13 +341,12 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
     GKeyFile* key_file;
     GPtrArray* accounts;
     GObject* obj;
+    const gchar* module_name;
     gchar* key_group;
     gchar** groups;
     guint i;
-    const gchar* module_name;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
-    g_assert (settings->modules);
     g_assert (settings->accounts);
 
     key_file = settings->priv->key_file;
@@ -401,20 +401,15 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
     if (naccounts > 0)
     {
         MailtcAccount* account;
-        MailtcModule* module;
         MailtcExtension* extension;
         GPtrArray* accounts;
-        GPtrArray* modules;
         GObject* obj;
         gchar* str;
         const gchar* key_group;
-        const gchar* module_name;
         gsize i;
-        gsize j;
         gboolean success;
 
         accounts = g_ptr_array_new ();
-        modules = settings->modules;
 
         for (i = 0; i < naccounts; i++)
         {
@@ -444,22 +439,13 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
             {
                 str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, error);
 
-                for (j = 0; j < modules->len; j++)
-                {
-                    extension = g_ptr_array_index (modules, j);
-
-                    module = MAILTC_MODULE (mailtc_extension_get_module (extension));
-                    module_name = mailtc_module_get_name (module);
-                    g_object_unref (module);
-
-                    if (!g_strcmp0 (str, module_name))
-                    {
-                        mailtc_account_set_extension (account, extension);
-                        break;
-                    }
-                }
-                /* FIXME GError */
-                g_assert (j < modules->len);
+                extension = mailtc_module_manager_find_extension (settings->modules, str);
+                if (extension)
+                    mailtc_account_set_extension (account, extension);
+#if 0
+                else
+                    /* FIXME GError */
+#endif
                 g_free (str);
             }
             if (success)
@@ -619,18 +605,35 @@ mailtc_settings_get_accounts (MailtcSettings* settings)
 }
 
 static void
-mailtc_settings_set_modules (MailtcSettings* settings,
-                             GPtrArray*      modules)
+mailtc_settings_set_modules (MailtcSettings*      settings,
+                             MailtcModuleManager* modules)
 {
-    MAILTC_SETTINGS_SET_PTR_ARRAY (settings, modules);
+    MAILTC_SETTINGS_SET_OBJECT (settings, modules);
 }
 
-GPtrArray*
+MailtcModuleManager*
 mailtc_settings_get_modules (MailtcSettings* settings)
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
-    return settings->modules;
+    return settings->modules ? g_object_ref (settings->modules) : NULL;
+}
+
+static void
+mailtc_settings_free_account (MailtcAccount* account)
+{
+    MailtcExtension* extension;
+
+    g_assert (MAILTC_IS_ACCOUNT (account));
+
+    extension = mailtc_account_get_extension (account);
+    if (extension)
+    {
+        /* FIXME GError */
+        mailtc_extension_remove_account (extension, G_OBJECT (account));
+        g_object_unref (extension);
+    }
+    g_object_unref (account);
 }
 
 static void
@@ -640,7 +643,7 @@ mailtc_settings_free_accounts (MailtcSettings* settings)
 
     if (settings->accounts)
     {
-        g_ptr_array_foreach (settings->accounts, (GFunc) g_object_unref, NULL);
+        g_ptr_array_foreach (settings->accounts, (GFunc) mailtc_settings_free_account, NULL);
         g_ptr_array_unref (settings->accounts);
         settings->accounts = NULL;
     }
@@ -681,7 +684,7 @@ mailtc_settings_set_property (GObject*      object,
             break;
 
         case PROP_MODULES:
-            mailtc_settings_set_modules (settings, g_value_get_boxed (value));
+            mailtc_settings_set_modules (settings, g_value_get_object (value));
             break;
 
         default:
@@ -729,7 +732,7 @@ mailtc_settings_get_property (GObject*    object,
             break;
 
         case PROP_MODULES:
-            g_value_set_boxed (value, settings->modules);
+            g_value_set_object (value, settings->modules);
             break;
 
         default:
@@ -750,7 +753,7 @@ mailtc_settings_finalize (GObject* object)
     mailtc_settings_free_accounts (settings);
 
     if (settings->modules)
-        g_ptr_array_unref (settings->modules);
+        g_object_unref (settings->modules);
 
     g_free (settings->command);
     g_free (settings->filename);
@@ -854,11 +857,11 @@ mailtc_settings_class_init (MailtcSettingsClass* klass)
 
     g_object_class_install_property (gobject_class,
                                      PROP_MODULES,
-                                     g_param_spec_boxed (
+                                     g_param_spec_object (
                                      MAILTC_SETTINGS_PROPERTY_MODULES,
                                      "Modules",
                                      "The mail extension modules",
-                                     G_TYPE_PTR_ARRAY,
+                                     MAILTC_TYPE_MODULE_MANAGER,
                                      flags));
 
     g_type_class_add_private (klass, sizeof (MailtcSettingsPrivate));
@@ -869,17 +872,17 @@ mailtc_settings_init (MailtcSettings* settings)
 {
     MailtcSettingsPrivate* priv;
 
-    priv = settings->priv = G_TYPE_INSTANCE_GET_PRIVATE (settings,
-                        MAILTC_TYPE_SETTINGS, MailtcSettingsPrivate);
+    priv = settings->priv = G_TYPE_INSTANCE_GET_PRIVATE (settings, MAILTC_TYPE_SETTINGS, MailtcSettingsPrivate);
 
     priv->key_file = NULL;
     priv->error = NULL;
+    settings->modules = NULL;
 }
 
 MailtcSettings*
-mailtc_settings_new (gchar*     filename,
-                     GPtrArray* modules,
-                     GError**   error)
+mailtc_settings_new (gchar*               filename,
+                     MailtcModuleManager* modules,
+                     GError**             error)
 {
     return g_initable_new (MAILTC_TYPE_SETTINGS, NULL, error,
                            MAILTC_SETTINGS_PROPERTY_FILENAME, filename,
