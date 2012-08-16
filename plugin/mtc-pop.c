@@ -409,8 +409,8 @@ mailtc_pop_init (MailtcPop* pop)
     pop->debug = FALSE;
 }
 
-MailtcPop*
-mailtc_pop_new (void)
+static MailtcPop*
+mailtc_pop_new (const gchar* directory)
 {
     MailtcPop* pop;
     GArray* protocol_array;
@@ -427,6 +427,7 @@ mailtc_pop_new (void)
         g_array_append_val (protocol_array, protocols[1]);
 
     pop = g_object_new (MAILTC_TYPE_POP,
+                        MAILTC_EXTENSION_PROPERTY_DIRECTORY,     directory,
                         MAILTC_EXTENSION_PROPERTY_COMPATIBILITY, VERSION,
                         MAILTC_EXTENSION_PROPERTY_NAME,          EXTENSION_NAME,
                         MAILTC_EXTENSION_PROPERTY_AUTHOR,        EXTENSION_AUTHOR,
@@ -440,8 +441,8 @@ mailtc_pop_new (void)
 }
 
 G_MODULE_EXPORT MailtcExtension*
-extension_init (void)
+extension_init (const gchar* directory)
 {
-    return (MailtcExtension*) mailtc_pop_new ();
+    return (MailtcExtension*) mailtc_pop_new (directory);
 }
 

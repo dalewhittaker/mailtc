@@ -223,7 +223,13 @@ run_plugin_thread (server_data* data)
 
     g_type_class_ref (MAILTC_TYPE_EXTENSION);
 
-    extension = extension_init ();
+    directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
+    g_assert (directory);
+    edirectory = g_build_filename (directory, filename, NULL);
+    g_assert (edirectory);
+    g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    extension = extension_init (directory);
     g_assert (extension);
     g_assert (mailtc_extension_is_valid (extension, NULL));
     protocols = mailtc_extension_get_protocols (extension);
@@ -241,12 +247,6 @@ run_plugin_thread (server_data* data)
     mailtc_account_set_user (account, "testuser");
     mailtc_account_set_password (account, "abc123");
 
-    directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
-    g_assert (directory);
-    edirectory = g_build_filename (directory, filename, NULL);
-    g_assert (edirectory);
-    g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    mailtc_extension_set_directory (extension, edirectory);
     g_dir_close (dir);
 
     g_assert (mailtc_extension_add_account (extension, G_OBJECT (account)));

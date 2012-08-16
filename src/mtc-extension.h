@@ -37,7 +37,7 @@ G_BEGIN_DECLS
     &g_array_index (mailtc_extension_get_protocols ((extension)), MailtcProtocol, (i))
 
 typedef MailtcExtension*
-(*MailtcExtensionInitFunc)               (void);
+(*MailtcExtensionInitFunc)               (const gchar* directory);
 
 gboolean
 mailtc_extension_is_valid                (MailtcExtension* extension,
