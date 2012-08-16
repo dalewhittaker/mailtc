@@ -58,7 +58,8 @@ typedef enum
 
 typedef enum
 {
-    MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0
+    MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0,
+    MAILTC_APPLICATION_ERROR_DIRECTORY
 } MailtcApplicationError;
 
 enum
@@ -455,8 +456,11 @@ mailtc_application_initialise (MailtcApplication* app,
     directory = mailtc_directory ();
     if (!directory)
     {
-        /* FIXME GError */
-        mailtc_error ("Failed to create " PACKAGE  " directory");
+        if (error)
+            *error = g_error_new (MAILTC_APPLICATION_ERROR,
+                                  MAILTC_APPLICATION_ERROR_DIRECTORY,
+                                  "Failed to create " PACKAGE  " directory");
+
         return FALSE;
     }
     priv->directory = directory;
@@ -466,7 +470,7 @@ mailtc_application_initialise (MailtcApplication* app,
     mailtc_application_set_log_glib (app);
     g_free (filename);
 
-    if (*error)
+    if (error && *error)
         return FALSE;
 
     str_time = mailtc_current_time ();

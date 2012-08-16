@@ -648,7 +648,7 @@ mailtc_combo_protocol_add_items (MailtcExtension* extension, GtkListStore* store
         protocol = &g_array_index (protocols, MailtcProtocol, index);
         gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
                                            COMBO_PROTOCOL_COLUMN, protocol->name,
-                                           COMBO_EXTENSION_COLUMN, extension, /* FIXME ref count? */
+                                           COMBO_EXTENSION_COLUMN, extension,
                                            COMBO_INDEX_COLUMN, index, -1);
     }
     g_array_unref (protocols);
