@@ -440,9 +440,9 @@ mailtc_pop_new (const gchar* directory)
     return pop;
 }
 
-G_MODULE_EXPORT MailtcExtension*
+G_MODULE_EXPORT GSList*
 extension_init (const gchar* directory)
 {
-    return (MailtcExtension*) mailtc_pop_new (directory);
+    return g_slist_append (NULL, mailtc_pop_new (directory));
 }
 

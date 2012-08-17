@@ -229,7 +229,7 @@ mailtc_module_finalize (GObject* object)
     MailtcModule* module = MAILTC_MODULE (object);
 
     g_free (module->name);
-    g_assert (mailtc_module_unload (module, NULL));
+    g_assert (mailtc_module_unload (module, NULL)); /* FIXME GError */
 
     G_OBJECT_CLASS (mailtc_module_parent_class)->finalize (object);
 }

@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 #define MAILTC_EXTENSION_GET_PROTOCOL(extension, i) \
     &g_array_index (mailtc_extension_get_protocols ((extension)), MailtcProtocol, (i))
 
-typedef MailtcExtension*
+typedef GSList*
 (*MailtcExtensionInitFunc)               (const gchar* directory);
 
 gboolean
