@@ -513,7 +513,6 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                      NULL,
                                      flags));
 
-    /* FIXME this really required? */
     g_object_class_install_property (gobject_class,
                                      PROP_MODULE,
                                      g_param_spec_object (

@@ -100,21 +100,31 @@ mailtc_module_manager_set_directory (MailtcModuleManager* manager,
 }
 
 static void
-mailtc_module_manager_unload_func (MailtcExtension* extension,
-                                   GError**         error)
+mailtc_module_manager_unload_func (GPtrArray* extensions,
+                                   GError**   error)
 {
+    MailtcExtension* extension;
     MailtcModule* module;
+    guint i = 0;
 
-    g_assert (extension);
+    g_assert (extensions);
 
-    /* FIXME not sure this is really correct, it wouldn't work if e.g
-     * we had more than one extension per module.
-     */
-    module = MAILTC_MODULE (mailtc_extension_get_module (extension));
-    g_object_unref (extension);
-    mailtc_module_unload (module, error);
+    if (extensions->len > 0)
+    {
+        extension = g_ptr_array_index (extensions, i);
+        g_assert (extension);
 
-    g_object_unref (module);
+        module = MAILTC_MODULE (mailtc_extension_get_module (extension));
+
+        do
+        {
+            g_object_unref (extension);
+            extension = g_ptr_array_index (extensions, ++i);
+        } while (i < extensions->len);
+
+        mailtc_module_unload (module, error);
+        g_object_unref (module);
+    }
 }
 
 gboolean
@@ -150,9 +160,10 @@ mailtc_module_manager_load (MailtcModuleManager* manager,
         MailtcModule* module;
         MailtcExtension* extension;
         MailtcExtensionInitFunc extension_init;
-        GSList* extensions;
+        GSList* elist;
         GSList* l;
         GPtrArray* modules;
+        GPtrArray* extensions;
         const gchar* filename;
         gchar* directory;
         gchar* fullname;
@@ -182,24 +193,35 @@ mailtc_module_manager_load (MailtcModuleManager* manager,
 
                 g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-                l = extensions = extension_init (directory);
+                elist = extension_init (directory);
                 g_free (directory);
 
-                while (l)
+                if (elist)
                 {
-                    extension = l->data;
+                    l = elist;
+                    extensions = g_ptr_array_new ();
 
-                    if (mailtc_extension_is_valid (extension, error))
+                    while (l)
                     {
-                        mailtc_extension_set_module (extension, G_OBJECT (module));
-                        g_ptr_array_add (modules, extension);
-                    }
-                    else
-                        mailtc_gerror (error);
+                        extension = l->data;
 
-                    l = l->next;
+                        if (mailtc_extension_is_valid (extension, error))
+                        {
+                            mailtc_extension_set_module (extension, G_OBJECT (module));
+                            g_ptr_array_add (extensions, extension);
+                        }
+                        else
+                            mailtc_gerror (error);
+
+                        l = l->next;
+                    }
+                    g_slist_free (elist);
+
+                    if (extensions->len > 0)
+                        g_ptr_array_add (modules, extensions);
+                    else
+                        g_ptr_array_unref (extensions);
                 }
-                g_slist_free (extensions);
             }
             g_object_unref (module);
             g_free (fullname);
@@ -231,55 +253,77 @@ mailtc_module_manager_load (MailtcModuleManager* manager,
 
 static gboolean
 mailtc_module_manager_find (MailtcModuleManager* manager,
-                            const gchar*         name,
+                            const gchar*         module_name,
+                            const gchar*         extension_name,
                             MailtcModule**       module,
                             MailtcExtension**    extension)
 {
     MailtcModule* mod;
     MailtcExtension* ext;
     GPtrArray* modules;
-    const gchar* module_name;
-    gsize i;
+    GPtrArray* extensions;
+    const gchar* mod_name;
+    const gchar* ext_name;
+    guint i;
+    guint j;
 
     g_assert (MAILTC_IS_MODULE_MANAGER (manager));
 
-    /* FIXME all this assumes that there is one extension per module */
     modules = manager->priv->modules;
     if (!modules)
         return FALSE;
 
-    /* FIXME could eventually use a hash table */
     for (i = 0; i < modules->len; i++)
     {
-        ext = g_ptr_array_index (modules, i);
-
-        mod = MAILTC_MODULE (mailtc_extension_get_module (ext));
-        module_name = mailtc_module_get_name (mod);
-
-        if (!g_strcmp0 (name, module_name))
+        extensions = g_ptr_array_index (modules, i);
+        if (extensions && extensions->len > 0)
         {
-            if (module)
-                *module = mod;
-            else
-                g_object_unref (mod);
+            j = 0;
+            ext = g_ptr_array_index (extensions, j);
+            g_assert (ext);
 
-            if (extension)
-                *extension = ext;
-            return TRUE;
+            mod = MAILTC_MODULE (mailtc_extension_get_module (ext));
+            mod_name = mailtc_module_get_name (mod);
+
+            if (!g_strcmp0 (module_name, mod_name))
+            {
+                if (extension_name)
+                {
+                    do
+                    {
+                        ext_name = mailtc_extension_get_name (ext);
+                        if (!g_strcmp0 (extension_name, ext_name))
+                            break;
+
+                        ext = g_ptr_array_index (extensions, ++j);
+                    } while (j < extensions->len);
+
+                    if (ext && extension)
+                        *extension = ext;
+                }
+                if (ext)
+                {
+                    if (module)
+                        *module = mod;
+                    else
+                        g_object_unref (mod);
+                    return TRUE;
+                }
+            }
+            g_object_unref (mod);
         }
-        g_object_unref (mod);
     }
-
     return FALSE;
 }
 
 MailtcExtension*
 mailtc_module_manager_find_extension (MailtcModuleManager* manager,
-                                      const gchar*         module_name)
+                                      const gchar*         module_name,
+                                      const gchar*         extension_name)
 {
    MailtcExtension* extension = NULL;
 
-   mailtc_module_manager_find (manager, module_name, NULL, &extension);
+   mailtc_module_manager_find (manager, module_name, extension_name, NULL, &extension);
 
    return extension;
 }
@@ -290,7 +334,7 @@ mailtc_module_manager_find_module (MailtcModuleManager* manager,
 {
    MailtcModule* module = NULL;
 
-   mailtc_module_manager_find (manager, module_name, &module, NULL);
+   mailtc_module_manager_find (manager, module_name, NULL, &module, NULL);
 
    return module;
 }
@@ -302,21 +346,28 @@ mailtc_module_manager_foreach_extension (MailtcModuleManager* manager,
 {
     MailtcExtension* extension;
     GPtrArray* modules;
+    GPtrArray* extensions;
     gsize i;
+    gsize j;
 
     g_assert (MAILTC_IS_MODULE_MANAGER (manager));
 
-    /* FIXME all this assumes that there is one extension per module */
     modules = manager->priv->modules;
     if (modules && func)
     {
-        /* FIXME could eventually use a hash table */
         for (i = 0; i < modules->len; i++)
         {
-            extension = g_ptr_array_index (modules, i);
+            extensions = g_ptr_array_index (modules, i);
+            if (extensions)
+            {
+                for (j = 0; j < extensions->len; j++)
+                {
+                    extension = g_ptr_array_index (extensions, i);
 
-            if (MAILTC_IS_EXTENSION (extension))
-                (*func) (extension, user_data);
+                    if (MAILTC_IS_EXTENSION (extension))
+                        (*func) (extension, user_data);
+                }
+            }
         }
     }
 }

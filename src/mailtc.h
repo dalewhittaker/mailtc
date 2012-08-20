@@ -48,6 +48,7 @@
 #define MAILTC_ACCOUNT_PROPERTY_USER                "user"
 #define MAILTC_ACCOUNT_PROPERTY_PASSWORD            "password"
 #define MAILTC_ACCOUNT_PROPERTY_PROTOCOL            "protocol"
+#define MAILTC_ACCOUNT_PROPERTY_MODULE              "module"
 #define MAILTC_ACCOUNT_PROPERTY_EXTENSION           "extension"
 #define MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR         "iconcolour"
 #define MAILTC_ACCOUNT_PROPERTY_PRIVATE             "private"

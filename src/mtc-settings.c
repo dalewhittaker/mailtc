@@ -342,6 +342,7 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
     GPtrArray* accounts;
     GObject* obj;
     const gchar* module_name;
+    const gchar* extension_name;
     gchar* key_group;
     gchar** groups;
     guint i;
@@ -368,9 +369,11 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         mailtc_settings_keyfile_write_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD);
 
         extension = mailtc_account_get_extension (account);
+        extension_name = mailtc_extension_get_name (extension);
         module = MAILTC_MODULE (mailtc_extension_get_module (extension));
         module_name = mailtc_module_get_name (module);
-        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, module_name);
+        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, module_name);
+        g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, extension_name);
         g_object_unref (module);
         g_object_unref (extension);
         g_free (key_group);
@@ -404,7 +407,8 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
         MailtcExtension* extension;
         GPtrArray* accounts;
         GObject* obj;
-        gchar* str;
+        gchar* module_name;
+        gchar* extension_name;
         const gchar* key_group;
         gsize i;
         gboolean success;
@@ -437,16 +441,18 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
                 success = mailtc_settings_keyfile_read_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, error);
             if (success)
             {
-                str = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, error);
+                module_name = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_MODULE, error);
+                extension_name = g_key_file_get_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, error);
 
-                extension = mailtc_module_manager_find_extension (settings->modules, str);
+                extension = mailtc_module_manager_find_extension (settings->modules, module_name, extension_name);
                 if (extension)
                     mailtc_account_set_extension (account, extension);
 #if 0
                 else
                     /* FIXME GError */
 #endif
-                g_free (str);
+                g_free (extension_name);
+                g_free (module_name);
             }
             if (success)
                 g_ptr_array_add (accounts, account);
