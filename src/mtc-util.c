@@ -69,7 +69,9 @@ mailtc_gtk_message (GtkWidget*     parent,
             mailtc_info (s);
             break;
         case GTK_MESSAGE_ERROR:
+            mailtc_error (s);
             icon = GTK_STOCK_DIALOG_ERROR;
+            break;
         default:
             mailtc_error (s);
             icon = NULL;
