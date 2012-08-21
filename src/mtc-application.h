@@ -57,12 +57,6 @@ mailtc_application_set_settings    (MailtcApplication* app,
 MailtcSettings*
 mailtc_application_get_settings    (MailtcApplication* app);
 
-void
-mailtc_application_set_log_glib    (MailtcApplication* app);
-
-void
-mailtc_application_set_log_gtk     (MailtcApplication* app);
-
 G_END_DECLS
 
 #endif /* __MAILTC_APPLICATION_H__ */

@@ -21,6 +21,7 @@
 #define __MAILTC_UTIL_H__
 
 #include <gdk/gdk.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -40,7 +41,14 @@ void
 mailtc_gerror               (GError**     error);
 
 void
-mailtc_gerror_warn          (GError**     error);
+mailtc_gerror_gtk           (GtkWidget* parent,
+                             GError**   error);
+
+void
+mailtc_gtk_message          (GtkWidget*     parent,
+                             GtkMessageType msg_type,
+                             const gchar*   format,
+                             ...);
 
 void
 mailtc_log                  (GIOChannel*  log,

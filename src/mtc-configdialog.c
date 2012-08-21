@@ -105,8 +105,7 @@ enum
 static void
 mailtc_config_dialog_destroy_cb (GtkWidget* widget)
 {
-    (void) widget;
-    mailtc_info ("Now run " PACKAGE " to check mail.");
+    mailtc_gtk_message (widget, GTK_MESSAGE_INFO, "Now run " PACKAGE " to check mail.");
     mailtc_quit ();
 }
 
@@ -155,7 +154,7 @@ mailtc_config_dialog_response_cb (GtkWidget* dialog,
         mailtc_settings_set_neterror (settings, net_error);
 
         if (!mailtc_settings_write (settings, &error))
-            mailtc_gerror (&error);
+            mailtc_gerror_gtk (GTK_WIDGET (dialog_config), &error);
     }
     else if (response_id == GTK_RESPONSE_CLOSE)
         gtk_widget_destroy (dialog);
@@ -385,7 +384,7 @@ mailtc_account_update_tree_view (MailtcConfigDialog* dialog,
     {
         if (!gtk_tree_model_iter_nth_child (model, &iter, NULL, index))
         {
-            mailtc_error ("Error getting tree view iter");
+            mailtc_gtk_message (GTK_WIDGET (dialog), GTK_MESSAGE_ERROR, "Error getting tree view iter");
             return;
         }
     }
@@ -482,7 +481,7 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
 
     if (empty)
     {
-        mailtc_error ("You must enter a %s", msg);
+        mailtc_gtk_message (GTK_WIDGET (dialog_config), GTK_MESSAGE_ERROR, "You must enter a %s", msg);
         return -1;
     }
 
@@ -865,7 +864,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
                 if (index != -1)
                     mailtc_account_update_tree_view (dialog_config, index);
                 else
-                    mailtc_gerror (&error);
+                    mailtc_gerror_gtk (GTK_WIDGET (dialog_config), &error);
             break;
             case GTK_RESPONSE_CANCEL:
             default:

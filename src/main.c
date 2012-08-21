@@ -126,11 +126,7 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
             if (net_error == error_count)
             {
                 if (error)
-                {
-                    mailtc_application_set_log_glib (app);
                     mailtc_gerror (&error);
-                    mailtc_application_set_log_gtk (app);
-                }
                 if (!err_msg)
                     err_msg = g_string_new (NULL);
 
@@ -150,8 +146,9 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
 
     if (err_msg)
     {
-        mailtc_warning ("There was an error connecting to the following servers:\n\n%s\n"
-                        "Please check the " PACKAGE " log for the error.", err_msg->str);
+        mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING,
+                            "There was an error connecting to the following servers:\n\n%s\n"
+                            "Please check the " PACKAGE " log for the error.", err_msg->str);
         g_string_free (err_msg, TRUE);
     }
 }

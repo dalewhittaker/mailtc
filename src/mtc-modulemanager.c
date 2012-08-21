@@ -328,13 +328,14 @@ mailtc_module_manager_find_extension (MailtcModuleManager* manager,
    return extension;
 }
 
-static MailtcModule*
+MailtcModule*
 mailtc_module_manager_find_module (MailtcModuleManager* manager,
-                                   const gchar*         module_name)
+                                   const gchar*         module_name,
+                                   const gchar*         extension_name)
 {
    MailtcModule* module = NULL;
 
-   mailtc_module_manager_find (manager, module_name, NULL, &module, NULL);
+   mailtc_module_manager_find (manager, module_name, extension_name, &module, NULL);
 
    return module;
 }

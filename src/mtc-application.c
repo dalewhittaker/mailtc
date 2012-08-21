@@ -19,7 +19,6 @@
 
 #include <config.h>
 #include "mtc-application.h"
-#include "mtc-configdialog.h" /* FIXME eventually remove */
 #include "mtc-util.h"
 #include "mtc-modulemanager.h"
 
@@ -134,7 +133,7 @@ mailtc_application_glib_handler (const gchar*   log_domain,
     g_free (s);
 }
 
-void
+static void
 mailtc_application_set_log_glib (MailtcApplication* app)
 {
     GIOChannel* log = NULL;
@@ -152,99 +151,6 @@ mailtc_application_set_log_glib (MailtcApplication* app)
                        G_LOG_FLAG_FATAL |
                        G_LOG_FLAG_RECURSION,
                        (GLogFunc) mailtc_application_glib_handler,
-                       log);
-}
-
-static void
-mailtc_application_gtk_handler (const gchar*              log_domain,
-                                GLogLevelFlags            log_level,
-                                const gchar*              message,
-                                GIOChannel*               log)
-{
-    gchar* s;
-    GtkMessageType msg_type;
-    const gchar* icon = NULL;
-
-    (void) log_domain;
-
-    s = g_strdup (message);
-    g_strchomp (s);
-
-    switch (log_level & G_LOG_LEVEL_MASK)
-    {
-        case G_LOG_LEVEL_ERROR:
-            msg_type = GTK_MESSAGE_QUESTION;
-            break;
-        case G_LOG_LEVEL_CRITICAL:
-            msg_type = GTK_MESSAGE_ERROR;
-            icon = GTK_STOCK_DIALOG_ERROR;
-            break;
-        case G_LOG_LEVEL_WARNING:
-            msg_type = GTK_MESSAGE_WARNING;
-            icon = GTK_STOCK_DIALOG_WARNING;
-            break;
-        case G_LOG_LEVEL_INFO:
-            msg_type = GTK_MESSAGE_INFO;
-            icon = GTK_STOCK_DIALOG_INFO;
-            break;
-        default:
-            msg_type = GTK_MESSAGE_OTHER;
-    }
-
-    if (msg_type == GTK_MESSAGE_QUESTION)
-        g_printerr ("%s\n", s);
-    else
-    {
-        GList* l;
-        GList* w;
-        GtkWidget* toplevel;
-        GtkWidget* dialog = NULL;
-
-        w = gtk_window_list_toplevels ();
-
-        for (l = w; l; l = l->next)
-        {
-            if (MAILTC_IS_CONFIG_DIALOG (l->data))
-                dialog = GTK_WIDGET (l->data);
-
-            g_list_free (w);
-        }
-
-        toplevel = dialog ? gtk_widget_get_toplevel (dialog) : NULL;
-
-        dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
-                                         GTK_WINDOW (toplevel) : NULL,
-                                         GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         msg_type,
-                                         GTK_BUTTONS_OK,
-                                         "%s", s);
-        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
-        if (icon)
-            gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
-        gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
-    }
-    mailtc_log (log, s);
-    g_free (s);
-}
-
-void
-mailtc_application_set_log_gtk (MailtcApplication* app)
-{
-    GIOChannel* log = NULL;
-
-    if (app)
-    {
-        g_assert (MAILTC_IS_APPLICATION (app));
-
-        log = app->priv->log;
-    }
-    g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR);
-    g_log_set_handler (NULL,
-                       G_LOG_LEVEL_MASK |
-                       G_LOG_FLAG_FATAL |
-                       G_LOG_FLAG_RECURSION,
-                       (GLogFunc) mailtc_application_gtk_handler,
                        log);
 }
 
@@ -379,8 +285,6 @@ mailtc_application_server_init (MailtcApplication* app,
 
     priv->manager = manager;
 
-    mailtc_application_set_log_gtk (app);
-
     filename = mailtc_application_file (app, MAILTC_APPLICATION_CONFIG_NAME);
     settings = mailtc_settings_new (filename, priv->manager, error);
     g_free (filename);
@@ -395,7 +299,7 @@ mailtc_application_server_init (MailtcApplication* app,
         accounts = mailtc_settings_get_accounts (settings);
         if (accounts->len == 0)
         {
-            mailtc_warning ("Incomplete settings found.\nPlease enter configuration settings");
+            mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING, "Incomplete settings found.\nPlease enter configuration settings");
             mode = MAILTC_MODE_CONFIG;
             g_object_unref (accounts);
         }
@@ -586,7 +490,7 @@ mailtc_application_command_line_cb (GApplication*            app,
             if (is_running)
             {
                 g_assert (gtk_main_level () > 0);
-                mailtc_warning ("An instance of %s is already running.", PACKAGE);
+                mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING, "An instance of %s is already running.", PACKAGE);
             }
             else
             {

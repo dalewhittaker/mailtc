@@ -51,6 +51,11 @@ mailtc_module_manager_find_extension    (MailtcModuleManager* manager,
                                          const gchar*         module_name,
                                          const gchar*         extension_name);
 
+MailtcModule*
+mailtc_module_manager_find_module       (MailtcModuleManager* manager,
+                                         const gchar*         module_name,
+                                         const gchar*         extension_name);
+
 void
 mailtc_module_manager_foreach_extension (MailtcModuleManager* manager,
                                          GFunc                func,

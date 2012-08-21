@@ -187,6 +187,7 @@ run_plugin_thread (server_data* data)
     MailtcModule* module;
     MailtcExtension* extension;
     MailtcExtensionInitFunc extension_init;
+    GSList* extensions;
     GArray* protocols;
     GDir* dir;
     gchar* directory;
@@ -229,7 +230,10 @@ run_plugin_thread (server_data* data)
     g_assert (edirectory);
     g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    extension = extension_init (directory);
+    extensions = extension_init (directory);
+    /* FIXME assumes one extension. */
+    extension = extensions->data;
+    g_slist_free (extensions);
     g_assert (extension);
     g_assert (mailtc_extension_is_valid (extension, NULL));
     protocols = mailtc_extension_get_protocols (extension);

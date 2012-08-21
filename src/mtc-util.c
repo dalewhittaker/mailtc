@@ -18,10 +18,8 @@
  */
 
 #include "mtc-util.h"
-#include "mtc-application.h"
 
 #include <config.h>
-#include <gtk/gtk.h>
 #include <glib/gstdio.h>
 
 gchar*
@@ -38,9 +36,61 @@ mailtc_info (const gchar* format,
              ...)
 {
     va_list args;
+
     va_start (args, format);
     g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format, args);
     va_end (args);
+}
+
+void
+mailtc_gtk_message (GtkWidget*     parent,
+                    GtkMessageType msg_type,
+                    const gchar*   format,
+                    ...)
+{
+    GtkWidget* toplevel;
+    GtkWidget* dialog;
+    const gchar* icon;
+    gchar* s;
+    va_list args;
+
+    va_start (args, format);
+    s = g_strdup_vprintf (format, args);
+    va_end (args);
+
+    switch (msg_type)
+    {
+        case GTK_MESSAGE_WARNING:
+            icon = GTK_STOCK_DIALOG_WARNING;
+            mailtc_warning (s);
+            break;
+        case GTK_MESSAGE_INFO:
+            icon = GTK_STOCK_DIALOG_INFO;
+            mailtc_info (s);
+            break;
+        case GTK_MESSAGE_ERROR:
+            icon = GTK_STOCK_DIALOG_ERROR;
+        default:
+            mailtc_error (s);
+            icon = NULL;
+    }
+
+    if (icon)
+    {
+        toplevel = gtk_widget_get_toplevel (parent);
+
+        dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
+                                         GTK_WINDOW (toplevel) : NULL,
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         msg_type,
+                                         GTK_BUTTONS_OK,
+                                         "%s", s);
+        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
+        gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+        g_free (s);
+    }
 }
 
 void
@@ -54,11 +104,12 @@ mailtc_gerror (GError** error)
 }
 
 void
-mailtc_gerror_warn (GError** error)
+mailtc_gerror_gtk (GtkWidget* parent,
+                   GError**   error)
 {
     if (error && *error)
     {
-        mailtc_warning ("%s", (*error)->message);
+        mailtc_gtk_message (parent, GTK_MESSAGE_ERROR, "%s", (*error)->message);
         g_clear_error (error);
     }
 }
@@ -102,14 +153,11 @@ mailtc_run_command (const gchar* command)
 
     error = NULL;
 
-    /* TODO could allow more information to be used
-     * (e.g number of new mails, account etc)
-     */
+    /* TODO could allow more information to be used (e.g number of new mails, account etc) */
     args = g_strsplit (command, " ", 0);
 
-    if (!g_spawn_async (NULL, args, NULL, G_SPAWN_SEARCH_PATH,
-                        NULL, NULL, NULL, &error))
-        mailtc_gerror (&error);
+    if (!g_spawn_async (NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error))
+        mailtc_gerror_gtk (NULL, &error);
 
     g_strfreev (args);
 }
@@ -117,9 +165,7 @@ mailtc_run_command (const gchar* command)
 gboolean
 mailtc_quit (void)
 {
-    mailtc_application_set_log_glib (NULL);
     gtk_main_quit ();
-
     return FALSE;
 }
 
