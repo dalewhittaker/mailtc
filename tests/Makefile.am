@@ -44,7 +44,6 @@ test_pop_SOURCES = \
 		$(top_srcdir)/src/mtc-configdialog.c \
 		$(top_srcdir)/src/mtc-envelope.c \
 		$(top_srcdir)/src/mtc-extension.c \
-		$(top_srcdir)/src/mtc-marshal.c \
 		$(top_srcdir)/src/mtc-module.c \
 		$(top_srcdir)/src/mtc-modulemanager.c \
 		$(top_srcdir)/src/mtc-settings.c \

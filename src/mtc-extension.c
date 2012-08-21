@@ -18,7 +18,6 @@
  */
 #include "mtc-extension.h"
 #include "mtc-account.h"
-#include "mtc-marshal.h"
 #include "mtc-module.h"
 #include "mtc-util.h"
 
@@ -537,7 +536,7 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                                 G_STRUCT_OFFSET (MailtcExtensionClass, add_account),
                                                 NULL,
                                                 NULL,
-                                                mailtc_marshal_BOOLEAN__OBJECT,
+                                                NULL,
                                                 G_TYPE_BOOLEAN,
                                                 1,
                                                 MAILTC_TYPE_ACCOUNT);
@@ -548,7 +547,7 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                                    G_STRUCT_OFFSET (MailtcExtensionClass, remove_account),
                                                    NULL,
                                                    NULL,
-                                                   mailtc_marshal_BOOLEAN__OBJECT,
+                                                   NULL,
                                                    G_TYPE_BOOLEAN,
                                                    1,
                                                    MAILTC_TYPE_ACCOUNT);
@@ -559,7 +558,7 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                                  G_STRUCT_OFFSET (MailtcExtensionClass, get_messages),
                                                  NULL,
                                                  NULL,
-                                                 mailtc_marshal_INT64__OBJECT_BOOLEAN,
+                                                 NULL,
                                                  G_TYPE_INT64,
                                                  2,
                                                  MAILTC_TYPE_ACCOUNT,
@@ -571,7 +570,7 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                                   G_STRUCT_OFFSET (MailtcExtensionClass, read_messages),
                                                   NULL,
                                                   NULL,
-                                                  mailtc_marshal_BOOLEAN__OBJECT,
+                                                  NULL,
                                                   G_TYPE_BOOLEAN,
                                                   1,
                                                   MAILTC_TYPE_ACCOUNT);

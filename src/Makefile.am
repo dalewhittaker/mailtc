@@ -38,16 +38,6 @@ LDADD = \
 		$(GTK_LIBS) \
 		$(GTHREAD_LIBS)
 
-mtc-marshal.h: mtc-marshal.list
-		glib-genmarshal --prefix=mailtc_marshal mtc-marshal.list --header > mtc-marshal.h
-
-mtc-marshal.c: mtc-marshal.list
-		glib-genmarshal --prefix=mailtc_marshal mtc-marshal.list --body > mtc-marshal.c
-
-BUILT_SOURCES = \
-		mtc-marshal.h \
-		mtc-marshal.c
-
 mailtc_SOURCES = \
 		mtc-account.c \
 		mtc-application.c \
@@ -55,7 +45,6 @@ mailtc_SOURCES = \
 		mtc-configdialog.c \
 		mtc-envelope.c \
 		mtc-extension.c \
-		mtc-marshal.c \
 		mtc-module.c \
 		mtc-modulemanager.c \
 		mtc-settings.c \
@@ -65,20 +54,14 @@ mailtc_SOURCES = \
 
 EXTRA_DIST = \
 		mailtc.h \
-		mtc-marshal.list \
 		mtc-account.h \
 		mtc-application.h \
 		mtc-checker.h \
 		mtc-configdialog.h \
 		mtc-envelope.h \
 		mtc-extension.h \
-		mtc-marshal.h \
 		mtc-module.h \
 		mtc-modulemanager.h \
 		mtc-settings.h \
 		mtc-statusicon.h \
 		mtc-util.h
-
-CLEANFILES = \
-		mtc-marshal.c \
-		mtc-marshal.h
