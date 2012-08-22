@@ -291,7 +291,7 @@ mailtc_extension_add_account (MailtcExtension* extension,
         return FALSE;
     }
 
-    return add_account (extension, account);
+    return add_account (extension, account, error);
 }
 
 gboolean
@@ -315,7 +315,7 @@ mailtc_extension_remove_account (MailtcExtension* extension,
         return FALSE;
     }
 
-    return remove_account (extension, account);
+    return remove_account (extension, account, error);
 }
 
 gboolean
@@ -339,7 +339,7 @@ mailtc_extension_read_messages (MailtcExtension* extension,
         return FALSE;
     }
 
-    return read_messages (extension, account);
+    return read_messages (extension, account, error);
 }
 
 gint64
@@ -364,7 +364,7 @@ mailtc_extension_get_messages (MailtcExtension* extension,
         return FALSE;
     }
 
-    return get_messages (extension, account, debug);
+    return get_messages (extension, account, debug, error);
 }
 
 static void

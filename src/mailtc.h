@@ -66,16 +66,25 @@ typedef struct _MailtcExtensionClass   MailtcExtensionClass;
 typedef struct _MailtcExtensionPrivate MailtcExtensionPrivate;
 
 typedef gboolean
-(*MailtcExtensionAddAccountFunc)       (MailtcExtension* extension, GObject* account);
+(*MailtcExtensionAddAccountFunc)       (MailtcExtension* extension,
+                                        GObject*         account,
+                                        GError**         error);
 
 typedef gboolean
-(*MailtcExtensionRemoveAccountFunc)    (MailtcExtension* extension, GObject* account);
+(*MailtcExtensionRemoveAccountFunc)    (MailtcExtension* extension,
+                                        GObject*         account,
+                                        GError**         error);
 
 typedef gboolean
-(*MailtcExtensionReadMessagesFunc)     (MailtcExtension* extension, GObject* account);
+(*MailtcExtensionReadMessagesFunc)     (MailtcExtension* extension,
+                                        GObject*         account,
+                                        GError**         error);
 
 typedef gint64
-(*MailtcExtensionGetMessagesFunc)      (MailtcExtension* extension, GObject* account, gboolean debug);
+(*MailtcExtensionGetMessagesFunc)      (MailtcExtension* extension,
+                                        GObject*         account,
+                                        gboolean         debug,
+                                        GError**         error);
 
 struct _MailtcProtocol
 {
