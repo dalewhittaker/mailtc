@@ -53,6 +53,13 @@
     mailtc_object_set_object (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                               #property, (GObject **) (&settings->property), G_OBJECT (property))
 
+#define MAILTC_SETTINGS_ERROR  g_quark_from_string ("MAILTC_SETTINGS_ERROR")
+
+typedef enum
+{
+    MAILTC_SETTINGS_ERROR_FIND_EXTENSION = 0
+} MailtcApplicationError;
+
 struct _MailtcSettingsPrivate
 {
     GKeyFile* key_file;
@@ -446,10 +453,16 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
 
                 extension = mailtc_module_manager_find_extension (settings->modules, module_name, extension_name);
                 if (extension)
-                    mailtc_account_update_extension (account, extension, NULL); /* FIXME GError */
+                    success = mailtc_account_update_extension (account, extension, error);
                 else
                 {
-                    /* FIXME GError */
+                    g_set_error (error,
+                                 MAILTC_SETTINGS_ERROR,
+                                 MAILTC_SETTINGS_ERROR_FIND_EXTENSION,
+                                 "Error: could not find extension %s in %s",
+                                 extension_name, module_name);
+
+                    success = FALSE;
                 }
                 g_free (extension_name);
                 g_free (module_name);
