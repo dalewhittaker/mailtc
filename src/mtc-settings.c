@@ -447,9 +447,9 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
                 extension = mailtc_module_manager_find_extension (settings->modules, module_name, extension_name);
                 if (extension)
                     mailtc_account_set_extension (account, extension);
+                /* FIXME GError */
 #if 0
                 else
-                    /* FIXME GError */
 #endif
                 g_free (extension_name);
                 g_free (module_name);
@@ -635,8 +635,11 @@ mailtc_settings_free_account (MailtcAccount* account)
     extension = mailtc_account_get_extension (account);
     if (extension)
     {
-        /* FIXME GError */
-        mailtc_extension_remove_account (extension, G_OBJECT (account), NULL);
+        GError* error = NULL;
+
+        if (!mailtc_extension_remove_account (extension, G_OBJECT (account), &error))
+            mailtc_gerror (&error);
+
         g_object_unref (extension);
     }
     g_object_unref (account);

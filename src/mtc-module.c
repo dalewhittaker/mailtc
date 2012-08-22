@@ -227,9 +227,11 @@ static void
 mailtc_module_finalize (GObject* object)
 {
     MailtcModule* module = MAILTC_MODULE (object);
+    GError* error = NULL;
 
     g_free (module->name);
-    g_assert (mailtc_module_unload (module, NULL)); /* FIXME GError */
+    if (!mailtc_module_unload (module, &error))
+        mailtc_gerror (&error);
 
     G_OBJECT_CLASS (mailtc_module_parent_class)->finalize (object);
 }

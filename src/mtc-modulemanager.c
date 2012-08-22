@@ -419,8 +419,11 @@ static void
 mailtc_module_manager_finalize (GObject* object)
 {
     MailtcModuleManager* manager = MAILTC_MODULE_MANAGER (object);
+    GError* error = NULL;
 
-    mailtc_module_manager_unload (manager, NULL); /* FIXME GError */
+    if (!mailtc_module_manager_unload (manager, &error))
+        mailtc_gerror (&error);
+
     g_clear_error (&manager->priv->error);
 
     g_free (manager->priv->directory);
