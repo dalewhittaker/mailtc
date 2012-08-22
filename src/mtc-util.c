@@ -48,8 +48,6 @@ mailtc_gtk_message (GtkWidget*     parent,
                     const gchar*   format,
                     ...)
 {
-    GtkWidget* toplevel;
-    GtkWidget* dialog;
     const gchar* icon;
     gchar* s;
     va_list args;
@@ -79,10 +77,12 @@ mailtc_gtk_message (GtkWidget*     parent,
 
     if (icon)
     {
-        toplevel = gtk_widget_get_toplevel (parent);
+        GtkWidget* dialog;
+        GtkWindow* toplevel;
 
-        dialog = gtk_message_dialog_new (toplevel && gtk_widget_is_toplevel (toplevel) ?
-                                         GTK_WINDOW (toplevel) : NULL,
+        toplevel = parent ? GTK_WINDOW (gtk_widget_get_toplevel (parent)) : NULL;
+
+        dialog = gtk_message_dialog_new (toplevel,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
                                          msg_type,
                                          GTK_BUTTONS_OK,
