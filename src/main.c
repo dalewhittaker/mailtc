@@ -41,10 +41,9 @@ mailtc_read_mail (GPtrArray* accounts)
 
         extension = mailtc_account_get_extension (account);
 
-        if (!mailtc_extension_read_messages (extension, G_OBJECT (account)))
-        {
-            /* FIXME GError */
-        }
+        if (!mailtc_extension_read_messages (extension, G_OBJECT (account), &error))
+            mailtc_gerror (&error);
+
         g_object_unref (extension);
     }
 }
@@ -113,8 +112,7 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
 
         error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
 
-        /* FIXME GError */
-        messages = mailtc_extension_get_messages (extension, G_OBJECT (account), debug);
+        messages = mailtc_extension_get_messages (extension, G_OBJECT (account), debug, &error);
         if (messages >= 0 && !error)
         {
             mailtc_status_icon_update (statusicon, id++, messages);

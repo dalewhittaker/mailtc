@@ -73,17 +73,6 @@ enum
     PROP_PROTOCOLS
 };
 
-enum
-{
-    SIGNAL_ADD_ACCOUNT = 0,
-    SIGNAL_REMOVE_ACCOUNT,
-    SIGNAL_GET_MESSAGES,
-    SIGNAL_READ_MESSAGES,
-    SIGNAL_LAST
-};
-
-static guint signals[SIGNAL_LAST];
-
 G_DEFINE_TYPE (MailtcExtension, mailtc_extension, G_TYPE_OBJECT)
 
 static void
@@ -209,10 +198,7 @@ gboolean
 mailtc_extension_is_valid (MailtcExtension* extension,
                            GError**         error)
 {
-    gboolean report_error;
     gboolean compatible = FALSE;
-
-    report_error = (error && !*error) ? TRUE : FALSE;
 
     if (extension)
     {
@@ -235,50 +221,48 @@ mailtc_extension_is_valid (MailtcExtension* extension,
                         {
                             if (protocols->len > 0)
                             {
-                                guint i;
+                                MailtcExtensionClass* klass;
 
-                                compatible = TRUE;
+                                klass = MAILTC_EXTENSION_GET_CLASS (extension);
 
-                                for (i = 0; i < (guint) SIGNAL_LAST; i++)
-                                {
-                                    if (!g_signal_has_handler_pending (extension, signals[i], 0, FALSE))
-                                    {
-                                        compatible = FALSE;
-                                        break;
-                                    }
-                                }
+                                if (klass->add_account && klass->remove_account && klass->read_messages && klass->get_messages)
+                                    compatible = TRUE;
                             }
                             g_array_unref (protocols);
                         }
                     }
-                    if (!compatible && report_error)
+                    if (!compatible)
                     {
-                        *error = g_error_new (MAILTC_EXTENSION_ERROR,
-                                              MAILTC_EXTENSION_ERROR_INCOMPLETE,
-                                              "Error: extension %s has incomplete information",
-                                              name);
+                        g_set_error (error,
+                                     MAILTC_EXTENSION_ERROR,
+                                     MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                                     "Error: extension %s has incomplete information",
+                                     name);
                     }
                 }
-                else if (report_error)
+                else
                 {
-                    *error = g_error_new (MAILTC_EXTENSION_ERROR,
-                                          MAILTC_EXTENSION_ERROR_INCOMPLETE,
-                                          "Error: extension has incomplete information");
+                    g_set_error_literal (error,
+                                         MAILTC_EXTENSION_ERROR,
+                                         MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                                         "Error: extension has incomplete information");
                 }
             }
-            else if (report_error)
+            else
             {
-                *error = g_error_new (MAILTC_EXTENSION_ERROR,
-                                      MAILTC_EXTENSION_ERROR_COMPATIBILITY,
-                                      "Error: extension %s has incompatible version",
-                                      name);
+                g_set_error (error,
+                             MAILTC_EXTENSION_ERROR,
+                             MAILTC_EXTENSION_ERROR_COMPATIBILITY,
+                             "Error: extension %s has incompatible version",
+                             name);
             }
         }
-        else if (report_error)
+        else
         {
-            *error = g_error_new (MAILTC_EXTENSION_ERROR,
-                                  MAILTC_EXTENSION_ERROR_TYPE,
-                                  "Error: invalid extension type");
+            g_set_error_literal (error,
+                                 MAILTC_EXTENSION_ERROR,
+                                 MAILTC_EXTENSION_ERROR_TYPE,
+                                 "Error: invalid extension type");
         }
         if (!compatible && G_IS_OBJECT (extension))
             g_object_unref (extension);
@@ -288,59 +272,99 @@ mailtc_extension_is_valid (MailtcExtension* extension,
 
 gboolean
 mailtc_extension_add_account (MailtcExtension* extension,
-                              GObject*         account)
+                              GObject*         account,
+                              GError**         error)
 {
-    gboolean ret = FALSE;
+    MailtcExtensionAddAccountFunc add_account;
 
     g_assert (MAILTC_IS_EXTENSION (extension));
 
-    /* FIXME GError */
-    g_signal_emit (extension, signals[SIGNAL_ADD_ACCOUNT], 0, account, &ret);
+    add_account = MAILTC_EXTENSION_GET_CLASS (extension)->add_account;
 
-    return ret;
+    if (!add_account)
+    {
+        g_set_error (error,
+                     MAILTC_EXTENSION_ERROR,
+                     MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                     "Error: extension %s is missing add_account",
+                     mailtc_extension_get_name);
+        return FALSE;
+    }
+
+    return add_account (extension, account);
 }
 
 gboolean
 mailtc_extension_remove_account (MailtcExtension* extension,
-                                 GObject*         account)
+                                 GObject*         account,
+                                 GError**         error)
 {
-    gboolean ret = FALSE;
+    MailtcExtensionRemoveAccountFunc remove_account;
 
     g_assert (MAILTC_IS_EXTENSION (extension));
 
-    /* FIXME GError */
-    g_signal_emit (extension, signals[SIGNAL_REMOVE_ACCOUNT], 0, account, &ret);
+    remove_account = MAILTC_EXTENSION_GET_CLASS (extension)->remove_account;
 
-    return ret;
+    if (!remove_account)
+    {
+        g_set_error (error,
+                     MAILTC_EXTENSION_ERROR,
+                     MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                     "Error: extension %s is missing remove_account",
+                     mailtc_extension_get_name);
+        return FALSE;
+    }
+
+    return remove_account (extension, account);
 }
 
 gboolean
 mailtc_extension_read_messages (MailtcExtension* extension,
-                                GObject*         account)
+                                GObject*         account,
+                                GError**         error)
 {
-    gboolean ret = FALSE;
+    MailtcExtensionReadMessagesFunc read_messages;
 
     g_assert (MAILTC_IS_EXTENSION (extension));
 
-    /* FIXME GError */
-    g_signal_emit (extension, signals[SIGNAL_READ_MESSAGES], 0, account, &ret);
+    read_messages = MAILTC_EXTENSION_GET_CLASS (extension)->read_messages;
 
-    return ret;
+    if (!read_messages)
+    {
+        g_set_error (error,
+                     MAILTC_EXTENSION_ERROR,
+                     MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                     "Error: extension %s is missing read_messages",
+                     mailtc_extension_get_name);
+        return FALSE;
+    }
+
+    return read_messages (extension, account);
 }
 
 gint64
 mailtc_extension_get_messages (MailtcExtension* extension,
                                GObject*         account,
-                               gboolean         debug)
+                               gboolean         debug,
+                               GError**         error)
 {
-    gint64 nmessages;
+    MailtcExtensionGetMessagesFunc get_messages;
 
     g_assert (MAILTC_IS_EXTENSION (extension));
 
-    /* FIXME GError */
-    g_signal_emit (extension, signals[SIGNAL_GET_MESSAGES], 0, account, debug, &nmessages);
+    get_messages = MAILTC_EXTENSION_GET_CLASS (extension)->get_messages;
 
-    return nmessages;
+    if (!get_messages)
+    {
+        g_set_error (error,
+                     MAILTC_EXTENSION_ERROR,
+                     MAILTC_EXTENSION_ERROR_INCOMPLETE,
+                     "Error: extension %s is missing get_messages",
+                     mailtc_extension_get_name);
+        return FALSE;
+    }
+
+    return get_messages (extension, account, debug);
 }
 
 static void
@@ -465,6 +489,11 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
     gobject_class->set_property = mailtc_extension_set_property;
     gobject_class->get_property = mailtc_extension_get_property;
 
+    klass->add_account = NULL;
+    klass->remove_account = NULL;
+    klass->read_messages = NULL;
+    klass->get_messages = NULL;
+
     flags = G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT;
 
     g_object_class_install_property (gobject_class,
@@ -529,51 +558,6 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                      "The extension protocols",
                                      G_TYPE_ARRAY,
                                      flags));
-
-    signals[SIGNAL_ADD_ACCOUNT] = g_signal_new (MAILTC_EXTENSION_SIGNAL_ADD_ACCOUNT,
-                                                G_TYPE_FROM_CLASS (gobject_class),
-                                                G_SIGNAL_RUN_LAST,
-                                                G_STRUCT_OFFSET (MailtcExtensionClass, add_account),
-                                                NULL,
-                                                NULL,
-                                                NULL,
-                                                G_TYPE_BOOLEAN,
-                                                1,
-                                                MAILTC_TYPE_ACCOUNT);
-
-    signals[SIGNAL_REMOVE_ACCOUNT] = g_signal_new (MAILTC_EXTENSION_SIGNAL_REMOVE_ACCOUNT,
-                                                   G_TYPE_FROM_CLASS (gobject_class),
-                                                   G_SIGNAL_RUN_LAST,
-                                                   G_STRUCT_OFFSET (MailtcExtensionClass, remove_account),
-                                                   NULL,
-                                                   NULL,
-                                                   NULL,
-                                                   G_TYPE_BOOLEAN,
-                                                   1,
-                                                   MAILTC_TYPE_ACCOUNT);
-
-    signals[SIGNAL_GET_MESSAGES] = g_signal_new (MAILTC_EXTENSION_SIGNAL_GET_MESSAGES,
-                                                 G_TYPE_FROM_CLASS (gobject_class),
-                                                 G_SIGNAL_RUN_LAST,
-                                                 G_STRUCT_OFFSET (MailtcExtensionClass, get_messages),
-                                                 NULL,
-                                                 NULL,
-                                                 NULL,
-                                                 G_TYPE_INT64,
-                                                 2,
-                                                 MAILTC_TYPE_ACCOUNT,
-                                                 G_TYPE_BOOLEAN);
-
-    signals[SIGNAL_READ_MESSAGES] = g_signal_new (MAILTC_EXTENSION_SIGNAL_READ_MESSAGES,
-                                                  G_TYPE_FROM_CLASS (gobject_class),
-                                                  G_SIGNAL_RUN_LAST,
-                                                  G_STRUCT_OFFSET (MailtcExtensionClass, read_messages),
-                                                  NULL,
-                                                  NULL,
-                                                  NULL,
-                                                  G_TYPE_BOOLEAN,
-                                                  1,
-                                                  MAILTC_TYPE_ACCOUNT);
 
     g_type_class_add_private (klass, sizeof (MailtcExtensionPrivate));
 }

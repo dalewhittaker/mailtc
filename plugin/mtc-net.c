@@ -31,9 +31,12 @@ MAILTC_DEFINE_EXTENSION (MailtcNet, mailtc_net)
 
 static gboolean
 mailtc_net_remove_account (MailtcNet* net,
-                           GObject*   account)
+                           GObject*   account,
+                           GError**   error)
 {
     MailtcUidTable* uid_table = NULL;
+
+    (void) error;
 
     g_assert (MAILTC_IS_NET (net));
     g_assert (G_IS_OBJECT (account));
@@ -51,7 +54,8 @@ mailtc_net_remove_account (MailtcNet* net,
 
 static gboolean
 mailtc_net_add_account (MailtcNet* net,
-                        GObject*   account)
+                        GObject*   account,
+                        GError**   error)
 {
     guint port;
     gchar* filename;
@@ -77,7 +81,7 @@ mailtc_net_add_account (MailtcNet* net,
 
     if (MAILTC_IS_UID_TABLE (uid_table))
     {
-        if (!mailtc_net_remove_account (net, account)) /* FIXME GError */
+        if (!mailtc_net_remove_account (net, account, error))
             return FALSE;
     }
 
@@ -92,12 +96,13 @@ mailtc_net_add_account (MailtcNet* net,
     g_free (filename);
     MAILTC_ACCOUNT_SET_PRIVATE (account, uid_table);
 
-    return mailtc_uid_table_load (uid_table, NULL); /* FIXME GError */
+    return mailtc_uid_table_load (uid_table, error);
 }
 
 static gboolean
 mailtc_net_read_messages (MailtcNet* net,
-                          GObject*   account)
+                          GObject*   account,
+                          GError**   error)
 {
     MailtcUidTable* uid_table = NULL;
 
@@ -106,7 +111,7 @@ mailtc_net_read_messages (MailtcNet* net,
 
     MAILTC_ACCOUNT_GET_PRIVATE (account, uid_table);
 
-    return mailtc_uid_table_mark_read (uid_table, NULL); /* FIXME GError */
+    return mailtc_uid_table_mark_read (uid_table, error);
 }
 
 gssize
@@ -205,10 +210,6 @@ mailtc_net_constructed (GObject* object)
 
     net->priv->sock = mailtc_socket_new ();
 
-    g_signal_connect (net, MAILTC_EXTENSION_SIGNAL_ADD_ACCOUNT, G_CALLBACK (mailtc_net_add_account), NULL);
-    g_signal_connect (net, MAILTC_EXTENSION_SIGNAL_REMOVE_ACCOUNT, G_CALLBACK (mailtc_net_remove_account), NULL);
-    g_signal_connect (net, MAILTC_EXTENSION_SIGNAL_READ_MESSAGES, G_CALLBACK (mailtc_net_read_messages), NULL);
-
     G_OBJECT_CLASS (mailtc_net_parent_class)->constructed (object);
 }
 
@@ -216,10 +217,16 @@ static void
 mailtc_net_class_init (MailtcNetClass* klass)
 {
     GObjectClass* gobject_class;
+    MailtcExtensionClass* extension_class;
 
     gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->constructed = mailtc_net_constructed;
     gobject_class->finalize = mailtc_net_finalize;
+
+    extension_class = MAILTC_BASE_EXTENSION_CLASS (klass);
+    extension_class->add_account = (MailtcExtensionAddAccountFunc) mailtc_net_add_account;
+    extension_class->remove_account = (MailtcExtensionRemoveAccountFunc) mailtc_net_remove_account;
+    extension_class->read_messages = (MailtcExtensionReadMessagesFunc) mailtc_net_read_messages;
 
     g_type_class_add_private (klass, sizeof (MailtcNetPrivate));
 }

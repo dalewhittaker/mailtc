@@ -192,14 +192,14 @@ mailtc_account_set_extension (MailtcAccount*   account,
     /* FIXME not really keen on this being here. */
     /* FIXME GError */
     if (account->extension)
-        mailtc_extension_remove_account (extension, G_OBJECT (account));
+        mailtc_extension_remove_account (extension, G_OBJECT (account), NULL);
 
     MAILTC_ACCOUNT_SET_OBJECT (account, extension);
 
     /* FIXME not really keen on this being here. */
     /* FIXME GError */
     if (extension)
-        mailtc_extension_add_account (extension, G_OBJECT (account));
+        mailtc_extension_add_account (extension, G_OBJECT (account), NULL);
 }
 
 MailtcExtension*

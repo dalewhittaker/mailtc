@@ -71,20 +71,24 @@ mailtc_extension_get_protocols           (MailtcExtension* extension);
 
 gboolean
 mailtc_extension_add_account             (MailtcExtension* extension,
-                                          GObject*         account);
+                                          GObject*         account,
+                                          GError**         error);
 
 gboolean
 mailtc_extension_remove_account          (MailtcExtension* extension,
-                                          GObject*         account);
+                                          GObject*         account,
+                                          GError**         error);
 
 gboolean
 mailtc_extension_read_messages           (MailtcExtension* extension,
-                                          GObject*         account);
+                                          GObject*         account,
+                                          GError**         error);
 
 gint64
 mailtc_extension_get_messages            (MailtcExtension* extension,
                                           GObject*         account,
-                                          gboolean         debug);
+                                          gboolean         debug,
+                                          GError**         error);
 
 GType
 mailtc_extension_get_type                (void);

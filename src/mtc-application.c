@@ -321,12 +321,10 @@ mailtc_application_server_init (MailtcApplication* app,
             break;
 
         default:
-            if (error)
-            {
-                *error = g_error_new (MAILTC_APPLICATION_ERROR,
-                                      MAILTC_APPLICATION_ERROR_INVALID_OPTION,
-                                      "Error: invalid option");
-            }
+            g_set_error_literal (error,
+                                 MAILTC_APPLICATION_ERROR,
+                                 MAILTC_APPLICATION_ERROR_INVALID_OPTION,
+                                 "Error: invalid option");
             return FALSE;
     }
 
@@ -360,10 +358,10 @@ mailtc_application_initialise (MailtcApplication* app,
     directory = mailtc_directory ();
     if (!directory)
     {
-        if (error)
-            *error = g_error_new (MAILTC_APPLICATION_ERROR,
-                                  MAILTC_APPLICATION_ERROR_DIRECTORY,
-                                  "Failed to create " PACKAGE  " directory");
+        g_set_error_literal (error,
+                             MAILTC_APPLICATION_ERROR,
+                             MAILTC_APPLICATION_ERROR_DIRECTORY,
+                             "Failed to create " PACKAGE  " directory");
 
         return FALSE;
     }

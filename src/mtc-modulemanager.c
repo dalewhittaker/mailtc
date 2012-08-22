@@ -233,19 +233,21 @@ mailtc_module_manager_load (MailtcModuleManager* manager,
 
         g_dir_close (dir);
     }
-    else if (error)
+    else
     {
-        *error = g_error_new (MAILTC_MODULE_MANAGER_ERROR,
-                              MAILTC_MODULE_MANAGER_ERROR_DIRECTORY,
-                              "Error opening module directory %s",
-                              dirname);
+        g_set_error (error,
+                     MAILTC_MODULE_MANAGER_ERROR,
+                     MAILTC_MODULE_MANAGER_ERROR_DIRECTORY,
+                     "Error opening module directory %s",
+                     dirname);
         return FALSE;
     }
-    if (error && !manager->priv->modules)
+    if (!manager->priv->modules)
     {
-        *error = g_error_new (MAILTC_MODULE_MANAGER_ERROR,
-                              MAILTC_MODULE_MANAGER_ERROR_EMPTY,
-                              "Error: no modules found!");
+        g_set_error_literal (error,
+                             MAILTC_MODULE_MANAGER_ERROR,
+                             MAILTC_MODULE_MANAGER_ERROR_EMPTY,
+                             "Error: no modules found!");
         return FALSE;
     }
     return TRUE;

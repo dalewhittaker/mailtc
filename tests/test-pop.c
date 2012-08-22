@@ -253,9 +253,9 @@ run_plugin_thread (server_data* data)
 
     g_dir_close (dir);
 
-    g_assert (mailtc_extension_add_account (extension, G_OBJECT (account)));
+    g_assert (mailtc_extension_add_account (extension, G_OBJECT (account), &error));
 
-    messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE);
+    messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
     g_print ("messages = %d\n", messages);
     if (messages < 0)
     {

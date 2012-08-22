@@ -636,7 +636,7 @@ mailtc_settings_free_account (MailtcAccount* account)
     if (extension)
     {
         /* FIXME GError */
-        mailtc_extension_remove_account (extension, G_OBJECT (account));
+        mailtc_extension_remove_account (extension, G_OBJECT (account), NULL);
         g_object_unref (extension);
     }
     g_object_unref (account);

@@ -323,7 +323,8 @@ mailtc_pop_calculate_new (MailtcPop*      pop,
 static gint64
 mailtc_pop_get_messages (MailtcPop* pop,
                          GObject*   account,
-                         gboolean   debug)
+                         gboolean   debug,
+                         GError**   error)
 {
     gchar* server;
     guint port;
@@ -348,20 +349,19 @@ mailtc_pop_get_messages (MailtcPop* pop,
 
     tls = protocol == POP_PROTOCOL_SSL ? TRUE : FALSE;
 
-    /* FIXME GError for all of these functions */
-    if (!mailtc_net_connect (MAILTC_NET (pop), server, port, tls, NULL))
+    if (!mailtc_net_connect (MAILTC_NET (pop), server, port, tls, error))
         return -1;
-    if (!mailtc_pop_run (pop, account, POP_CMD_NULL, NULL))
+    if (!mailtc_pop_run (pop, account, POP_CMD_NULL, error))
         return -1;
-    if (!mailtc_pop_run (pop, account, POP_CMD_USER, NULL))
+    if (!mailtc_pop_run (pop, account, POP_CMD_USER, error))
         return -1;
-    if (!mailtc_pop_run (pop, account, POP_CMD_PASS, NULL))
+    if (!mailtc_pop_run (pop, account, POP_CMD_PASS, error))
         return -1;
-    if (!mailtc_pop_run (pop, account, POP_CMD_STAT, NULL))
+    if (!mailtc_pop_run (pop, account, POP_CMD_STAT, error))
         return -1;
-    if ((nmails = mailtc_pop_calculate_new (pop, uid_table, NULL)) == -1)
+    if ((nmails = mailtc_pop_calculate_new (pop, uid_table, error)) == -1)
         return -1;
-    if (!mailtc_pop_run (pop, account, POP_CMD_QUIT, NULL))
+    if (!mailtc_pop_run (pop, account, POP_CMD_QUIT, error))
         return -1;
 
     mailtc_net_disconnect (MAILTC_NET (pop));
@@ -387,8 +387,6 @@ mailtc_pop_constructed (GObject* object)
 
     pop->msg = g_string_new (NULL);
 
-    g_signal_connect (object, MAILTC_EXTENSION_SIGNAL_GET_MESSAGES, G_CALLBACK (mailtc_pop_get_messages), NULL);
-
     G_OBJECT_CLASS (mailtc_pop_parent_class)->constructed (object);
 }
 
@@ -396,10 +394,14 @@ static void
 mailtc_pop_class_init (MailtcPopClass* klass)
 {
     GObjectClass* gobject_class;
+    MailtcExtensionClass* extension_class;
 
     gobject_class = G_OBJECT_CLASS (klass);
     gobject_class->constructed = mailtc_pop_constructed;
     gobject_class->finalize = mailtc_pop_finalize;
+
+    extension_class = MAILTC_BASE_EXTENSION_CLASS (klass);
+    extension_class->get_messages = (MailtcExtensionGetMessagesFunc) mailtc_pop_get_messages;
 }
 
 static void
