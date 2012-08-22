@@ -423,14 +423,13 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     const gchar* password;
     const gchar* port;
     const gchar*msg;
-    gboolean exists;
-    gboolean empty;
-    gboolean changed;
     gint active;
     guint iport;
     guint protocol;
-
-    (void) error;
+    gboolean exists;
+    gboolean empty;
+    gboolean changed;
+    gboolean success = TRUE;
 
     g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
 
@@ -515,14 +514,17 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     mailtc_account_set_iconcolour (account, &colour);
 
     if (changed)
-        mailtc_account_set_extension (account, extension);
+        success = mailtc_account_update_extension (account, extension, error);
 
     g_object_unref (extension);
 
-    for (active = 0; (guint) active < priv->accounts->len; active++)
+    if (success)
     {
-        if (g_ptr_array_index (priv->accounts, active) == account)
-            return active;
+        for (active = 0; (guint) active < priv->accounts->len; active++)
+        {
+            if (g_ptr_array_index (priv->accounts, active) == account)
+                return active;
+        }
     }
     return -1;
 }

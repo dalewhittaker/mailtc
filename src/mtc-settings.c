@@ -446,11 +446,11 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
 
                 extension = mailtc_module_manager_find_extension (settings->modules, module_name, extension_name);
                 if (extension)
-                    mailtc_account_set_extension (account, extension);
-                /* FIXME GError */
-#if 0
+                    mailtc_account_update_extension (account, extension, NULL); /* FIXME GError */
                 else
-#endif
+                {
+                    /* FIXME GError */
+                }
                 g_free (extension_name);
                 g_free (module_name);
             }

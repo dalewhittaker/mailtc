@@ -244,7 +244,7 @@ run_plugin_thread (server_data* data)
 
     account = mailtc_account_new ();
     mailtc_account_set_protocol (account, data->protocol);
-    mailtc_account_set_extension (account, extension);
+    g_assert (mailtc_account_update_extension (account, extension, &error));
     mailtc_account_set_name (account, "test");
     mailtc_account_set_server (account, "localhost");
     mailtc_account_set_port (account, data->port);

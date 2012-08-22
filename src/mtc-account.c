@@ -183,23 +183,11 @@ mailtc_account_get_iconcolour (MailtcAccount* account,
     *iconcolour = account->iconcolour;
 }
 
-void
+static void
 mailtc_account_set_extension (MailtcAccount*   account,
                               MailtcExtension* extension)
 {
-    g_assert (MAILTC_IS_ACCOUNT (account));
-
-    /* FIXME not really keen on this being here. */
-    /* FIXME GError */
-    if (account->extension)
-        mailtc_extension_remove_account (extension, G_OBJECT (account), NULL);
-
     MAILTC_ACCOUNT_SET_OBJECT (account, extension);
-
-    /* FIXME not really keen on this being here. */
-    /* FIXME GError */
-    if (extension)
-        mailtc_extension_add_account (extension, G_OBJECT (account), NULL);
 }
 
 MailtcExtension*
@@ -223,6 +211,28 @@ mailtc_account_get_private (MailtcAccount* account)
     g_assert (MAILTC_IS_ACCOUNT (account));
 
     return account->private;
+}
+
+gboolean
+mailtc_account_update_extension (MailtcAccount*   account,
+                                 MailtcExtension* extension,
+                                 GError**         error)
+{
+    g_assert (MAILTC_IS_ACCOUNT (account));
+
+    if (account->extension)
+    {
+        if (!mailtc_extension_remove_account (extension, G_OBJECT (account), error))
+            return FALSE;
+    }
+    mailtc_account_set_extension (account, extension);
+
+    if (extension)
+    {
+        if (!mailtc_extension_add_account (extension, G_OBJECT (account), error))
+            return FALSE;
+    }
+    return TRUE;
 }
 
 static void
