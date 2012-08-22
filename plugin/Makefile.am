@@ -1,6 +1,6 @@
 plugindir = "$(libdir)/mailtc"
 
-plugin_LTLIBRARIES = pop.la
+plugin_LTLIBRARIES = net.la
 
 AM_CPPFLAGS = \
 		-DATK_DISABLE_SINGLE_INCLUDES \
@@ -39,13 +39,13 @@ INCLUDES = \
 LDADD = \
 		$(GTK_LIBS)
 
-pop_la_SOURCES = \
+net_la_SOURCES = \
 		mtc-socket.c \
 		mtc-uid.c \
 		mtc-net.c \
 		mtc-pop.c
 
-pop_la_LDFLAGS = \
+net_la_LDFLAGS = \
 		-no-undefined \
 		-module \
 		-avoid-version \
