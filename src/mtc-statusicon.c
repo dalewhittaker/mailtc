@@ -48,7 +48,7 @@ G_DEFINE_TYPE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON)
 typedef struct
 {
     gchar* name;
-    guint64 nmails;
+    gint64 nmails;
     GdkColor colour;
 
 } MailtcStatusIconItem;
@@ -201,10 +201,10 @@ mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
     mailtc_status_icon_add_item (status_icon, NULL, colour);
 }
 
-void
+gint64
 mailtc_status_icon_update (MailtcStatusIcon* status_icon,
                            guint             id,
-                           guint64           nmails)
+                           gint64            nmails)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
@@ -230,16 +230,22 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
 
     g_assert (id < priv->nitems);
 
-    /* This is here because modifying the value while iterating
-     * invalidates the item pointer.
-     */
+    /* This is here because modifying the value while iterating invalidates the item pointer. */
     item = (MailtcStatusIconItem*) g_hash_table_lookup (priv->items, &id);
     g_assert (item);
 
     dflitem = (MailtcStatusIconItem*) g_hash_table_lookup (priv->items, &index);
     g_assert (dflitem);
 
-    item->nmails = nmails;
+    if (nmails < 0)
+    {
+        if (item->nmails < 0)
+            nmails = --item->nmails;
+        else
+            item->nmails = -1;
+    }
+    else
+        item->nmails = nmails;
 
     g_hash_table_iter_init (&iter, priv->items);
     while (g_hash_table_iter_next (&iter, NULL, (gpointer*) &item))
@@ -272,6 +278,8 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     gtk_status_icon_set_tooltip_text (GTK_STATUS_ICON (status_icon), tooltip->str);
 
     tooltip = g_string_set_size (tooltip, 0);
+
+    return nmails;
 }
 
 void

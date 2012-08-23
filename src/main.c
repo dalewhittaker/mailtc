@@ -91,10 +91,8 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
     GString* err_msg = NULL;
     gboolean debug;
     gint64 messages;
-    guint error_count;
     guint net_error;
     guint i;
-    guint id = 0;
 
     statusicon = mailtc_checker_get_status_icon (checker);
     settings = mailtc_application_get_settings (app);
@@ -110,33 +108,25 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
 
         extension = mailtc_account_get_extension (account);
 
-        error_count = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (app), "error_count")); /* FIXME */
-
         messages = mailtc_extension_get_messages (extension, G_OBJECT (account), debug, &error);
-        if (messages >= 0 && !error)
-        {
-            mailtc_status_icon_update (statusicon, id++, messages);
-            error_count = 0;
-        }
-        else
-        {
-            error_count++;
-            if (net_error == error_count)
-            {
-                if (error)
-                    mailtc_gerror (&error);
-                if (!err_msg)
-                    err_msg = g_string_new (NULL);
+        messages = mailtc_status_icon_update (statusicon, i, messages);
 
-                err_msg = g_string_prepend (err_msg, "\n");
-                err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
-                error_count = 0;
-            }
-            if (error)
-                g_clear_error (&error);
+        if (net_error + messages < 1)
+        {
+            if (!err_msg)
+                err_msg = g_string_new (NULL);
+
+            err_msg = g_string_prepend (err_msg, "\n");
+            err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
+
+            /* Reset error */
+            mailtc_status_icon_update (statusicon, i, 0);
         }
+
+        if (error)
+            mailtc_gerror (&error);
+
         g_object_unref (extension);
-        g_object_set_data (G_OBJECT (app), "error_count", GUINT_TO_POINTER (error_count)); /* FIXME */
     }
     g_ptr_array_unref (accounts);
     g_object_unref (statusicon);

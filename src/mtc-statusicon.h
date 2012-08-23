@@ -47,10 +47,10 @@ mailtc_status_icon_add_item           (MailtcStatusIcon* status_icon,
                                        const gchar*      account_name,
                                        const GdkColor*   account_colour);
 
-void
+gint64
 mailtc_status_icon_update             (MailtcStatusIcon* status_icon,
                                        guint             id,
-                                       guint64           nmails);
+                                       gint64            nmails);
 void
 mailtc_status_icon_clear              (MailtcStatusIcon* status_icon);
 

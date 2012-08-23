@@ -45,6 +45,7 @@ struct _MailtcCheckerPrivate
 {
     guint idle_id;
     guint timeout_id;
+    gboolean is_running;
     gboolean locked;
 };
 
@@ -114,15 +115,23 @@ mailtc_checker_idle_destroy (MailtcChecker* checker)
 void
 mailtc_checker_run (MailtcChecker* checker)
 {
+    MailtcCheckerPrivate* priv;
+
     g_assert (MAILTC_IS_CHECKER (checker));
 
-    checker->priv->idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
-                                              (GSourceFunc) mailtc_checker_idle_func, checker,
-                                              (GDestroyNotify) mailtc_checker_idle_destroy);
+    priv = checker->priv;
 
-    checker->priv->timeout_id = g_timeout_add_seconds_full (G_PRIORITY_DEFAULT, 60 * checker->timeout,
+    if (!priv->is_running)
+    {
+        priv->is_running = TRUE;
+        priv->idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+                                         (GSourceFunc) mailtc_checker_idle_func, checker,
+                                         (GDestroyNotify) mailtc_checker_idle_destroy);
+
+        priv->timeout_id = g_timeout_add_seconds_full (G_PRIORITY_DEFAULT, 60 * checker->timeout,
                                                            (GSourceFunc) mailtc_checker_timeout_func, checker,
                                                            (GDestroyNotify) mailtc_checker_timeout_destroy);
+    }
 }
 
 static void
@@ -142,7 +151,7 @@ mailtc_checker_notify_timeout_cb (GObject*    object,
     if (priv->timeout_id > 0)
         g_source_remove (priv->timeout_id);
 
-    if (checker->timeout > 0)
+    if (priv->is_running && checker->timeout > 0)
     {
         priv->timeout_id = g_timeout_add_seconds_full (G_PRIORITY_DEFAULT, 60 * checker->timeout,
                                                        (GSourceFunc) mailtc_checker_timeout_func, checker,
@@ -302,6 +311,7 @@ mailtc_checker_init (MailtcChecker* checker)
 
     priv->idle_id = 0;
     priv->timeout_id = 0;
+    priv->is_running = FALSE;
     priv->locked = FALSE;
 
     g_signal_connect (checker, "notify::timeout",
