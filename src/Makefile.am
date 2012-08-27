@@ -52,8 +52,10 @@ mailtc_SOURCES = \
 		mtc-util.c \
 		main.c
 
+include_HEADERS = \
+		mailtc.h
+
 EXTRA_DIST = \
-		mailtc.h \
 		mtc-account.h \
 		mtc-application.h \
 		mtc-checker.h \
