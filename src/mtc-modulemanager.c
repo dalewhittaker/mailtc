@@ -365,7 +365,7 @@ mailtc_module_manager_foreach_extension (MailtcModuleManager* manager,
             {
                 for (j = 0; j < extensions->len; j++)
                 {
-                    extension = g_ptr_array_index (extensions, i);
+                    extension = g_ptr_array_index (extensions, j);
 
                     if (MAILTC_IS_EXTENSION (extension))
                         (*func) (extension, user_data);
