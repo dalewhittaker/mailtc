@@ -256,7 +256,7 @@ mailtc_settings_keyfile_write_base64 (MailtcSettings* settings,
     g_object_get (obj, name, &value, NULL);
 
     str = g_base64_encode ((const guchar*) value, strlen (value));
-    g_key_file_set_string (key_file, key_group, name, value);
+    g_key_file_set_string (key_file, key_group, name, str);
     g_free (str);
     g_free (value);
 }
@@ -306,7 +306,7 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
     g_object_get (obj, name, &colour, NULL);
     value = gdk_color_to_string (colour);
 
-    g_key_file_set_string (key_file, key_group, name, value);
+    g_key_file_set_string (key_file, key_group, name, value + 1);
 
     g_free (value);
     gdk_color_free (colour);
@@ -383,7 +383,6 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         g_key_file_set_string (key_file, key_group, MAILTC_ACCOUNT_PROPERTY_EXTENSION, extension_name);
         g_object_unref (module);
         g_object_unref (extension);
-        g_free (key_group);
     }
     g_key_file_set_string_list (key_file, MAILTC_SETTINGS_GROUP_GLOBAL,
                                 MAILTC_SETTINGS_PROPERTY_ACCOUNTS, (const gchar**) groups, accounts->len);
