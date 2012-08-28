@@ -60,9 +60,9 @@ mailtc_net_add_account (MailtcNet* net,
     guint port;
     gchar* filename;
     gchar* hash;
-    const gchar* directory = NULL;
-    const gchar* server = NULL;
-    const gchar* user = NULL;
+    gchar* directory = NULL;
+    gchar* server = NULL;
+    gchar* user = NULL;
     MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_NET (net));
@@ -88,9 +88,12 @@ mailtc_net_add_account (MailtcNet* net,
     filename = g_strdup_printf ("%s%u%s", server, port, user);
     hash = g_strdup_printf ("%x", g_str_hash (filename));
     g_free (filename);
+    g_free (user);
+    g_free (server);
 
     filename = g_build_filename (directory, hash, NULL);
     g_free (hash);
+    g_free (directory);
 
     uid_table = mailtc_uid_table_new (filename);
     g_free (filename);

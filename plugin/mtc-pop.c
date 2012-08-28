@@ -326,11 +326,12 @@ mailtc_pop_get_messages (MailtcPop* pop,
                          gboolean   debug,
                          GError**   error)
 {
-    gchar* server;
     guint port;
     guint protocol;
     gint64 nmails;
     gboolean tls;
+    gboolean success;
+    gchar* server = NULL;
     MailtcUidTable* uid_table = NULL;
 
     g_assert (MAILTC_IS_POP (pop));
@@ -349,8 +350,12 @@ mailtc_pop_get_messages (MailtcPop* pop,
 
     tls = protocol == POP_PROTOCOL_SSL ? TRUE : FALSE;
 
-    if (!mailtc_net_connect (MAILTC_NET (pop), server, port, tls, error))
+    success = mailtc_net_connect (MAILTC_NET (pop), server, port, tls, error);
+    g_free (server);
+
+    if (!success)
         return -1;
+
     if (!mailtc_pop_run (pop, account, POP_CMD_NULL, error))
         return -1;
     if (!mailtc_pop_run (pop, account, POP_CMD_USER, error))
