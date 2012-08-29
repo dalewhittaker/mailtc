@@ -36,11 +36,18 @@
 #define TIMEOUT_NET 5
 #define TIMEOUT_FREQ 100
 
+#define POP_COMMAND_USER     0
+#define POP_COMMAND_PASSWORD 1
+#define POP_COMMAND_STAT     2
+#define POP_COMMAND_UIDL     3
+#define POP_COMMAND_QUIT     4
+
 typedef struct
 {
     guint command;
     guint protocol;
     guint port;
+    gint nuids;
     GString* msg;
     GSocketConnection* connection;
     GMainLoop* loop;
@@ -103,37 +110,42 @@ server_read (GIOChannel*  channel,
     switch (command)
     {
         /* FIXME proper checks */
-        /* FIXME much tidying */
-        case 0:
+        case POP_COMMAND_USER:
             if (!server_write (channel, "+OK Give me a password,\r\n"))
                 return FALSE;
             break;
-        case 1:
+
+        case POP_COMMAND_PASSWORD:
             if (!server_write (channel, "+OK We are good.\r\n"))
                 return FALSE;
             break;
-        case 2:
+
+        case POP_COMMAND_STAT:
             /* The plugin doesn't use the maildrop size param, so we can just use 1. */
-            /* FIXME use a random value for no. of messages? */
-            if (!server_write (channel, "+OK 3 1.\r\n"))
+            data->nuids = g_random_int_range (1, 5);
+            g_string_printf (s, "+OK %d 1.\r\n", data->nuids);
+            if (!server_write (channel, s->str))
                 return FALSE;
             break;
-        case 3:
+
+        case POP_COMMAND_UIDL:
             sv = g_strsplit_set (s->str, " \r\n", 0);
             svlen = g_strv_length (sv);
             if (svlen != 4 || strlen (sv[2]) != 0 || strlen (sv[3]) != 0)
                 return FALSE;
-            if (atoi (sv[1]) < 3)
-                data->command = command;
+            if (atoi (sv[1]) < data->nuids)
+                data->command = POP_COMMAND_UIDL;
             g_string_printf (s, "+OK MTC-%s\r\n", sv[1]);
             g_strfreev (sv);
             if (!server_write (channel, s->str))
                 return FALSE;
             break;
-        case 4:
+
+        case POP_COMMAND_QUIT:
             if (!server_write (channel, "+OK See ya!.\r\n"))
                 return FALSE;
             break;
+
         default:
             return FALSE;
     }
@@ -203,7 +215,7 @@ run_plugin_thread (server_data* data)
     /* Find the pop plugin. */
     while ((filename = g_dir_read_name (dir)))
     {
-        if (g_str_has_prefix (filename, "pop") && g_str_has_suffix (filename, G_MODULE_SUFFIX))
+        if (g_str_has_prefix (filename, "net") && g_str_has_suffix (filename, G_MODULE_SUFFIX))
             break;
     }
 
@@ -238,22 +250,20 @@ run_plugin_thread (server_data* data)
     g_assert (mailtc_extension_is_valid (extension, NULL));
     protocols = mailtc_extension_get_protocols (extension);
     g_assert (data->protocol < protocols->len);
-    g_object_unref (protocols);
+    g_array_unref (protocols);
 
     mailtc_extension_set_module (extension, G_OBJECT (module));
 
     account = mailtc_account_new ();
     mailtc_account_set_protocol (account, data->protocol);
-    g_assert (mailtc_account_update_extension (account, extension, &error));
     mailtc_account_set_name (account, "test");
     mailtc_account_set_server (account, "localhost");
     mailtc_account_set_port (account, data->port);
     mailtc_account_set_user (account, "testuser");
     mailtc_account_set_password (account, "abc123");
+    g_assert (mailtc_account_update_extension (account, extension, &error));
 
     g_dir_close (dir);
-
-    g_assert (mailtc_extension_add_account (extension, G_OBJECT (account), &error));
 
     messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
     g_print ("messages = %d\n", messages);
