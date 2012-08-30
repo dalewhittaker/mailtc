@@ -301,8 +301,8 @@ mailtc_application_server_init (MailtcApplication* app,
         {
             mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING, "Incomplete settings found.\nPlease enter configuration settings");
             mode = MAILTC_MODE_CONFIG;
-            g_object_unref (accounts);
         }
+        g_ptr_array_unref (accounts);
     }
 
     mailtc_application_set_settings (app, settings);
