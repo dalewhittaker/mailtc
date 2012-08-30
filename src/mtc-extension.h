@@ -33,9 +33,6 @@ G_BEGIN_DECLS
 #define MAILTC_IS_EXTENSION_CLASS(klass)        (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_EXTENSION))
 #define MAILTC_EXTENSION_GET_CLASS(obj)         (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_EXTENSION, MailtcExtensionClass))
 
-#define MAILTC_EXTENSION_GET_PROTOCOL(extension, i) \
-    &g_array_index (mailtc_extension_get_protocols ((extension)), MailtcProtocol, (i))
-
 typedef GSList*
 (*MailtcExtensionInitFunc)               (const gchar* directory);
 

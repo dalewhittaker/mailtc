@@ -367,6 +367,7 @@ mailtc_account_update_tree_view (MailtcConfigDialog* dialog,
     MailtcAccount* account;
     MailtcExtension* extension;
     MailtcProtocol* protocol;
+    GArray* protocols;
     GtkTreeModel* model;
     GtkTreeIter iter;
     GtkTreeIter combo_iter;
@@ -398,11 +399,13 @@ mailtc_account_update_tree_view (MailtcConfigDialog* dialog,
     g_assert (exists);
 
     extension = mailtc_account_get_extension (account);
-    protocol = MAILTC_EXTENSION_GET_PROTOCOL (extension, mailtc_account_get_protocol (account));
+    protocols = mailtc_extension_get_protocols (extension);
+    protocol = &g_array_index (protocols, MailtcProtocol, mailtc_account_get_protocol (account));
     g_assert (protocol);
     gtk_list_store_set (GTK_LIST_STORE (model), &iter,
                         TREEVIEW_ACCOUNT_COLUMN, mailtc_account_get_name (account),
                         TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
+    g_array_unref (protocols);
     g_object_unref (extension);
 }
 
@@ -1013,6 +1016,7 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
     GtkWidget* button_add;
     GtkWidget* button_edit;
     GtkWidget* button_remove;
+    GArray* protocols;
     guint i;
 
     g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
@@ -1048,11 +1052,14 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 
         extension = mailtc_account_get_extension (account);
         g_assert (extension);
-        protocol = MAILTC_EXTENSION_GET_PROTOCOL (extension, mailtc_account_get_protocol (account));
+        protocols = mailtc_extension_get_protocols (extension);
+        g_assert (protocols);
+        protocol = &g_array_index (protocols, MailtcProtocol, mailtc_account_get_protocol (account));
         g_assert (protocol);
         gtk_list_store_insert_with_values (store, NULL, G_MAXINT,
                                            TREEVIEW_ACCOUNT_COLUMN, mailtc_account_get_name (account),
                                            TREEVIEW_PROTOCOL_COLUMN, protocol->name, -1);
+        g_array_unref (protocols);
         g_object_unref (extension);
     }
 
