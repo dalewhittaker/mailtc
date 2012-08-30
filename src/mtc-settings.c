@@ -419,7 +419,8 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
         gsize i;
         gboolean success;
 
-        accounts = g_ptr_array_new ();
+        accounts = settings->accounts;
+        g_assert (accounts);
 
         for (i = 0; i < naccounts; i++)
         {
@@ -473,8 +474,6 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
         }
         if (accounts->len > 0)
             mailtc_settings_set_accounts (settings, accounts);
-
-        g_ptr_array_unref (accounts);
     }
     g_strfreev (account_groups);
 
@@ -792,11 +791,16 @@ mailtc_settings_constructed (GObject* object)
 {
     MailtcSettings* settings;
     MailtcSettingsPrivate* priv;
+    GPtrArray* accounts;
 
     settings = MAILTC_SETTINGS (object);
     priv = settings->priv;
 
     priv->key_file = g_key_file_new ();
+
+    accounts = g_ptr_array_new ();
+    mailtc_settings_set_accounts (settings, accounts);
+    g_ptr_array_unref (accounts);
 
     if (g_key_file_load_from_file (priv->key_file, settings->filename, G_KEY_FILE_NONE, &priv->error))
         mailtc_settings_keyfile_read (settings, &priv->error);
