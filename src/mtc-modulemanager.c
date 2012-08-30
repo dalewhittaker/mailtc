@@ -33,8 +33,7 @@
 
 typedef enum
 {
-    MAILTC_MODULE_MANAGER_ERROR_DIRECTORY = 0,
-    MAILTC_MODULE_MANAGER_ERROR_EMPTY
+    MAILTC_MODULE_MANAGER_ERROR_EMPTY = 0
 } MailtcModuleManagerError;
 
 enum
@@ -150,98 +149,89 @@ gboolean
 mailtc_module_manager_load (MailtcModuleManager* manager,
                             GError**             error)
 {
+    MailtcModule* module;
+    MailtcExtension* extension;
+    MailtcExtensionInitFunc extension_init;
+    GSList* elist;
+    GSList* l;
+    GPtrArray* modules;
+    GPtrArray* extensions;
     GDir* dir;
+    const gchar* filename;
+    gchar* directory;
+    gchar* fullname;
     gchar* dirname = LIBDIR;
 
     g_assert (MAILTC_IS_MODULE_MANAGER (manager));
 
-    if ((dir = g_dir_open (dirname, 0, error)))
-    {
-        MailtcModule* module;
-        MailtcExtension* extension;
-        MailtcExtensionInitFunc extension_init;
-        GSList* elist;
-        GSList* l;
-        GPtrArray* modules;
-        GPtrArray* extensions;
-        const gchar* filename;
-        gchar* directory;
-        gchar* fullname;
-
-        modules = g_ptr_array_new ();
-
-        while ((filename = g_dir_read_name (dir)))
-        {
-            if (!mailtc_module_filename (filename))
-                continue;
-
-            fullname = g_build_filename (dirname, filename, NULL);
-
-            module = mailtc_module_new ();
-            if (!mailtc_module_load (module, fullname, error) ||
-                !mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, error))
-            {
-                mailtc_gerror (error);
-            }
-            else
-            {
-
-                g_type_class_ref (MAILTC_TYPE_EXTENSION);
-
-                g_assert (manager->priv->directory);
-                directory = g_build_filename (manager->priv->directory, filename, NULL);
-
-                g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
-                elist = extension_init (directory);
-                g_free (directory);
-
-                if (elist)
-                {
-                    l = elist;
-                    extensions = g_ptr_array_new ();
-
-                    while (l)
-                    {
-                        extension = l->data;
-
-                        if (mailtc_extension_is_valid (extension, error))
-                        {
-                            mailtc_extension_set_module (extension, G_OBJECT (module));
-                            g_ptr_array_add (extensions, extension);
-                        }
-                        else
-                            mailtc_gerror (error);
-
-                        l = l->next;
-                    }
-                    g_slist_free (elist);
-
-                    if (extensions->len > 0)
-                        g_ptr_array_add (modules, extensions);
-                    else
-                        g_ptr_array_unref (extensions);
-                }
-            }
-            g_object_unref (module);
-            g_free (fullname);
-        }
-        if (modules->len > 0)
-            manager->priv->modules = modules;
-        else
-            g_ptr_array_unref (modules);
-
-        g_dir_close (dir);
-    }
-    else
-    {
-        g_set_error (error,
-                     MAILTC_MODULE_MANAGER_ERROR,
-                     MAILTC_MODULE_MANAGER_ERROR_DIRECTORY,
-                     "Error opening module directory %s",
-                     dirname);
+    if (!(dir = g_dir_open (dirname, 0, error)))
         return FALSE;
+
+    modules = g_ptr_array_new ();
+
+    while ((filename = g_dir_read_name (dir)))
+    {
+        if (!mailtc_module_filename (filename))
+            continue;
+
+        fullname = g_build_filename (dirname, filename, NULL);
+
+        module = mailtc_module_new ();
+        if (!mailtc_module_load (module, fullname, error) ||
+            !mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, error))
+        {
+            mailtc_gerror (error);
+        }
+        else
+        {
+
+            g_type_class_ref (MAILTC_TYPE_EXTENSION);
+
+            g_assert (manager->priv->directory);
+            directory = g_build_filename (manager->priv->directory, filename, NULL);
+
+            g_mkdir_with_parents (directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+            elist = extension_init (directory);
+            g_free (directory);
+
+            if (elist)
+            {
+                l = elist;
+                extensions = g_ptr_array_new ();
+
+                while (l)
+                {
+                    extension = l->data;
+
+                    if (mailtc_extension_is_valid (extension, error))
+                    {
+                        mailtc_extension_set_module (extension, G_OBJECT (module));
+                        g_ptr_array_add (extensions, extension);
+                    }
+                    else
+                        mailtc_gerror (error);
+
+                    l = l->next;
+                }
+                g_slist_free (elist);
+
+                if (extensions->len > 0)
+                    g_ptr_array_add (modules, extensions);
+                else
+                    g_ptr_array_unref (extensions);
+            }
+        }
+        g_object_unref (module);
+        g_free (fullname);
     }
+    if (modules->len > 0)
+        manager->priv->modules = modules;
+    else
+        g_ptr_array_unref (modules);
+
+    g_dir_close (dir);
+
     if (!manager->priv->modules)
     {
         g_set_error_literal (error,
