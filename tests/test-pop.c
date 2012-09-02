@@ -44,250 +44,62 @@
 
 typedef struct
 {
+    GArray* protocols;
     guint command;
     guint protocol;
-    guint port;
     gint nuids;
+    char buf[512];
     GString* msg;
-    GSocketConnection* connection;
+    GSocketService* service;
+    GIOStream* connection;
+    GInputStream* istream;
+    GOutputStream* ostream;
     GMainLoop* loop;
     GThread* thread;
+    MailtcExtension* extension;
 } server_data;
 
-static gboolean
-server_write (GIOChannel* channel,
-              gchar*      data)
-{
-    GIOStatus status;
-    gsize bytes;
-    gsize written;
-
-    bytes = strlen (data);
-    status =  g_io_channel_write_chars (channel, data, bytes, &written, NULL);
-    if (status != G_IO_STATUS_NORMAL || bytes != written)
-        return FALSE;
-    status =  g_io_channel_flush (channel, NULL);
-
-    return (status == G_IO_STATUS_NORMAL) ? TRUE : FALSE;
-}
-
-static gboolean
-server_read (GIOChannel*  channel,
-             GIOCondition condition,
-             server_data* data)
-{
-    GString* s;
-    gchar** sv;
-    guint svlen;
-    GIOStatus ret;
-    guint command;
-    GError* error = NULL;
-
-    (void) condition;
-
-    /* FIXME proper error handles */
-    s = data->msg;
-    ret = g_io_channel_read_line_string (channel, s, NULL, &error);
-
-    if (ret == G_IO_STATUS_EOF)
-    {
-        g_string_free (s, TRUE);
-        return FALSE;
-    }
-    if (ret == G_IO_STATUS_ERROR)
-    {
-        g_print ("%s\n", error->message);
-        g_test_message ("%s\n", error->message);
-        g_clear_error (&error);
-        g_object_unref (data->connection);
-        g_string_free (s, TRUE);
-        return FALSE;
-    }
-
-    command = data->command;
-    data->command++;
-
-    switch (command)
-    {
-        /* FIXME proper checks */
-        case POP_COMMAND_USER:
-            if (!server_write (channel, "+OK Give me a password,\r\n"))
-                return FALSE;
-            break;
-
-        case POP_COMMAND_PASSWORD:
-            if (!server_write (channel, "+OK We are good.\r\n"))
-                return FALSE;
-            break;
-
-        case POP_COMMAND_STAT:
-            /* The plugin doesn't use the maildrop size param, so we can just use 1. */
-            data->nuids = g_random_int_range (1, 5);
-            g_string_printf (s, "+OK %d 1.\r\n", data->nuids);
-            if (!server_write (channel, s->str))
-                return FALSE;
-            break;
-
-        case POP_COMMAND_UIDL:
-            sv = g_strsplit_set (s->str, " \r\n", 0);
-            svlen = g_strv_length (sv);
-            if (svlen != 4 || strlen (sv[2]) != 0 || strlen (sv[3]) != 0)
-                return FALSE;
-            if (atoi (sv[1]) < data->nuids)
-                data->command = POP_COMMAND_UIDL;
-            g_string_printf (s, "+OK MTC-%s\r\n", sv[1]);
-            g_strfreev (sv);
-            if (!server_write (channel, s->str))
-                return FALSE;
-            break;
-
-        case POP_COMMAND_QUIT:
-            if (!server_write (channel, "+OK See ya!.\r\n"))
-                return FALSE;
-            break;
-
-        default:
-            return FALSE;
-    }
-    /* FIXME cleanups etc...*/
-    return TRUE;
-}
+static void
+server_read (GInputStream* istream,
+             server_data*  data);
 
 static void
-destroy_channel (server_data* data)
-{
-    g_thread_join (data->thread);
-    g_main_loop_quit (data->loop);
-}
-
-static gboolean
-service_incoming_cb (GSocketService*    service,
-                     GSocketConnection* connection,
-                     GObject*           source_object,
-                     server_data*       data)
-{
-    GSocket* socket;
-    GIOChannel* channel;
-    gboolean success;
-    gint fd;
-
-    (void) service;
-    (void) source_object;
-
-    g_object_ref (connection);
-
-    socket = g_socket_connection_get_socket (connection);
-    fd = g_socket_get_fd (socket);
-    channel = g_io_channel_unix_new (fd);
-
-    /*data = g_new (server_data, 1);*/
-    data->connection = connection;
-    data->msg = g_string_new (NULL);
-    data->command = 0;
-
-    success = server_write (channel, "+OK MTC test server\r\n");
-    g_assert (success);
-    g_io_add_watch_full (channel, G_PRIORITY_DEFAULT, G_IO_IN, (GIOFunc) server_read, data, (GDestroyNotify) destroy_channel);
-
-    return TRUE;
-}
+server_write (GOutputStream* ostream,
+              gchar*         buf,
+              server_data*   data);
 
 static gpointer
 run_plugin_thread (server_data* data)
 {
     MailtcAccount* account;
-    MailtcModule* module;
     MailtcExtension* extension;
-    MailtcExtensionInitFunc extension_init;
-    GSList* extensions;
-    GArray* protocols;
-    GDir* dir;
-    gchar* directory;
-    gchar* edirectory;
-    const gchar* filename;
-    gchar* fullname;
+    MailtcProtocol* protocol;
     gint messages = 0;
     GError* error = NULL;
 
-    dir = g_dir_open (PLUGINDIR, 0, &error);
-    g_assert (dir);
+    g_assert (data);
 
-    /* Find the pop plugin. */
-    while ((filename = g_dir_read_name (dir)))
-    {
-        if (g_str_has_prefix (filename, "net") && g_str_has_suffix (filename, G_MODULE_SUFFIX))
-            break;
-    }
+    extension = data->extension;
+    g_assert (MAILTC_IS_EXTENSION (extension));
 
-    g_assert (filename);
-
-    /* Load it. */
-    fullname = g_build_filename (PLUGINDIR, filename, NULL);
-    g_assert (fullname);
-
-    module = mailtc_module_new ();
-    g_assert (module);
-
-    g_assert (mailtc_module_load (module, fullname, &error));
-    g_free (fullname);
-
-    g_assert (mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, &error));
-    g_assert (extension_init);
-
-    g_type_class_ref (MAILTC_TYPE_EXTENSION);
-
-    directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
-    g_assert (directory);
-    edirectory = g_build_filename (directory, filename, NULL);
-    g_assert (edirectory);
-    g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
-    extensions = extension_init (directory);
-    /* FIXME assumes one extension. */
-    extension = extensions->data;
-    g_slist_free (extensions);
-    g_assert (extension);
-    g_assert (mailtc_extension_is_valid (extension, NULL));
-    protocols = mailtc_extension_get_protocols (extension);
-    g_assert (data->protocol < protocols->len);
-    g_array_unref (protocols);
-
-    mailtc_extension_set_module (extension, G_OBJECT (module));
+    protocol = &g_array_index (data->protocols, MailtcProtocol, data->protocol);
 
     account = mailtc_account_new ();
     mailtc_account_set_protocol (account, data->protocol);
     mailtc_account_set_name (account, "test");
     mailtc_account_set_server (account, "localhost");
-    mailtc_account_set_port (account, data->port);
+    mailtc_account_set_port (account, protocol->port);
     mailtc_account_set_user (account, "testuser");
     mailtc_account_set_password (account, "abc123");
     g_assert (mailtc_account_update_extension (account, extension, &error));
 
-    g_dir_close (dir);
-
     messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
+    g_assert_no_error (error);
     g_print ("messages = %d\n", messages);
-    if (messages < 0)
-    {
-        g_print ("2: %s\n", error->message);
-        g_test_message ("%s\n", error->message);
-        g_clear_error (&error);
-        g_assert (messages >= 0);
-    }
 
     /* FIXME we'll want to mark as read too. */
 
-    g_assert (g_remove (edirectory) == 0);
-    g_assert (g_remove (directory) == 0);
-    g_assert (g_remove (CONFIGDIR) == 0);
-
-    g_assert (mailtc_module_unload (module, &error));
-
     g_object_unref (account);
-    g_object_unref (extension);
-    g_object_unref (module);
-
-    g_free (directory);
 
     return NULL;
 }
@@ -300,55 +112,290 @@ run_plugin (server_data* data)
 }
 
 static void
-test_pop_protocol (guint protocol)
+server_close_stream_finish (GObject*      object,
+                            GAsyncResult* res,
+                            server_data*  data)
 {
+    GError* error = NULL;
+
+    if (G_IS_INPUT_STREAM (object))
+    {
+        g_input_stream_close_finish (G_INPUT_STREAM (object), res, &error);
+        data->istream = NULL;
+    }
+    else
+    {
+        g_assert (G_IS_OUTPUT_STREAM (object));
+        g_output_stream_close_finish (G_OUTPUT_STREAM (object), res, &error);
+        data->ostream = NULL;
+    }
+    g_assert_no_error (error);
+
+    if (!data->istream && !data->ostream)
+    {
+        if (++data->protocol < data->protocols->len)
+        {
+            g_object_unref (data->connection);
+            g_idle_add ((GSourceFunc) run_plugin, data);
+        }
+        else
+        {
+            GIOStream* base_connection;
+
+            g_object_get (data->connection, "base-io-stream", &base_connection, NULL);
+            g_object_unref (data->connection);
+            g_object_unref (base_connection);
+            g_thread_join (data->thread);
+            g_main_loop_quit (data->loop);
+        }
+    }
+}
+
+static void
+server_read_write_finish (GObject*      stream,
+                          GAsyncResult* res,
+                          server_data*  data)
+{
+    GString* s;
+    gchar** sv;
+    guint svlen;
+    gssize read;
+    guint command;
+    GError* error = NULL;
+
+    if (G_IS_OUTPUT_STREAM (stream))
+    {
+        g_output_stream_write_finish (G_OUTPUT_STREAM (stream), res, &error);
+        g_assert_no_error (error);
+
+        server_read (data->istream, data);
+
+        if (data->command > 4)
+            g_output_stream_close_async (G_OUTPUT_STREAM (stream), G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_close_stream_finish, data);
+
+        return;
+    }
+
+    g_assert (G_IS_INPUT_STREAM (stream));
+    read = g_input_stream_read_finish (G_INPUT_STREAM (stream), res, &error);
+    g_assert_no_error (error);
+    data->buf[read] = '\0';
+
+    s = data->msg;
+    command = data->command;
+    data->command++;
+
+    /* FIXME want to simulate server blocking errors at each point.
+     * and also -ERR at each point.
+     */
+    switch (command)
+    {
+        case POP_COMMAND_USER:
+            server_write (data->ostream, "+OK Give me a password,\r\n", data);
+            break;
+
+        case POP_COMMAND_PASSWORD:
+            server_write (data->ostream, "+OK We are good.\r\n", data);
+            break;
+
+        case POP_COMMAND_STAT:
+            /* The plugin doesn't use the maildrop size param, so we can just use 1. */
+            data->nuids = g_random_int_range (1, 5);
+            g_string_printf (s, "+OK %d 1.\r\n", data->nuids);
+            server_write (data->ostream, s->str, data);
+            break;
+
+        case POP_COMMAND_UIDL:
+            sv = g_strsplit_set (data->buf, " \r\n", 0);
+            svlen = g_strv_length (sv);
+            g_assert (svlen == 4 && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
+            if (atoi (sv[1]) < data->nuids)
+                data->command = POP_COMMAND_UIDL;
+            g_string_printf (s, "+OK MTC-%s\r\n", sv[1]);
+            g_strfreev (sv);
+            server_write (data->ostream, s->str, data);
+            break;
+
+        case POP_COMMAND_QUIT:
+            server_write (data->ostream, "+OK See ya!.\r\n", data);
+            break;
+
+        default:
+            g_input_stream_close_async (G_INPUT_STREAM (stream), G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_close_stream_finish, data);
+    }
+}
+
+static void
+server_read (GInputStream* istream,
+             server_data*  data)
+{
+    g_input_stream_read_async (istream, data->buf, sizeof (data->buf), G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_read_write_finish, data);
+}
+
+static void
+server_write (GOutputStream* ostream,
+              gchar*         buf,
+              server_data*   data)
+{
+    gsize bytes;
+
+    bytes = strlen (buf);
+    g_output_stream_write_async (ostream, buf, bytes, G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_read_write_finish, data);
+}
+
+static gboolean
+service_incoming_cb (GSocketService*    service,
+                     GSocketConnection* connection,
+                     GObject*           source_object,
+                     server_data*       data)
+{
+    GIOStream* conn;
+
+    (void) service;
+    (void) source_object;
+
+    if (data->protocol == 1)
+    {
+        GTlsCertificate* cert;
+        GError* error = NULL;
+
+        /* server.pem was a file generated as follows:
+         * openssl genrsa -out key.pem 1024
+         * openssl req -new -x509 -key.pem -out server.pem -days 1095
+         * cat key.pem >> server.pem
+         * FIXME autogenerate server.pem from either here or Makefile.am
+         */
+        cert = g_tls_certificate_new_from_file (SRCDIR "/server.pem", &error);
+        g_assert_no_error (error);
+        conn = g_tls_server_connection_new (G_IO_STREAM (connection), cert, &error);
+        g_assert_no_error (error);
+        g_object_unref (cert);
+        g_tls_connection_set_require_close_notify (G_TLS_CONNECTION (conn), FALSE);
+        g_tls_connection_handshake (G_TLS_CONNECTION (conn), NULL, &error);
+        g_assert_no_error (error);
+    }
+    else
+        conn = G_IO_STREAM (connection);
+
+    g_object_ref (conn);
+    data->connection = conn;
+    data->msg = g_string_new (NULL);
+    data->command = 0;
+    data->istream = g_io_stream_get_input_stream (conn);
+    data->ostream = g_io_stream_get_output_stream (conn);
+    g_print ("\n");
+    server_write (data->ostream, "+OK MTC test server\r\n", data);
+
+    return TRUE;
+}
+
+static void
+test_pop (void)
+{
+    MailtcModule* module;
+    MailtcExtension* extension;
+    MailtcProtocol* protocol;
+    MailtcExtensionInitFunc extension_init;
     GMainLoop* loop = NULL;
-    GSocketService* service;
     GInetAddress* address;
     GSocketAddress* sock_address;
+    GSocketService* service;
+    GSList* extensions;
+    GArray* protocols;
+    GDir* dir;
     GError* error = NULL;
-    guint ports[] = { POP_PORT, POPS_PORT };
-    guint port;
+    guint i;
+    const gchar* filename;
+    gchar* fullname;
+    gchar* directory;
+    gchar* edirectory;
     server_data data;
 
-    port = ports[protocol];
-    g_print ("\n");
+    dir = g_dir_open (PLUGINDIR, 0, &error);
+    g_assert (dir);
+
+    /* Find the pop plugin. */
+    while ((filename = g_dir_read_name (dir)))
+    {
+        if (g_str_has_prefix (filename, "net") && g_str_has_suffix (filename, G_MODULE_SUFFIX))
+            break;
+    }
+    g_assert (filename);
+
+    /* Load it. */
+    fullname = g_build_filename (PLUGINDIR, filename, NULL);
+    g_assert (fullname);
+    directory = g_build_filename (CONFIGDIR, PACKAGE, NULL);
+    g_assert (directory);
+    edirectory = g_build_filename (directory, filename, NULL);
+    g_assert (edirectory);
+    g_mkdir_with_parents (edirectory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    module = mailtc_module_new ();
+    g_assert (module);
+    g_assert (mailtc_module_load (module, fullname, &error));
+    g_assert (mailtc_module_symbol (module, MAILTC_EXTENSION_SYMBOL_INIT, (gpointer*) &extension_init, &error));
+    g_assert (extension_init);
+
+    g_type_class_ref (MAILTC_TYPE_EXTENSION);
+
+    extensions = extension_init (directory);
+
+    /* FIXME assumes one extension. */
+    extension = extensions->data;
+    g_assert (extension);
+    g_assert (mailtc_extension_is_valid (extension, NULL));
+    protocols = mailtc_extension_get_protocols (extension);
+
     service = g_socket_service_new ();
     address = g_inet_address_new_from_string ("127.0.0.1");
-    sock_address = g_inet_socket_address_new (address, port);
-    if (!g_socket_listener_add_address (G_SOCKET_LISTENER (service), sock_address,
-            G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &error))
+    for (i = 0; i < protocols->len; i++)
     {
-        g_print ("%s\n", error->message);
-        g_test_message ("%s\n", error->message);
-        g_clear_error (&error);
+        protocol = &g_array_index (protocols, MailtcProtocol, i);
+        sock_address = g_inet_socket_address_new (address, protocol->port);
+        g_socket_listener_add_address (G_SOCKET_LISTENER (service), sock_address, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &error);
+        g_assert_no_error (error);
+        g_object_unref (sock_address);
     }
-    g_object_unref (sock_address);
     g_object_unref (address);
 
     g_signal_connect (service, "incoming", G_CALLBACK (service_incoming_cb), &data);
 
     g_socket_service_start (service);
 
+    mailtc_extension_set_module (extension, G_OBJECT (module));
+
     loop = g_main_loop_new (NULL, FALSE);
     g_assert (loop);
     data.loop = loop;
-    data.protocol = protocol;
-    data.port = port;
+    data.protocols = protocols;
+    data.protocol = 0;
+    data.extension = extension;
+    g_array_unref (protocols);
 
     g_idle_add ((GSourceFunc) run_plugin, &data);
     g_main_loop_run (loop);
+
     g_main_loop_unref (loop);
 
-    g_socket_service_stop (service);
-}
+    if (data.msg)
+        g_string_free (data.msg, TRUE);
 
-static void
-test_pop (void)
-{
-    /* FIXME initialise the plugin here... */
-    test_pop_protocol (0);
-    /*test_pop_protocol (1);*/
+    g_slist_free (extensions);
+    g_assert (mailtc_module_unload (module, &error));
+    g_assert (g_remove (edirectory) == 0);
+    g_assert (g_remove (directory) == 0);
+    g_assert (g_remove (CONFIGDIR) == 0);
+
+    g_object_unref (module);
+    g_free (directory);
+    g_free (fullname);
+    g_dir_close (dir);
+
+    g_socket_service_stop (service);
+    g_object_unref (service);
+
+    g_print ("done\n");
 }
 
 int
