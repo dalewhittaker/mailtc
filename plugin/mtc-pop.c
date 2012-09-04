@@ -33,6 +33,13 @@
 #define EXTENSION_AUTHOR      "Dale Whittaker ("PACKAGE_BUGREPORT")"
 #define EXTENSION_DESCRIPTION "POP3 network extension."
 
+#define MAILTC_POP_ERROR g_quark_from_string ("MAILTC_POP_ERROR")
+
+typedef enum
+{
+    MAILTC_POP_ERROR_SERVER = 0
+} MailtcSocketError;
+
 typedef enum
 {
     POP_CMD_NULL = 0,
@@ -93,6 +100,12 @@ mailtc_pop_read (MailtcPop* pop,
     if (bytes == -1 || !g_ascii_strncasecmp (msg->str, "-ERR", 4) ||
         (msg->len >= endlen && g_ascii_strncasecmp (msg->str + msg->len - endlen, endchars, endlen) != 0))
     {
+        if (error && !*error)
+        {
+            *error = g_error_new (MAILTC_POP_ERROR,
+                                  MAILTC_POP_ERROR_SERVER,
+                                  "Error from server: %s", msg->str);
+        }
         return FALSE;
     }
     return TRUE;
