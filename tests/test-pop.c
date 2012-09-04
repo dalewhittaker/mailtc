@@ -36,11 +36,22 @@
 #define TIMEOUT_NET 5
 #define TIMEOUT_FREQ 100
 
-#define POP_COMMAND_USER     0
-#define POP_COMMAND_PASSWORD 1
-#define POP_COMMAND_STAT     2
-#define POP_COMMAND_UIDL     3
-#define POP_COMMAND_QUIT     4
+#define POP_CONNECT_SERVER   0
+#define POP_CONNECT_PORT     1
+#define POP_COMMAND_USER     2
+#define POP_COMMAND_PASSWORD 3
+#define POP_COMMAND_STAT     4
+#define POP_COMMAND_UIDL     5
+#define POP_COMMAND_QUIT     6
+
+typedef struct
+{
+    const gchar* name;
+    const gchar* server;
+    guint port;
+    const gchar* user;
+    const gchar* password;
+} account_data;
 
 typedef struct
 {
@@ -48,15 +59,17 @@ typedef struct
     guint command;
     guint protocol;
     gint nuids;
+    gboolean success;
     char buf[512];
     GString* msg;
-    GSocketService* service;
     GIOStream* connection;
     GInputStream* istream;
     GOutputStream* ostream;
     GMainLoop* loop;
     GThread* thread;
     MailtcExtension* extension;
+    account_data accounts[3];
+    guint user;
 } server_data;
 
 static void
@@ -74,6 +87,13 @@ run_plugin_thread (server_data* data)
     MailtcAccount* account;
     MailtcExtension* extension;
     MailtcProtocol* protocol;
+    account_data* accdata;
+    account_data* baddata;
+    guint errval;
+    const gchar* server;
+    guint port;
+    const gchar* user;
+    const gchar* password;
     gint messages = 0;
     GError* error = NULL;
 
@@ -83,21 +103,57 @@ run_plugin_thread (server_data* data)
     g_assert (MAILTC_IS_EXTENSION (extension));
 
     protocol = &g_array_index (data->protocols, MailtcProtocol, data->protocol);
+    accdata = &data->accounts[data->protocol];
+    baddata = &data->accounts[data->protocols->len];
 
     account = mailtc_account_new ();
+
     mailtc_account_set_protocol (account, data->protocol);
-    mailtc_account_set_name (account, "test");
-    mailtc_account_set_server (account, "localhost");
-    mailtc_account_set_port (account, protocol->port);
-    mailtc_account_set_user (account, "testuser");
-    mailtc_account_set_password (account, "abc123");
-    g_assert (mailtc_account_update_extension (account, extension, &error));
+    mailtc_account_set_name (account, accdata->name);
 
-    messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
-    g_assert_no_error (error);
-    g_print ("messages = %d\n", messages);
+    errval = POP_CONNECT_SERVER;
 
-    /* FIXME we'll want to mark as read too. */
+    while (errval <= POP_COMMAND_STAT)
+    {
+        data->success = TRUE;
+
+        server = errval == POP_CONNECT_SERVER ? baddata->server : accdata->server;
+        port = errval == POP_CONNECT_PORT ? baddata->port : accdata->port;
+        user = errval == POP_COMMAND_USER ? baddata->user : accdata->user;
+        password = errval == POP_COMMAND_PASSWORD ? baddata->password : accdata->password;
+
+        mailtc_account_set_server (account, server);
+        mailtc_account_set_port (account, port);
+        mailtc_account_set_user (account, user);
+        mailtc_account_set_password (account, password);
+        g_assert (mailtc_account_update_extension (account, extension, &error));
+
+        g_print ("\n");
+        messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
+        if (error)
+        {
+            if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR && (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+            {
+                g_print ("%s\n", error->message);
+                g_clear_error (&error);
+            }
+            else if (errval == POP_CONNECT_PORT && error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CONNECTION_REFUSED)
+            {
+                g_print ("%s\n", error->message);
+                g_clear_error (&error);
+            }
+            else if (errval == data->command - 1 && !g_strcmp0 (g_quark_to_string (error->domain), "MAILTC_POP_ERROR") && error->code == 0)
+            {
+                g_print ("%s\n", error->message);
+                g_clear_error (&error);
+            }
+        }
+        g_assert_no_error (error);
+        g_print ("messages = %d\n", messages);
+
+        ++errval;
+        /* FIXME we'll want to mark as read too. */
+    }
 
     g_object_unref (account);
 
@@ -156,11 +212,12 @@ server_read_write_finish (GObject*      stream,
                           GAsyncResult* res,
                           server_data*  data)
 {
-    GString* s;
     gchar** sv;
     guint svlen;
-    gssize read;
     guint command;
+    gint uid;
+    gssize read;
+    GString* s;
     GError* error = NULL;
 
     if (G_IS_OUTPUT_STREAM (stream))
@@ -168,9 +225,10 @@ server_read_write_finish (GObject*      stream,
         g_output_stream_write_finish (G_OUTPUT_STREAM (stream), res, &error);
         g_assert_no_error (error);
 
-        server_read (data->istream, data);
+        if (data->success)
+            server_read (data->istream, data);
 
-        if (data->command > 4)
+        if (data->command > POP_COMMAND_QUIT)
             g_output_stream_close_async (G_OUTPUT_STREAM (stream), G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_close_stream_finish, data);
 
         return;
@@ -185,31 +243,69 @@ server_read_write_finish (GObject*      stream,
     command = data->command;
     data->command++;
 
-    /* FIXME want to simulate server blocking errors at each point.
-     * and also -ERR at each point.
-     */
+    /* FIXME want to simulate server blocking errors at each point. */
+    /* FIXME tidy all this code at some point. */
     switch (command)
     {
         case POP_COMMAND_USER:
-            server_write (data->ostream, "+OK Give me a password,\r\n", data);
+            sv = g_strsplit_set (data->buf, " \r\n", 0);
+            svlen = g_strv_length (sv);
+            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "USER") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
+
+            if (!g_strcmp0 (sv[1], data->accounts[0].user))
+            {
+                data->user = 0;
+                data->success = TRUE;
+            }
+            else if (!g_strcmp0 (sv[1], data->accounts[1].user))
+            {
+                data->user = 1;
+                data->success = TRUE;
+            }
+            else
+                data->success = FALSE;
+
+            if (data->success)
+                g_string_printf (s, "+OK Hello %s, can i have your password?\r\n", sv[1]);
+            else
+                g_string_printf (s, "-ERR I don't know any %s.\r\n", sv[1]);
+            server_write (data->ostream, s->str, data);
+            g_strfreev (sv);
             break;
 
         case POP_COMMAND_PASSWORD:
-            server_write (data->ostream, "+OK We are good.\r\n", data);
+            sv = g_strsplit_set (data->buf, " \r\n", 0);
+            svlen = g_strv_length (sv);
+            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "PASS") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
+            data->success = (!g_strcmp0 (sv[1], data->accounts[0].password) || !g_strcmp0 (sv[1], data->accounts[1].password)) ? TRUE : FALSE;
+            if (data->success)
+                server_write (data->ostream, "+OK We are good.\r\n", data);
+            else
+            {
+                g_string_printf (s, "-ERR Hey you're not %s!\r\n", data->accounts[data->user].user);
+                server_write (data->ostream, s->str, data);
+            }
+            g_strfreev (sv);
             break;
 
         case POP_COMMAND_STAT:
+            sv = g_strsplit_set (data->buf, " \r\n", 0);
+            svlen = g_strv_length (sv);
+            g_assert (svlen == 3 && !g_strcmp0 (sv[0], "STAT") && strlen (sv[1]) == 0 && strlen (sv[2]) == 0);
             /* The plugin doesn't use the maildrop size param, so we can just use 1. */
             data->nuids = g_random_int_range (1, 5);
             g_string_printf (s, "+OK %d 1.\r\n", data->nuids);
             server_write (data->ostream, s->str, data);
+            g_strfreev (sv);
             break;
 
         case POP_COMMAND_UIDL:
             sv = g_strsplit_set (data->buf, " \r\n", 0);
             svlen = g_strv_length (sv);
-            g_assert (svlen == 4 && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
-            if (atoi (sv[1]) < data->nuids)
+            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "UIDL") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
+            uid = atoi (sv[1]);
+            g_assert (uid <= data->nuids);
+            if (uid < data->nuids)
                 data->command = POP_COMMAND_UIDL;
             g_string_printf (s, "+OK MTC-%s\r\n", sv[1]);
             g_strfreev (sv);
@@ -280,10 +376,9 @@ service_incoming_cb (GSocketService*    service,
     g_object_ref (conn);
     data->connection = conn;
     data->msg = g_string_new (NULL);
-    data->command = 0;
+    data->command = POP_COMMAND_USER;
     data->istream = g_io_stream_get_input_stream (conn);
     data->ostream = g_io_stream_get_output_stream (conn);
-    g_print ("\n");
     server_write (data->ostream, "+OK MTC test server\r\n", data);
 
     return TRUE;
@@ -347,6 +442,20 @@ test_pop (void)
     g_assert (mailtc_extension_is_valid (extension, NULL));
     protocols = mailtc_extension_get_protocols (extension);
 
+    data.accounts[0].name = "POP account 1";
+    data.accounts[0].user = "Fred";
+    data.accounts[0].password = "abc123";
+
+    data.accounts[1].name = "POPTLS account 2";
+    data.accounts[1].user = "Bob";
+    data.accounts[1].password = "def456";
+
+    data.accounts[2].server = "localhost1";
+    data.accounts[2].port = 123;
+    data.accounts[2].name = "bad account";
+    data.accounts[2].user = "Bill";
+    data.accounts[2].password = "ghi789";
+
     service = g_socket_service_new ();
     address = g_inet_address_new_from_string ("127.0.0.1");
     for (i = 0; i < protocols->len; i++)
@@ -356,6 +465,9 @@ test_pop (void)
         g_socket_listener_add_address (G_SOCKET_LISTENER (service), sock_address, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &error);
         g_assert_no_error (error);
         g_object_unref (sock_address);
+
+        data.accounts[i].server = "localhost";
+        data.accounts[i].port = protocol->port;
     }
     g_object_unref (address);
 
