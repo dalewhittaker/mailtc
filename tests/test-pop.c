@@ -81,6 +81,23 @@ server_write (GOutputStream* ostream,
               gchar*         buf,
               server_data*   data);
 
+static gboolean
+expected_error (GError* error,
+                guint   command,
+                guint   errval)
+{
+    if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR && (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+        return TRUE;
+
+    if (errval == POP_CONNECT_PORT && error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CONNECTION_REFUSED)
+        return TRUE;
+
+    if (errval == command - 1 && !g_strcmp0 (g_quark_to_string (error->domain), "MAILTC_POP_ERROR") && error->code == 0)
+        return TRUE;
+
+    return FALSE;
+}
+
 static gpointer
 run_plugin_thread (server_data* data)
 {
@@ -130,26 +147,14 @@ run_plugin_thread (server_data* data)
 
         g_print ("\n");
         messages = mailtc_extension_get_messages (extension, G_OBJECT (account), TRUE, &error);
-        if (error)
+        if (!error)
+            g_print ("messages = %d\n", messages);
+        else if (expected_error (error, data->command, errval))
         {
-            if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR && (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE))
-            {
-                g_print ("%s\n", error->message);
-                g_clear_error (&error);
-            }
-            else if (errval == POP_CONNECT_PORT && error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CONNECTION_REFUSED)
-            {
-                g_print ("%s\n", error->message);
-                g_clear_error (&error);
-            }
-            else if (errval == data->command - 1 && !g_strcmp0 (g_quark_to_string (error->domain), "MAILTC_POP_ERROR") && error->code == 0)
-            {
-                g_print ("%s\n", error->message);
-                g_clear_error (&error);
-            }
+            g_print ("%s\n", error->message);
+            g_clear_error (&error);
         }
         g_assert_no_error (error);
-        g_print ("messages = %d\n", messages);
 
         ++errval;
         /* FIXME we'll want to mark as read too. */
@@ -207,17 +212,38 @@ server_close_stream_finish (GObject*      object,
     }
 }
 
+gchar**
+pop_string_value (const gchar* buf,
+                  guint        expected_len,
+                  const gchar* command,
+                  gchar**      result)
+{
+    gchar** sv;
+    guint svlen;
+
+    sv = g_strsplit_set (buf, " \r\n", 0);
+    svlen = g_strv_length (sv);
+    g_assert (svlen == expected_len);
+    g_assert (svlen > 2);
+    g_assert (!g_strcmp0 (sv[0], command));
+    g_assert (strlen (sv[svlen - 2]) == 0 && strlen (sv[svlen - 1]) == 0);
+
+    *result = sv[1];
+
+    return sv;
+}
+
 static void
 server_read_write_finish (GObject*      stream,
                           GAsyncResult* res,
                           server_data*  data)
 {
-    gchar** sv;
-    guint svlen;
     guint command;
     gint uid;
     gssize read;
     GString* s;
+    gchar* arg;
+    gchar** sv = NULL;
     GError* error = NULL;
 
     if (G_IS_OUTPUT_STREAM (stream))
@@ -244,20 +270,17 @@ server_read_write_finish (GObject*      stream,
     data->command++;
 
     /* FIXME want to simulate server blocking errors at each point. */
-    /* FIXME tidy all this code at some point. */
     switch (command)
     {
         case POP_COMMAND_USER:
-            sv = g_strsplit_set (data->buf, " \r\n", 0);
-            svlen = g_strv_length (sv);
-            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "USER") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
+            sv = pop_string_value (data->buf, 4, "USER", &arg);
 
-            if (!g_strcmp0 (sv[1], data->accounts[0].user))
+            if (!g_strcmp0 (arg, data->accounts[0].user))
             {
                 data->user = 0;
                 data->success = TRUE;
             }
-            else if (!g_strcmp0 (sv[1], data->accounts[1].user))
+            else if (!g_strcmp0 (arg, data->accounts[1].user))
             {
                 data->user = 1;
                 data->success = TRUE;
@@ -266,18 +289,16 @@ server_read_write_finish (GObject*      stream,
                 data->success = FALSE;
 
             if (data->success)
-                g_string_printf (s, "+OK Hello %s, can i have your password?\r\n", sv[1]);
+                g_string_printf (s, "+OK Hello %s, can i have your password?\r\n", arg);
             else
-                g_string_printf (s, "-ERR I don't know any %s.\r\n", sv[1]);
+                g_string_printf (s, "-ERR I don't know any %s.\r\n", arg);
             server_write (data->ostream, s->str, data);
-            g_strfreev (sv);
             break;
 
         case POP_COMMAND_PASSWORD:
-            sv = g_strsplit_set (data->buf, " \r\n", 0);
-            svlen = g_strv_length (sv);
-            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "PASS") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
-            data->success = (!g_strcmp0 (sv[1], data->accounts[0].password) || !g_strcmp0 (sv[1], data->accounts[1].password)) ? TRUE : FALSE;
+            sv = pop_string_value (data->buf, 4, "PASS", &arg);
+
+            data->success = (!g_strcmp0 (arg, data->accounts[0].password) || !g_strcmp0 (sv[1], data->accounts[1].password)) ? TRUE : FALSE;
             if (data->success)
                 server_write (data->ostream, "+OK We are good.\r\n", data);
             else
@@ -285,30 +306,24 @@ server_read_write_finish (GObject*      stream,
                 g_string_printf (s, "-ERR Hey you're not %s!\r\n", data->accounts[data->user].user);
                 server_write (data->ostream, s->str, data);
             }
-            g_strfreev (sv);
             break;
 
         case POP_COMMAND_STAT:
-            sv = g_strsplit_set (data->buf, " \r\n", 0);
-            svlen = g_strv_length (sv);
-            g_assert (svlen == 3 && !g_strcmp0 (sv[0], "STAT") && strlen (sv[1]) == 0 && strlen (sv[2]) == 0);
+            sv = pop_string_value (data->buf, 3, "STAT", &arg);
+
             /* The plugin doesn't use the maildrop size param, so we can just use 1. */
             data->nuids = g_random_int_range (1, 5);
             g_string_printf (s, "+OK %d 1.\r\n", data->nuids);
             server_write (data->ostream, s->str, data);
-            g_strfreev (sv);
             break;
 
         case POP_COMMAND_UIDL:
-            sv = g_strsplit_set (data->buf, " \r\n", 0);
-            svlen = g_strv_length (sv);
-            g_assert (svlen == 4 && !g_strcmp0 (sv[0], "UIDL") && strlen (sv[2]) == 0 && strlen (sv[3]) == 0);
-            uid = atoi (sv[1]);
+            sv = pop_string_value (data->buf, 4, "UIDL", &arg);
+            uid = atoi (arg);
             g_assert (uid <= data->nuids);
             if (uid < data->nuids)
                 data->command = POP_COMMAND_UIDL;
-            g_string_printf (s, "+OK MTC-%s\r\n", sv[1]);
-            g_strfreev (sv);
+            g_string_printf (s, "+OK MTC-%s\r\n", arg);
             server_write (data->ostream, s->str, data);
             break;
 
@@ -319,6 +334,8 @@ server_read_write_finish (GObject*      stream,
         default:
             g_input_stream_close_async (G_INPUT_STREAM (stream), G_PRIORITY_DEFAULT, NULL, (GAsyncReadyCallback) server_close_stream_finish, data);
     }
+    if (sv)
+        g_strfreev (sv);
 }
 
 static void
