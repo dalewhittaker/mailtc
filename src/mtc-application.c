@@ -269,10 +269,6 @@ mailtc_application_server_init (MailtcApplication* app,
 
     g_assert (MAILTC_IS_APPLICATION (app));
 
-    /* Initialise thread system */
-    if (!g_thread_supported ())
-        g_thread_init (NULL);
-
     priv = app->priv;
     if (!(manager = mailtc_module_manager_new (priv->directory, error)))
         return FALSE;

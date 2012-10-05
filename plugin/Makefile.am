@@ -3,11 +3,9 @@ plugindir = "$(libdir)/mailtc"
 plugin_LTLIBRARIES = net.la
 
 AM_CPPFLAGS = \
-		-DG_DISABLE_SINGLE_INCLUDES \
-		-DG_DISABLE_DEPRECATED \
-		-DGSEAL_ENABLE \
+		-DG_DISABLE_DEPRECATED=1 \
+		-DG_DISABLE_SINGLE_INCLUDES=1 \
 		-DLIBDIR=\"$(plugindir)\"
-
 
 AM_CFLAGS = \
 		-Wall \

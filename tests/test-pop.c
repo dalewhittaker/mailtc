@@ -17,14 +17,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
-
+#include <config.h>
 /* NOTE - This test must be run with appropriate permissions. */
 
 #include <string.h> /* strlen () */
 #include <stdlib.h> /* atoi () */
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <config.h>
 
 #include "mtc-account.h"
 #include "mtc-extension.h"
@@ -168,7 +167,7 @@ run_plugin_thread (server_data* data)
 static gboolean
 run_plugin (server_data* data)
 {
-    data->thread = g_thread_create ((GThreadFunc) run_plugin_thread, data, TRUE, NULL);
+    data->thread = g_thread_new ("run_plugin", (GThreadFunc) run_plugin_thread, data);
     return FALSE;
 }
 

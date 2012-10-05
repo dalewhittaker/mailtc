@@ -17,9 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <config.h>
+
 #include "mtc-net.h"
 
-#include <config.h>
 #include <gmodule.h>
 
 #define MAILTC_TYPE_POP            (mailtc_pop_get_type  ())

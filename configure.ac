@@ -3,9 +3,7 @@ AC_PREREQ(2.57)
 m4_define([mailtc_package],[mailtc])
 m4_define([mailtc_version],[1.4.3])
 
-m4_define([glib_required_version],[2.28.0])
-m4_define([gmodule_required_version],[2.28.0])
-m4_define([gthread_required_version],[2.28.0])
+m4_define([glib_required_version],[GLIB_VERSION_2_32])
 m4_define([gtk_required_version],[2.24.0])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
@@ -17,16 +15,6 @@ AC_SUBST(ACLOCAL_AMFLAGS,"-I autotools")
 
 # for autoheader
 AC_CONFIG_HEADERS([config.h])
-
-GLIB_REQUIRED_VERSION=glib_required_version
-GMODULE_REQUIRED_VERSION=gmodule_required_version
-GTHREAD_REQUIRED_VERSION=gthread_required_version
-GTK_REQUIRED_VERSION=gtk_required_version
-
-AC_SUBST(GLIB_REQUIRED_VERSION)
-AC_SUBST(GMODULE_REQUIRED_VERSION)
-AC_SUBST(GTHREAD_REQUIRED_VERSION)
-AC_SUBST(GTK_REQUIRED_VERSION)
 
 # put .o files in the subdirectory and package as bzip2
 AM_INIT_AUTOMAKE([subdir-objects dist-bzip2 no-dist-gzip])
@@ -47,14 +35,15 @@ LIBTOOL="$LIBTOOL --silent"
 ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
 
 PKG_PROG_PKG_CONFIG(0,23)
-PKG_CHECK_MODULES(GLIB,glib-2.0 >= $GLIB_REQUIRED_VERSION)
-PKG_CHECK_MODULES(GMODULE,gmodule-2.0 >= $GMODULE_REQUIRED_VERSION)
-PKG_CHECK_MODULES(GTHREAD,gthread-2.0 >= $GTHREAD_REQUIRED_VERSION)
-PKG_CHECK_MODULES(GTK,gtk+-2.0 >= $GTK_REQUIRED_VERSION)
+PKG_CHECK_MODULES([GTK], [gtk+-2.0 >= gtk_required_version])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= glib_required_version, gobject-2.0, gmodule-2.0, gio-2.0])
 
+AC_SUBST([GLIB_CFLAGS])
+AC_SUBST([GLIB_LIBS])
 AC_SUBST([GTK_CFLAGS])
 AC_SUBST([GTK_LIBS])
-AC_SUBST([GTHREAD_LIBS])
+
+AC_DEFINE([GLIB_VERSION_MIN_REQUIRED], [glib_required_version], [Ignore post 2.32 deprecations])
 
 AC_MSG_CHECKING([whether to do a debug build])
 AC_ARG_ENABLE(debug,

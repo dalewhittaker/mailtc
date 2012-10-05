@@ -17,10 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <config.h>
 #include "mtc-socket.h"
 
 #include <gio/gio.h>
-#include <config.h>
 
 #define TIMEOUT_NET 5
 #define TIMEOUT_FREQ 100
@@ -269,7 +269,7 @@ mailtc_socket_disconnect (MailtcSocket* sock)
     if (G_IS_SOCKET_CONNECTION (priv->connection))
     {
         g_tcp_connection_set_graceful_disconnect (
-                G_TCP_CONNECTION (priv->connection), TRUE);
+                G_TCP_CONNECTION (priv->connection), FALSE);
 
         g_io_stream_close (priv->connection, NULL, NULL);
         g_object_unref (priv->connection);

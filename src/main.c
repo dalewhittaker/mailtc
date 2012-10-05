@@ -16,6 +16,8 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+#include <config.h>
+
 #include "mtc-account.h"
 #include "mtc-application.h"
 #include "mtc-checker.h"
@@ -23,8 +25,6 @@
 #include "mtc-settings.h"
 #include "mtc-statusicon.h"
 #include "mtc-util.h"
-
-#include <config.h>
 
 static void
 mailtc_read_mail (GPtrArray* accounts)

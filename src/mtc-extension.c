@@ -16,12 +16,12 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+#include <config.h>
+
 #include "mtc-extension.h"
 #include "mtc-account.h"
 #include "mtc-module.h"
 #include "mtc-util.h"
-
-#include <config.h>
 
 #define MAILTC_EXTENSION_ERROR g_quark_from_string ("MAILTC_EXTENSION_ERROR")
 
