@@ -60,11 +60,11 @@ mailtc_settings_get_neterror   (MailtcSettings* settings);
 
 void
 mailtc_settings_set_iconcolour (MailtcSettings* settings,
-                                const GdkColor* colour);
+                                const GdkRGBA*  colour);
 
 void
 mailtc_settings_get_iconcolour (MailtcSettings* settings,
-                                GdkColor*       colour);
+                                GdkRGBA*        colour);
 
 void
 mailtc_settings_set_accounts   (MailtcSettings* settings,

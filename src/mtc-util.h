@@ -95,8 +95,8 @@ void
 mailtc_object_set_colour    (GObject*        obj,
                              GType           objtype,
                              const gchar*    name,
-                             GdkColor*       colour,
-                             const GdkColor* newcolour);
+                             GdkRGBA*        colour,
+                             const GdkRGBA*  newcolour);
 
 void
 mailtc_object_set_array     (GObject*     obj,

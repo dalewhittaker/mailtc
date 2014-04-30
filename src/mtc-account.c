@@ -45,7 +45,7 @@ struct _MailtcAccount
 {
     GObject parent_instance;
 
-    GdkColor iconcolour;
+    GdkRGBA iconcolour;
     gchar* name;
     gchar* server;
     gchar* user;
@@ -169,14 +169,14 @@ mailtc_account_get_protocol (MailtcAccount* account)
 
 void
 mailtc_account_set_iconcolour (MailtcAccount*  account,
-                               const GdkColor* iconcolour)
+                               const GdkRGBA*  iconcolour)
 {
     MAILTC_ACCOUNT_SET_COLOUR (account, iconcolour);
 }
 
 void
 mailtc_account_get_iconcolour (MailtcAccount* account,
-                               GdkColor*      iconcolour)
+                               GdkRGBA*       iconcolour)
 {
     g_assert (MAILTC_IS_ACCOUNT (account));
 
@@ -294,7 +294,7 @@ mailtc_account_get_property (GObject*    object,
                              GParamSpec* pspec)
 {
     MailtcAccount* account = MAILTC_ACCOUNT (object);
-    GdkColor colour;
+    GdkRGBA colour;
 
     switch (prop_id)
     {
@@ -436,7 +436,7 @@ mailtc_account_class_init (MailtcAccountClass* klass)
                                      MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
                                      "The account icon colour",
-                                     GDK_TYPE_COLOR,
+                                     GDK_TYPE_RGBA,
                                      flags));
 
     g_object_class_install_property (gobject_class,

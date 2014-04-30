@@ -43,11 +43,11 @@ mailtc_envelope_new        (void);
 
 void
 mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const GdkColor* colour);
+                            const GdkRGBA*  colour);
 
 void
 mailtc_envelope_get_colour (MailtcEnvelope* envelope,
-                            GdkColor*       colour);
+                            GdkRGBA*        colour);
 
 GdkPixbuf*
 mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope);

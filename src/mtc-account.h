@@ -87,11 +87,11 @@ mailtc_account_get_protocol     (MailtcAccount* account);
 
 void
 mailtc_account_set_iconcolour   (MailtcAccount*  account,
-                                 const GdkColor* iconcolour);
+                                 const GdkRGBA*  iconcolour);
 
 void
 mailtc_account_get_iconcolour   (MailtcAccount* account,
-                                 GdkColor*      iconcolour);
+                                 GdkRGBA*       iconcolour);
 
 MailtcExtension*
 mailtc_account_get_extension    (MailtcAccount* account);

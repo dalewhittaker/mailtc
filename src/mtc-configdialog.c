@@ -127,7 +127,7 @@ mailtc_config_dialog_response_cb (GtkWidget* dialog,
         MailtcConfigDialogPrivate* priv;
         MailtcSettings* settings;
         guint net_error;
-        GdkColor colour;
+        GdkRGBA colour;
         GError* error = NULL;
 
         g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
@@ -174,23 +174,20 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
                                MailtcEnvelope* envelope)
 {
     GtkWidget* dialog;
-    GtkWidget *coloursel;
-    GdkColor colour;
+    GdkRGBA colour;
     gint response;
 
     (void) button;
 
-    dialog = gtk_color_selection_dialog_new ("Select Icon Colour");
-    coloursel = gtk_color_selection_dialog_get_color_selection (GTK_COLOR_SELECTION_DIALOG (dialog));
+    dialog = gtk_color_chooser_dialog_new ("Select Icon Colour", GTK_WINDOW (gtk_widget_get_toplevel (button)));
 
     mailtc_envelope_get_colour (envelope, &colour);
-    gtk_color_selection_set_current_color (GTK_COLOR_SELECTION (coloursel), &colour);
+    gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog), &colour);
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
-
     if (response == GTK_RESPONSE_OK)
     {
-        gtk_color_selection_get_current_color (GTK_COLOR_SELECTION (coloursel), &colour);
+        gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), &colour);
         mailtc_envelope_set_colour (envelope, &colour);
     }
     gtk_widget_destroy (dialog);
@@ -239,6 +236,7 @@ mailtc_button_extension_clicked_cb (GtkWidget*          button,
     gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (dialog_extension), mailtc_extension_get_compatibility (extension));
     gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (dialog_extension), mailtc_extension_get_description (extension));
     gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (dialog_extension), authors);
+    gtk_about_dialog_set_logo_icon_name (GTK_ABOUT_DIALOG (dialog_extension), "help-about");
     g_object_unref (extension);
 
     gtk_dialog_run (GTK_DIALOG (dialog_extension));
@@ -288,7 +286,7 @@ mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
     adj_connections = (GtkAdjustment*)gtk_adjustment_new (2.0, 2.0, 5.0, 1.0, 1.0, 0.0);
     spin_connections = gtk_spin_button_new (adj_connections, 1.0, 0);
     label_connections = gtk_label_new ("failed connections");
-    hbox_errordlg = gtk_hbox_new (FALSE, 0);
+    hbox_errordlg = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (hbox_errordlg), combo_errordlg, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox_errordlg), spin_connections, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox_errordlg), label_connections, FALSE, FALSE, 0);
@@ -296,7 +294,7 @@ mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
     label_icon = gtk_label_new ("Multiple icon colour:");
     envelope_icon = mailtc_envelope_new ();
     button_icon = gtk_button_new_with_label ("Select Colour...");
-    hbox_icon = gtk_hbox_new (FALSE, 0);
+    hbox_icon = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (hbox_icon), envelope_icon, FALSE, FALSE, 0);
     gtk_box_pack_end (GTK_BOX (hbox_icon), button_icon, FALSE, FALSE, 5);
 
@@ -308,36 +306,30 @@ mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
     gtk_container_add (GTK_CONTAINER (align), widget); \
     gtk_size_group_add_widget (group, align);
 
-    table_general = gtk_table_new (5, 2, FALSE);
+    table_general = gtk_grid_new ();
+    gtk_grid_set_column_spacing (GTK_GRID (table_general), 20);
+    gtk_grid_set_row_spacing (GTK_GRID (table_general), 10);
     SIZE_GROUP_ADD (label_group, label_interval);
-    gtk_table_attach (GTK_TABLE (table_general), align, 0, 1, 0, 1,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 0, 0, 1, 1);
     SIZE_GROUP_ADD (label_input, spin_interval);
-    gtk_table_attach (GTK_TABLE (table_general), align, 1, 2, 0, 1,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 1, 0, 1, 1);
     SIZE_GROUP_ADD (label_group, label_command);
-    gtk_table_attach (GTK_TABLE (table_general), align, 0, 1, 1, 2,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 0, 1, 1, 1);
     SIZE_GROUP_ADD (label_input, entry_command);
-    gtk_table_attach (GTK_TABLE (table_general), align, 1, 2, 1, 2,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 1, 1, 1, 1);
     SIZE_GROUP_ADD (label_group, label_icon);
-    gtk_table_attach (GTK_TABLE (table_general), align, 0, 1, 3, 4,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 0, 2, 1, 1);
     SIZE_GROUP_ADD (label_input, hbox_icon);
-    gtk_table_attach (GTK_TABLE (table_general), align, 1, 2, 3, 4,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 1, 2, 1, 1);
     SIZE_GROUP_ADD (label_group, label_errordlg);
-    gtk_table_attach (GTK_TABLE (table_general), align, 0, 1, 4, 5,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 0, 3, 1, 1);
     SIZE_GROUP_ADD (label_input, hbox_errordlg);
-    gtk_table_attach (GTK_TABLE (table_general), align, 1, 2, 4, 5,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
+    gtk_grid_attach (GTK_GRID (table_general), align, 1, 3, 1, 1);
 
     g_object_unref (label_input);
     g_object_unref (label_group);
 
-    gtk_container_set_border_width (GTK_CONTAINER (table_general), 4);
+    gtk_container_set_border_width (GTK_CONTAINER (table_general), 10);
 
     g_signal_connect (combo_errordlg, "changed",
             G_CALLBACK (mailtc_combo_errordlg_changed_cb), label_connections);
@@ -418,7 +410,7 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     MailtcExtension* accextension;
     GtkTreeModel* model;
     GtkTreeIter iter;
-    GdkColor colour;
+    GdkRGBA colour;
     const gchar* name;
     const gchar* server;
     const gchar* user;
@@ -700,13 +692,23 @@ mailtc_account_dialog_run (GtkWidget*          button,
                 PACKAGE " Configuration",
                 GTK_WINDOW (dialog_config),
                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                GTK_STOCK_OK, GTK_RESPONSE_OK,
-                GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                 NULL);
+
+        gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");
+        button = gtk_button_new ();
+        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+        gtk_button_set_label (GTK_BUTTON (button), "_OK");
+        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
+        gtk_widget_show (button);
+        button = gtk_button_new ();
+        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+        gtk_button_set_label (GTK_BUTTON (button), "_Cancel");
+        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_CANCEL);
+        gtk_widget_show (button);
 
         priv->dialog_account = dialog;
         gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
-        gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
+        gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");
 
         label_name = gtk_label_new ("Name:");
         entry_name = gtk_entry_new ();
@@ -743,43 +745,29 @@ mailtc_account_dialog_run (GtkWidget*          button,
         label_icon = gtk_label_new ("Icon Colour:");
         envelope_icon = mailtc_envelope_new ();
         button_icon = gtk_button_new_with_label ("Select Colour...");
-        hbox_icon = gtk_hbox_new (FALSE, 5);
+        hbox_icon = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 5);
         gtk_box_pack_start (GTK_BOX (hbox_icon), envelope_icon, FALSE, FALSE, 0);
         gtk_box_pack_end (GTK_BOX (hbox_icon), button_icon, TRUE, TRUE, 0);
 
-        table_account = gtk_table_new (8, 2, FALSE);
-        gtk_table_attach (GTK_TABLE (table_account), label_name, 0, 1, 0, 1,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), entry_name, 1, 2, 0, 1,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_server, 0, 1, 1, 2,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), entry_server, 1, 2, 1, 2,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_port, 0, 1, 2, 3,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), entry_port, 1, 2, 2, 3,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_user, 0, 1, 3, 4,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), entry_user, 1, 2, 3, 4,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_password, 0, 1, 4, 5,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), entry_password, 1, 2, 4, 5,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_protocol, 0, 1, 5, 6,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), combo_protocol, 1, 2, 5, 6,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), button_extension, 1, 2, 6, 7,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), label_icon, 0, 1, 7, 8,
-            GTK_SHRINK, GTK_EXPAND | GTK_FILL, 10, 2);
-        gtk_table_attach (GTK_TABLE (table_account), hbox_icon, 1, 2, 7, 8,
-            GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-
-        gtk_container_set_border_width (GTK_CONTAINER (table_account), 4);
+        table_account = gtk_grid_new ();
+        gtk_grid_set_column_spacing (GTK_GRID (table_account), 20);
+        gtk_grid_set_row_spacing (GTK_GRID (table_account), 10);
+        gtk_grid_attach (GTK_GRID (table_account), label_name, 0, 0, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), entry_name, 1, 0, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_server, 0, 1, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), entry_server, 1, 1, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_port, 0, 2, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), entry_port, 1, 2, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_user, 0, 3, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), entry_user, 1, 3, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_password, 0, 4, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), entry_password, 1, 4, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_protocol, 0, 5, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), combo_protocol, 1, 5, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), button_extension, 1, 6, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), label_icon, 0, 7, 1, 1);
+        gtk_grid_attach (GTK_GRID (table_account), hbox_icon, 1, 7, 1, 1);
+        gtk_container_set_border_width (GTK_CONTAINER (table_account), 10);
 
         g_signal_connect (dialog, "delete-event",
                 G_CALLBACK (gtk_widget_hide_on_delete), NULL);
@@ -806,7 +794,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
         gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))),
                             table_account, FALSE, 0, 0);
-        gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+/*        gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);*/
     }
     else
         dialog = priv->dialog_account;
@@ -818,7 +806,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         const gchar* user;
         const gchar* password;
         gchar* port;
-        GdkColor colour;
+        GdkRGBA colour;
 
         name = mailtc_account_get_name (account);
         server = mailtc_account_get_server (account);
@@ -1062,11 +1050,17 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
         g_object_unref (extension);
     }
 
-    button_edit = gtk_button_new_from_stock (GTK_STOCK_PROPERTIES);
-    button_add = gtk_button_new_from_stock (GTK_STOCK_ADD);
-    button_remove = gtk_button_new_from_stock (GTK_STOCK_REMOVE);
+    button_edit = gtk_button_new_from_icon_name ("document-properties", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_use_underline (GTK_BUTTON (button_edit), TRUE);
+    gtk_button_set_label (GTK_BUTTON (button_edit), "_Properties");
+    button_add = gtk_button_new_from_icon_name ("list-add", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_use_underline (GTK_BUTTON (button_add), TRUE);
+    gtk_button_set_label (GTK_BUTTON (button_add), "_Add");
+    button_remove = gtk_button_new_from_icon_name ("list-remove", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_use_underline (GTK_BUTTON (button_remove), TRUE);
+    gtk_button_set_label (GTK_BUTTON (button_remove), "_Remove");
 
-    hbox = gtk_hbox_new (TRUE, 0);
+    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (hbox), button_add, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), button_edit, TRUE, TRUE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), button_remove, TRUE, TRUE, 0);
@@ -1095,12 +1089,16 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 
     priv->tree_view = tree_view;
 
-    table_accounts = gtk_table_new (2, 1, FALSE);
-    gtk_table_attach (GTK_TABLE (table_accounts), tree_scroll, 0, 1, 0, 1,
-                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-    gtk_table_attach (GTK_TABLE (table_accounts), hbox, 0, 1, 1, 2,
-                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 10, 2);
-    gtk_container_set_border_width (GTK_CONTAINER (table_accounts), 4);
+    table_accounts = gtk_grid_new ();
+    gtk_grid_set_column_spacing (GTK_GRID (table_accounts), 20);
+    gtk_grid_set_row_spacing (GTK_GRID (table_accounts), 10);
+    gtk_grid_attach (GTK_GRID (table_accounts), tree_scroll, 0, 0, 2, 1);
+    gtk_grid_attach (GTK_GRID (table_accounts), hbox, 0, 1, 2, 1);
+    gtk_widget_set_hexpand (tree_scroll, TRUE);
+    gtk_widget_set_halign (tree_scroll, GTK_ALIGN_FILL);
+    gtk_widget_set_hexpand (hbox, TRUE);
+    gtk_widget_set_halign (hbox, GTK_ALIGN_FILL);
+    gtk_container_set_border_width (GTK_CONTAINER (table_accounts), 10);
     gtk_widget_show_all (table_accounts);
 
     return table_accounts;
@@ -1185,7 +1183,8 @@ mailtc_config_dialog_constructed (GObject* object)
     GtkWidget* label_general;
     GtkWidget* page_accounts;
     GtkWidget* label_accounts;
-    GdkColor colour;
+    GtkWidget* button;
+    GdkRGBA colour;
     const gchar* str;
     guint u;
 
@@ -1205,11 +1204,17 @@ mailtc_config_dialog_constructed (GObject* object)
     gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
     gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), TRUE);
     gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
-    gtk_window_set_icon_name (GTK_WINDOW (dialog), GTK_STOCK_PREFERENCES);
-    gtk_dialog_add_buttons (GTK_DIALOG (dialog),
-                            GTK_STOCK_SAVE, GTK_RESPONSE_OK,
-                            GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
-                            NULL);
+    gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");
+    button = gtk_button_new_from_icon_name ("document-save", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+    gtk_button_set_label (GTK_BUTTON (button), "_Save");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
+    gtk_widget_show (button);
+    button = gtk_button_new_from_icon_name ("window-close", GTK_ICON_SIZE_BUTTON);
+    gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+    gtk_button_set_label (GTK_BUTTON (button), "_Close");
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_CLOSE);
+    gtk_widget_show (button);
 
     notebook = gtk_notebook_new ();
     gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);

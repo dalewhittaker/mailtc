@@ -59,16 +59,16 @@ mailtc_gtk_message (GtkWidget*     parent,
     switch (msg_type)
     {
         case GTK_MESSAGE_WARNING:
-            icon = GTK_STOCK_DIALOG_WARNING;
+            icon = "dialog-warning";
             mailtc_warning (s);
             break;
         case GTK_MESSAGE_INFO:
-            icon = GTK_STOCK_DIALOG_INFO;
+            icon = "dialog-information";
             mailtc_info (s);
             break;
         case GTK_MESSAGE_ERROR:
             mailtc_error (s);
-            icon = GTK_STOCK_DIALOG_ERROR;
+            icon = "dialog-error";
             break;
         default:
             mailtc_error (s);
@@ -78,6 +78,7 @@ mailtc_gtk_message (GtkWidget*     parent,
     if (icon)
     {
         GtkWidget* dialog;
+        GtkWidget* button;
         GtkWindow* toplevel;
 
         toplevel = parent ? GTK_WINDOW (gtk_widget_get_toplevel (parent)) : NULL;
@@ -85,8 +86,14 @@ mailtc_gtk_message (GtkWidget*     parent,
         dialog = gtk_message_dialog_new (toplevel,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
                                          msg_type,
-                                         GTK_BUTTONS_OK,
+                                         GTK_BUTTONS_NONE,
+                                         /*GTK_BUTTONS_OK,*/
                                          "%s", s);
+        button = gtk_button_new ();
+        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+        gtk_button_set_label (GTK_BUTTON (button), "_OK");
+        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
+        gtk_widget_show (button);
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
         gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
         gtk_dialog_run (GTK_DIALOG (dialog));
@@ -247,19 +254,19 @@ void
 mailtc_object_set_colour (GObject*        obj,
                           GType           objtype,
                           const gchar*    name,
-                          GdkColor*       colour,
-                          const GdkColor* newcolour)
+                          GdkRGBA*        colour,
+                          const GdkRGBA*  newcolour)
 {
-    GdkColor defaultcolour;
+    GdkRGBA defaultcolour;
 
     g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
 
     if (!newcolour)
     {
-        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 0xFFFF;
+        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 1.0;
         newcolour = &defaultcolour;
     }
-    if (!gdk_color_equal (newcolour, colour))
+    if (!gdk_rgba_equal (newcolour, colour))
     {
         *colour = *newcolour;
 

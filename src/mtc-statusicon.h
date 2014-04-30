@@ -40,12 +40,12 @@ mailtc_status_icon_get_type           (void);
 
 void
 mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
-                                       const GdkColor*   colour);
+                                       const GdkRGBA*    colour);
 
 void
 mailtc_status_icon_add_item           (MailtcStatusIcon* status_icon,
                                        const gchar*      account_name,
-                                       const GdkColor*   account_colour);
+                                       const GdkRGBA*    account_colour);
 
 gint64
 mailtc_status_icon_update             (MailtcStatusIcon* status_icon,

@@ -73,7 +73,7 @@ struct _MailtcSettings
     MailtcSettingsPrivate* priv;
     MailtcModuleManager* modules;
     GPtrArray* accounts;
-    GdkColor iconcolour;
+    GdkRGBA iconcolour;
     guint interval;
     guint neterror;
     gchar* command;
@@ -143,16 +143,20 @@ G_DEFINE_TYPE_WITH_CODE (MailtcSettings, mailtc_settings, G_TYPE_OBJECT,
 
 static void
 mailtc_settings_string_to_colour (const gchar* str,
-                                  GdkColor*    colour)
+                                  GdkRGBA*     colour)
 {
+    guint16 temp;
     guint64 cvalue;
 
     g_assert (colour);
 
     cvalue = g_ascii_strtoull (str, NULL, 16);
-    colour->red = (guint16) ((cvalue >> 32) & 0xFFFF);
-    colour->green = (guint16) ((cvalue >> 16) & 0xFFFF);
-    colour->blue = (guint16) (cvalue & 0xFFFF);
+    temp = (guint16) ((cvalue >> 32) & 0xFFFF);
+    colour->red = ((gdouble) temp ) / 65535;
+    temp = (guint16) ((cvalue >> 16) & 0xFFFF);
+    colour->green = ((gdouble) temp ) / 65535;
+    temp = (guint16) (cvalue & 0xFFFF);
+    colour->blue = ((gdouble) temp ) / 65535;
 }
 
 static void
@@ -297,19 +301,19 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
 {
     GKeyFile* key_file;
     gchar* value;
-    GdkColor* colour = NULL;
+    GdkRGBA* colour = NULL;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
 
     key_file = settings->priv->key_file;
 
     g_object_get (obj, name, &colour, NULL);
-    value = gdk_color_to_string (colour);
+    value = gdk_rgba_to_string (colour);
 
     g_key_file_set_string (key_file, key_group, name, value + 1);
 
     g_free (value);
-    gdk_color_free (colour);
+    gdk_rgba_free (colour);
 }
 
 static gboolean
@@ -321,7 +325,7 @@ mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
 {
     GKeyFile* key_file;
     gchar* value;
-    GdkColor colour;
+    GdkRGBA colour;
 
     g_assert (MAILTC_IS_SETTINGS (settings));
 
@@ -592,14 +596,14 @@ mailtc_settings_get_neterror (MailtcSettings* settings)
 
 void
 mailtc_settings_set_iconcolour (MailtcSettings* settings,
-                                const GdkColor* iconcolour)
+                                const GdkRGBA*  iconcolour)
 {
     MAILTC_SETTINGS_SET_COLOUR (settings, iconcolour);
 }
 
 void
 mailtc_settings_get_iconcolour (MailtcSettings* settings,
-                                GdkColor*      iconcolour)
+                                GdkRGBA*        iconcolour)
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
@@ -720,7 +724,7 @@ mailtc_settings_get_property (GObject*    object,
                               GParamSpec* pspec)
 {
     MailtcSettings* settings;
-    GdkColor colour;
+    GdkRGBA colour;
 
     settings = MAILTC_SETTINGS (object);
 
@@ -859,7 +863,7 @@ mailtc_settings_class_init (MailtcSettingsClass* klass)
                                      MAILTC_SETTINGS_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
                                      "The icon colour",
-                                     GDK_TYPE_COLOR,
+                                     GDK_TYPE_RGBA,
                                      flags));
 
     g_object_class_install_property (gobject_class,

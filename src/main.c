@@ -157,7 +157,7 @@ mailtc_run_cb (MailtcApplication* app)
     MailtcSettings* settings;
     MailtcAccount* account;
     GPtrArray* accounts;
-    GdkColor icon_colour;
+    GdkRGBA icon_colour;
     guint i;
 
     settings = mailtc_application_get_settings (app);

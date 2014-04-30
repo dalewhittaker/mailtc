@@ -49,7 +49,7 @@ typedef struct
 {
     gchar* name;
     gint64 nmails;
-    GdkColor colour;
+    GdkRGBA colour;
 
 } MailtcStatusIconItem;
 
@@ -160,7 +160,7 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
 void
 mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
                              const gchar*      account_name,
-                             const GdkColor*   account_colour)
+                             const GdkRGBA*    account_colour)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
@@ -172,7 +172,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     item = g_new0 (MailtcStatusIconItem, 1);
 
     if (!account_colour)
-        item->colour.red = item->colour.green = item->colour.blue = 0xFFFF;
+        item->colour.red = item->colour.green = item->colour.blue = 1.0;
     else
         item->colour = *account_colour;
 
@@ -193,7 +193,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
 
 void
 mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
-                                       const GdkColor*   colour)
+                                       const GdkRGBA*    colour)
 {
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
@@ -214,7 +214,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     gchar* tmp_str;
     GString* tooltip;
     GHashTableIter iter;
-    GdkColor* colour;
+    GdkRGBA* colour;
     gint index;
 
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));

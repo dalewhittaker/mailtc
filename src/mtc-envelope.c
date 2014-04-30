@@ -36,7 +36,7 @@ struct _MailtcEnvelope
     GtkImage parent_instance;
 
     MailtcEnvelopePrivate* priv;
-    GdkColor colour;
+    GdkRGBA colour;
 };
 
 struct _MailtcEnvelopeClass
@@ -54,7 +54,7 @@ enum
 
 static void
 mailtc_envelope_set_pixbuf_colour (GdkPixbuf* pixbuf,
-                                   GdkColor*  colour)
+                                   GdkRGBA*   colour)
 {
     gint width;
     gint height;
@@ -70,9 +70,9 @@ mailtc_envelope_set_pixbuf_colour (GdkPixbuf* pixbuf,
 
     if (colour)
     {
-        r = colour->red >> 8;
-        g = colour->green >> 8;
-        b = colour->blue >> 8;
+        r = (guint8) (colour->red * 255);
+        g = (guint8) (colour->green * 255);
+        b = (guint8) (colour->blue * 255);
     }
     else
         r = g = b = 255;
@@ -244,14 +244,14 @@ mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope)
 
 void
 mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const GdkColor* colour)
+                            const GdkRGBA*  colour)
 {
     MAILTC_ENVELOPE_SET_COLOUR (envelope, colour);
 }
 
 void
 mailtc_envelope_get_colour (MailtcEnvelope* envelope,
-                            GdkColor*       colour)
+                            GdkRGBA*        colour)
 {
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
@@ -285,7 +285,7 @@ mailtc_envelope_get_property (GObject*    object,
                               GParamSpec* pspec)
 {
     MailtcEnvelope* envelope = MAILTC_ENVELOPE (object);
-    GdkColor colour;
+    GdkRGBA colour;
 
     switch (prop_id)
     {
@@ -327,7 +327,7 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
                                      "colour",
                                      "Colour",
                                      "The envelope colour",
-                                     GDK_TYPE_COLOR,
+                                     GDK_TYPE_RGBA,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 
     g_type_class_add_private (klass, sizeof (MailtcEnvelopePrivate));
