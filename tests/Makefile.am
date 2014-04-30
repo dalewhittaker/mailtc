@@ -4,16 +4,14 @@ EXTRA_DIST =
 TEST_PROGS =
 
 AM_CPPFLAGS = \
-		-DG_DISABLE_SINGLE_INCLUDES=1 \
+		$(GTK_CFLAGS) \
+		-I$(top_srcdir)/src \
 		-DG_DISABLE_DEPRECATED=1 \
-		-DGTK_DISABLE_SINGLE_INCLUDES=1 \
 		-DGTK_DISABLE_DEPRECATED=1 \
-		-DGTK_MULTIHEAD_SAFE=1 \
 		-DGDK_PIXBUF_DISABLE_DEPRECATED=1 \
 		-DGDK_DISABLE_DEPRECATED=1 \
 		-DGDK_MULTIHEAD_SAFE=1 \
-		-DPANGO_DISABLE_DEPRECATED=1 \
-		-DGSEAL_ENABLE=1 \
+		-DGTK_MULTIHEAD_SAFE=1 \
 		-DPLUGINDIR=\""$(top_srcdir)/plugin/.libs"\" \
 		-DLIBDIR=\""$(libdir)/mailtc"\" \
 		-DSRCDIR=\""$(srcdir)"\" \
@@ -27,10 +25,6 @@ AM_CFLAGS = \
 		-ansi \
 		-pedantic \
 		-ggdb
-
-INCLUDES = \
-		$(GTK_CFLAGS) \
-		-I$(top_srcdir)/src
 
 LDADD = \
 		$(GTK_LIBS)

@@ -3,8 +3,9 @@ plugindir = "$(libdir)/mailtc"
 plugin_LTLIBRARIES = net.la
 
 AM_CPPFLAGS = \
+		$(GLIB_CFLAGS) \
+		-I$(top_srcdir)/src \
 		-DG_DISABLE_DEPRECATED=1 \
-		-DG_DISABLE_SINGLE_INCLUDES=1 \
 		-DLIBDIR=\"$(plugindir)\"
 
 AM_CFLAGS = \
@@ -20,10 +21,6 @@ AM_CPPFLAGS += \
 AM_CFLAGS += \
 		-ggdb
 endif
-
-INCLUDES = \
-		$(GLIB_CFLAGS) \
-		-I$(top_srcdir)/src
 
 LDADD = \
 		$(GLIB_LIBS)
