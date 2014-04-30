@@ -172,7 +172,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     item = g_new0 (MailtcStatusIconItem, 1);
 
     if (!account_colour)
-        item->colour.red = item->colour.green = item->colour.blue = 1.0;
+        item->colour.red = item->colour.green = item->colour.blue = item->colour.alpha = 1.0;
     else
         item->colour = *account_colour;
 

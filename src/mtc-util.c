@@ -262,7 +262,7 @@ mailtc_object_set_colour (GObject*        obj,
 
     if (!newcolour)
     {
-        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 1.0;
+        defaultcolour.red = defaultcolour.green = defaultcolour.blue = defaultcolour.alpha = 1.0;
         newcolour = &defaultcolour;
     }
     if (!gdk_rgba_equal (newcolour, colour))

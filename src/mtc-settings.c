@@ -142,24 +142,6 @@ G_DEFINE_TYPE_WITH_CODE (MailtcSettings, mailtc_settings, G_TYPE_OBJECT,
         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, mailtc_settings_initable_iface_init))
 
 static void
-mailtc_settings_string_to_colour (const gchar* str,
-                                  GdkRGBA*     colour)
-{
-    guint16 temp;
-    guint64 cvalue;
-
-    g_assert (colour);
-
-    cvalue = g_ascii_strtoull (str, NULL, 16);
-    temp = (guint16) ((cvalue >> 32) & 0xFFFF);
-    colour->red = ((gdouble) temp ) / 65535;
-    temp = (guint16) ((cvalue >> 16) & 0xFFFF);
-    colour->green = ((gdouble) temp ) / 65535;
-    temp = (guint16) (cvalue & 0xFFFF);
-    colour->blue = ((gdouble) temp ) / 65535;
-}
-
-static void
 mailtc_settings_keyfile_write_uint (MailtcSettings* settings,
                                     GObject*        obj,
                                     const gchar*    key_group,
@@ -310,7 +292,7 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
     g_object_get (obj, name, &colour, NULL);
     value = gdk_rgba_to_string (colour);
 
-    g_key_file_set_string (key_file, key_group, name, value + 1);
+    g_key_file_set_string (key_file, key_group, name, value);
 
     g_free (value);
     gdk_rgba_free (colour);
@@ -335,7 +317,7 @@ mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
     if (error && *error)
         return FALSE;
 
-    mailtc_settings_string_to_colour (value, &colour);
+    g_assert (gdk_rgba_parse (&colour, value));
     g_free (value);
 
     g_object_set (obj, name, &colour, NULL);
