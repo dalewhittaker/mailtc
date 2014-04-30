@@ -87,7 +87,6 @@ mailtc_gtk_message (GtkWidget*     parent,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
                                          msg_type,
                                          GTK_BUTTONS_NONE,
-                                         /*GTK_BUTTONS_OK,*/
                                          "%s", s);
         button = gtk_button_new ();
         gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
