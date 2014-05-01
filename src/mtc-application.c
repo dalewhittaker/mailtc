@@ -742,8 +742,6 @@ mailtc_application_new (void)
     g_set_application_name (PACKAGE);
     mailtc_application_set_log_glib (NULL);
 
-    g_type_init ();
-
     g_assert (g_application_id_is_valid (MAILTC_APPLICATION_ID));
 
     return g_object_new (MAILTC_TYPE_APPLICATION,

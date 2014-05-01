@@ -3,7 +3,7 @@ AC_PREREQ(2.57)
 m4_define([mailtc_package],[mailtc])
 m4_define([mailtc_version],[1.4.3])
 
-m4_define([glib_required_version],[GLIB_VERSION_2_32])
+m4_define([glib_required_version],[GLIB_VERSION_2_38])
 m4_define([gtk_required_version],[3.10.0])
 
 AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
@@ -43,7 +43,7 @@ AC_SUBST([GLIB_LIBS])
 AC_SUBST([GTK_CFLAGS])
 AC_SUBST([GTK_LIBS])
 
-AC_DEFINE([GLIB_VERSION_MIN_REQUIRED], [glib_required_version], [Ignore post 2.32 deprecations])
+AC_DEFINE([GLIB_VERSION_MIN_REQUIRED], [glib_required_version], [Ignore post 2.38 deprecations])
 
 AC_MSG_CHECKING([whether to do a debug build])
 AC_ARG_ENABLE(debug,
