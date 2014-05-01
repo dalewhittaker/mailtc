@@ -692,6 +692,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
                 PACKAGE " Configuration",
                 GTK_WINDOW (dialog_config),
                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                NULL,
                 NULL);
 
         gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");

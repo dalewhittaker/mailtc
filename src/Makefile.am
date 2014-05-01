@@ -13,8 +13,6 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 		-Wall \
 		-Wextra \
-		-Wno-overlength-strings \
-		-Wno-format \
 		-ansi \
 		-pedantic
 
@@ -29,6 +27,15 @@ endif
 LDADD = \
 		$(GTK_LIBS)
 
+UI_FILES = \
+		mtc-envelope.png
+
+mtc-resources.c: mtc-gresource.xml $(UI_FILES)
+		glib-compile-resources --target=$@ --generate-source --c-name mailtc mtc-gresource.xml
+
+mtc-resources.h: mtc-gresource.xml $(UI_FILES)
+		glib-compile-resources --target=$@ --generate-header --c-name mailtc mtc-gresource.xml
+
 mailtc_SOURCES = \
 		mtc-account.c \
 		mtc-application.c \
@@ -38,6 +45,7 @@ mailtc_SOURCES = \
 		mtc-extension.c \
 		mtc-module.c \
 		mtc-modulemanager.c \
+		mtc-resources.c \
 		mtc-settings.c \
 		mtc-statusicon.c \
 		mtc-util.c \
@@ -55,6 +63,7 @@ EXTRA_DIST = \
 		mtc-extension.h \
 		mtc-module.h \
 		mtc-modulemanager.h \
+		mtc-resources.h \
 		mtc-settings.h \
 		mtc-statusicon.h \
 		mtc-util.h

@@ -530,8 +530,6 @@ int
 main (int    argc,
       char** argv)
 {
-    g_type_init ();
-
 #if 1
     g_test_init (&argc, &argv, NULL);
     g_test_add_func ("/plugin/pop", test_pop);

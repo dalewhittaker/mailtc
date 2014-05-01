@@ -27,7 +27,6 @@
 struct _MailtcEnvelopePrivate
 {
     GdkPixbuf* pixbuf;
-    guint8* data;
     gboolean pixbuf_is_envelope;
 };
 
@@ -107,69 +106,14 @@ mailtc_envelope_set_pixbuf_colour (GdkPixbuf* pixbuf,
 static GdkPixbuf*
 mailtc_envelope_create_pixbuf (MailtcEnvelope* envelope)
 {
-
+    GInputStream *stream;
     GdkPixbuf* pixbuf;
 
-/* GdkPixbuf RGBA C-Source image dump */
-
-#ifdef __SUNPRO_C
-#pragma align 4 (my_pixbuf)
-#endif
-#ifdef __GNUC__
-static const guint8 envelope_data[] __attribute__ ((__aligned__ (4))) =
-#else
-static const guint8 envelope_data[] =
-#endif
-{ ""
-  /* Pixbuf magic (0x47646b50) */
-  "GdkP"
-  /* length: header (24) + pixel_data (703) */
-  "\0\0\2\327"
-  /* pixdata_type (0x2010002) */
-  "\2\1\0\2"
-  /* rowstride (88) */
-  "\0\0\0X"
-  /* width (22) */
-  "\0\0\0\26"
-  /* height (22) */
-  "\0\0\0\26"
-  /* pixel_data: */
-  "\304\0\0\0\0\1\0\0\0\1\221\0\0\0\2\1\0\0\0\1\202\0\0\0\0\1\0\0\0f\221"
-  "\0\0\0\377\4\0\0\0m\0\0\0\10\0\0\0\2\0\0\0\1\202\0\0\0\377\217\377\377"
-  "\377\377\202\0\0\0\377\6\0\0\0\31\0\0\0\10\0\0\0\2\0\0\0\377\377\377"
-  "\377\377\0\0\0\377\215\377\377\377\377\7\0\0\0\377\377\377\377\377\0"
-  "\0\0\377\0\0\0(\0\0\0\17\0\0\0\2\0\0\0\377\202\377\377\377\377\1\0\0"
-  "\0\377\213\377\377\377\377\1\0\0\0\377\202\377\377\377\377\5\0\0\0\377"
-  "\0\0\0-\0\0\0\21\0\0\0\2\0\0\0\377\203\377\377\377\377\1\0\0\0\377\211"
-  "\377\377\377\377\1\0\0\0\377\203\377\377\377\377\5\0\0\0\377\0\0\0-\0"
-  "\0\0\21\0\0\0\2\0\0\0\377\204\377\377\377\377\1\0\0\0\377\207\377\377"
-  "\377\377\1\0\0\0\377\204\377\377\377\377\5\0\0\0\377\0\0\0-\0\0\0\21"
-  "\0\0\0\2\0\0\0\377\205\377\377\377\377\1\0\0\0\377\205\377\377\377\377"
-  "\1\0\0\0\377\205\377\377\377\377\5\0\0\0\377\0\0\0-\0\0\0\21\0\0\0\2"
-  "\0\0\0\377\205\377\377\377\377\202\0\0\0\377\203\377\377\377\377\202"
-  "\0\0\0\377\205\377\377\377\377\5\0\0\0\377\0\0\0-\0\0\0\21\0\0\0\2\0"
-  "\0\0\377\204\377\377\377\377\1\0\0\0\377\202\377\377\377\377\3\0\0\0"
-  "\377\377\377\377\377\0\0\0\377\202\377\377\377\377\1\0\0\0\377\204\377"
-  "\377\377\377\5\0\0\0\377\0\0\0-\0\0\0\21\0\0\0\2\0\0\0\377\203\377\377"
-  "\377\377\1\0\0\0\377\204\377\377\377\377\1\0\0\0\377\204\377\377\377"
-  "\377\1\0\0\0\377\203\377\377\377\377\5\0\0\0\377\0\0\0-\0\0\0\21\0\0"
-  "\0\2\0\0\0\377\202\377\377\377\377\1\0\0\0\377\213\377\377\377\377\1"
-  "\0\0\0\377\202\377\377\377\377\7\0\0\0\377\0\0\0-\0\0\0\21\0\0\0\2\0"
-  "\0\0\377\377\377\377\377\0\0\0\377\215\377\377\377\377\6\0\0\0\377\377"
-  "\377\377\377\0\0\0\377\0\0\0-\0\0\0\21\0\0\0\2\202\0\0\0\377\217\377"
-  "\377\377\377\202\0\0\0\377\4\0\0\0-\0\0\0\21\0\0\0\2\0\0\0m\221\0\0\0"
-  "\377\7\0\0\0\207\0\0\0(\0\0\0\17\0\0\0\1\0\0\0\10\0\0\0\31\0\0\0(\217"
-  "\0\0\0-\7\0\0\0(\0\0\0\31\0\0\0\10\0\0\0\0\0\0\0\2\0\0\0\10\0\0\0\16"
-  "\217\0\0\0\21\3\0\0\0\16\0\0\0\10\0\0\0\2\202\0\0\0\0\1\0\0\0\1\221\0"
-  "\0\0\2\1\0\0\0\1\227\0\0\0\0"};
-
     g_assert (MAILTC_IS_ENVELOPE (envelope));
-    if (!envelope->priv->data)
-        envelope->priv->data = g_memdup (envelope_data, sizeof (envelope_data));
 
-    pixbuf = gdk_pixbuf_new_from_inline (-1, envelope->priv->data, FALSE, NULL);
-    if (!pixbuf)
-        return NULL;
+    stream = g_resources_open_stream ("/org/mailtc/data/envelope.png", 0, NULL);
+    pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, NULL);
+    g_object_unref (stream);
 
     return pixbuf;
 }
@@ -306,7 +250,6 @@ mailtc_envelope_finalize (GObject* object)
     MailtcEnvelope* envelope = MAILTC_ENVELOPE (object);
 
     g_object_unref (envelope->priv->pixbuf);
-    g_free (envelope->priv->data);
 
     G_OBJECT_CLASS (mailtc_envelope_parent_class)->finalize (object);
 }
@@ -338,7 +281,7 @@ mailtc_envelope_init (MailtcEnvelope* envelope)
 {
     envelope->priv = G_TYPE_INSTANCE_GET_PRIVATE (envelope,
                      MAILTC_TYPE_ENVELOPE, MailtcEnvelopePrivate);
-    envelope->priv->data = NULL;
+
     envelope->priv->pixbuf = NULL;
     envelope->priv->pixbuf_is_envelope = FALSE;
 

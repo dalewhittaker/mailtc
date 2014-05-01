@@ -60,18 +60,18 @@ mailtc_gtk_message (GtkWidget*     parent,
     {
         case GTK_MESSAGE_WARNING:
             icon = "dialog-warning";
-            mailtc_warning (s);
+            mailtc_warning ("%s", s);
             break;
         case GTK_MESSAGE_INFO:
             icon = "dialog-information";
             mailtc_info (s);
             break;
         case GTK_MESSAGE_ERROR:
-            mailtc_error (s);
+            mailtc_error ("%s", s);
             icon = "dialog-error";
             break;
         default:
-            mailtc_error (s);
+            mailtc_error ("%s", s);
             icon = NULL;
     }
 

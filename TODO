@@ -6,9 +6,6 @@ Next release
 - Automated testing.
 - IMAP.
 - Config file encryption.
-- Use GResource for icon resource?
 - Use GSettings once it allows to do lists
+- Use GResource/GtkBuilder for dialogues
 - GNotification API, this way it should work with wayland.
-- Would be nice to have restart option
-    e.g -c allows configuration while running.
-    then -r restarts etc.

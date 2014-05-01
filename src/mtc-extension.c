@@ -287,7 +287,7 @@ mailtc_extension_add_account (MailtcExtension* extension,
                      MAILTC_EXTENSION_ERROR,
                      MAILTC_EXTENSION_ERROR_INCOMPLETE,
                      "Error: extension %s is missing add_account",
-                     mailtc_extension_get_name);
+                     mailtc_extension_get_name (extension));
         return FALSE;
     }
 
@@ -311,7 +311,7 @@ mailtc_extension_remove_account (MailtcExtension* extension,
                      MAILTC_EXTENSION_ERROR,
                      MAILTC_EXTENSION_ERROR_INCOMPLETE,
                      "Error: extension %s is missing remove_account",
-                     mailtc_extension_get_name);
+                     mailtc_extension_get_name (extension));
         return FALSE;
     }
 
@@ -335,7 +335,7 @@ mailtc_extension_read_messages (MailtcExtension* extension,
                      MAILTC_EXTENSION_ERROR,
                      MAILTC_EXTENSION_ERROR_INCOMPLETE,
                      "Error: extension %s is missing read_messages",
-                     mailtc_extension_get_name);
+                     mailtc_extension_get_name (extension));
         return FALSE;
     }
 
@@ -360,7 +360,7 @@ mailtc_extension_get_messages (MailtcExtension* extension,
                      MAILTC_EXTENSION_ERROR,
                      MAILTC_EXTENSION_ERROR_INCOMPLETE,
                      "Error: extension %s is missing get_messages",
-                     mailtc_extension_get_name);
+                     mailtc_extension_get_name (extension));
         return FALSE;
     }
 
