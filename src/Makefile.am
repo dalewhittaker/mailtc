@@ -27,13 +27,14 @@ endif
 LDADD = \
 		$(GTK_LIBS)
 
-UI_FILES = \
-		mtc-envelope.png
+RES_FILES = \
+		mtc-envelope.png \
+		mtc-configdialog.ui
 
-mtc-resources.c: mtc-gresource.xml $(UI_FILES)
+mtc-resources.c: mtc-gresource.xml $(RES_FILES)
 		glib-compile-resources --target=$@ --generate-source --c-name mailtc mtc-gresource.xml
 
-mtc-resources.h: mtc-gresource.xml $(UI_FILES)
+mtc-resources.h: mtc-gresource.xml $(RES_FILES)
 		glib-compile-resources --target=$@ --generate-header --c-name mailtc mtc-gresource.xml
 
 mailtc_SOURCES = \
@@ -55,6 +56,7 @@ include_HEADERS = \
 		mailtc.h
 
 EXTRA_DIST = \
+		$(RES_FILES) \
 		mtc-account.h \
 		mtc-application.h \
 		mtc-checker.h \

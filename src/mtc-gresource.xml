@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/org/mailtc">
-    <file alias="data/envelope.png">mtc-envelope.png</file>
+    <file alias="icon/envelope.png">mtc-envelope.png</file>
+    <file alias="ui/configdialog.xml" compressed="true">mtc-configdialog.ui</file>
   </gresource>
 </gresources>
 

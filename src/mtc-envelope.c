@@ -111,7 +111,7 @@ mailtc_envelope_create_pixbuf (MailtcEnvelope* envelope)
 
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
-    stream = g_resources_open_stream ("/org/mailtc/data/envelope.png", 0, NULL);
+    stream = g_resources_open_stream ("/org/mailtc/icon/envelope.png", 0, NULL);
     pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, NULL);
     g_object_unref (stream);
 

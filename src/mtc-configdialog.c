@@ -70,6 +70,7 @@ struct _MailtcConfigDialogPrivate
     GtkWidget* envelope_account;
     GtkWidget* combo_extension;
 
+    GtkBuilder* builder;
     GPtrArray* accounts;
     MailtcModuleManager* modules;
 
@@ -177,8 +178,6 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
     GdkRGBA colour;
     gint response;
 
-    (void) button;
-
     dialog = gtk_color_chooser_dialog_new ("Select Icon Colour", GTK_WINDOW (gtk_widget_get_toplevel (button)));
 
     mailtc_envelope_get_colour (envelope, &colour);
@@ -214,11 +213,8 @@ mailtc_button_extension_clicked_cb (GtkWidget*          button,
 
     if (!dialog_extension)
     {
-        dialog_extension = gtk_about_dialog_new ();
-
-        g_signal_connect (dialog_extension, "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-
-        priv->dialog_extension = dialog_extension;
+        g_assert (priv->builder);
+        priv->dialog_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "about"));
     }
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->combo_extension));
@@ -236,7 +232,6 @@ mailtc_button_extension_clicked_cb (GtkWidget*          button,
     gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (dialog_extension), mailtc_extension_get_compatibility (extension));
     gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (dialog_extension), mailtc_extension_get_description (extension));
     gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG (dialog_extension), authors);
-    gtk_about_dialog_set_logo_icon_name (GTK_ABOUT_DIALOG (dialog_extension), "help-about");
     g_object_unref (extension);
 
     gtk_dialog_run (GTK_DIALOG (dialog_extension));
@@ -688,14 +683,10 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
     if (!priv->dialog_account)
     {
-        dialog = gtk_dialog_new_with_buttons (
-                PACKAGE " Configuration",
-                GTK_WINDOW (dialog_config),
-                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                NULL,
-                NULL);
+        g_assert (priv->builder);
+        dialog = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account"));
 
-        gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");
+        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
         button = gtk_button_new ();
         gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
         gtk_button_set_label (GTK_BUTTON (button), "_OK");
@@ -795,7 +786,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
         gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))),
                             table_account, FALSE, 0, 0);
-/*        gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);*/
+        gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
     }
     else
         dialog = priv->dialog_account;
@@ -1167,6 +1158,8 @@ mailtc_config_dialog_finalize (GObject* object)
         g_ptr_array_unref (priv->accounts);
     if (priv->modules)
         g_object_unref (priv->modules);
+    if (priv->builder)
+        g_object_unref (priv->builder);
     if (dialog->settings)
         g_object_unref (dialog->settings);
 
@@ -1200,6 +1193,10 @@ mailtc_config_dialog_constructed (GObject* object)
 
     priv->modules = mailtc_settings_get_modules (settings);
     g_assert (priv->modules);
+
+    priv->builder = gtk_builder_new_from_resource ("/org/mailtc/ui/configdialog.xml");
+    g_assert (priv->builder);
+    gtk_builder_connect_signals (priv->builder, NULL);
 
     gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
     gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
@@ -1288,6 +1285,7 @@ mailtc_config_dialog_init (MailtcConfigDialog* dialog)
     priv = dialog->priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog, MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogPrivate);
     dialog->settings = NULL;
 
+    priv->builder = NULL;
     priv->dialog_account = NULL;
     priv->dialog_extension = NULL;
     priv->spin_interval = NULL;
