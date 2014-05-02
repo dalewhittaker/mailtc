@@ -214,7 +214,7 @@ mailtc_button_extension_clicked_cb (GtkWidget*          button,
     if (!dialog_extension)
     {
         g_assert (priv->builder);
-        priv->dialog_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "about"));
+        priv->dialog_extension = dialog_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "about"));
     }
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->combo_extension));
@@ -687,20 +687,8 @@ mailtc_account_dialog_run (GtkWidget*          button,
         dialog = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account"));
 
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
-        button = gtk_button_new ();
-        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
-        gtk_button_set_label (GTK_BUTTON (button), "_OK");
-        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
-        gtk_widget_show (button);
-        button = gtk_button_new ();
-        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
-        gtk_button_set_label (GTK_BUTTON (button), "_Cancel");
-        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_CANCEL);
-        gtk_widget_show (button);
-
+        gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (dialog_config));
         priv->dialog_account = dialog;
-        gtk_window_set_default_size (GTK_WINDOW (dialog), 100, 100);
-        gtk_window_set_icon_name (GTK_WINDOW (dialog), "preferences-system");
 
         label_name = gtk_label_new ("Name:");
         entry_name = gtk_entry_new ();
@@ -741,9 +729,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         gtk_box_pack_start (GTK_BOX (hbox_icon), envelope_icon, FALSE, FALSE, 0);
         gtk_box_pack_end (GTK_BOX (hbox_icon), button_icon, TRUE, TRUE, 0);
 
-        table_account = gtk_grid_new ();
-        gtk_grid_set_column_spacing (GTK_GRID (table_account), 20);
-        gtk_grid_set_row_spacing (GTK_GRID (table_account), 10);
+        table_account = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_table"));
         gtk_grid_attach (GTK_GRID (table_account), label_name, 0, 0, 1, 1);
         gtk_grid_attach (GTK_GRID (table_account), entry_name, 1, 0, 1, 1);
         gtk_grid_attach (GTK_GRID (table_account), label_server, 0, 1, 1, 1);
@@ -759,10 +745,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         gtk_grid_attach (GTK_GRID (table_account), button_extension, 1, 6, 1, 1);
         gtk_grid_attach (GTK_GRID (table_account), label_icon, 0, 7, 1, 1);
         gtk_grid_attach (GTK_GRID (table_account), hbox_icon, 1, 7, 1, 1);
-        gtk_container_set_border_width (GTK_CONTAINER (table_account), 10);
 
-        g_signal_connect (dialog, "delete-event",
-                G_CALLBACK (gtk_widget_hide_on_delete), NULL);
         g_signal_connect (dialog, "destroy",
                 G_CALLBACK (gtk_widget_destroyed), &priv->dialog_account);
         g_signal_connect (button_icon, "clicked",
@@ -783,10 +766,6 @@ mailtc_account_dialog_run (GtkWidget*          button,
         priv->entry_password = entry_password;
         priv->envelope_account = envelope_icon;
         priv->combo_extension = combo_protocol;
-
-        gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))),
-                            table_account, FALSE, 0, 0);
-        gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
     }
     else
         dialog = priv->dialog_account;
