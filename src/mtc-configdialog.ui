@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- Account dialog -->
+  <object class="GtkListStore" id="account_store_protocol">
+    <columns>
+      <column type="gchararray" />
+      <column type="MailtcExtension" />
+      <column type="gint" />
+    </columns>
+  </object>
   <object class="GtkDialog" id="account">
     <property name="modal">TRUE</property>
     <property name="destroy-with-parent">TRUE</property>
@@ -133,6 +140,22 @@
               </packing>
               </child>
               <child>
+              <object class="GtkComboBox" id="account_combo_protocol">
+                <property name="visible">TRUE</property>
+                <property name="model">account_store_protocol</property>
+                <child>
+                  <object class="GtkCellRendererText" id="acount_renderer_protocol"/>
+                    <attributes>
+                      <attribute name="text">0</attribute>
+                    </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left-attach">1</property>
+                <property name="top-attach">5</property>
+              </packing>
+              </child>
+              <child>
               <object class="GtkButton" id="account_button_extension">
                 <property name="label">Plugin Information...</property>
                 <property name="visible">TRUE</property>
@@ -158,7 +181,7 @@
                 <property name="visible">TRUE</property>
                 <property name="orientation">horizontal</property>
                 <property name="spacing">5</property>
-            <!--    <child>
+              <child>
                 <object class="MailtcEnvelope" id="account_icon">
                   <property name="visible">TRUE</property>
                   <property name="can-focus">FALSE</property>
@@ -168,7 +191,7 @@
                   <property name="fill">FALSE</property>
                   <property name="pack-type">start</property>
                 </packing>
-                </child> -->
+                </child>
                 <child>
                 <object class="GtkButton" id="account_button_icon">
                   <property name="visible">TRUE</property>

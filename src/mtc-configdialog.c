@@ -651,19 +651,6 @@ mailtc_account_dialog_run (GtkWidget*          button,
 {
     MailtcConfigDialogPrivate* priv;
     GtkWidget* dialog;
-    GtkWidget* table_account;
-    GtkWidget* entry_name;
-    GtkWidget* entry_server;
-    GtkWidget* entry_port;
-    GtkWidget* entry_user;
-    GtkWidget* entry_password;
-    GtkWidget* combo_protocol;
-    GtkWidget* button_extension;
-    GtkWidget* hbox_icon;
-    GtkWidget* envelope_icon;
-    GtkWidget* button_icon;
-    GtkListStore* store;
-    GtkCellRenderer* renderer;
     GError* error;
     gint result;
     gint index;
@@ -675,9 +662,20 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
     if (!priv->dialog_account)
     {
+        GtkWidget* entry_name;
+        GtkWidget* entry_server;
+        GtkWidget* entry_port;
+        GtkWidget* entry_user;
+        GtkWidget* entry_password;
+        GtkWidget* combo_protocol;
+        GtkWidget* button_extension;
+        GtkWidget* envelope_icon;
+        GtkWidget* button_icon;
+        GtkListStore* store;
+
         g_assert (priv->builder);
         dialog = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account"));
-        hbox_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_box_icon"));
+        envelope_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_icon"));
         button_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_icon"));
         button_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_extension"));
 
@@ -686,6 +684,8 @@ mailtc_account_dialog_run (GtkWidget*          button,
         entry_port = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_port"));
         entry_user = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_user"));
         entry_password = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_password"));
+        combo_protocol = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_combo_protocol"));
+        store = GTK_LIST_STORE (gtk_builder_get_object (priv->builder, "account_store_protocol"));
 
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
         gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (dialog_config));
@@ -697,20 +697,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         gtk_entry_set_max_length (GTK_ENTRY (entry_user), MAILTC_PATH_LENGTH);
         gtk_entry_set_max_length (GTK_ENTRY (entry_password), MAILTC_PATH_LENGTH);
 
-        store = gtk_list_store_new (N_COMBO_COLUMNS, G_TYPE_STRING, MAILTC_TYPE_EXTENSION, G_TYPE_INT);
-        combo_protocol = gtk_combo_box_new_with_model (GTK_TREE_MODEL (store));
-        g_object_unref (store);
-        renderer = gtk_cell_renderer_text_new ();
-        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo_protocol), renderer, TRUE);
-        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo_protocol), renderer, "text", 0, NULL);
-
         mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, store);
-
-        envelope_icon = mailtc_envelope_new ();
-        gtk_box_pack_start (GTK_BOX (hbox_icon), envelope_icon, FALSE, FALSE, 0);
-
-        table_account = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_table"));
-        gtk_grid_attach (GTK_GRID (table_account), combo_protocol, 1, 5, 1, 1);
 
         g_signal_connect (dialog, "destroy",
                 G_CALLBACK (gtk_widget_destroyed), &priv->dialog_account);
@@ -1137,6 +1124,9 @@ mailtc_config_dialog_constructed (GObject* object)
 
     priv->modules = mailtc_settings_get_modules (settings);
     g_assert (priv->modules);
+
+    g_type_ensure (MAILTC_TYPE_ENVELOPE);
+    g_type_ensure (MAILTC_TYPE_EXTENSION);
 
     priv->builder = gtk_builder_new_from_resource ("/org/mailtc/ui/configdialog.xml");
     g_assert (priv->builder);
