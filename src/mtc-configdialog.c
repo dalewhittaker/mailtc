@@ -662,62 +662,47 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
     if (!priv->dialog_account)
     {
-        GtkWidget* entry_name;
-        GtkWidget* entry_server;
-        GtkWidget* entry_port;
-        GtkWidget* entry_user;
-        GtkWidget* entry_password;
-        GtkWidget* combo_protocol;
         GtkWidget* button_extension;
-        GtkWidget* envelope_icon;
         GtkWidget* button_icon;
         GtkListStore* store;
 
         g_assert (priv->builder);
         dialog = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account"));
-        envelope_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_icon"));
-        button_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_icon"));
-        button_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_extension"));
-
-        entry_name = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_name"));
-        entry_server = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_server"));
-        entry_port = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_port"));
-        entry_user = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_user"));
-        entry_password = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_password"));
-        combo_protocol = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_combo_protocol"));
-        store = GTK_LIST_STORE (gtk_builder_get_object (priv->builder, "account_store_protocol"));
-
         gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
         gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (dialog_config));
+
         priv->dialog_account = dialog;
+        priv->envelope_account = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_icon"));
+        priv->entry_name = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_name"));
+        priv->entry_server = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_server"));
+        priv->entry_port = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_port"));
+        priv->entry_user = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_user"));
+        priv->entry_password = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_entry_password"));
+        priv->combo_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_combo_protocol"));
 
-        gtk_entry_set_max_length (GTK_ENTRY (entry_name), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (entry_server), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (entry_port), G_ASCII_DTOSTR_BUF_SIZE);
-        gtk_entry_set_max_length (GTK_ENTRY (entry_user), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (entry_password), MAILTC_PATH_LENGTH);
+        gtk_entry_set_max_length (GTK_ENTRY (priv->entry_name), MAILTC_PATH_LENGTH);
+        gtk_entry_set_max_length (GTK_ENTRY (priv->entry_server), MAILTC_PATH_LENGTH);
+        gtk_entry_set_max_length (GTK_ENTRY (priv->entry_port), G_ASCII_DTOSTR_BUF_SIZE);
+        gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user), MAILTC_PATH_LENGTH);
+        gtk_entry_set_max_length (GTK_ENTRY (priv->entry_password), MAILTC_PATH_LENGTH);
 
+        store = GTK_LIST_STORE (gtk_builder_get_object (priv->builder, "account_store_protocol"));
         mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, store);
+
+        button_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_icon"));
+        button_extension = GTK_WIDGET (gtk_builder_get_object (priv->builder, "account_button_extension"));
 
         g_signal_connect (dialog, "destroy",
                 G_CALLBACK (gtk_widget_destroyed), &priv->dialog_account);
         g_signal_connect (button_icon, "clicked",
-                G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
+                G_CALLBACK (mailtc_button_icon_clicked_cb), priv->envelope_account);
         g_signal_connect (button_extension, "clicked",
                 G_CALLBACK (mailtc_button_extension_clicked_cb), dialog_config);
-        g_signal_connect (combo_protocol, "changed",
+        g_signal_connect (priv->combo_extension, "changed",
             G_CALLBACK (mailtc_combo_protocol_changed_cb), dialog_config);
 
-        priv->entry_insert_text_id = g_signal_connect (entry_port, "insert-text",
+        priv->entry_insert_text_id = g_signal_connect (priv->entry_port, "insert-text",
                 G_CALLBACK (mailtc_port_entry_insert_text_cb), priv);
-
-        priv->entry_name = entry_name;
-        priv->entry_server = entry_server;
-        priv->entry_port = entry_port;
-        priv->entry_user = entry_user;
-        priv->entry_password = entry_password;
-        priv->envelope_account = envelope_icon;
-        priv->combo_extension = combo_protocol;
     }
     else
         dialog = priv->dialog_account;
