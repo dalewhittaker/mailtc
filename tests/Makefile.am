@@ -4,6 +4,7 @@ EXTRA_DIST =
 TEST_PROGS =
 
 AM_CPPFLAGS = \
+		$(GLIB_CFLAGS) \
 		$(GTK_CFLAGS) \
 		-I$(top_srcdir)/src \
 		-DG_DISABLE_DEPRECATED=1 \
@@ -25,6 +26,7 @@ AM_CFLAGS = \
 		-ggdb
 
 LDADD = \
+		$(GLIB_LIBS) \
 		$(GTK_LIBS)
 
 TEST_PROGS += test-pop

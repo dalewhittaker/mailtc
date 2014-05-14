@@ -1,6 +1,7 @@
 bin_PROGRAMS = mailtc
 
 AM_CPPFLAGS = \
+		$(GLIB_CFLAGS) \
 		$(GTK_CFLAGS) \
 		-DG_DISABLE_DEPRECATED=1 \
 		-DGTK_DISABLE_DEPRECATED=1 \
@@ -25,6 +26,7 @@ AM_CFLAGS += \
 endif
 
 LDADD = \
+		$(GLIB_LIBS) \
 		$(GTK_LIBS)
 
 RES_FILES = \
