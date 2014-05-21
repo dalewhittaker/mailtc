@@ -243,102 +243,29 @@ mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
 {
     MailtcConfigDialogPrivate* priv;
     GtkWidget* table_general;
-    GtkWidget* label_interval;
-    GtkAdjustment* adj_interval;
-    GtkWidget* spin_interval;
-    GtkWidget* label_command;
-    GtkWidget* entry_command;
-    GtkWidget* label_errordlg;
-    GtkWidget* combo_errordlg;
-    GtkWidget* hbox_errordlg;
-    GtkAdjustment* adj_connections;
-    GtkWidget* spin_connections;
-    GtkWidget* label_connections;
-    GtkWidget* hbox_icon;
-    GtkWidget* label_icon;
-    GtkWidget* envelope_icon;
     GtkWidget* button_icon;
-    GtkSizeGroup* label_group;
-    GtkSizeGroup* label_input;
-    GtkWidget* align;
+    GtkWidget* label_connections;
 
     g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
-    label_interval = gtk_label_new ("Interval in minutes for mail check:");
-    adj_interval = (GtkAdjustment*)gtk_adjustment_new (1.0, 1.0, 60.0, 1.0, 5.0, 0.0);
-    spin_interval = gtk_spin_button_new (GTK_ADJUSTMENT (adj_interval), 1.0, 0);
-
-    label_command = gtk_label_new ("Mail reading command:");
-    entry_command = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (entry_command), MAILTC_PATH_LENGTH);
-
-    label_errordlg = gtk_label_new ("Show network error dialog:");
-    combo_errordlg = gtk_combo_box_text_new ();
-    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Never");
-    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Always");
-    gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_errordlg), "Every");
-
-    adj_connections = (GtkAdjustment*)gtk_adjustment_new (2.0, 2.0, 5.0, 1.0, 1.0, 0.0);
-    spin_connections = gtk_spin_button_new (adj_connections, 1.0, 0);
-    label_connections = gtk_label_new ("failed connections");
-    hbox_errordlg = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start (GTK_BOX (hbox_errordlg), combo_errordlg, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox_errordlg), spin_connections, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox_errordlg), label_connections, FALSE, FALSE, 0);
-
-    label_icon = gtk_label_new ("Multiple icon colour:");
-    envelope_icon = mailtc_envelope_new ();
-    button_icon = gtk_button_new_with_label ("Select Colour...");
-    hbox_icon = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start (GTK_BOX (hbox_icon), envelope_icon, FALSE, FALSE, 0);
-    gtk_box_pack_end (GTK_BOX (hbox_icon), button_icon, FALSE, FALSE, 5);
-
-    label_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-    label_input = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-
-#define SIZE_GROUP_ADD(group, widget) \
-    align = gtk_alignment_new (0, 0.5, 0, 0); \
-    gtk_container_add (GTK_CONTAINER (align), widget); \
-    gtk_size_group_add_widget (group, align);
-
-    table_general = gtk_grid_new ();
-    gtk_grid_set_column_spacing (GTK_GRID (table_general), 20);
-    gtk_grid_set_row_spacing (GTK_GRID (table_general), 10);
-    SIZE_GROUP_ADD (label_group, label_interval);
-    gtk_grid_attach (GTK_GRID (table_general), align, 0, 0, 1, 1);
-    SIZE_GROUP_ADD (label_input, spin_interval);
-    gtk_grid_attach (GTK_GRID (table_general), align, 1, 0, 1, 1);
-    SIZE_GROUP_ADD (label_group, label_command);
-    gtk_grid_attach (GTK_GRID (table_general), align, 0, 1, 1, 1);
-    SIZE_GROUP_ADD (label_input, entry_command);
-    gtk_grid_attach (GTK_GRID (table_general), align, 1, 1, 1, 1);
-    SIZE_GROUP_ADD (label_group, label_icon);
-    gtk_grid_attach (GTK_GRID (table_general), align, 0, 2, 1, 1);
-    SIZE_GROUP_ADD (label_input, hbox_icon);
-    gtk_grid_attach (GTK_GRID (table_general), align, 1, 2, 1, 1);
-    SIZE_GROUP_ADD (label_group, label_errordlg);
-    gtk_grid_attach (GTK_GRID (table_general), align, 0, 3, 1, 1);
-    SIZE_GROUP_ADD (label_input, hbox_errordlg);
-    gtk_grid_attach (GTK_GRID (table_general), align, 1, 3, 1, 1);
-
-    g_object_unref (label_input);
-    g_object_unref (label_group);
-
-    gtk_container_set_border_width (GTK_CONTAINER (table_general), 10);
-
-    g_signal_connect (combo_errordlg, "changed",
-            G_CALLBACK (mailtc_combo_errordlg_changed_cb), label_connections);
-    g_signal_connect (combo_errordlg, "changed",
-            G_CALLBACK (mailtc_combo_errordlg_changed_cb), spin_connections);
-    g_signal_connect (button_icon, "clicked",
-            G_CALLBACK (mailtc_button_icon_clicked_cb), envelope_icon);
-
     priv = dialog->priv;
-    priv->spin_interval = spin_interval;
-    priv->entry_command = entry_command;
-    priv->envelope_config = envelope_icon;
-    priv->combo_errordlg = combo_errordlg;
-    priv->spin_connections = spin_connections;
+    table_general = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_table"));
+    button_icon = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_button_icon"));
+    label_connections = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_label_connections"));
+    priv->spin_connections = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_spin_connections"));
+    priv->spin_interval = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_spin_interval"));
+    priv->envelope_config = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_icon"));
+    priv->entry_command = GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_entry_command"));
+    priv->combo_errordlg= GTK_WIDGET (gtk_builder_get_object (priv->builder, "general_combo_errordlg"));
+
+    gtk_entry_set_max_length (GTK_ENTRY (priv->entry_command), MAILTC_PATH_LENGTH);
+
+    g_signal_connect (priv->combo_errordlg, "changed",
+            G_CALLBACK (mailtc_combo_errordlg_changed_cb), label_connections);
+    g_signal_connect (priv->combo_errordlg, "changed",
+            G_CALLBACK (mailtc_combo_errordlg_changed_cb), priv->spin_connections);
+    g_signal_connect (button_icon, "clicked",
+            G_CALLBACK (mailtc_button_icon_clicked_cb), priv->envelope_config);
 
     gtk_widget_show_all (table_general);
 

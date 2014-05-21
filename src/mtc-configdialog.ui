@@ -243,6 +243,256 @@
     </action-widgets>
   </object>
 
+  <!-- Configuration dialog, first tab -->
+  <object class="GtkSizeGroup" id="general_group_label">
+    <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
+    <widgets>
+      <widget name="general_align_label_interval" />
+      <widget name="general_align_label_command" />
+      <widget name="general_align_label_icon" />
+      <widget name="general_align_label_errordlg" />
+    </widgets>
+  </object>
+  <object class="GtkSizeGroup" id="general_group_input">
+    <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
+    <widgets>
+      <widget name="general_align_spin_interval" />
+      <widget name="general_align_entry_command" />
+      <widget name="general_align_box_icon" />
+      <widget name="general_align_box_errordlg" />
+    </widgets>
+  </object>
+  <object class="GtkAdjustment" id="general_adjust_interval">
+    <property name="value">1</property>
+    <property name="lower">1</property>
+    <property name="upper">60</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">5</property>
+  </object>
+  <object class="GtkAdjustment" id="general_adjust_connections">
+    <property name="value">2</property>
+    <property name="lower">2</property>
+    <property name="upper">5</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">1</property>
+  </object>
+  <object class="GtkGrid" id="general_table">
+    <property name="column-spacing">20</property>
+    <property name="row-spacing">10</property>
+    <property name="border-width">10</property>
+    <property name="visible">TRUE</property>
+    <property name="can-focus">TRUE</property>
+    <child>
+      <object class="GtkAlignment" id="general_align_label_interval">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+          <object class="GtkLabel" id="general_label_interval">
+            <property name="visible">TRUE</property>
+            <property name="label">Interval in minutes for mail check:</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+          <property name="left-attach">0</property>
+          <property name="top-attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_spin_interval">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+            <object class="GtkSpinButton" id="general_spin_interval">
+              <property name="visible">TRUE</property>
+              <property name="climb-rate">1</property>
+              <property name="adjustment">general_adjust_interval</property>
+            </object>
+        </child>
+      </object>
+      <packing>
+          <property name="left-attach">1</property>
+          <property name="top-attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_label_command">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+            <object class="GtkLabel" id="general_label_command">
+              <property name="visible">TRUE</property>
+              <property name="label">Mail reading command:</property>
+            </object>
+        </child>
+      </object>
+      <packing>
+          <property name="left-attach">0</property>
+          <property name="top-attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_entry_command">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+          <object class="GtkEntry" id="general_entry_command">
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+          <property name="left-attach">1</property>
+          <property name="top-attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_label_icon">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+          <object class="GtkLabel" id="general_label_icon">
+            <property name="visible">TRUE</property>
+            <property name="label">Multiple icon colour:</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left-attach">0</property>
+        <property name="top-attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_box_icon">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+          <object class="GtkBox" id="general_box_icon">
+            <property name="visible">TRUE</property>
+            <property name="orientation">horizontal</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="MailtcEnvelope" id="general_icon">
+                <property name="visible">TRUE</property>
+                <property name="can-focus">FALSE</property>
+              </object>
+              <packing>
+                <property name="expand">FALSE</property>
+                <property name="fill">FALSE</property>
+                <property name="pack-type">start</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="general_button_icon">
+                <property name="visible">TRUE</property>
+                <property name="can-focus">TRUE</property>
+                <property name="label">Select Colour...</property>
+              </object>
+              <packing>
+                <property name="expand">TRUE</property>
+                <property name="fill">TRUE</property>
+                <property name="pack-type">end</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left-attach">1</property>
+        <property name="top-attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_label_errordlg">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+            <object class="GtkLabel" id="general_label_errordlg">
+                <property name="visible">TRUE</property>
+                <property name="label">Show network error dialog:</property>
+            </object>
+        </child>
+      </object>
+      <packing>
+          <property name="left-attach">0</property>
+          <property name="top-attach">3</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkAlignment" id="general_align_box_errordlg">
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
+        <property name="xscale">0</property>
+        <property name="yscale">0</property>
+        <child>
+          <object class="GtkBox" id="general_box_errordlg">
+            <property name="visible">TRUE</property>
+            <property name="orientation">horizontal</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkComboBoxText" id="general_combo_errordlg">
+                <property name="visible">TRUE</property>
+                <items>
+                    <item>Never</item>
+                    <item>Always</item>
+                    <item>Every</item>
+                </items>
+              </object>
+              <packing>
+                <property name="expand">FALSE</property>
+                <property name="fill">FALSE</property>
+                <property name="pack-type">start</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="general_spin_connections">
+                <property name="visible">TRUE</property>
+                <property name="climb-rate">1</property>
+                <property name="adjustment">general_adjust_connections</property>
+              </object>
+              <packing>
+                <property name="padding">10</property>
+                <property name="expand">FALSE</property>
+                <property name="fill">FALSE</property>
+                <property name="pack-type">start</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="general_label_connections">
+                <property name="visible">TRUE</property>
+                <property name="label">failed connections</property>
+              </object>
+              <packing>
+                <property name="expand">FALSE</property>
+                <property name="fill">FALSE</property>
+                <property name="pack-type">start</property>
+              </packing>
+            </child>
+         </object>
+        </child>
+      </object>
+      <packing>
+        <property name="left-attach">1</property>
+        <property name="top-attach">3</property>
+      </packing>
+    </child>
+  </object>
+
   <!-- About box -->
   <object class="GtkAboutDialog" id="about">
     <property name="logo_icon_name">help-about</property>
