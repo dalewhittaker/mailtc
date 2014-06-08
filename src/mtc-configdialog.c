@@ -829,12 +829,7 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
     MailtcProtocol* protocol;
     GtkWidget* table_accounts;
     GtkWidget* tree_view;
-    GtkWidget* tree_scroll;
     GtkListStore* store;
-    GtkTreeSelection* selection;
-    GtkTreeViewColumn* column;
-    GtkCellRenderer* renderer;
-    GtkWidget* hbox;
     GtkWidget* button_add;
     GtkWidget* button_edit;
     GtkWidget* button_remove;
@@ -845,27 +840,12 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 
     priv = dialog->priv;
 
-    store = gtk_list_store_new (N_TREEVIEW_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
-    tree_view = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-    g_object_unref (store);
-
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes ("Account",
-                                    renderer, "text", TREEVIEW_ACCOUNT_COLUMN, NULL);
-    gtk_tree_view_column_set_min_width (column, 230);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
-    column = gtk_tree_view_column_new_with_attributes ("Protocol",
-                                    renderer, "text", TREEVIEW_PROTOCOL_COLUMN, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
-
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
-    gtk_tree_selection_set_mode (selection, GTK_SELECTION_SINGLE);
-    tree_scroll = gtk_scrolled_window_new (NULL, NULL);
-    gtk_container_add (GTK_CONTAINER (tree_scroll), tree_view);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (tree_scroll),
-                                GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (tree_scroll),
-                                GTK_SHADOW_IN);
+    table_accounts = GTK_WIDGET (gtk_builder_get_object (priv->builder, "accounts_table"));
+    button_add = GTK_WIDGET (gtk_builder_get_object (priv->builder, "accounts_button_add"));
+    button_edit = GTK_WIDGET (gtk_builder_get_object (priv->builder, "accounts_button_edit"));
+    button_remove = GTK_WIDGET (gtk_builder_get_object (priv->builder, "accounts_button_remove"));
+    tree_view = GTK_WIDGET (gtk_builder_get_object (priv->builder, "accounts_treeview"));
+    store = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (tree_view)));
 
     for (i = 0; i < priv->accounts->len; i++)
     {
@@ -885,27 +865,9 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
         g_object_unref (extension);
     }
 
-    button_edit = gtk_button_new_from_icon_name ("document-properties", GTK_ICON_SIZE_BUTTON);
-    gtk_button_set_use_underline (GTK_BUTTON (button_edit), TRUE);
-    gtk_button_set_label (GTK_BUTTON (button_edit), "_Properties");
-    button_add = gtk_button_new_from_icon_name ("list-add", GTK_ICON_SIZE_BUTTON);
-    gtk_button_set_use_underline (GTK_BUTTON (button_add), TRUE);
-    gtk_button_set_label (GTK_BUTTON (button_add), "_Add");
-    button_remove = gtk_button_new_from_icon_name ("list-remove", GTK_ICON_SIZE_BUTTON);
-    gtk_button_set_use_underline (GTK_BUTTON (button_remove), TRUE);
-    gtk_button_set_label (GTK_BUTTON (button_remove), "_Remove");
-
-    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), button_add, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), button_edit, TRUE, TRUE, 5);
-    gtk_box_pack_start (GTK_BOX (hbox), button_remove, TRUE, TRUE, 0);
-
-    g_signal_connect (button_add, "clicked",
-            G_CALLBACK (mailtc_add_button_clicked_cb), dialog);
-    g_signal_connect (button_edit, "clicked",
-            G_CALLBACK (mailtc_edit_button_clicked_cb), dialog);
-    g_signal_connect (button_remove, "clicked",
-            G_CALLBACK (mailtc_remove_button_clicked_cb), dialog);
+    g_signal_connect (button_add, "clicked", G_CALLBACK (mailtc_add_button_clicked_cb), dialog);
+    g_signal_connect (button_edit, "clicked", G_CALLBACK (mailtc_edit_button_clicked_cb), dialog);
+    g_signal_connect (button_remove, "clicked", G_CALLBACK (mailtc_remove_button_clicked_cb), dialog);
 
     priv->button_edit_cursor_changed_id = g_signal_connect (
             tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_edit);
@@ -916,24 +878,13 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
     priv->button_remove_columns_changed_id = g_signal_connect (
             tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), button_remove);
 
-    g_signal_connect (tree_view, "destroy",
-            G_CALLBACK (mailtc_tree_view_destroy_cb), priv);
+    g_signal_connect (tree_view, "destroy", G_CALLBACK (mailtc_tree_view_destroy_cb), priv);
 
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_edit);
     mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (tree_view), button_remove);
 
     priv->tree_view = tree_view;
 
-    table_accounts = gtk_grid_new ();
-    gtk_grid_set_column_spacing (GTK_GRID (table_accounts), 20);
-    gtk_grid_set_row_spacing (GTK_GRID (table_accounts), 10);
-    gtk_grid_attach (GTK_GRID (table_accounts), tree_scroll, 0, 0, 2, 1);
-    gtk_grid_attach (GTK_GRID (table_accounts), hbox, 0, 1, 2, 1);
-    gtk_widget_set_hexpand (tree_scroll, TRUE);
-    gtk_widget_set_halign (tree_scroll, GTK_ALIGN_FILL);
-    gtk_widget_set_hexpand (hbox, TRUE);
-    gtk_widget_set_halign (hbox, GTK_ALIGN_FILL);
-    gtk_container_set_border_width (GTK_CONTAINER (table_accounts), 10);
     gtk_widget_show_all (table_accounts);
 
     return table_accounts;

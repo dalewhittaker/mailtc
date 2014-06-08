@@ -493,6 +493,110 @@
     </child>
   </object>
 
+  <!-- Configuration dialog, second tab -->
+  <object class="GtkListStore" id="accounts_store">
+    <columns>
+      <column type="gchararray" />
+      <column type="gchararray" />
+    </columns>
+  </object>
+  <object class="GtkGrid" id="accounts_table">
+    <property name="column-spacing">20</property>
+    <property name="row-spacing">10</property>
+    <property name="border-width">10</property>
+    <property name="visible">TRUE</property>
+    <property name="can-focus">TRUE</property>
+    <child>
+      <object class="GtkScrolledWindow" id="accounts_tree_scroll">
+        <property name="hexpand">TRUE</property>
+        <property name="halign">GTK_ALIGN_FILL</property>
+        <property name="shadow-type">GTK_SHADOW_IN</property>
+        <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+        <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+        <child>
+          <object class="GtkTreeView" id="accounts_treeview">
+            <property name="model">accounts_store</property>
+            <child>
+              <object class="GtkTreeViewColumn" id="accounts_column_account">
+                <property name="min-width">230</property>
+                <property name="title">Account</property>
+                <child>
+                  <object class="GtkCellRendererText" id="accounts_renderer_account" />
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="accounts_column_protocol">
+                <property name="title">boo</property>
+                <child>
+                  <object class="GtkCellRendererText" id="accounts_renderer_protocol" />
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox" id="accounts_box_buttons">
+        <property name="visible">TRUE</property>
+        <property name="orientation">horizontal</property>
+        <property name="hexpand">TRUE</property>
+        <property name="halign">GTK_ALIGN_FILL</property>
+        <child>
+          <object class="GtkButton" id="accounts_button_add">
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+            <property name="label">_Add</property>
+            <property name="use-underline">TRUE</property>
+          </object>
+          <packing>
+            <property name="expand">TRUE</property>
+            <property name="fill">TRUE</property>
+            <property name="pack-type">start</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="accounts_button_edit">
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+            <property name="label">_Properties</property>
+            <property name="use-underline">TRUE</property>
+          </object>
+          <packing>
+            <property name="padding">5</property>
+            <property name="expand">TRUE</property>
+            <property name="fill">TRUE</property>
+            <property name="pack-type">start</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="accounts_button_remove">
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+            <property name="label">_Remove</property>
+            <property name="use-underline">TRUE</property>
+          </object>
+          <packing>
+            <property name="expand">TRUE</property>
+            <property name="fill">TRUE</property>
+            <property name="pack-type">start</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="left-attach">0</property>
+        <property name="top-attach">1</property>
+      </packing>
+    </child>
+  </object>
+
   <!-- About box -->
   <object class="GtkAboutDialog" id="about">
     <property name="logo_icon_name">help-about</property>
