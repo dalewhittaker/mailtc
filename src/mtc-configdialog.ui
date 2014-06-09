@@ -544,7 +544,7 @@
                 </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="accounts_column_protocol">
-                    <property name="title">boo</property>
+                    <property name="title">Protocol</property>
                     <child>
                       <object class="GtkCellRendererText" id="accounts_renderer_protocol" />
                       <attributes>
