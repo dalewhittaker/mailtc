@@ -238,7 +238,7 @@ mailtc_button_extension_clicked_cb (GtkWidget*          button,
     gtk_widget_hide (dialog_extension);
 }
 
-static GtkWidget*
+static void
 mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
 {
     MailtcConfigDialogPrivate* priv;
@@ -268,8 +268,6 @@ mailtc_config_dialog_page_general (MailtcConfigDialog* dialog)
             G_CALLBACK (mailtc_button_icon_clicked_cb), priv->envelope_config);
 
     gtk_widget_show_all (table_general);
-
-    return table_general;
 }
 
 static void
@@ -820,7 +818,7 @@ mailtc_tree_view_destroy_cb (GtkWidget*                 widget,
     g_signal_handler_disconnect (widget, priv->button_remove_cursor_changed_id);
 }
 
-static GtkWidget*
+static void
 mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
 {
     MailtcConfigDialogPrivate* priv;
@@ -886,8 +884,6 @@ mailtc_config_dialog_page_accounts (MailtcConfigDialog* dialog)
     priv->tree_view = tree_view;
 
     gtk_widget_show_all (table_accounts);
-
-    return table_accounts;
 }
 
 static void
@@ -967,10 +963,6 @@ mailtc_config_dialog_constructed (GObject* object)
     MailtcConfigDialogPrivate* priv;
     MailtcSettings* settings;
     GtkWidget* notebook;
-    GtkWidget* page_general;
-    GtkWidget* label_general;
-    GtkWidget* page_accounts;
-    GtkWidget* label_accounts;
     GtkWidget* button;
     GdkRGBA colour;
     const gchar* str;
@@ -1011,17 +1003,8 @@ mailtc_config_dialog_constructed (GObject* object)
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_CLOSE);
     gtk_widget_show (button);
 
-    notebook = gtk_notebook_new ();
-    gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_TOP);
-    gtk_container_set_border_width (GTK_CONTAINER (notebook), 6);
-
-    label_general = gtk_label_new ("General");
-    page_general = mailtc_config_dialog_page_general (dialog);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), page_general, label_general);
-
-    label_accounts = gtk_label_new ("Mail Accounts");
-    page_accounts = mailtc_config_dialog_page_accounts (dialog);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), page_accounts, label_accounts);
+    mailtc_config_dialog_page_general (dialog);
+    mailtc_config_dialog_page_accounts (dialog);
 
     g_signal_connect_after (dialog, "destroy",
             G_CALLBACK (mailtc_config_dialog_destroy_cb), NULL);
@@ -1030,11 +1013,8 @@ mailtc_config_dialog_constructed (GObject* object)
     g_signal_connect (dialog, "response",
             G_CALLBACK (mailtc_config_dialog_response_cb), NULL);
 
+    notebook = GTK_WIDGET (gtk_builder_get_object (priv->builder, "config_notebook"));
     gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), notebook, FALSE, 0, 0);
-
-    gtk_widget_show (label_general);
-    gtk_widget_show (label_accounts);
-    gtk_widget_show (notebook);
 
     str = mailtc_settings_get_command (settings);
     gtk_entry_set_text (GTK_ENTRY (priv->entry_command), str ? str : "");
