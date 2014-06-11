@@ -53,7 +53,7 @@ struct _MailtcSocketClass
     GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcSocket))
 
 enum
 {
@@ -146,8 +146,6 @@ mailtc_socket_class_init (MailtcSocketClass* klass)
                                      "Whether to enable TLS",
                                      FALSE,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
-
-    g_type_class_add_private (klass, sizeof (MailtcSocketPrivate));
 }
 
 static void

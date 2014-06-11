@@ -43,7 +43,7 @@ struct _MailtcUidTableClass
     GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE (MailtcUidTable, mailtc_uid_table, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (MailtcUidTable, mailtc_uid_table, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcUidTable))
 
 enum
 {
@@ -173,8 +173,6 @@ mailtc_uid_table_class_init (MailtcUidTableClass* klass)
                                      "The UID filename",
                                      NULL,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
-
-    g_type_class_add_private (klass, sizeof (MailtcUidTablePrivate));
 }
 
 static void
