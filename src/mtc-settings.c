@@ -139,6 +139,7 @@ mailtc_settings_initable_iface_init (GInitableIface* iface)
 }
 
 G_DEFINE_TYPE_WITH_CODE (MailtcSettings, mailtc_settings, G_TYPE_OBJECT,
+        G_ADD_PRIVATE (MailtcSettings)
         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, mailtc_settings_initable_iface_init))
 
 static void
@@ -874,8 +875,6 @@ mailtc_settings_class_init (MailtcSettingsClass* klass)
                                      "The mail extension modules",
                                      MAILTC_TYPE_MODULE_MANAGER,
                                      flags));
-
-    g_type_class_add_private (klass, sizeof (MailtcSettingsPrivate));
 }
 
 static void

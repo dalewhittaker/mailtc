@@ -89,6 +89,7 @@ mailtc_module_manager_initable_iface_init (GInitableIface* iface)
 }
 
 G_DEFINE_TYPE_WITH_CODE (MailtcModuleManager, mailtc_module_manager, G_TYPE_OBJECT,
+        G_ADD_PRIVATE (MailtcModuleManager)
         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, mailtc_module_manager_initable_iface_init))
 
 static void
@@ -450,8 +451,6 @@ mailtc_module_manager_class_init (MailtcModuleManagerClass* klass)
                                      "The parent directory for modules",
                                      NULL,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
-
-    g_type_class_add_private (klass, sizeof (MailtcModuleManagerPrivate));
 }
 
 static void

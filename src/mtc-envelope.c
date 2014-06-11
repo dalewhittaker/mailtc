@@ -43,7 +43,7 @@ struct _MailtcEnvelopeClass
     GtkImageClass parent_class;
 };
 
-G_DEFINE_TYPE (MailtcEnvelope, mailtc_envelope, GTK_TYPE_IMAGE)
+G_DEFINE_TYPE_WITH_CODE (MailtcEnvelope, mailtc_envelope, GTK_TYPE_IMAGE, G_ADD_PRIVATE (MailtcEnvelope))
 
 enum
 {
@@ -272,8 +272,6 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
                                      "The envelope colour",
                                      GDK_TYPE_RGBA,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
-
-    g_type_class_add_private (klass, sizeof (MailtcEnvelopePrivate));
 }
 
 static void

@@ -67,7 +67,7 @@ struct _MailtcCheckerClass
 
 static guint signals[LAST_SIGNAL];
 
-G_DEFINE_TYPE (MailtcChecker, mailtc_checker, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (MailtcChecker, mailtc_checker, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcChecker))
 
 static gboolean
 mailtc_checker_timeout_func (MailtcChecker* checker)
@@ -298,8 +298,6 @@ mailtc_checker_class_init (MailtcCheckerClass* klass)
                                           g_cclosure_marshal_VOID__VOID,
                                           G_TYPE_NONE,
                                           0);
-
-    g_type_class_add_private (klass, sizeof (MailtcCheckerPrivate));
 }
 
 static void

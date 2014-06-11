@@ -54,7 +54,7 @@ struct _MailtcModuleClass
     GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE (MailtcModule, mailtc_module, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (MailtcModule, mailtc_module, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcModule))
 
 enum
 {
@@ -254,8 +254,6 @@ mailtc_module_class_init (MailtcModuleClass* klass)
                                      "The module name",
                                      NULL,
                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT));
-
-    g_type_class_add_private (klass, sizeof (MailtcModulePrivate));
 }
 
 static void

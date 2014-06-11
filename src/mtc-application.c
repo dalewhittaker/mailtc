@@ -104,7 +104,7 @@ struct _MailtcApplicationClass
 
 static guint signals[LAST_SIGNAL];
 
-G_DEFINE_TYPE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
+G_DEFINE_TYPE_WITH_CODE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION, G_ADD_PRIVATE (MailtcApplication))
 
 static void
 mailtc_application_glib_handler (const gchar*   log_domain,
@@ -711,8 +711,6 @@ mailtc_application_class_init (MailtcApplicationClass* klass)
                                               g_cclosure_marshal_VOID__VOID,
                                               G_TYPE_NONE,
                                               0);
-
-    g_type_class_add_private (klass, sizeof (MailtcApplicationPrivate));
 }
 
 static void

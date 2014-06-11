@@ -43,7 +43,7 @@ struct _MailtcStatusIconClass
     void (*mark_as_read) (MailtcStatusIcon* status_icon);
 };
 
-G_DEFINE_TYPE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON)
+G_DEFINE_TYPE_WITH_CODE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON, G_ADD_PRIVATE (MailtcStatusIcon))
 
 typedef struct
 {
@@ -128,8 +128,6 @@ mailtc_status_icon_class_init (MailtcStatusIconClass* klass)
                                           g_cclosure_marshal_VOID__VOID,
                                           G_TYPE_NONE,
                                           0);
-
-    g_type_class_add_private (klass, sizeof (MailtcStatusIconPrivate));
 }
 
 static void

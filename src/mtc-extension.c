@@ -73,7 +73,7 @@ enum
     PROP_PROTOCOLS
 };
 
-G_DEFINE_TYPE (MailtcExtension, mailtc_extension, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (MailtcExtension, mailtc_extension, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcExtension))
 
 static void
 mailtc_extension_set_compatibility (MailtcExtension* extension,
@@ -558,8 +558,6 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
                                      "The extension protocols",
                                      G_TYPE_ARRAY,
                                      flags));
-
-    g_type_class_add_private (klass, sizeof (MailtcExtensionPrivate));
 }
 
 static void
