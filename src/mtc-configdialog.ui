@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
+  <!-- interface-requires gtk+ 3.10 -->
+
+  <!-- About box -->
+  <object class="GtkAboutDialog" id="about_dialog">
+    <property name="logo_icon_name">help-about</property>
+    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
+  </object>
+
   <!-- Account dialog -->
   <object class="GtkListStore" id="account_store_protocol">
     <columns>
@@ -8,7 +16,7 @@
       <column type="gint" />
     </columns>
   </object>
-  <object class="GtkDialog" id="account">
+  <object class="GtkDialog" id="account_dialog">
     <property name="modal">TRUE</property>
     <property name="destroy-with-parent">TRUE</property>
     <property name="default-width">100</property>
@@ -243,385 +251,455 @@
     </action-widgets>
   </object>
 
-  <object class="GtkNotebook" id="config_notebook">
+  <!-- Main configuration dialogue -->
+  <object class="GtkImage" id="accounts_image_add">
+    <property name="visible">TRUE</property>
+    <property name="can-focus">FALSE</property>
+    <property name="icon-name">document-properties</property>
+  </object>
+  <object class="GtkImage" id="accounts_image_edit">
+    <property name="visible">TRUE</property>
+    <property name="can-focus">FALSE</property>
+    <property name="icon-name">list-add</property>
+  </object>
+  <object class="GtkImage" id="accounts_image_remove">
+    <property name="visible">TRUE</property>
+    <property name="can-focus">FALSE</property>
+    <property name="icon-name">list-remove</property>
+  </object>
+  <object class="GtkImage" id="config_image_save">
+    <property name="visible">TRUE</property>
+    <property name="can-focus">FALSE</property>
+    <property name="icon-name">document-save</property>
+  </object>
+  <object class="GtkImage" id="config_image_close">
+    <property name="visible">TRUE</property>
+    <property name="can-focus">FALSE</property>
+    <property name="icon-name">window-close</property>
+  </object>
+  <template class="MailtcConfigDialog" parent="GtkDialog">
     <property name="visible">TRUE</property>
     <property name="can-focus">TRUE</property>
-    <property name="border-width">6</property>
-    <!-- Configuration dialog, first tab -->
-    <child>
-      <object class="GtkSizeGroup" id="general_group_label">
-        <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
-        <widgets>
-          <widget name="general_align_label_interval" />
-          <widget name="general_align_label_command" />
-          <widget name="general_align_label_icon" />
-          <widget name="general_align_label_errordlg" />
-        </widgets>
-      </object>
-      <object class="GtkSizeGroup" id="general_group_input">
-        <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
-        <widgets>
-          <widget name="general_align_spin_interval" />
-          <widget name="general_align_entry_command" />
-          <widget name="general_align_box_icon" />
-          <widget name="general_align_box_errordlg" />
-        </widgets>
-      </object>
-      <object class="GtkAdjustment" id="general_adjust_interval">
-        <property name="value">1</property>
-        <property name="lower">1</property>
-        <property name="upper">60</property>
-        <property name="step_increment">1</property>
-        <property name="page_increment">5</property>
-      </object>
-      <object class="GtkAdjustment" id="general_adjust_connections">
-        <property name="value">2</property>
-        <property name="lower">2</property>
-        <property name="upper">5</property>
-        <property name="step_increment">1</property>
-        <property name="page_increment">1</property>
-      </object>
-      <object class="GtkGrid" id="general_table">
-        <property name="column-spacing">20</property>
-        <property name="row-spacing">10</property>
-        <property name="border-width">10</property>
+    <property name="modal">TRUE</property>
+    <property name="icon-name">preferences-system</property>
+    <property name="destroy-with-parent">TRUE</property>
+    <property name="default-width">100</property>
+    <property name="default-height">100</property>
+    <property name="resizable">FALSE</property>
+    <child internal-child="vbox">
+      <object class="GtkButtonBox" id="config_vbox">
         <property name="visible">TRUE</property>
         <property name="can-focus">TRUE</property>
         <child>
-          <object class="GtkAlignment" id="general_align_label_interval">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-              <object class="GtkLabel" id="general_label_interval">
-                <property name="visible">TRUE</property>
-                <property name="label">Interval in minutes for mail check:</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-              <property name="left-attach">0</property>
-              <property name="top-attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_spin_interval">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-                <object class="GtkSpinButton" id="general_spin_interval">
-                  <property name="visible">TRUE</property>
-                  <property name="climb-rate">1</property>
-                  <property name="adjustment">general_adjust_interval</property>
-                </object>
-            </child>
-          </object>
-          <packing>
-              <property name="left-attach">1</property>
-              <property name="top-attach">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_label_command">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-                <object class="GtkLabel" id="general_label_command">
-                  <property name="visible">TRUE</property>
-                  <property name="label">Mail reading command:</property>
-                </object>
-            </child>
-          </object>
-          <packing>
-              <property name="left-attach">0</property>
-              <property name="top-attach">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_entry_command">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-              <object class="GtkEntry" id="general_entry_command">
-                <property name="visible">TRUE</property>
-                <property name="can-focus">TRUE</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-              <property name="left-attach">1</property>
-              <property name="top-attach">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_label_icon">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-              <object class="GtkLabel" id="general_label_icon">
-                <property name="visible">TRUE</property>
-                <property name="label">Multiple icon colour:</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_box_icon">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-              <object class="GtkBox" id="general_box_icon">
-                <property name="visible">TRUE</property>
-                <property name="orientation">horizontal</property>
-                <property name="spacing">5</property>
-                <child>
-                  <object class="MailtcEnvelope" id="general_icon">
-                    <property name="visible">TRUE</property>
-                    <property name="can-focus">FALSE</property>
-                  </object>
-                  <packing>
-                    <property name="expand">FALSE</property>
-                    <property name="fill">FALSE</property>
-                    <property name="pack-type">start</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="general_button_icon">
-                    <property name="visible">TRUE</property>
-                    <property name="can-focus">TRUE</property>
-                    <property name="label">Select Colour...</property>
-                  </object>
-                  <packing>
-                    <property name="expand">TRUE</property>
-                    <property name="fill">TRUE</property>
-                    <property name="pack-type">end</property>
-                  </packing>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_label_errordlg">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-                <object class="GtkLabel" id="general_label_errordlg">
-                    <property name="visible">TRUE</property>
-                    <property name="label">Show network error dialog:</property>
-                </object>
-            </child>
-          </object>
-          <packing>
-              <property name="left-attach">0</property>
-              <property name="top-attach">3</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkAlignment" id="general_align_box_errordlg">
-            <property name="xalign">0</property>
-            <property name="yalign">0.5</property>
-            <property name="xscale">0</property>
-            <property name="yscale">0</property>
-            <child>
-              <object class="GtkBox" id="general_box_errordlg">
-                <property name="visible">TRUE</property>
-                <property name="orientation">horizontal</property>
-                <property name="spacing">5</property>
-                <child>
-                  <object class="GtkComboBoxText" id="general_combo_errordlg">
-                    <property name="visible">TRUE</property>
-                    <items>
-                        <item>Never</item>
-                        <item>Always</item>
-                        <item>Every</item>
-                    </items>
-                  </object>
-                  <packing>
-                    <property name="expand">FALSE</property>
-                    <property name="fill">FALSE</property>
-                    <property name="pack-type">start</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="general_spin_connections">
-                    <property name="visible">TRUE</property>
-                    <property name="climb-rate">1</property>
-                    <property name="adjustment">general_adjust_connections</property>
-                  </object>
-                  <packing>
-                    <property name="padding">10</property>
-                    <property name="expand">FALSE</property>
-                    <property name="fill">FALSE</property>
-                    <property name="pack-type">start</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="general_label_connections">
-                    <property name="visible">TRUE</property>
-                    <property name="label">failed connections</property>
-                  </object>
-                  <packing>
-                    <property name="expand">FALSE</property>
-                    <property name="fill">FALSE</property>
-                    <property name="pack-type">start</property>
-                  </packing>
-                </child>
-             </object>
-            </child>
-          </object>
-          <packing>
-            <property name="left-attach">1</property>
-            <property name="top-attach">3</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <child type="tab">
-      <object class="GtkLabel" id="config_notebook_tab_general">
-        <property name="visible">TRUE</property>
-        <property name="label">General</property>
-      </object>
-    </child>
-    <!-- Configuration dialog, second tab -->
-    <child>
-      <object class="GtkListStore" id="accounts_store">
-        <columns>
-          <column type="gchararray" />
-          <column type="gchararray" />
-        </columns>
-      </object>
-      <object class="GtkGrid" id="accounts_table">
-        <property name="column-spacing">20</property>
-        <property name="row-spacing">10</property>
-        <property name="border-width">10</property>
-        <property name="visible">TRUE</property>
-        <property name="can-focus">TRUE</property>
-        <child>
-          <object class="GtkScrolledWindow" id="accounts_tree_scroll">
-            <property name="hexpand">TRUE</property>
-            <property name="halign">GTK_ALIGN_FILL</property>
-            <property name="shadow-type">GTK_SHADOW_IN</property>
-            <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
-            <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
-            <child>
-              <object class="GtkTreeView" id="accounts_treeview">
-                <property name="visible">TRUE</property>
-                <property name="can-focus">TRUE</property>
-                <property name="model">accounts_store</property>
-                <child>
-                  <object class="GtkTreeViewColumn" id="accounts_column_account">
-                    <property name="min-width">230</property>
-                    <property name="title">Account</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="accounts_renderer_account" />
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="accounts_column_protocol">
-                    <property name="title">Protocol</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="accounts_renderer_protocol" />
-                      <attributes>
-                        <attribute name="text">1</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="GtkBox" id="accounts_box_buttons">
+          <object class="GtkNotebook" id="config_notebook">
             <property name="visible">TRUE</property>
-            <property name="orientation">horizontal</property>
-            <property name="hexpand">TRUE</property>
-            <property name="halign">GTK_ALIGN_FILL</property>
+            <property name="can-focus">TRUE</property>
+            <property name="border-width">6</property>
+            <!-- Configuration dialog, first tab -->
             <child>
-              <object class="GtkButton" id="accounts_button_add">
+              <object class="GtkSizeGroup" id="general_group_label">
+                <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
+                <widgets>
+                  <widget name="general_align_label_interval" />
+                  <widget name="general_align_label_command" />
+                  <widget name="general_align_label_icon" />
+                  <widget name="general_align_label_errordlg" />
+                </widgets>
+              </object>
+              <object class="GtkSizeGroup" id="general_group_input">
+                <property name="mode">GTK_SIZE_GROUP_HORIZONTAL</property>
+                <widgets>
+                  <widget name="general_align_spin_interval" />
+                  <widget name="general_align_entry_command" />
+                  <widget name="general_align_box_icon" />
+                  <widget name="general_align_box_errordlg" />
+                </widgets>
+              </object>
+              <object class="GtkAdjustment" id="general_adjust_interval">
+                <property name="value">1</property>
+                <property name="lower">1</property>
+                <property name="upper">60</property>
+                <property name="step_increment">1</property>
+                <property name="page_increment">5</property>
+              </object>
+              <object class="GtkAdjustment" id="general_adjust_connections">
+                <property name="value">2</property>
+                <property name="lower">2</property>
+                <property name="upper">5</property>
+                <property name="step_increment">1</property>
+                <property name="page_increment">1</property>
+              </object>
+              <object class="GtkGrid" id="general_table">
+                <property name="column-spacing">20</property>
+                <property name="row-spacing">10</property>
+                <property name="border-width">10</property>
                 <property name="visible">TRUE</property>
                 <property name="can-focus">TRUE</property>
-                <property name="label">_Add</property>
-                <property name="use-underline">TRUE</property>
+                <child>
+                  <object class="GtkAlignment" id="general_align_label_interval">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkLabel" id="general_label_interval">
+                        <property name="visible">TRUE</property>
+                        <property name="label">Interval in minutes for mail check:</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                      <property name="left-attach">0</property>
+                      <property name="top-attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_spin_interval">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                        <object class="GtkSpinButton" id="general_spin_interval">
+                          <property name="visible">TRUE</property>
+                          <property name="climb-rate">1</property>
+                          <property name="adjustment">general_adjust_interval</property>
+                        </object>
+                    </child>
+                  </object>
+                  <packing>
+                      <property name="left-attach">1</property>
+                      <property name="top-attach">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_label_command">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                        <object class="GtkLabel" id="general_label_command">
+                          <property name="visible">TRUE</property>
+                          <property name="label">Mail reading command:</property>
+                        </object>
+                    </child>
+                  </object>
+                  <packing>
+                      <property name="left-attach">0</property>
+                      <property name="top-attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_entry_command">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkEntry" id="general_entry_command">
+                        <property name="visible">TRUE</property>
+                        <property name="can-focus">TRUE</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                      <property name="left-attach">1</property>
+                      <property name="top-attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_label_icon">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkLabel" id="general_label_icon">
+                        <property name="visible">TRUE</property>
+                        <property name="label">Multiple icon colour:</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_box_icon">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkBox" id="general_box_icon">
+                        <property name="visible">TRUE</property>
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">5</property>
+                        <child>
+                          <object class="MailtcEnvelope" id="general_icon">
+                            <property name="visible">TRUE</property>
+                            <property name="can-focus">FALSE</property>
+                          </object>
+                          <packing>
+                            <property name="expand">FALSE</property>
+                            <property name="fill">FALSE</property>
+                            <property name="pack-type">start</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="general_button_icon">
+                            <property name="visible">TRUE</property>
+                            <property name="can-focus">TRUE</property>
+                            <property name="label">Select Colour...</property>
+                          </object>
+                          <packing>
+                            <property name="expand">TRUE</property>
+                            <property name="fill">TRUE</property>
+                            <property name="pack-type">end</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_label_errordlg">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                        <object class="GtkLabel" id="general_label_errordlg">
+                            <property name="visible">TRUE</property>
+                            <property name="label">Show network error dialog:</property>
+                        </object>
+                    </child>
+                  </object>
+                  <packing>
+                      <property name="left-attach">0</property>
+                      <property name="top-attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_box_errordlg">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkBox" id="general_box_errordlg">
+                        <property name="visible">TRUE</property>
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">5</property>
+                        <child>
+                          <object class="GtkComboBoxText" id="general_combo_errordlg">
+                            <property name="visible">TRUE</property>
+                            <items>
+                                <item>Never</item>
+                                <item>Always</item>
+                                <item>Every</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">FALSE</property>
+                            <property name="fill">FALSE</property>
+                            <property name="pack-type">start</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="general_spin_connections">
+                            <property name="visible">TRUE</property>
+                            <property name="climb-rate">1</property>
+                            <property name="adjustment">general_adjust_connections</property>
+                          </object>
+                          <packing>
+                            <property name="padding">10</property>
+                            <property name="expand">FALSE</property>
+                            <property name="fill">FALSE</property>
+                            <property name="pack-type">start</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="general_label_connections">
+                            <property name="visible">TRUE</property>
+                            <property name="label">failed connections</property>
+                          </object>
+                          <packing>
+                            <property name="expand">FALSE</property>
+                            <property name="fill">FALSE</property>
+                            <property name="pack-type">start</property>
+                          </packing>
+                        </child>
+                     </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">3</property>
+                  </packing>
+                </child>
               </object>
-              <packing>
-                <property name="expand">TRUE</property>
-                <property name="fill">TRUE</property>
-                <property name="pack-type">start</property>
-              </packing>
             </child>
-            <child>
-              <object class="GtkButton" id="accounts_button_edit">
+            <child type="tab">
+              <object class="GtkLabel" id="config_notebook_tab_general">
                 <property name="visible">TRUE</property>
-                <property name="can-focus">TRUE</property>
-                <property name="label">_Properties</property>
-                <property name="use-underline">TRUE</property>
+                <property name="label">General</property>
               </object>
-              <packing>
-                <property name="padding">5</property>
-                <property name="expand">TRUE</property>
-                <property name="fill">TRUE</property>
-                <property name="pack-type">start</property>
-              </packing>
             </child>
+            <!-- Configuration dialog, second tab -->
             <child>
-              <object class="GtkButton" id="accounts_button_remove">
+              <object class="GtkListStore" id="accounts_store">
+                <columns>
+                  <column type="gchararray" />
+                  <column type="gchararray" />
+                </columns>
+              </object>
+              <object class="GtkGrid" id="accounts_table">
+                <property name="column-spacing">20</property>
+                <property name="row-spacing">10</property>
+                <property name="border-width">10</property>
                 <property name="visible">TRUE</property>
                 <property name="can-focus">TRUE</property>
-                <property name="label">_Remove</property>
-                <property name="use-underline">TRUE</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="accounts_tree_scroll">
+                    <property name="hexpand">TRUE</property>
+                    <property name="halign">GTK_ALIGN_FILL</property>
+                    <property name="shadow-type">GTK_SHADOW_IN</property>
+                    <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                    <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                    <child>
+                      <object class="GtkTreeView" id="accounts_tree_view">
+                        <property name="visible">TRUE</property>
+                        <property name="can-focus">TRUE</property>
+                        <property name="model">accounts_store</property>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="accounts_column_account">
+                            <property name="min-width">230</property>
+                            <property name="title">Account</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="accounts_renderer_account" />
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="accounts_column_protocol">
+                            <property name="title">Protocol</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="accounts_renderer_protocol" />
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox" id="accounts_box_buttons">
+                    <property name="visible">TRUE</property>
+                    <property name="orientation">horizontal</property>
+                    <property name="hexpand">TRUE</property>
+                    <property name="halign">GTK_ALIGN_FILL</property>
+                    <child>
+                      <object class="GtkButton" id="accounts_button_add">
+                        <property name="visible">TRUE</property>
+                        <property name="can-focus">TRUE</property>
+                        <property name="label">_Add</property>
+                        <property name="use-underline">TRUE</property>
+                        <property name="image">accounts_image_add</property>
+                      </object>
+                      <packing>
+                        <property name="expand">TRUE</property>
+                        <property name="fill">TRUE</property>
+                        <property name="pack-type">start</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="accounts_button_edit">
+                        <property name="visible">TRUE</property>
+                        <property name="can-focus">TRUE</property>
+                        <property name="label">_Properties</property>
+                        <property name="use-underline">TRUE</property>
+                        <property name="image">accounts_image_edit</property>
+                      </object>
+                      <packing>
+                        <property name="padding">5</property>
+                        <property name="expand">TRUE</property>
+                        <property name="fill">TRUE</property>
+                        <property name="pack-type">start</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="accounts_button_remove">
+                        <property name="visible">TRUE</property>
+                        <property name="can-focus">TRUE</property>
+                        <property name="label">_Remove</property>
+                        <property name="use-underline">TRUE</property>
+                        <property name="image">accounts_image_remove</property>
+                      </object>
+                      <packing>
+                        <property name="expand">TRUE</property>
+                        <property name="fill">TRUE</property>
+                        <property name="pack-type">start</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">1</property>
+                  </packing>
+                </child>
               </object>
-              <packing>
-                <property name="expand">TRUE</property>
-                <property name="fill">TRUE</property>
-                <property name="pack-type">start</property>
-              </packing>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel" id="config_notebook_tab_accounts">
+                <property name="visible">TRUE</property>
+                <property name="label">Mail Accounts</property>
+              </object>
             </child>
           </object>
-          <packing>
-            <property name="left-attach">0</property>
-            <property name="top-attach">1</property>
-          </packing>
         </child>
       </object>
     </child>
-    <child type="tab">
-      <object class="GtkLabel" id="config_notebook_tab_accounts">
+    <child internal-child="action_area">
+      <object class="GtkButtonBox" id="config_action_area">
         <property name="visible">TRUE</property>
-        <property name="label">Mail Accounts</property>
+        <property name="can-focus">TRUE</property>
+        <property name="layout-style">end</property>
+        <child>
+          <object class="GtkButton" id="config_button_ok">
+            <property name="label">_Save</property>
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+            <property name="use-underline">TRUE</property>
+            <property name="image">config_image_save</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="config_button_close">
+            <property name="label">_Close</property>
+            <property name="visible">TRUE</property>
+            <property name="can-focus">TRUE</property>
+            <property name="use-underline">TRUE</property>
+            <property name="image">config_image_close</property>
+          </object>
+        </child>
       </object>
     </child>
-  </object>
-
-  <!-- About box -->
-  <object class="GtkAboutDialog" id="about">
-    <property name="logo_icon_name">help-about</property>
-    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
-  </object>
+    <action-widgets>
+      <action-widget response="-5" default="true">config_button_ok</action-widget>
+      <action-widget response="-7">config_button_close</action-widget>
+    </action-widgets>
+  </template>
 </interface>
