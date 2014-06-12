@@ -54,7 +54,6 @@ enum
 
 struct _MailtcConfigDialogPrivate
 {
-    GtkWidget* dialog_account;
     GtkWidget* about_dialog;
     GtkWidget* account_button_extension;
     GtkWidget* account_button_icon;
@@ -82,10 +81,8 @@ struct _MailtcConfigDialogPrivate
     MailtcModuleManager* modules;
 
     gulong entry_insert_text_id;
-    gulong button_edit_columns_changed_id;
-    gulong button_edit_cursor_changed_id;
-    gulong button_remove_columns_changed_id;
-    gulong button_remove_cursor_changed_id;
+    gulong columns_changed_id;
+    gulong cursor_changed_id;
 };
 
 struct _MailtcConfigDialog
@@ -167,13 +164,25 @@ mailtc_config_dialog_response_cb (GtkWidget* dialog,
 }
 
 static void
-mailtc_combo_errordlg_changed_cb (GtkComboBox* combo,
-                                  GtkWidget*   widget)
+mailtc_combo_errordlg_changed_cb (GtkComboBox*        combo,
+                                  MailtcConfigDialog* dialog)
 {
+    MailtcConfigDialogPrivate* priv;
+
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+
+    priv = dialog->priv;
+
     if (gtk_combo_box_get_active (combo) > 1)
-        gtk_widget_show (widget);
+    {
+        gtk_widget_show (priv->general_label_connections);
+        gtk_widget_show (priv->general_spin_connections);
+    }
     else
-        gtk_widget_hide (widget);
+    {
+        gtk_widget_hide (priv->general_label_connections);
+        gtk_widget_hide (priv->general_spin_connections);
+    }
 }
 
 static void
@@ -553,38 +562,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
     g_assert (MAILTC_IS_CONFIG_DIALOG (dialog_config));
     priv = dialog_config->priv;
 
-    if (!priv->dialog_account)
-    {
-        GtkTreeModel* model;
-
-        dialog = priv->account_dialog;
-        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
-        gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (dialog_config));
-
-        priv->dialog_account = dialog;
-        gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_name), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_server), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_port), G_ASCII_DTOSTR_BUF_SIZE);
-        gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_user), MAILTC_PATH_LENGTH);
-        gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_password), MAILTC_PATH_LENGTH);
-
-        model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->account_combo_protocol));
-        mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, GTK_LIST_STORE (model));
-
-        g_signal_connect (dialog, "destroy",
-                G_CALLBACK (gtk_widget_destroyed), &priv->dialog_account);
-        g_signal_connect (priv->account_button_icon, "clicked",
-                G_CALLBACK (mailtc_button_icon_clicked_cb), priv->account_icon);
-        g_signal_connect (priv->account_button_extension, "clicked",
-                G_CALLBACK (mailtc_button_extension_clicked_cb), dialog_config);
-        g_signal_connect (priv->account_combo_protocol, "changed",
-            G_CALLBACK (mailtc_combo_protocol_changed_cb), dialog_config);
-
-        priv->entry_insert_text_id = g_signal_connect (priv->account_entry_port, "insert-text",
-                G_CALLBACK (mailtc_port_entry_insert_text_cb), priv);
-    }
-    else
-        dialog = priv->dialog_account;
+    dialog = priv->account_dialog;
 
     if (account)
     {
@@ -738,8 +716,8 @@ mailtc_remove_button_clicked_cb (GtkWidget* button,
 }
 
 static void
-mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
-                                  GtkWidget*   button)
+mailtc_cursor_or_cols_changed (GtkTreeView* tree_view,
+                               GtkWidget*   button)
 {
     GtkTreeModel* model;
     GtkTreeSelection* selection;
@@ -761,14 +739,32 @@ mailtc_cursor_or_cols_changed_cb (GtkTreeView* tree_view,
 }
 
 static void
-mailtc_tree_view_destroy_cb (GtkWidget*                 widget,
-                             MailtcConfigDialogPrivate* priv)
+mailtc_cursor_or_cols_changed_cb (GtkTreeView*        tree_view,
+                                  MailtcConfigDialog* dialog)
 {
-    g_assert (priv);
-    g_signal_handler_disconnect (widget, priv->button_edit_columns_changed_id);
-    g_signal_handler_disconnect (widget, priv->button_edit_cursor_changed_id);
-    g_signal_handler_disconnect (widget, priv->button_remove_columns_changed_id);
-    g_signal_handler_disconnect (widget, priv->button_remove_cursor_changed_id);
+
+    MailtcConfigDialogPrivate* priv;
+
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+
+    priv = dialog->priv;
+
+    mailtc_cursor_or_cols_changed (tree_view, priv->accounts_button_edit);
+    mailtc_cursor_or_cols_changed (tree_view, priv->accounts_button_remove);
+}
+
+static void
+mailtc_tree_view_destroy_cb (GtkWidget*          widget,
+                             MailtcConfigDialog* dialog)
+{
+    MailtcConfigDialogPrivate* priv;
+
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+
+    priv = dialog->priv;
+
+    g_signal_handler_disconnect (widget, priv->columns_changed_id);
+    g_signal_handler_disconnect (widget, priv->cursor_changed_id);
 }
 
 static void
@@ -871,11 +867,15 @@ mailtc_config_dialog_constructed (GObject* object)
     g_type_ensure (MAILTC_TYPE_EXTENSION);
 
     gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
-    gtk_entry_set_max_length (GTK_ENTRY (priv->general_entry_command), MAILTC_PATH_LENGTH);
+    gtk_window_set_title (GTK_WINDOW (priv->account_dialog), PACKAGE " Configuration");
+    gtk_window_set_transient_for (GTK_WINDOW (priv->account_dialog), GTK_WINDOW (dialog));
 
-    g_signal_connect (priv->general_combo_errordlg, "changed", G_CALLBACK (mailtc_combo_errordlg_changed_cb), priv->general_label_connections);
-    g_signal_connect (priv->general_combo_errordlg, "changed", G_CALLBACK (mailtc_combo_errordlg_changed_cb), priv->general_spin_connections);
-    g_signal_connect (priv->general_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->general_icon);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->general_entry_command), MAILTC_PATH_LENGTH);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_name), MAILTC_PATH_LENGTH);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_server), MAILTC_PATH_LENGTH);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_port), G_ASCII_DTOSTR_BUF_SIZE);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_user), MAILTC_PATH_LENGTH);
+    gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_password), MAILTC_PATH_LENGTH);
 
     store = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->accounts_tree_view)));
 
@@ -897,27 +897,15 @@ mailtc_config_dialog_constructed (GObject* object)
         g_object_unref (extension);
     }
 
-    g_signal_connect (priv->accounts_button_add, "clicked", G_CALLBACK (mailtc_add_button_clicked_cb), dialog);
-    g_signal_connect (priv->accounts_button_edit, "clicked", G_CALLBACK (mailtc_edit_button_clicked_cb), dialog);
-    g_signal_connect (priv->accounts_button_remove, "clicked", G_CALLBACK (mailtc_remove_button_clicked_cb), dialog);
+    priv->cursor_changed_id = g_signal_connect (
+            priv->accounts_tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), dialog);
+    priv->columns_changed_id = g_signal_connect (
+            priv->accounts_tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), dialog);
+    priv->entry_insert_text_id = g_signal_connect (
+            priv->account_entry_port, "insert-text", G_CALLBACK (mailtc_port_entry_insert_text_cb), priv);
 
-    priv->button_edit_cursor_changed_id = g_signal_connect (
-            priv->accounts_tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), priv->accounts_button_edit);
-    priv->button_edit_columns_changed_id = g_signal_connect (
-            priv->accounts_tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), priv->accounts_button_edit);
-    priv->button_remove_cursor_changed_id = g_signal_connect (
-            priv->accounts_tree_view, "cursor-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), priv->accounts_button_remove);
-    priv->button_remove_columns_changed_id = g_signal_connect (
-            priv->accounts_tree_view, "columns-changed", G_CALLBACK (mailtc_cursor_or_cols_changed_cb), priv->accounts_button_remove);
-
-    g_signal_connect (priv->accounts_tree_view, "destroy", G_CALLBACK (mailtc_tree_view_destroy_cb), priv);
-
-    mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (priv->accounts_tree_view), priv->accounts_button_edit);
-    mailtc_cursor_or_cols_changed_cb (GTK_TREE_VIEW (priv->accounts_tree_view), priv->accounts_button_remove);
-
-    g_signal_connect_after (dialog, "destroy", G_CALLBACK (mailtc_config_dialog_destroy_cb), NULL);
-    g_signal_connect (dialog, "delete-event", G_CALLBACK (mailtc_config_dialog_delete_event_cb), NULL);
-    g_signal_connect (dialog, "response", G_CALLBACK (mailtc_config_dialog_response_cb), NULL);
+    mailtc_cursor_or_cols_changed (GTK_TREE_VIEW (priv->accounts_tree_view), priv->accounts_button_edit);
+    mailtc_cursor_or_cols_changed (GTK_TREE_VIEW (priv->accounts_tree_view), priv->accounts_button_remove);
 
     str = mailtc_settings_get_command (settings);
     gtk_entry_set_text (GTK_ENTRY (priv->general_entry_command), str ? str : "");
@@ -928,6 +916,13 @@ mailtc_config_dialog_constructed (GObject* object)
 
     mailtc_settings_get_iconcolour (settings, &colour);
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
+
+    store = GTK_LIST_STORE (gtk_combo_box_get_model (GTK_COMBO_BOX (priv->account_combo_protocol)));
+    mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, store);
+
+    g_signal_connect (priv->account_dialog, "destroy", G_CALLBACK (gtk_widget_destroyed), &priv->account_dialog);
+    g_signal_connect (priv->account_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->account_icon);
+    g_signal_connect (priv->general_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->general_icon);
 
     gtk_widget_show_all (GTK_WIDGET (dialog));
 
@@ -982,6 +977,16 @@ mailtc_config_dialog_class_init (MailtcConfigDialogClass* klass)
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_spin_interval);
 
     gtk_widget_class_bind_template_callback (widget_class, gtk_widget_hide_on_delete);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_button_extension_clicked_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_combo_errordlg_changed_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_combo_protocol_changed_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_delete_event_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_destroy_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_response_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_add_button_clicked_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_edit_button_clicked_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_remove_button_clicked_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_tree_view_destroy_cb);
 }
 
 static void
@@ -994,12 +999,9 @@ mailtc_config_dialog_init (MailtcConfigDialog* dialog)
     priv = dialog->priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog, MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogPrivate);
     dialog->settings = NULL;
 
-    priv->dialog_account = NULL;
     priv->entry_insert_text_id = 0;
-    priv->button_edit_columns_changed_id = 0;
-    priv->button_edit_cursor_changed_id = 0;
-    priv->button_remove_columns_changed_id = 0;
-    priv->button_remove_cursor_changed_id = 0;
+    priv->columns_changed_id = 0;
+    priv->cursor_changed_id = 0;
 }
 
 GtkWidget*

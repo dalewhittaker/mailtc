@@ -5,7 +5,7 @@
   <!-- About box -->
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="logo_icon_name">help-about</property>
-    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
+    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no" />
   </object>
 
   <!-- Account dialog -->
@@ -23,7 +23,7 @@
     <property name="default-height">100</property>
     <property name="icon-name">preferences-system</property>
     <property name="resizable">FALSE</property>
-    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
+    <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no" />
     <child internal-child="vbox">
       <object class="GtkButtonBox" id="account_vbox">
         <property name="visible">TRUE</property>
@@ -151,6 +151,7 @@
               <object class="GtkComboBox" id="account_combo_protocol">
                 <property name="visible">TRUE</property>
                 <property name="model">account_store_protocol</property>
+                <signal name="changed" handler="mailtc_combo_protocol_changed_cb" swapped="no" object="MailtcConfigDialog" />
                 <child>
                   <object class="GtkCellRendererText" id="acount_renderer_protocol"/>
                     <attributes>
@@ -168,6 +169,7 @@
                 <property name="label">Plugin Information...</property>
                 <property name="visible">TRUE</property>
                 <property name="can-focus">TRUE</property>
+                <signal name="clicked" handler="mailtc_button_extension_clicked_cb" swapped="no" object="MailtcConfigDialog" />
               </object>
               <packing>
                 <property name="left-attach">1</property>
@@ -286,6 +288,9 @@
     <property name="default-width">100</property>
     <property name="default-height">100</property>
     <property name="resizable">FALSE</property>
+    <signal name="delete-event" handler="mailtc_config_dialog_delete_event_cb" swapped="no" />
+    <signal name="destroy" handler="mailtc_config_dialog_destroy_cb" after="yes" swapped="no" />
+    <signal name="response" handler="mailtc_config_dialog_response_cb" swapped="no" />
     <child internal-child="vbox">
       <object class="GtkButtonBox" id="config_vbox">
         <property name="visible">TRUE</property>
@@ -500,6 +505,7 @@
                         <child>
                           <object class="GtkComboBoxText" id="general_combo_errordlg">
                             <property name="visible">TRUE</property>
+                            <signal name="changed" handler="mailtc_combo_errordlg_changed_cb" swapped="no" object="MailtcConfigDialog" />
                             <items>
                                 <item>Never</item>
                                 <item>Always</item>
@@ -578,6 +584,7 @@
                         <property name="visible">TRUE</property>
                         <property name="can-focus">TRUE</property>
                         <property name="model">accounts_store</property>
+                        <signal name="destroy" handler="mailtc_tree_view_destroy_cb" swapped="no" object="MailtcConfigDialog" />
                         <child>
                           <object class="GtkTreeViewColumn" id="accounts_column_account">
                             <property name="min-width">230</property>
@@ -618,6 +625,7 @@
                         <property name="label">_Add</property>
                         <property name="use-underline">TRUE</property>
                         <property name="image">accounts_image_add</property>
+                        <signal name="clicked" handler="mailtc_add_button_clicked_cb" swapped="no" object="MailtcConfigDialog" />
                       </object>
                       <packing>
                         <property name="expand">TRUE</property>
@@ -632,6 +640,7 @@
                         <property name="label">_Properties</property>
                         <property name="use-underline">TRUE</property>
                         <property name="image">accounts_image_edit</property>
+                        <signal name="clicked" handler="mailtc_edit_button_clicked_cb" swapped="no" object="MailtcConfigDialog" />
                       </object>
                       <packing>
                         <property name="padding">5</property>
@@ -647,6 +656,7 @@
                         <property name="label">_Remove</property>
                         <property name="use-underline">TRUE</property>
                         <property name="image">accounts_image_remove</property>
+                        <signal name="clicked" handler="mailtc_remove_button_clicked_cb" swapped="no" object="MailtcConfigDialog" />
                       </object>
                       <packing>
                         <property name="expand">TRUE</property>
