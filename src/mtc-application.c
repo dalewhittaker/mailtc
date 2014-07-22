@@ -744,5 +744,5 @@ mailtc_application_new (void)
 
     return g_object_new (MAILTC_TYPE_APPLICATION,
                          "application-id", MAILTC_APPLICATION_ID,
-                         "flags", G_APPLICATION_FLAGS_NONE);
+                         "flags", G_APPLICATION_HANDLES_COMMAND_LINE);
 }
