@@ -28,7 +28,7 @@
 #define MAILTC_APPLICATION_PROPERTY_DEBUG    "debug"
 #define MAILTC_APPLICATION_PROPERTY_SETTINGS "settings"
 
-#define MAILTC_APPLICATION_ID          "org." PACKAGE
+#define MAILTC_APPLICATION_ID          "org." PACKAGE ".Application"
 #define MAILTC_APPLICATION_LOG_NAME    "log"
 #define MAILTC_APPLICATION_CONFIG_NAME "config"
 
