@@ -76,6 +76,7 @@ struct _MailtcConfigDialogPrivate
     GtkWidget* general_label_connections;
     GtkWidget* general_spin_connections;
     GtkWidget* general_spin_interval;
+    GtkWidget* config_button_close;
 
     GPtrArray* accounts;
     MailtcModuleManager* modules;
@@ -98,7 +99,7 @@ struct _MailtcConfigDialogClass
     GtkDialogClass parent_class;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_DIALOG, G_ADD_PRIVATE (MailtcConfigDialog))
+G_DEFINE_TYPE_WITH_CODE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_WINDOW, G_ADD_PRIVATE (MailtcConfigDialog))
 
 enum
 {
@@ -123,44 +124,48 @@ mailtc_config_dialog_delete_event_cb (GtkWidget* widget,
 }
 
 static void
-mailtc_config_dialog_response_cb (GtkWidget* dialog,
-                                  gint       response_id)
+mailtc_close_button_clicked_cb (GtkWidget*          button,
+                                MailtcConfigDialog* dialog)
 {
-    if (response_id == GTK_RESPONSE_OK)
-    {
-        MailtcConfigDialog* dialog_config;
-        MailtcConfigDialogPrivate* priv;
-        MailtcSettings* settings;
-        guint net_error;
-        GdkRGBA colour;
-        GError* error = NULL;
+    (void) button;
 
-        g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
+    gtk_widget_destroy (GTK_WIDGET (dialog));
+}
 
-        dialog_config = MAILTC_CONFIG_DIALOG (dialog);
-        priv = dialog_config->priv;
+static void
+mailtc_save_button_clicked_cb (GtkWidget*          button,
+                               MailtcConfigDialog* dialog)
+{
+    MailtcConfigDialogPrivate* priv;
+    MailtcSettings* settings;
+    guint net_error;
+    GdkRGBA colour;
+    GError* error = NULL;
 
-        settings = dialog_config->settings;
+    (void) button;
 
-        mailtc_settings_set_interval (settings,
-                (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->general_spin_interval)));
+    g_assert (MAILTC_IS_CONFIG_DIALOG (dialog));
 
-        mailtc_settings_set_command (settings, gtk_entry_get_text (GTK_ENTRY (priv->general_entry_command)));
+    priv = dialog->priv;
+    settings = dialog->settings;
 
-        mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
-        mailtc_settings_set_iconcolour (settings, &colour);
+    mailtc_settings_set_interval (settings,
+            (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->general_spin_interval)));
 
-        net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->general_combo_errordlg));
-        if (net_error > 1)
-            net_error = (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->general_spin_connections));
+    mailtc_settings_set_command (settings, gtk_entry_get_text (GTK_ENTRY (priv->general_entry_command)));
 
-        mailtc_settings_set_neterror (settings, net_error);
+    mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
+    mailtc_settings_set_iconcolour (settings, &colour);
 
-        if (!mailtc_settings_write (settings, &error))
-            mailtc_gerror_gtk (GTK_WIDGET (dialog_config), &error);
-    }
-    else if (response_id == GTK_RESPONSE_CLOSE)
-        gtk_widget_destroy (dialog);
+    net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->general_combo_errordlg));
+    if (net_error > 1)
+        net_error = (guint) gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (priv->general_spin_connections));
+
+    mailtc_settings_set_neterror (settings, net_error);
+
+    if (!mailtc_settings_write (settings, &error))
+        mailtc_gerror_gtk (GTK_WIDGET (dialog), &error);
+
 }
 
 static void
@@ -869,7 +874,6 @@ mailtc_config_dialog_constructed (GObject* object)
     gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
     gtk_window_set_title (GTK_WINDOW (priv->account_dialog), PACKAGE " Configuration");
     gtk_window_set_transient_for (GTK_WINDOW (priv->account_dialog), GTK_WINDOW (dialog));
-
     gtk_entry_set_max_length (GTK_ENTRY (priv->general_entry_command), MAILTC_PATH_LENGTH);
     gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_name), MAILTC_PATH_LENGTH);
     gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_server), MAILTC_PATH_LENGTH);
@@ -923,7 +927,6 @@ mailtc_config_dialog_constructed (GObject* object)
     g_signal_connect (priv->account_dialog, "destroy", G_CALLBACK (gtk_widget_destroyed), &priv->account_dialog);
     g_signal_connect (priv->account_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->account_icon);
     g_signal_connect (priv->general_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->general_icon);
-
     gtk_widget_show_all (GTK_WIDGET (dialog));
 
     G_OBJECT_CLASS (mailtc_config_dialog_parent_class)->constructed (object);
@@ -975,6 +978,7 @@ mailtc_config_dialog_class_init (MailtcConfigDialogClass* klass)
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_label_connections);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_spin_connections);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_spin_interval);
+    gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, config_button_close);
 
     gtk_widget_class_bind_template_callback (widget_class, gtk_widget_hide_on_delete);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_button_extension_clicked_cb);
@@ -982,7 +986,8 @@ mailtc_config_dialog_class_init (MailtcConfigDialogClass* klass)
     gtk_widget_class_bind_template_callback (widget_class, mailtc_combo_protocol_changed_cb);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_delete_event_cb);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_destroy_cb);
-    gtk_widget_class_bind_template_callback (widget_class, mailtc_config_dialog_response_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_save_button_clicked_cb);
+    gtk_widget_class_bind_template_callback (widget_class, mailtc_close_button_clicked_cb);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_add_button_clicked_cb);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_edit_button_clicked_cb);
     gtk_widget_class_bind_template_callback (widget_class, mailtc_remove_button_clicked_cb);
