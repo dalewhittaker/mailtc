@@ -1,5 +1,5 @@
 /* test-pop.c
- * Copyright (C) 2009-2011 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -85,7 +85,7 @@ expected_error (GError* error,
                 guint   command,
                 guint   errval)
 {
-    if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR && (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+    if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR /*&& (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE)*/)
         return TRUE;
 
     if (errval == POP_CONNECT_PORT && error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CONNECTION_REFUSED)
