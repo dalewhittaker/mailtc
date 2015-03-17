@@ -1,5 +1,5 @@
 /* mtc-statusicon.c
- * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,10 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+
+/* FIXME - temporary hack to use GtkStatusIcon with gtk 3.14 */
+#define GDK_DISABLE_DEPRECATION_WARNINGS 1
+#undef GTK_DISABLE_DEPRECATED
 
 #include "mtc-statusicon.h"
 #include "mtc-envelope.h"
