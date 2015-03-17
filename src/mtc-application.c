@@ -1,5 +1,5 @@
 /* mtc-application.c
- * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -216,7 +216,7 @@ mailtc_application_parse_config (int*     argc,
         guint i;
 
         hstr = g_string_sized_new (300);
-        g_string_append_printf (hstr, "\n%s %s - Copyright (c) 2009-2012 Dale Whittaker.\n\n"
+        g_string_append_printf (hstr, "\n%s %s - Copyright (c) 2009-2015 Dale Whittaker.\n\n"
                                       "Usage:\n  %s <option>\n\nOptions:\n",
                                       PACKAGE, VERSION, g_get_prgname ());
 

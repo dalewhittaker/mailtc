@@ -1,5 +1,5 @@
 /* mtc-module.h
- * Copyright (C) 2009-2012 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
