@@ -575,14 +575,15 @@
               </object>
               <object class="GtkGrid" id="accounts_table">
                 <property name="column-spacing">20</property>
-                <property name="row-spacing">10</property>
-                <property name="border-width">10</property>
+                <property name="row-spacing">5</property>
+                <property name="border-width">5</property>
                 <property name="visible">TRUE</property>
                 <property name="can-focus">TRUE</property>
                 <child>
                   <object class="GtkScrolledWindow" id="accounts_tree_scroll">
                     <property name="hexpand">TRUE</property>
                     <property name="halign">GTK_ALIGN_FILL</property>
+                    <property name="border-width">5</property>
                     <property name="shadow-type">GTK_SHADOW_IN</property>
                     <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
                     <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
@@ -625,6 +626,9 @@
                     <property name="orientation">horizontal</property>
                     <property name="hexpand">TRUE</property>
                     <property name="halign">GTK_ALIGN_FILL</property>
+                    <property name="vexpand">TRUE</property>
+                    <property name="valign">GTK_ALIGN_FILL</property>
+                    <property name="border-width">5</property>
                     <child>
                       <object class="GtkButton" id="accounts_button_add">
                         <property name="visible">TRUE</property>
