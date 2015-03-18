@@ -8,8 +8,14 @@ TEST_PROGS =
 
 AM_CPPFLAGS = \
 		$(GLIB_CFLAGS) \
+		$(GTK_CFLAGS) \
 		-I$(SRC_DIR) \
 		-DG_DISABLE_DEPRECATED=1 \
+		-DGTK_DISABLE_DEPRECATED=1 \
+		-DGDK_PIXBUF_DISABLE_DEPRECATED=1 \
+		-DGDK_DISABLE_DEPRECATED=1 \
+		-DGDK_MULTIHEAD_SAFE=1 \
+		-DGTK_MULTIHEAD_SAFE=1 \
 		-DPLUGINDIR=\""$(top_srcdir)/plugin/.libs"\" \
 		-DLIBDIR=\""$(libdir)/mailtc"\" \
 		-DSRCDIR=\""$(srcdir)"\" \
@@ -23,19 +29,15 @@ AM_CFLAGS = \
 		-ggdb
 
 LDADD = \
-		$(GLIB_LIBS)
+		$(GLIB_LIBS) \
+		$(GTK_LIBS)
 
 TEST_PROGS += test-pop
 
 test_pop_SOURCES = \
 		$(SRC_DIR)/mtc-account.c \
-		$(SRC_DIR))/mtc-application.c \
-		$(SRC_DIR)/mtc-envelope.c \
 		$(SRC_DIR)/mtc-extension.c \
 		$(SRC_DIR)/mtc-module.c \
-		$(SRC_DIR)/mtc-modulemanager.c \
-		$(SRC_DIR)/mtc-settings.c \
-		$(SRC_DIR)/mtc-statusicon.c \
 		$(SRC_DIR)/mtc-util.c \
 		test-pop.c
 

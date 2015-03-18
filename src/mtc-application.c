@@ -58,7 +58,8 @@ typedef enum
 typedef enum
 {
     MAILTC_APPLICATION_ERROR_INVALID_OPTION = 0,
-    MAILTC_APPLICATION_ERROR_DIRECTORY
+    MAILTC_APPLICATION_ERROR_DIRECTORY,
+    MAILTC_APPLICATION_ERROR_NO_SETTINGS
 } MailtcApplicationError;
 
 enum
@@ -266,6 +267,7 @@ mailtc_application_server_init (MailtcApplication* app,
     gchar* filename;
 
     g_assert (MAILTC_IS_APPLICATION (app));
+    g_assert (error);
 
     priv = app->priv;
     if (!(manager = mailtc_module_manager_new (priv->directory, error)))
@@ -289,14 +291,21 @@ mailtc_application_server_init (MailtcApplication* app,
     if (mode != MAILTC_MODE_CONFIG)
     {
         GPtrArray* accounts;
+        guint len;
 
         accounts = mailtc_settings_get_accounts (settings);
-        if (accounts->len == 0)
-        {
-            mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING, "Incomplete settings found.\nPlease enter configuration settings");
-            mode = MAILTC_MODE_CONFIG;
-        }
+        len = accounts->len;
         g_ptr_array_unref (accounts);
+
+        if (len == 0)
+        {
+            g_set_error_literal (error,
+                                 MAILTC_APPLICATION_ERROR,
+                                 MAILTC_APPLICATION_ERROR_NO_SETTINGS,
+                                 "Incomplete settings found.\nPlease enter configuration settings");
+            g_object_unref (settings);
+            return FALSE;
+        }
     }
 
     mailtc_application_set_settings (app, settings);
