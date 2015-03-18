@@ -21,7 +21,6 @@
 #include "mtc-account.h"
 #include "mtc-application.h"
 #include "mtc-checker.h"
-#include "mtc-configdialog.h"
 #include "mtc-settings.h"
 #include "mtc-statusicon.h"
 #include "mtc-util.h"
@@ -190,19 +189,6 @@ mailtc_run_cb (MailtcApplication* app)
     mailtc_checker_run (checker);
 }
 
-static void
-mailtc_configure_cb (MailtcApplication* app)
-{
-    MailtcSettings* settings;
-    GtkWidget* dialog;
-
-    settings = mailtc_application_get_settings (app);
-    dialog = mailtc_config_dialog_new (settings);
-
-    g_object_unref (settings);
-    gtk_widget_show (GTK_WIDGET (dialog));
-}
-
 int
 main (int    argc,
       char** argv)
@@ -212,7 +198,6 @@ main (int    argc,
 
     app = mailtc_application_new ();
 
-    g_signal_connect (app, "configure", G_CALLBACK (mailtc_configure_cb), NULL);
     g_signal_connect (app, "run", G_CALLBACK (mailtc_run_cb), NULL);
 
     status = g_application_run (G_APPLICATION (app), argc, argv);

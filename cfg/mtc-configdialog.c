@@ -108,6 +108,17 @@ enum
 };
 
 static void
+mailtc_gerror_gtk (GtkWidget* parent,
+                   GError**   error)
+{
+    if (error && *error)
+    {
+        mailtc_gtk_message (parent, GTK_MESSAGE_ERROR, "%s", (*error)->message);
+        g_clear_error (error);
+    }
+}
+
+static void
 mailtc_config_dialog_destroy_cb (GtkWidget* widget)
 {
     mailtc_gtk_message (widget, GTK_MESSAGE_INFO, "Now run " PACKAGE " to check mail.");

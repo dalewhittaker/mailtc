@@ -112,17 +112,6 @@ mailtc_gerror (GError** error)
 }
 
 void
-mailtc_gerror_gtk (GtkWidget* parent,
-                   GError**   error)
-{
-    if (error && *error)
-    {
-        mailtc_gtk_message (parent, GTK_MESSAGE_ERROR, "%s", (*error)->message);
-        g_clear_error (error);
-    }
-}
-
-void
 mailtc_log (GIOChannel*  log,
             const gchar* message)
 {
@@ -165,7 +154,13 @@ mailtc_run_command (const gchar* command)
     args = g_strsplit (command, " ", 0);
 
     if (!g_spawn_async (NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error))
-        mailtc_gerror_gtk (NULL, &error);
+    {
+        if (error)
+        {
+            mailtc_gtk_message (NULL, GTK_MESSAGE_ERROR, "%s", error->message);
+            g_clear_error (&error);
+        }
+    }
 
     g_strfreev (args);
 }

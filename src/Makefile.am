@@ -1,4 +1,8 @@
-bin_PROGRAMS = mailtc
+APP_NAME = mailtc
+
+RES_DIR = $(top_srcdir)/resource
+
+bin_PROGRAMS = $(APP_NAME)
 
 AM_CPPFLAGS = \
 		$(GLIB_CFLAGS) \
@@ -9,7 +13,7 @@ AM_CPPFLAGS = \
 		-DGDK_DISABLE_DEPRECATED=1 \
 		-DGDK_MULTIHEAD_SAFE=1 \
 		-DGTK_MULTIHEAD_SAFE=1 \
-		-DLIBDIR=\""$(libdir)/mailtc"\"
+		-DLIBDIR=\""$(libdir)/$(APP_NAME)"\"
 
 AM_CFLAGS = \
 		-Wall \
@@ -30,20 +34,18 @@ LDADD = \
 		$(GTK_LIBS)
 
 RES_FILES = \
-		mtc-envelope.png \
-		mtc-configdialog.ui
+		$(RES_DIR)/mtc-envelope.png
 
 mtc-resources.c: mtc-gresource.xml $(RES_FILES)
-		glib-compile-resources --target=$@ --generate-source --c-name mailtc mtc-gresource.xml
+		glib-compile-resources --sourcedir=$(RES_DIR) --target=$@ --generate-source --c-name $(APP_NAME) mtc-gresource.xml
 
 mtc-resources.h: mtc-gresource.xml $(RES_FILES)
-		glib-compile-resources --target=$@ --generate-header --c-name mailtc mtc-gresource.xml
+		glib-compile-resources --sourcedir=$(RES_DIR) --target=$@ --generate-header --c-name $(APP_NAME) mtc-gresource.xml
 
 mailtc_SOURCES = \
 		mtc-account.c \
 		mtc-application.c \
 		mtc-checker.c \
-		mtc-configdialog.c \
 		mtc-envelope.c \
 		mtc-extension.c \
 		mtc-module.c \
@@ -62,7 +64,6 @@ EXTRA_DIST = \
 		mtc-account.h \
 		mtc-application.h \
 		mtc-checker.h \
-		mtc-configdialog.h \
 		mtc-envelope.h \
 		mtc-extension.h \
 		mtc-module.h \

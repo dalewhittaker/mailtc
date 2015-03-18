@@ -70,7 +70,6 @@ enum
 
 enum
 {
-    SIGNAL_CONFIGURE,
     SIGNAL_RUN,
     SIGNAL_TERMINATE,
     LAST_SIGNAL
@@ -189,21 +188,22 @@ mailtc_application_parse_config (int*     argc,
 {
     GOptionContext* context;
     GOptionEntry *entries;
-    gboolean configure;
     gboolean debug;
     gboolean kill;
     gboolean parsed;
     gboolean help;
     GString* hstr;
 
-    configure = debug = kill = help = FALSE;
+    if (argc && *argc == 0)
+        return MAILTC_MODE_CONFIG;
+
+    debug = kill = help = FALSE;
     hstr = NULL;
 
-    entries = g_new0 (GOptionEntry, 5);
-    mailtc_application_set_option_entry (&entries[0], "configure", 'c', "Configure mail details.", &configure);
-    mailtc_application_set_option_entry (&entries[1], "debug", 'd', "Run in network debug mode.", &debug);
-    mailtc_application_set_option_entry (&entries[2], "kill", 'k', "Kill all running " PACKAGE " processes.", &kill);
-    mailtc_application_set_option_entry (&entries[3], "help", 'h', "Show help options.", &help);
+    entries = g_new0 (GOptionEntry, 4);
+    mailtc_application_set_option_entry (&entries[0], "debug", 'd', "Run in network debug mode.", &debug);
+    mailtc_application_set_option_entry (&entries[1], "kill", 'k', "Kill all running " PACKAGE " processes.", &kill);
+    mailtc_application_set_option_entry (&entries[2], "help", 'h', "Show help options.", &help);
 
     context = g_option_context_new (NULL);
     g_option_context_set_help_enabled (context, FALSE);
@@ -220,7 +220,7 @@ mailtc_application_parse_config (int*     argc,
                                       "Usage:\n  %s <option>\n\nOptions:\n",
                                       PACKAGE, VERSION, g_get_prgname ());
 
-        for (i = 0; i < 4; i++)
+        for (i = 0; i < 3; i++)
         {
             g_string_append_printf (hstr, "  -%c, --%-14s%s\n",
                     entries[i].short_name, entries[i].long_name, entries[i].description);
@@ -242,8 +242,6 @@ mailtc_application_parse_config (int*     argc,
 
     if (kill)
         return MAILTC_MODE_KILL;
-    if (configure)
-        return MAILTC_MODE_CONFIG;
     if (debug)
         return MAILTC_MODE_DEBUG;
 
@@ -309,11 +307,8 @@ mailtc_application_server_init (MailtcApplication* app,
         case MAILTC_MODE_DEBUG:
             mailtc_application_set_debug (app, TRUE);
         case MAILTC_MODE_NORMAL:
-            g_signal_emit (app, signals[SIGNAL_RUN], 0);
-            break;
-
         case MAILTC_MODE_CONFIG:
-            g_signal_emit (app, signals[SIGNAL_CONFIGURE], 0);
+            g_signal_emit (app, signals[SIGNAL_RUN], 0);
             break;
 
         default:
@@ -681,16 +676,6 @@ mailtc_application_class_init (MailtcApplicationClass* klass)
                                      "The settings",
                                      MAILTC_TYPE_SETTINGS,
                                      flags));
-
-    signals[SIGNAL_CONFIGURE] = g_signal_new ("configure",
-                                              G_TYPE_FROM_CLASS (gobject_class),
-                                              G_SIGNAL_RUN_LAST,
-                                              G_STRUCT_OFFSET (MailtcApplicationClass, configure),
-                                              NULL,
-                                              NULL,
-                                              g_cclosure_marshal_VOID__VOID,
-                                              G_TYPE_NONE,
-                                              0);
 
     signals[SIGNAL_RUN] = g_signal_new ("run",
                                         G_TYPE_FROM_CLASS (gobject_class),

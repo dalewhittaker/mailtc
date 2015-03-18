@@ -41,10 +41,6 @@ void
 mailtc_gerror               (GError**     error);
 
 void
-mailtc_gerror_gtk           (GtkWidget* parent,
-                             GError**   error);
-
-void
 mailtc_gtk_message          (GtkWidget*     parent,
                              GtkMessageType msg_type,
                              const gchar*   format,

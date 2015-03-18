@@ -123,22 +123,15 @@ mailtc_envelope_notify_pixbuf_cb (GObject*    object,
                                   GParamSpec* pspec)
 {
     MailtcEnvelope* envelope;
+    GdkPixbuf* pixbuf;
     gboolean is_envelope = FALSE;
 
     (void) pspec;
     envelope = MAILTC_ENVELOPE (object);
 
-    if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF)
-    {
-        GdkPixbuf* pixbuf;
-
-        pixbuf = gtk_image_get_pixbuf (GTK_IMAGE (envelope));
-        if (pixbuf)
-        {
-            is_envelope = GPOINTER_TO_UINT (
-                    g_object_get_data (G_OBJECT (pixbuf), "mailtc_envelope"));
-        }
-    }
+    pixbuf = mailtc_envelope_get_pixbuf (envelope);
+    if (pixbuf)
+        is_envelope = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (pixbuf), "mailtc_envelope"));
 
     envelope->priv->pixbuf_is_envelope = is_envelope;
 }
