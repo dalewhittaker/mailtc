@@ -212,7 +212,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     MailtcStatusIconItem* item;
     MailtcStatusIconItem* dflitem;
     GtkWidget* envelope;
-    GdkPixbuf* pixbuf;
+    GIcon* icon;
     gchar* tmp_str;
     GString* tooltip;
     GHashTableIter iter;
@@ -222,7 +222,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     colour = NULL;
-    pixbuf = NULL;
+    icon = NULL;
     tooltip = NULL;
     dflitem = NULL;
     index = -1;
@@ -271,10 +271,11 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     }
 
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
-    pixbuf = mailtc_envelope_get_pixbuf (MAILTC_ENVELOPE (envelope));
-    g_assert (pixbuf);
+    icon = mailtc_envelope_get_icon (MAILTC_ENVELOPE (envelope));
+    g_assert (icon);
 
-    gtk_status_icon_set_from_pixbuf (GTK_STATUS_ICON (status_icon), pixbuf);
+    /*gtk_status_icon_set_from_gicon (GTK_STATUS_ICON (status_icon), icon);*/
+    gtk_status_icon_set_from_pixbuf (GTK_STATUS_ICON (status_icon), GDK_PIXBUF (icon));
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), colour ? TRUE : FALSE);
 
     gtk_status_icon_set_tooltip_text (GTK_STATUS_ICON (status_icon), tooltip->str);

@@ -49,8 +49,8 @@ void
 mailtc_envelope_get_colour (MailtcEnvelope* envelope,
                             GdkRGBA*        colour);
 
-GdkPixbuf*
-mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope);
+GIcon*
+mailtc_envelope_get_icon (MailtcEnvelope* envelope);
 
 G_END_DECLS
 

@@ -123,15 +123,15 @@ mailtc_envelope_notify_pixbuf_cb (GObject*    object,
                                   GParamSpec* pspec)
 {
     MailtcEnvelope* envelope;
-    GdkPixbuf* pixbuf;
+    GIcon* icon;
     gboolean is_envelope = FALSE;
 
     (void) pspec;
     envelope = MAILTC_ENVELOPE (object);
 
-    pixbuf = mailtc_envelope_get_pixbuf (envelope);
-    if (pixbuf)
-        is_envelope = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (pixbuf), "mailtc_envelope"));
+    icon = mailtc_envelope_get_icon (envelope);
+    if (icon)
+        is_envelope = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (icon), "mailtc_envelope"));
 
     envelope->priv->pixbuf_is_envelope = is_envelope;
 }
@@ -156,9 +156,8 @@ mailtc_envelope_notify_colour_cb (GObject*    object,
 
     mailtc_envelope_set_pixbuf_colour (pixbuf, &envelope->colour);
 
-    g_object_set_data (G_OBJECT (pixbuf),
-                       "mailtc_envelope", GUINT_TO_POINTER (1));
-    gtk_image_set_from_pixbuf (GTK_IMAGE (envelope), pixbuf);
+    g_object_set_data (G_OBJECT (pixbuf), "mailtc_envelope", GUINT_TO_POINTER (1));
+    gtk_image_set_from_gicon (GTK_IMAGE (envelope), G_ICON (pixbuf), GTK_ICON_SIZE_LARGE_TOOLBAR);
 
     if (priv->pixbuf)
         g_object_unref (priv->pixbuf);
@@ -166,17 +165,17 @@ mailtc_envelope_notify_colour_cb (GObject*    object,
     priv->pixbuf = pixbuf;
 }
 
-GdkPixbuf*
-mailtc_envelope_get_pixbuf (MailtcEnvelope* envelope)
+GIcon*
+mailtc_envelope_get_icon (MailtcEnvelope* envelope)
 {
-    GdkPixbuf* pixbuf = NULL;
+    GIcon* icon = NULL;
 
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
-    if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_PIXBUF)
-        pixbuf = gtk_image_get_pixbuf (GTK_IMAGE (envelope));
+    if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_GICON)
+        gtk_image_get_gicon (GTK_IMAGE (envelope), &icon, NULL);
 
-    return (pixbuf);
+    return (icon);
 }
 
 void
