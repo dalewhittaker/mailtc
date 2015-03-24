@@ -20,8 +20,8 @@
 #include "mtc-envelope.h"
 #include "mtc-util.h"
 
-#define MAILTC_ENVELOPE_SET_COLOUR(envelope,property) \
-    mailtc_object_set_colour (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
+#define MAILTC_ENVELOPE_SET_STRING(envelope,property) \
+    mailtc_object_set_string (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
                               #property, &envelope->property, property)
 
 struct _MailtcEnvelopePrivate
@@ -35,7 +35,7 @@ struct _MailtcEnvelope
     GtkImage parent_instance;
 
     MailtcEnvelopePrivate* priv;
-    GdkRGBA colour;
+    gchar* colour;
 };
 
 struct _MailtcEnvelopeClass
@@ -52,8 +52,8 @@ enum
 };
 
 static void
-mailtc_envelope_set_pixbuf_colour (GdkPixbuf* pixbuf,
-                                   GdkRGBA*   colour)
+mailtc_envelope_set_pixbuf_colour (GdkPixbuf*   pixbuf,
+                                   const gchar* colour)
 {
     gint width;
     gint height;
@@ -69,9 +69,12 @@ mailtc_envelope_set_pixbuf_colour (GdkPixbuf* pixbuf,
 
     if (colour)
     {
-        r = (guint8) (colour->red * 255);
-        g = (guint8) (colour->green * 255);
-        b = (guint8) (colour->blue * 255);
+        GdkRGBA rgb;
+
+        gdk_rgba_parse (&rgb, colour);
+        r = (guint8) (rgb.red * 255);
+        g = (guint8) (rgb.green * 255);
+        b = (guint8) (rgb.blue * 255);
     }
     else
         r = g = b = 255;
@@ -154,7 +157,7 @@ mailtc_envelope_notify_colour_cb (GObject*    object,
     pixbuf = mailtc_envelope_create_pixbuf (envelope);
     g_assert (pixbuf);
 
-    mailtc_envelope_set_pixbuf_colour (pixbuf, &envelope->colour);
+    mailtc_envelope_set_pixbuf_colour (pixbuf, envelope->colour);
 
     g_object_set_data (G_OBJECT (pixbuf), "mailtc_envelope", GUINT_TO_POINTER (1));
     gtk_image_set_from_gicon (GTK_IMAGE (envelope), G_ICON (pixbuf), GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -178,44 +181,19 @@ mailtc_envelope_get_icon (MailtcEnvelope* envelope)
     return (icon);
 }
 
-static void
-mailtc_object_set_colour (GObject*        obj,
-                          GType           objtype,
-                          const gchar*    name,
-                          GdkRGBA*        colour,
-                          const GdkRGBA*  newcolour)
-{
-    GdkRGBA defaultcolour;
-
-    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
-
-    if (!newcolour)
-    {
-        defaultcolour.red = defaultcolour.green = defaultcolour.blue = defaultcolour.alpha = 1.0;
-        newcolour = &defaultcolour;
-    }
-    if (!gdk_rgba_equal (newcolour, colour))
-    {
-        *colour = *newcolour;
-
-        g_object_notify (obj, name);
-    }
-}
-
 void
 mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const GdkRGBA*  colour)
+                            const gchar*    colour)
 {
-    MAILTC_ENVELOPE_SET_COLOUR (envelope, colour);
+    MAILTC_ENVELOPE_SET_STRING (envelope, colour);
 }
 
-void
-mailtc_envelope_get_colour (MailtcEnvelope* envelope,
-                            GdkRGBA*        colour)
+const gchar*
+mailtc_envelope_get_colour (MailtcEnvelope* envelope)
 {
     g_assert (MAILTC_IS_ENVELOPE (envelope));
 
-    *colour = envelope->colour;
+    return envelope->colour;
 }
 
 static void
@@ -229,7 +207,7 @@ mailtc_envelope_set_property (GObject*      object,
     switch (prop_id)
     {
         case PROP_COLOUR:
-            mailtc_envelope_set_colour (envelope, g_value_get_boxed (value));
+            mailtc_envelope_set_colour (envelope, g_value_get_string (value));
             break;
 
         default:
@@ -245,13 +223,11 @@ mailtc_envelope_get_property (GObject*    object,
                               GParamSpec* pspec)
 {
     MailtcEnvelope* envelope = MAILTC_ENVELOPE (object);
-    GdkRGBA colour;
 
     switch (prop_id)
     {
         case PROP_COLOUR:
-            mailtc_envelope_get_colour (envelope, &colour);
-            g_value_set_boxed (value, &colour);
+            g_value_set_string (value, mailtc_envelope_get_colour (envelope));
             break;
 
         default:
@@ -282,11 +258,11 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 
     g_object_class_install_property (gobject_class,
                                      PROP_COLOUR,
-                                     g_param_spec_boxed (
+                                     g_param_spec_string (
                                      "colour",
                                      "Colour",
                                      "The envelope colour",
-                                     GDK_TYPE_RGBA,
+                                     NULL,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 }
 

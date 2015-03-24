@@ -216,11 +216,13 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     gchar* tmp_str;
     GString* tooltip;
     GHashTableIter iter;
-    GdkRGBA* colour;
+    GdkRGBA* rgb;
+    const gchar* colour;
     gint index;
 
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
+    rgb = NULL;
     colour = NULL;
     icon = NULL;
     tooltip = NULL;
@@ -266,9 +268,12 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
             g_free (tmp_str);
 
             /* If colour is already set there is more than one item, show the multi colour. */
-            colour = colour ? &dflitem->colour : &item->colour;
+            rgb = rgb ? &dflitem->colour : &item->colour;
         }
     }
+
+    if (rgb)
+        colour = gdk_rgba_to_string (rgb);
 
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
     icon = mailtc_envelope_get_icon (MAILTC_ENVELOPE (envelope));

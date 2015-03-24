@@ -43,11 +43,10 @@ mailtc_envelope_new        (void);
 
 void
 mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const GdkRGBA*  colour);
+                            const gchar*    colour);
 
-void
-mailtc_envelope_get_colour (MailtcEnvelope* envelope,
-                            GdkRGBA*        colour);
+const gchar*
+mailtc_envelope_get_colour (MailtcEnvelope* envelope);
 
 GIcon*
 mailtc_envelope_get_icon (MailtcEnvelope* envelope);
