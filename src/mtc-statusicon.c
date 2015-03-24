@@ -54,7 +54,6 @@ typedef struct
     gchar* name;
     gint64 nmails;
     GdkRGBA colour;
-
 } MailtcStatusIconItem;
 
 enum
@@ -162,7 +161,7 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
 void
 mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
                              const gchar*      account_name,
-                             const GdkRGBA*    account_colour)
+                             const gchar*      account_colour)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
@@ -176,7 +175,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     if (!account_colour)
         item->colour.red = item->colour.green = item->colour.blue = item->colour.alpha = 1.0;
     else
-        item->colour = *account_colour;
+        gdk_rgba_parse (&item->colour, account_colour);
 
     index = g_new (gint, 1);
 
@@ -195,7 +194,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
 
 void
 mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
-                                       const GdkRGBA*    colour)
+                                       const gchar*      colour)
 {
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
