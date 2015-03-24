@@ -24,6 +24,7 @@
 #include <stdlib.h> /* atoi () */
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 
 #include "mtc-account.h"
 #include "mtc-extension.h"
@@ -85,7 +86,7 @@ expected_error (GError* error,
                 guint   command,
                 guint   errval)
 {
-    if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR && (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE))
+    if (errval == POP_CONNECT_SERVER && error->domain == G_RESOLVER_ERROR /*&& (error->code == G_RESOLVER_ERROR_NOT_FOUND || error->code == G_RESOLVER_ERROR_TEMPORARY_FAILURE)*/)
         return TRUE;
 
     if (errval == POP_CONNECT_PORT && error->domain == G_IO_ERROR && error->code == G_IO_ERROR_CONNECTION_REFUSED)

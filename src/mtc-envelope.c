@@ -178,6 +178,30 @@ mailtc_envelope_get_icon (MailtcEnvelope* envelope)
     return (icon);
 }
 
+static void
+mailtc_object_set_colour (GObject*        obj,
+                          GType           objtype,
+                          const gchar*    name,
+                          GdkRGBA*        colour,
+                          const GdkRGBA*  newcolour)
+{
+    GdkRGBA defaultcolour;
+
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (!newcolour)
+    {
+        defaultcolour.red = defaultcolour.green = defaultcolour.blue = defaultcolour.alpha = 1.0;
+        newcolour = &defaultcolour;
+    }
+    if (!gdk_rgba_equal (newcolour, colour))
+    {
+        *colour = *newcolour;
+
+        g_object_notify (obj, name);
+    }
+}
+
 void
 mailtc_envelope_set_colour (MailtcEnvelope* envelope,
                             const GdkRGBA*  colour)

@@ -23,7 +23,6 @@
 #include "mtc-extension.h"
 
 #include <glib-object.h>
-#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 
@@ -86,12 +85,11 @@ guint
 mailtc_account_get_protocol     (MailtcAccount* account);
 
 void
-mailtc_account_set_iconcolour   (MailtcAccount*  account,
-                                 const GdkRGBA*  iconcolour);
+mailtc_account_set_iconcolour   (MailtcAccount* account,
+                                 const gchar*   iconcolour);
 
-void
-mailtc_account_get_iconcolour   (MailtcAccount* account,
-                                 GdkRGBA*       iconcolour);
+const gchar*
+mailtc_account_get_iconcolour   (MailtcAccount* account);
 
 MailtcExtension*
 mailtc_account_get_extension    (MailtcAccount* account);

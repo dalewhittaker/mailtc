@@ -22,7 +22,7 @@
 
 #include "mtc-modulemanager.h"
 
-#include <gdk/gdk.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -60,11 +60,10 @@ mailtc_settings_get_neterror   (MailtcSettings* settings);
 
 void
 mailtc_settings_set_iconcolour (MailtcSettings* settings,
-                                const GdkRGBA*  colour);
+                                const gchar*    colour);
 
-void
-mailtc_settings_get_iconcolour (MailtcSettings* settings,
-                                GdkRGBA*        colour);
+const gchar*
+mailtc_settings_get_iconcolour (MailtcSettings* settings);
 
 void
 mailtc_settings_set_accounts   (MailtcSettings* settings,

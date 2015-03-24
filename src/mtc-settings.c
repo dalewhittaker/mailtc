@@ -41,10 +41,6 @@
     mailtc_object_set_uint (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                             #property, &settings->property, property)
 
-#define MAILTC_SETTINGS_SET_COLOUR(settings, property) \
-    mailtc_object_set_colour (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
-                              #property, &settings->property, property)
-
 #define MAILTC_SETTINGS_SET_PTR_ARRAY(settings, property) \
     mailtc_object_set_ptr_array (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
                                  #property, &settings->property, property)
@@ -73,11 +69,11 @@ struct _MailtcSettings
     MailtcSettingsPrivate* priv;
     MailtcModuleManager* modules;
     GPtrArray* accounts;
-    GdkRGBA iconcolour;
     guint interval;
     guint neterror;
     gchar* command;
     gchar* filename;
+    gchar* iconcolour;
 };
 
 struct _MailtcSettingsClass
@@ -277,56 +273,6 @@ mailtc_settings_keyfile_read_base64 (MailtcSettings* settings,
 }
 
 static void
-mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
-                                      GObject*        obj,
-                                      const gchar*    key_group,
-                                      const gchar*    name)
-{
-    GKeyFile* key_file;
-    gchar* value;
-    GdkRGBA* colour = NULL;
-
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    key_file = settings->priv->key_file;
-
-    g_object_get (obj, name, &colour, NULL);
-    value = gdk_rgba_to_string (colour);
-
-    g_key_file_set_string (key_file, key_group, name, value);
-
-    g_free (value);
-    gdk_rgba_free (colour);
-}
-
-static gboolean
-mailtc_settings_keyfile_read_colour (MailtcSettings* settings,
-                                     GObject*        obj,
-                                     const gchar*    key_group,
-                                     const gchar*    name,
-                                     GError**        error)
-{
-    GKeyFile* key_file;
-    gchar* value;
-    GdkRGBA colour;
-
-    g_assert (MAILTC_IS_SETTINGS (settings));
-
-    key_file = settings->priv->key_file;
-
-    value = g_key_file_get_string (key_file, key_group, name, error);
-    if (error && *error)
-        return FALSE;
-
-    g_assert (gdk_rgba_parse (&colour, value));
-    g_free (value);
-
-    g_object_set (obj, name, &colour, NULL);
-
-    return TRUE;
-}
-
-static void
 mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
 {
     MailtcAccount* account;
@@ -359,7 +305,7 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
         mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PORT);
         mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_USER);
         mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL);
-        mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR);
+        mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR);
         mailtc_settings_keyfile_write_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD);
 
         extension = mailtc_account_get_extension (account);
@@ -430,7 +376,7 @@ mailtc_settings_keyfile_read_accounts (MailtcSettings* settings,
             if (success)
                 success = mailtc_settings_keyfile_read_uint (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PROTOCOL, error);
             if (success)
-                success = mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR, error);
+                success = mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR, error);
             if (success)
                 success = mailtc_settings_keyfile_read_base64 (settings, obj, key_group, MAILTC_ACCOUNT_PROPERTY_PASSWORD, error);
             if (success)
@@ -480,7 +426,7 @@ mailtc_settings_keyfile_read (MailtcSettings* settings,
         return FALSE;
     if (!mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_COMMAND, error))
         return FALSE;
-    if (!mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR, error))
+    if (!mailtc_settings_keyfile_read_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR, error))
         return FALSE;
 
     return mailtc_settings_keyfile_read_accounts (settings, error);
@@ -506,7 +452,7 @@ mailtc_settings_write (MailtcSettings* settings,
     mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_INTERVAL);
     mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_NET_ERROR);
     mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_COMMAND);
-    mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
+    mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
     mailtc_settings_keyfile_write_accounts (settings);
 
     data = g_key_file_to_data (settings->priv->key_file, NULL, error);
@@ -579,18 +525,17 @@ mailtc_settings_get_neterror (MailtcSettings* settings)
 
 void
 mailtc_settings_set_iconcolour (MailtcSettings* settings,
-                                const GdkRGBA*  iconcolour)
+                                const gchar*    iconcolour)
 {
-    MAILTC_SETTINGS_SET_COLOUR (settings, iconcolour);
+    MAILTC_SETTINGS_SET_STRING (settings, iconcolour);
 }
 
-void
-mailtc_settings_get_iconcolour (MailtcSettings* settings,
-                                GdkRGBA*        iconcolour)
+const gchar*
+mailtc_settings_get_iconcolour (MailtcSettings* settings)
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
-    *iconcolour = settings->iconcolour;
+    return settings->iconcolour;
 }
 
 void
@@ -683,7 +628,7 @@ mailtc_settings_set_property (GObject*      object,
             break;
 
         case PROP_ICON_COLOUR:
-            mailtc_settings_set_iconcolour (settings, g_value_get_boxed (value));
+            mailtc_settings_set_iconcolour (settings, g_value_get_string (value));
             break;
 
         case PROP_ACCOUNTS:
@@ -707,7 +652,6 @@ mailtc_settings_get_property (GObject*    object,
                               GParamSpec* pspec)
 {
     MailtcSettings* settings;
-    GdkRGBA colour;
 
     settings = MAILTC_SETTINGS (object);
 
@@ -730,8 +674,7 @@ mailtc_settings_get_property (GObject*    object,
             break;
 
         case PROP_ICON_COLOUR:
-            mailtc_settings_get_iconcolour (settings, &colour);
-            g_value_set_boxed (value, &colour);
+            g_value_set_string (value, mailtc_settings_get_iconcolour (settings));
             break;
 
         case PROP_ACCOUNTS:
@@ -764,6 +707,7 @@ mailtc_settings_finalize (GObject* object)
 
     g_free (settings->command);
     g_free (settings->filename);
+    g_free (settings->iconcolour);
 
     g_clear_error (&priv->error);
 
@@ -842,11 +786,11 @@ mailtc_settings_class_init (MailtcSettingsClass* klass)
 
     g_object_class_install_property (gobject_class,
                                      PROP_ICON_COLOUR,
-                                     g_param_spec_boxed (
+                                     g_param_spec_string (
                                      MAILTC_SETTINGS_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
                                      "The icon colour",
-                                     GDK_TYPE_RGBA,
+                                     NULL,
                                      flags));
 
     g_object_class_install_property (gobject_class,

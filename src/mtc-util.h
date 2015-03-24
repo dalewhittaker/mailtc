@@ -20,7 +20,6 @@
 #ifndef __MAILTC_UTIL_H__
 #define __MAILTC_UTIL_H__
 
-#include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -86,13 +85,6 @@ mailtc_object_set_object    (GObject*     obj,
                              const gchar* name,
                              GObject**    value,
                              GObject*     newvalue);
-
-void
-mailtc_object_set_colour    (GObject*        obj,
-                             GType           objtype,
-                             const gchar*    name,
-                             GdkRGBA*        colour,
-                             const GdkRGBA*  newcolour);
 
 void
 mailtc_object_set_array     (GObject*     obj,
