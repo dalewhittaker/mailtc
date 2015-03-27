@@ -213,8 +213,11 @@ mailtc_button_icon_clicked_cb (GtkWidget*      button,
     dialog = gtk_color_chooser_dialog_new ("Select Icon Colour", GTK_WINDOW (gtk_widget_get_toplevel (button)));
 
     colour = mailtc_envelope_get_colour (envelope);
-    gdk_rgba_parse (&rgb, colour);
-    gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog), &rgb);
+    if (colour)
+    {
+        gdk_rgba_parse (&rgb, colour);
+        gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog), &rgb);
+    }
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if (response == GTK_RESPONSE_OK)

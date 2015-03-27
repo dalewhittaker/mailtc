@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_CHECKER            (mailtc_checker_get_type  ())
+#define MAILTC_TYPE_CHECKER            (mailtc_checker_get_type ())
 #define MAILTC_CHECKER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_CHECKER, MailtcChecker))
 #define MAILTC_CHECKER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_CHECKER, MailtcCheckerClass))
 #define MAILTC_IS_CHECKER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_CHECKER))

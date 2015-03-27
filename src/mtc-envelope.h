@@ -24,7 +24,7 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_ENVELOPE            (mailtc_envelope_get_type  ())
+#define MAILTC_TYPE_ENVELOPE            (mailtc_envelope_get_type ())
 #define MAILTC_ENVELOPE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_ENVELOPE, MailtcEnvelope))
 #define MAILTC_ENVELOPE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_ENVELOPE, MailtcEnvelopeClass))
 #define MAILTC_IS_ENVELOPE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_ENVELOPE))
@@ -49,7 +49,7 @@ const gchar*
 mailtc_envelope_get_colour (MailtcEnvelope* envelope);
 
 GIcon*
-mailtc_envelope_get_icon (MailtcEnvelope* envelope);
+mailtc_envelope_get_icon   (MailtcEnvelope* envelope);
 
 G_END_DECLS
 

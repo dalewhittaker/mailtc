@@ -22,6 +22,7 @@
 #undef GTK_DISABLE_DEPRECATED
 
 #include "mtc-statusicon.h"
+#include "mtc-colour.h"
 #include "mtc-envelope.h"
 
 struct _MailtcStatusIconPrivate
@@ -53,7 +54,7 @@ typedef struct
 {
     gchar* name;
     gint64 nmails;
-    GdkRGBA colour;
+    MailtcColour colour;
 } MailtcStatusIconItem;
 
 enum
@@ -173,9 +174,9 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     item = g_new0 (MailtcStatusIconItem, 1);
 
     if (!account_colour)
-        item->colour.red = item->colour.green = item->colour.blue = item->colour.alpha = 1.0;
+        item->colour.red = item->colour.green = item->colour.blue = 1.0;
     else
-        gdk_rgba_parse (&item->colour, account_colour);
+        mailtc_colour_parse (&item->colour, account_colour);
 
     index = g_new (gint, 1);
 
@@ -210,12 +211,12 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
     MailtcStatusIconItem* dflitem;
+    MailtcColour* rgb;
     GtkWidget* envelope;
     GIcon* icon;
     gchar* tmp_str;
     GString* tooltip;
     GHashTableIter iter;
-    GdkRGBA* rgb;
     const gchar* colour;
     gint index;
 
@@ -272,7 +273,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     }
 
     if (rgb)
-        colour = gdk_rgba_to_string (rgb);
+        colour = mailtc_colour_to_string (rgb);
 
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
     icon = mailtc_envelope_get_icon (MAILTC_ENVELOPE (envelope));

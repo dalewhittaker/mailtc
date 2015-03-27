@@ -18,8 +18,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 		-Wall \
 		-Wextra \
-		-ansi \
-		-pedantic
+		-ansi
 
 if ENABLE_DEBUG
 AM_CPPFLAGS += \
@@ -46,6 +45,7 @@ mailtc_SOURCES = \
 		mtc-account.c \
 		mtc-application.c \
 		mtc-checker.c \
+		mtc-colour.c \
 		mtc-envelope.c \
 		mtc-extension.c \
 		mtc-module.c \
@@ -64,6 +64,7 @@ EXTRA_DIST = \
 		mtc-account.h \
 		mtc-application.h \
 		mtc-checker.h \
+		mtc-colour.h \
 		mtc-envelope.h \
 		mtc-extension.h \
 		mtc-module.h \

@@ -24,7 +24,7 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_MODULE            (mailtc_module_get_type  ())
+#define MAILTC_TYPE_MODULE            (mailtc_module_get_type ())
 #define MAILTC_MODULE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_MODULE, MailtcModule))
 #define MAILTC_MODULE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_MODULE, MailtcModuleClass))
 #define MAILTC_IS_MODULE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_MODULE))

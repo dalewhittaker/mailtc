@@ -17,6 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include "mtc-colour.h"
 #include "mtc-envelope.h"
 #include "mtc-util.h"
 
@@ -69,9 +70,9 @@ mailtc_envelope_set_pixbuf_colour (GdkPixbuf*   pixbuf,
 
     if (colour)
     {
-        GdkRGBA rgb;
+        MailtcColour rgb;
 
-        gdk_rgba_parse (&rgb, colour);
+        mailtc_colour_parse (&rgb, colour);
         r = (guint8) (rgb.red * 255);
         g = (guint8) (rgb.green * 255);
         b = (guint8) (rgb.blue * 255);

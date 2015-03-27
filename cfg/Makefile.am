@@ -47,6 +47,7 @@ mtc-resources.h: mtc-gresource.xml $(RES_FILES)
 mailtc_config_SOURCES = \
 		$(SRC_DIR)/mtc-account.c \
 		$(SRC_DIR)/mtc-application.c \
+		$(SRC_DIR)/mtc-colour.c \
 		$(SRC_DIR)/mtc-envelope.c \
 		$(SRC_DIR)/mtc-extension.c \
 		$(SRC_DIR)/mtc-module.c \

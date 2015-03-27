@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_SETTINGS            (mailtc_settings_get_type  ())
+#define MAILTC_TYPE_SETTINGS            (mailtc_settings_get_type ())
 #define MAILTC_SETTINGS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_SETTINGS, MailtcSettings))
 #define MAILTC_SETTINGS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_SETTINGS, MailtcSettingsClass))
 #define MAILTC_IS_SETTINGS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_SETTINGS))
