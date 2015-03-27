@@ -20,6 +20,8 @@
 #ifndef __MAILTC_ENVELOPE_H__
 #define __MAILTC_ENVELOPE_H__
 
+#include "mtc-colour.h"
+
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -42,14 +44,15 @@ GtkWidget*
 mailtc_envelope_new        (void);
 
 void
-mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const gchar*    colour);
+mailtc_envelope_set_colour (MailtcEnvelope*     envelope,
+                            const MailtcColour* colour);
 
-const gchar*
-mailtc_envelope_get_colour (MailtcEnvelope* envelope);
+void
+mailtc_envelope_get_colour (MailtcEnvelope*     envelope,
+                            MailtcColour*       colour);
 
 GIcon*
-mailtc_envelope_get_icon   (MailtcEnvelope* envelope);
+mailtc_envelope_get_icon   (MailtcEnvelope*     envelope);
 
 G_END_DECLS
 

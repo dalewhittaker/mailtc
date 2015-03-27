@@ -28,6 +28,10 @@
     mailtc_object_set_uint (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
                             #property, &account->property, property)
 
+#define MAILTC_ACCOUNT_SET_COLOUR(account,property) \
+    mailtc_object_set_colour (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
+                              #property, &account->property, property)
+
 #define MAILTC_ACCOUNT_SET_OBJECT(account,property) \
     mailtc_object_set_object (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
                               #property, (GObject **) (&account->property), G_OBJECT (property))
@@ -41,7 +45,6 @@ struct _MailtcAccount
 {
     GObject parent_instance;
 
-    gchar* iconcolour;
     gchar* name;
     gchar* server;
     gchar* user;
@@ -50,6 +53,7 @@ struct _MailtcAccount
     guint protocol;
     gpointer private;
     MailtcExtension* extension;
+    MailtcColour iconcolour;
 };
 
 struct _MailtcAccountClass
@@ -164,18 +168,19 @@ mailtc_account_get_protocol (MailtcAccount* account)
 }
 
 void
-mailtc_account_set_iconcolour (MailtcAccount* account,
-                               const gchar*   iconcolour)
+mailtc_account_set_iconcolour (MailtcAccount*      account,
+                               const MailtcColour* iconcolour)
 {
-    MAILTC_ACCOUNT_SET_STRING (account, iconcolour);
+    MAILTC_ACCOUNT_SET_COLOUR (account, iconcolour);
 }
 
-const gchar*
-mailtc_account_get_iconcolour (MailtcAccount* account)
+void
+mailtc_account_get_iconcolour (MailtcAccount* account,
+                               MailtcColour*  iconcolour)
 {
     g_assert (MAILTC_IS_ACCOUNT (account));
 
-    return account->iconcolour;
+    *iconcolour = account->iconcolour;
 }
 
 static void
@@ -265,7 +270,7 @@ mailtc_account_set_property (GObject*      object,
             break;
 
         case PROP_ICON_COLOUR:
-            mailtc_account_set_iconcolour (account, g_value_get_string (value));
+            mailtc_account_set_iconcolour (account, g_value_get_boxed (value));
             break;
 
         case PROP_EXTENSION:
@@ -288,6 +293,7 @@ mailtc_account_get_property (GObject*    object,
                              GValue*     value,
                              GParamSpec* pspec)
 {
+    MailtcColour* colour;
     MailtcAccount* account = MAILTC_ACCOUNT (object);
 
     switch (prop_id)
@@ -317,7 +323,8 @@ mailtc_account_get_property (GObject*    object,
             break;
 
         case PROP_ICON_COLOUR:
-            g_value_set_string (value, mailtc_account_get_iconcolour (account));
+            mailtc_account_get_iconcolour (account, &colour);
+            g_value_set_boxed (value, &colour);
             break;
 
         case PROP_EXTENSION:
@@ -344,7 +351,6 @@ mailtc_account_finalize (GObject* object)
     if (account->extension)
         g_object_unref (account->extension);
 
-    g_free (account->iconcolour);
     g_free (account->password);
     g_free (account->user);
     g_free (account->server);
@@ -426,11 +432,11 @@ mailtc_account_class_init (MailtcAccountClass* klass)
 
     g_object_class_install_property (gobject_class,
                                      PROP_ICON_COLOUR,
-                                     g_param_spec_string (
+                                     g_param_spec_boxed (
                                      MAILTC_ACCOUNT_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
                                      "The account icon colour",
-                                     NULL,
+                                     MAILTC_TYPE_COLOUR,
                                      flags));
 
     g_object_class_install_property (gobject_class,

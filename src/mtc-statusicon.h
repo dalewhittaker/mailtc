@@ -20,6 +20,8 @@
 #ifndef __MAILTC_STATUS_ICON_H__
 #define __MAILTC_STATUS_ICON_H__
 
+#include "mtc-colour.h"
+
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -39,20 +41,20 @@ GType
 mailtc_status_icon_get_type           (void);
 
 void
-mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
-                                       const gchar*      colour);
+mailtc_status_icon_set_default_colour (MailtcStatusIcon*   status_icon,
+                                       const MailtcColour* colour);
 
 void
-mailtc_status_icon_add_item           (MailtcStatusIcon* status_icon,
-                                       const gchar*      account_name,
-                                       const gchar*      account_colour);
+mailtc_status_icon_add_item           (MailtcStatusIcon*   status_icon,
+                                       const gchar*        account_name,
+                                       const MailtcColour* account_colour);
 
 gint64
-mailtc_status_icon_update             (MailtcStatusIcon* status_icon,
-                                       guint             id,
-                                       gint64            nmails);
+mailtc_status_icon_update             (MailtcStatusIcon*   status_icon,
+                                       guint               id,
+                                       gint64              nmails);
 void
-mailtc_status_icon_clear              (MailtcStatusIcon* status_icon);
+mailtc_status_icon_clear              (MailtcStatusIcon*   status_icon);
 
 MailtcStatusIcon*
 mailtc_status_icon_new                (void);

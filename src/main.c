@@ -155,8 +155,8 @@ mailtc_run_cb (MailtcApplication* app)
     MailtcStatusIcon* statusicon;
     MailtcSettings* settings;
     MailtcAccount* account;
+    MailtcColour icon_colour;
     GPtrArray* accounts;
-    const gchar* colour;
     guint i;
 
     settings = mailtc_application_get_settings (app);
@@ -168,14 +168,14 @@ mailtc_run_cb (MailtcApplication* app)
     statusicon = mailtc_status_icon_new ();
     mailtc_checker_set_status_icon (checker, statusicon);
 
-    colour = mailtc_settings_get_iconcolour (settings);
-    mailtc_status_icon_set_default_colour (statusicon, colour);
+    mailtc_settings_get_iconcolour (settings, &icon_colour);
+    mailtc_status_icon_set_default_colour (statusicon, &icon_colour);
 
     for (i = 0; i < accounts->len; i++)
     {
         account = g_ptr_array_index (accounts, i);
-        colour = mailtc_account_get_iconcolour (account);
-        mailtc_status_icon_add_item (statusicon, mailtc_account_get_name (account), colour);
+        mailtc_account_get_iconcolour (account, &icon_colour);
+        mailtc_status_icon_add_item (statusicon, mailtc_account_get_name (account), &icon_colour);
     }
     g_ptr_array_unref (accounts);
     g_object_unref (statusicon);

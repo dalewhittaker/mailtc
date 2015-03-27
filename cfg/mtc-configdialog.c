@@ -149,8 +149,8 @@ mailtc_save_button_clicked_cb (GtkWidget*          button,
 {
     MailtcConfigDialogPrivate* priv;
     MailtcSettings* settings;
+    MailtcColour colour;
     guint net_error;
-    const gchar* colour;
     GError* error = NULL;
 
     (void) button;
@@ -165,8 +165,8 @@ mailtc_save_button_clicked_cb (GtkWidget*          button,
 
     mailtc_settings_set_command (settings, gtk_entry_get_text (GTK_ENTRY (priv->general_entry_command)));
 
-    colour = mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_icon));
-    mailtc_settings_set_iconcolour (settings, colour);
+    mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
+    mailtc_settings_set_iconcolour (settings, &colour);
 
     net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->general_combo_errordlg));
     if (net_error > 1)
@@ -205,26 +205,28 @@ static void
 mailtc_button_icon_clicked_cb (GtkWidget*      button,
                                MailtcEnvelope* envelope)
 {
+    MailtcColour colour;
     GtkWidget* dialog;
     GdkRGBA rgb;
-    const gchar* colour;
     gint response;
 
     dialog = gtk_color_chooser_dialog_new ("Select Icon Colour", GTK_WINDOW (gtk_widget_get_toplevel (button)));
 
-    colour = mailtc_envelope_get_colour (envelope);
-    if (colour)
-    {
-        gdk_rgba_parse (&rgb, colour);
-        gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog), &rgb);
-    }
+    mailtc_envelope_get_colour (envelope, &colour);
+    rgb.red = colour.red;
+    rgb.green = colour.green;
+    rgb.blue = colour.blue;
+    rgb.alpha = 1.0;
+    gtk_color_chooser_set_rgba (GTK_COLOR_CHOOSER (dialog), &rgb);
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if (response == GTK_RESPONSE_OK)
     {
         gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (dialog), &rgb);
-        colour = gdk_rgba_to_string (&rgb);
-        mailtc_envelope_set_colour (envelope, colour);
+        colour.red = rgb.red;
+        colour.green = rgb.green;
+        colour.blue = rgb.blue;
+        mailtc_envelope_set_colour (envelope, &colour);
     }
     gtk_widget_destroy (dialog);
 }
@@ -327,9 +329,9 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     MailtcConfigDialogPrivate* priv;
     MailtcExtension* extension = NULL;
     MailtcExtension* accextension;
+    MailtcColour colour;
     GtkTreeModel* model;
     GtkTreeIter iter;
-    const gchar* colour;
     const gchar* name;
     const gchar* server;
     const gchar* user;
@@ -423,8 +425,8 @@ mailtc_account_dialog_save (MailtcConfigDialog* dialog_config,
     mailtc_account_set_password (account, password);
     mailtc_account_set_port (account, iport);
     mailtc_account_set_protocol (account, protocol);
-    colour = mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->account_icon));
-    mailtc_account_set_iconcolour (account, colour);
+    mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->account_icon), &colour);
+    mailtc_account_set_iconcolour (account, &colour);
 
     if (changed)
         success = mailtc_account_update_extension (account, extension, error);
@@ -588,11 +590,11 @@ mailtc_account_dialog_run (GtkWidget*          button,
 
     if (account)
     {
+        MailtcColour colour;
         const gchar* name;
         const gchar* server;
         const gchar* user;
         const gchar* password;
-        const gchar* colour;
         gchar* port;
 
         name = mailtc_account_get_name (account);
@@ -601,7 +603,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         password = mailtc_account_get_password (account);
         g_assert (name && server && user && password);
 
-        colour = mailtc_account_get_iconcolour (account);
+        mailtc_account_get_iconcolour (account, &colour);
 
         port = g_strdup_printf ("%u", mailtc_account_get_port (account));
         gtk_entry_set_text (GTK_ENTRY (priv->account_entry_name), name);
@@ -613,7 +615,7 @@ mailtc_account_dialog_run (GtkWidget*          button,
         index = mailtc_combo_get_protocol_index (dialog_config, account);
         g_assert (index > -1);
         gtk_combo_box_set_active (GTK_COMBO_BOX (priv->account_combo_protocol), index);
-        mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->account_icon), colour);
+        mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->account_icon), &colour);
         gtk_entry_set_text (GTK_ENTRY (priv->account_entry_port), port ? port : "");
         g_free (port);
     }
@@ -866,6 +868,7 @@ mailtc_config_dialog_constructed (GObject* object)
     MailtcAccount* account;
     MailtcExtension* extension;
     MailtcProtocol* protocol;
+    MailtcColour colour;
     GtkListStore* store;
     GArray* protocols;
     const gchar* str;
@@ -934,8 +937,8 @@ mailtc_config_dialog_constructed (GObject* object)
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->general_spin_connections), (gdouble) u);
     gtk_combo_box_set_active (GTK_COMBO_BOX (priv->general_combo_errordlg), (u > 2) ? 2 : u);
 
-    str = mailtc_settings_get_iconcolour (settings);
-    mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->general_icon), str);
+    mailtc_settings_get_iconcolour (settings, &colour);
+    mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
 
     store = GTK_LIST_STORE (gtk_combo_box_get_model (GTK_COMBO_BOX (priv->account_combo_protocol)));
     mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, store);

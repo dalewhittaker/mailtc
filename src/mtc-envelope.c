@@ -21,8 +21,8 @@
 #include "mtc-envelope.h"
 #include "mtc-util.h"
 
-#define MAILTC_ENVELOPE_SET_STRING(envelope,property) \
-    mailtc_object_set_string (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
+#define MAILTC_ENVELOPE_SET_COLOUR(envelope,property) \
+    mailtc_object_set_colour (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
                               #property, &envelope->property, property)
 
 struct _MailtcEnvelopePrivate
@@ -36,7 +36,7 @@ struct _MailtcEnvelope
     GtkImage parent_instance;
 
     MailtcEnvelopePrivate* priv;
-    gchar* colour;
+    MailtcColour colour;
 };
 
 struct _MailtcEnvelopeClass
@@ -53,8 +53,8 @@ enum
 };
 
 static void
-mailtc_envelope_set_pixbuf_colour (GdkPixbuf*   pixbuf,
-                                   const gchar* colour)
+mailtc_envelope_set_pixbuf_colour (GdkPixbuf*          pixbuf,
+                                   const MailtcColour* colour)
 {
     gint width;
     gint height;
@@ -70,12 +70,9 @@ mailtc_envelope_set_pixbuf_colour (GdkPixbuf*   pixbuf,
 
     if (colour)
     {
-        MailtcColour rgb;
-
-        mailtc_colour_parse (&rgb, colour);
-        r = (guint8) (rgb.red * 255);
-        g = (guint8) (rgb.green * 255);
-        b = (guint8) (rgb.blue * 255);
+        r = (guint8) (colour->red * 255);
+        g = (guint8) (colour->green * 255);
+        b = (guint8) (colour->blue * 255);
     }
     else
         r = g = b = 255;
@@ -158,7 +155,7 @@ mailtc_envelope_notify_colour_cb (GObject*    object,
     pixbuf = mailtc_envelope_create_pixbuf (envelope);
     g_assert (pixbuf);
 
-    mailtc_envelope_set_pixbuf_colour (pixbuf, envelope->colour);
+    mailtc_envelope_set_pixbuf_colour (pixbuf, &envelope->colour);
 
     g_object_set_data (G_OBJECT (pixbuf), "mailtc_envelope", GUINT_TO_POINTER (1));
     gtk_image_set_from_gicon (GTK_IMAGE (envelope), G_ICON (pixbuf), GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -183,18 +180,20 @@ mailtc_envelope_get_icon (MailtcEnvelope* envelope)
 }
 
 void
-mailtc_envelope_set_colour (MailtcEnvelope* envelope,
-                            const gchar*    colour)
+mailtc_envelope_set_colour (MailtcEnvelope*     envelope,
+                            const MailtcColour* colour)
 {
-    MAILTC_ENVELOPE_SET_STRING (envelope, colour);
+    MAILTC_ENVELOPE_SET_COLOUR (envelope, colour);
 }
 
-const gchar*
-mailtc_envelope_get_colour (MailtcEnvelope* envelope)
+void
+mailtc_envelope_get_colour (MailtcEnvelope* envelope,
+                            MailtcColour*   colour)
 {
     g_assert (MAILTC_IS_ENVELOPE (envelope));
+    g_assert (colour);
 
-    return envelope->colour;
+    *colour = envelope->colour;
 }
 
 static void
@@ -208,7 +207,7 @@ mailtc_envelope_set_property (GObject*      object,
     switch (prop_id)
     {
         case PROP_COLOUR:
-            mailtc_envelope_set_colour (envelope, g_value_get_string (value));
+            mailtc_envelope_set_colour (envelope, g_value_get_boxed (value));
             break;
 
         default:
@@ -223,12 +222,14 @@ mailtc_envelope_get_property (GObject*    object,
                               GValue*     value,
                               GParamSpec* pspec)
 {
+    MailtcColour colour;
     MailtcEnvelope* envelope = MAILTC_ENVELOPE (object);
 
     switch (prop_id)
     {
         case PROP_COLOUR:
-            g_value_set_string (value, mailtc_envelope_get_colour (envelope));
+            mailtc_envelope_get_colour (envelope, &colour);
+            g_value_set_boxed (value, &colour);
             break;
 
         default:
@@ -259,11 +260,11 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 
     g_object_class_install_property (gobject_class,
                                      PROP_COLOUR,
-                                     g_param_spec_string (
+                                     g_param_spec_boxed (
                                      "colour",
                                      "Colour",
                                      "The envelope colour",
-                                     NULL,
+                                     GDK_TYPE_RGBA,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 }
 

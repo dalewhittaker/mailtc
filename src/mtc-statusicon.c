@@ -160,9 +160,9 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
 }
 
 void
-mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
-                             const gchar*      account_name,
-                             const gchar*      account_colour)
+mailtc_status_icon_add_item (MailtcStatusIcon*   status_icon,
+                             const gchar*        account_name,
+                             const MailtcColour* account_colour)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
@@ -176,7 +176,7 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
     if (!account_colour)
         item->colour.red = item->colour.green = item->colour.blue = 1.0;
     else
-        mailtc_colour_parse (&item->colour, account_colour);
+        item->colour = *account_colour;
 
     index = g_new (gint, 1);
 
@@ -194,8 +194,8 @@ mailtc_status_icon_add_item (MailtcStatusIcon* status_icon,
 }
 
 void
-mailtc_status_icon_set_default_colour (MailtcStatusIcon* status_icon,
-                                       const gchar*      colour)
+mailtc_status_icon_set_default_colour (MailtcStatusIcon*   status_icon,
+                                       const MailtcColour* colour)
 {
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
@@ -211,18 +211,16 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
     MailtcStatusIconItem* dflitem;
-    MailtcColour* rgb;
+    MailtcColour* colour;
     GtkWidget* envelope;
     GIcon* icon;
     gchar* tmp_str;
     GString* tooltip;
     GHashTableIter iter;
-    const gchar* colour;
     gint index;
 
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
-    rgb = NULL;
     colour = NULL;
     icon = NULL;
     tooltip = NULL;
@@ -268,12 +266,9 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
             g_free (tmp_str);
 
             /* If colour is already set there is more than one item, show the multi colour. */
-            rgb = rgb ? &dflitem->colour : &item->colour;
+            colour = colour ? &dflitem->colour : &item->colour;
         }
     }
-
-    if (rgb)
-        colour = mailtc_colour_to_string (rgb);
 
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
     icon = mailtc_envelope_get_icon (MAILTC_ENVELOPE (envelope));
