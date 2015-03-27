@@ -26,13 +26,13 @@ G_DEFINE_BOXED_TYPE (MailtcColour, mailtc_colour, mailtc_colour_copy, mailtc_col
 MailtcColour*
 mailtc_colour_copy (const MailtcColour* colour)
 {
-    return g_boxed_copy (MAILTC_TYPE_COLOUR, colour);
+    return g_slice_dup (MailtcColour, colour);
 }
 
 void
 mailtc_colour_free (MailtcColour* colour)
 {
-    g_boxed_free (MAILTC_TYPE_COLOUR, colour);
+    g_slice_free (MailtcColour, colour);
 }
 
 gboolean
