@@ -51,6 +51,10 @@ mailtc_colour_parse     (MailtcColour* colour,
 gchar*
 mailtc_colour_to_string (const MailtcColour* colour);
 
+gboolean
+mailtc_colour_equal     (const MailtcColour* a,
+                         const MailtcColour* b);
+
 G_END_DECLS
 
 #endif /* __MAILTC_COLOUR_H__ */

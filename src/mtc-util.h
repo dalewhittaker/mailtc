@@ -22,6 +22,8 @@
 
 #include <gtk/gtk.h>
 
+#include "mtc-colour.h"
+
 G_BEGIN_DECLS
 
 #define mailtc_message g_message
@@ -33,79 +35,86 @@ gchar*
 mailtc_current_time         (void);
 
 void
-mailtc_info                 (const gchar*   format,
+mailtc_info                 (const gchar*       format,
                              ...);
 
 void
-mailtc_gerror               (GError**       error);
+mailtc_gerror               (GError**           error);
 
 void
-mailtc_gtk_message          (GtkWidget*     parent,
-                             GtkMessageType msg_type,
-                             const gchar*   format,
+mailtc_gtk_message          (GtkWidget*         parent,
+                             GtkMessageType     msg_type,
+                             const gchar*       format,
                              ...);
 
 void
-mailtc_log                  (GIOChannel*    log,
-                             const gchar*   message);
+mailtc_log                  (GIOChannel*        log,
+                             const gchar*       message);
 
 gchar*
 mailtc_directory            (void);
 
 void
-mailtc_run_command          (const gchar*   command);
+mailtc_run_command          (const gchar*       command);
 
 gboolean
 mailtc_quit                 (void);
 
 void
-mailtc_object_set_string    (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             gchar**        value,
-                             const gchar*   newvalue);
+mailtc_object_set_string    (GObject*           obj,
+                             GType              objtype,
+                             const gchar*       name,
+                             gchar**            value,
+                             const gchar*       newvalue);
 
 void
-mailtc_object_set_uint      (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             guint*         value,
-                             guint          newvalue);
+mailtc_object_set_uint      (GObject*           obj,
+                             GType              objtype,
+                             const gchar*       name,
+                             guint*             value,
+                             guint              newvalue);
 
 void
-mailtc_object_set_boolean   (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             gboolean*      value,
-                             gboolean       newvalue);
+mailtc_object_set_boolean   (GObject*           obj,
+                             GType              objtype,
+                             const gchar*       name,
+                             gboolean*          value,
+                             gboolean           newvalue);
 
 void
-mailtc_object_set_object    (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             GObject**      value,
-                             GObject*       newvalue);
+mailtc_object_set_object    (GObject*           obj,
+                             GType              objtype,
+                             const gchar*       name,
+                             GObject**          value,
+                             GObject*           newvalue);
 
 void
-mailtc_object_set_array     (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             GArray**       value,
-                             GArray*        newvalue);
+mailtc_object_set_colour    (GObject*            obj,
+                             GType               objtype,
+                             const gchar*        name,
+                             MailtcColour*       value,
+                             const MailtcColour* newvalue);
 
 void
-mailtc_object_set_ptr_array (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             GPtrArray**    value,
-                             GPtrArray*     newvalue);
+mailtc_object_set_array     (GObject*            obj,
+                             GType               objtype,
+                             const gchar*        name,
+                             GArray**            value,
+                             GArray*             newvalue);
 
 void
-mailtc_object_set_pointer   (GObject*       obj,
-                             GType          objtype,
-                             const gchar*   name,
-                             gpointer*      value,
-                             gpointer       newvalue);
+mailtc_object_set_ptr_array (GObject*            obj,
+                             GType               objtype,
+                             const gchar*        name,
+                             GPtrArray**         value,
+                             GPtrArray*          newvalue);
+
+void
+mailtc_object_set_pointer   (GObject*            obj,
+                             GType               objtype,
+                             const gchar*        name,
+                             gpointer*           value,
+                             gpointer            newvalue);
 
 G_END_DECLS
 

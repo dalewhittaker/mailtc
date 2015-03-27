@@ -69,3 +69,10 @@ mailtc_colour_to_string (const MailtcColour* colour)
     return gdk_rgba_to_string (&rgb);
 }
 
+gboolean
+mailtc_colour_equal (const MailtcColour* a,
+                     const MailtcColour* b)
+{
+    return (a->red == b->red && a->green == b->green && a->blue == b->blue) ? TRUE : FALSE;
+}
+

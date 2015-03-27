@@ -36,6 +36,7 @@ TEST_PROGS += test-pop
 
 test_pop_SOURCES = \
 		$(SRC_DIR)/mtc-account.c \
+		$(SRC_DIR)/mtc-colour.c \
 		$(SRC_DIR)/mtc-extension.c \
 		$(SRC_DIR)/mtc-module.c \
 		$(SRC_DIR)/mtc-util.c \

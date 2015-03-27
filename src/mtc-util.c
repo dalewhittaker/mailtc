@@ -245,6 +245,30 @@ mailtc_object_set_object (GObject*     obj,
 }
 
 void
+mailtc_object_set_colour (GObject*            obj,
+                          GType               objtype,
+                          const gchar*        name,
+                          MailtcColour*       colour,
+                          const MailtcColour* newcolour)
+{
+    MailtcColour defaultcolour;
+
+    g_assert (G_TYPE_CHECK_INSTANCE_TYPE (obj, objtype));
+
+    if (!newcolour)
+    {
+        defaultcolour.red = defaultcolour.green = defaultcolour.blue = 1.0;
+        newcolour = &defaultcolour;
+    }
+    if (!mailtc_colour_equal (newcolour, colour))
+    {
+        *colour = *newcolour;
+
+        g_object_notify (obj, name);
+    }
+}
+
+void
 mailtc_object_set_array (GObject*     obj,
                          GType        objtype,
                          const gchar* name,
