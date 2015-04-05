@@ -292,9 +292,7 @@ mailtc_settings_keyfile_write_colour (MailtcSettings* settings,
 
     g_object_get (obj, name, &colour, NULL);
     value = mailtc_colour_to_string (colour);
-
     g_key_file_set_string (key_file, key_group, name, value);
-
     g_free (value);
     mailtc_colour_free (colour);
 }

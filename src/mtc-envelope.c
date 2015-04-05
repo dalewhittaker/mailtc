@@ -264,7 +264,7 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
                                      "colour",
                                      "Colour",
                                      "The envelope colour",
-                                     GDK_TYPE_RGBA,
+                                     MAILTC_TYPE_COLOUR,
                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 }
 

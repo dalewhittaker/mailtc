@@ -293,7 +293,7 @@ mailtc_account_get_property (GObject*    object,
                              GValue*     value,
                              GParamSpec* pspec)
 {
-    MailtcColour* colour;
+    MailtcColour colour;
     MailtcAccount* account = MAILTC_ACCOUNT (object);
 
     switch (prop_id)
