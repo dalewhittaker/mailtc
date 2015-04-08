@@ -27,6 +27,9 @@
 
 #include <gtk/gtk.h>
 
+#define MAILTC_STATUS_ICON_ERROR   -2
+#define MAILTC_STATUS_ICON_DEFAULT -1
+
 struct _MailtcStatusIconPrivate
 {
     MailtcEnvelope* envelope;
@@ -161,10 +164,11 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
             G_CALLBACK (mailtc_status_icon_button_press_event_cb), NULL);
 }
 
-void
-mailtc_status_icon_add_item (MailtcStatusIcon*   status_icon,
-                             const gchar*        account_name,
-                             const MailtcColour* account_colour)
+static void
+mailtc_status_icon_insert_item (MailtcStatusIcon*   status_icon,
+                                const gchar*        account_name,
+                                const MailtcColour* account_colour,
+                                const gint          ind)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
@@ -182,17 +186,22 @@ mailtc_status_icon_add_item (MailtcStatusIcon*   status_icon,
 
     index = g_new (gint, 1);
 
-    /* If there is no name, it is assumed to be the default colour */
     if (account_name)
-    {
         item->name = g_strdup (account_name);
-        *index = priv->nitems;
-        priv->nitems++;
-    }
-    else
-        *index = -1;
+
+    *index = ind;
 
     g_hash_table_insert (priv->items, index, item);
+}
+
+void
+mailtc_status_icon_add_item (MailtcStatusIcon*   status_icon,
+                             const gchar*        account_name,
+                             const MailtcColour* account_colour)
+{
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
+
+    mailtc_status_icon_insert_item (status_icon, account_name, account_colour, status_icon->priv->nitems++);
 }
 
 void
@@ -202,17 +211,29 @@ mailtc_status_icon_set_default_colour (MailtcStatusIcon*   status_icon,
     g_assert (MAILTC_IS_STATUS_ICON (status_icon));
 
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
-    mailtc_status_icon_add_item (status_icon, NULL, colour);
+    mailtc_status_icon_insert_item (status_icon, NULL, colour, MAILTC_STATUS_ICON_DEFAULT);
 }
 
-gint64
+void
+mailtc_status_icon_set_error_colour (MailtcStatusIcon*   status_icon,
+                                    const MailtcColour* colour)
+{
+    g_assert (MAILTC_IS_STATUS_ICON (status_icon));
+
+    gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
+    mailtc_status_icon_insert_item (status_icon, NULL, colour, MAILTC_STATUS_ICON_ERROR);
+}
+
+void
 mailtc_status_icon_update (MailtcStatusIcon* status_icon,
                            guint             id,
-                           gint64            nmails)
+                           gint64            nmails,
+                           gint64            ntries)
 {
     MailtcStatusIconPrivate* priv;
     MailtcStatusIconItem* item;
     MailtcStatusIconItem* dflitem;
+    MailtcStatusIconItem* erritem;
     MailtcColour* colour;
     MailtcEnvelope* envelope;
     GIcon* icon;
@@ -227,7 +248,6 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     icon = NULL;
     tooltip = NULL;
     dflitem = NULL;
-    index = -1;
     priv = status_icon->priv;
     envelope = priv->envelope;
     tooltip = priv->tooltip;
@@ -238,7 +258,12 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     item = (MailtcStatusIconItem*) g_hash_table_lookup (priv->items, &id);
     g_assert (item);
 
+    index = MAILTC_STATUS_ICON_DEFAULT;
     dflitem = (MailtcStatusIconItem*) g_hash_table_lookup (priv->items, &index);
+    g_assert (dflitem);
+
+    index = MAILTC_STATUS_ICON_ERROR;
+    erritem = (MailtcStatusIconItem*) g_hash_table_lookup (priv->items, &index);
     g_assert (dflitem);
 
     if (nmails < 0)
@@ -255,20 +280,29 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     while (g_hash_table_iter_next (&iter, NULL, (gpointer*) &item))
     {
         g_assert (item);
-        if (item->name && item->nmails > 0)
+        if (item->name && (item->nmails > 0 || (ntries + item->nmails < 1)))
         {
             if (tooltip->len > 0)
                 tooltip = g_string_append (tooltip, "\n");
 
-            tmp_str = g_strdup_printf ("%s: %" G_GINT64_FORMAT " new %s",
-                                       item->name,
-                                       item->nmails,
-                                       (item->nmails > 1) ? "messages" : "message");
+            if (item->nmails > 0)
+            {
+                tmp_str = g_strdup_printf ("%s: %" G_GINT64_FORMAT " new %s",
+                                           item->name,
+                                           item->nmails,
+                                           (item->nmails > 1) ? "messages" : "message");
+
+                colour = colour ? &dflitem->colour : &item->colour;
+            }
+            else
+            {
+                tmp_str = g_strdup_printf ("%s: error", item->name);
+                dflitem = erritem;
+                colour = &dflitem->colour;
+            }
+
             tooltip = g_string_append (tooltip, tmp_str);
             g_free (tmp_str);
-
-            /* If colour is already set there is more than one item, show the multi colour. */
-            colour = colour ? &dflitem->colour : &item->colour;
         }
     }
 
@@ -283,8 +317,6 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     gtk_status_icon_set_tooltip_text (GTK_STATUS_ICON (status_icon), tooltip->str);
 
     tooltip = g_string_set_size (tooltip, 0);
-
-    return nmails;
 }
 
 void

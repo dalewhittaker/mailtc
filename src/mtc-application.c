@@ -107,6 +107,12 @@ static guint signals[LAST_SIGNAL];
 G_DEFINE_TYPE_WITH_CODE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION, G_ADD_PRIVATE (MailtcApplication))
 
 static void
+mailtc_application_quit (void)
+{
+    gtk_main_quit ();
+}
+
+static void
 mailtc_application_glib_handler (const gchar*   log_domain,
                                  GLogLevelFlags log_level,
                                  const gchar*   message,
@@ -252,7 +258,7 @@ mailtc_application_parse_config (int*     argc,
 static void
 mailtc_application_term_handler (gint signal)
 {
-    mailtc_quit ();
+    mailtc_application_quit ();
     mailtc_message ("\n%s: %s.", PACKAGE, g_strsignal (signal));
 }
 
@@ -480,7 +486,7 @@ mailtc_application_command_line_cb (GApplication*            app,
             if (is_running)
             {
                 g_assert (gtk_main_level () > 0);
-                mailtc_quit ();
+                mailtc_application_quit ();
             }
         }
         else if (MAILTC_MODE_UNIQUE (mode))

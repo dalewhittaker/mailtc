@@ -87,7 +87,6 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
     MailtcExtension* extension;
     GPtrArray* accounts;
     GError* error = NULL;
-    GString* err_msg = NULL;
     gboolean debug;
     gint64 messages;
     guint net_error;
@@ -108,19 +107,7 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
         extension = mailtc_account_get_extension (account);
 
         messages = mailtc_extension_get_messages (extension, G_OBJECT (account), debug, &error);
-        messages = mailtc_status_icon_update (statusicon, i, messages);
-
-        if (net_error + messages < 1)
-        {
-            if (!err_msg)
-                err_msg = g_string_new (NULL);
-
-            err_msg = g_string_prepend (err_msg, "\n");
-            err_msg = g_string_prepend (err_msg, mailtc_account_get_server (account));
-
-            /* Reset error */
-            mailtc_status_icon_update (statusicon, i, 0);
-        }
+        mailtc_status_icon_update (statusicon, i, messages, net_error);
 
         if (error)
             mailtc_gerror (&error);
@@ -130,14 +117,6 @@ mailtc_check_mail_cb (MailtcChecker*     checker,
     g_ptr_array_unref (accounts);
     g_object_unref (statusicon);
     g_object_unref (settings);
-
-    if (err_msg)
-    {
-        mailtc_gtk_message (NULL, GTK_MESSAGE_WARNING,
-                            "There was an error connecting to the following servers:\n\n%s\n"
-                            "Please check the " PACKAGE " log for the error.", err_msg->str);
-        g_string_free (err_msg, TRUE);
-    }
 }
 
 static void
@@ -170,6 +149,8 @@ mailtc_run_cb (MailtcApplication* app)
 
     mailtc_settings_get_iconcolour (settings, &icon_colour);
     mailtc_status_icon_set_default_colour (statusicon, &icon_colour);
+    mailtc_settings_get_erroriconcolour (settings, &icon_colour);
+    mailtc_status_icon_set_error_colour (statusicon, &icon_colour);
 
     for (i = 0; i < accounts->len; i++)
     {

@@ -24,14 +24,15 @@
 #include <string.h>
 #include <glib/gstdio.h>
 
-#define MAILTC_SETTINGS_GROUP_GLOBAL         "settings"
-#define MAILTC_SETTINGS_PROPERTY_ACCOUNTS    "accounts"
-#define MAILTC_SETTINGS_PROPERTY_COMMAND     "command"
-#define MAILTC_SETTINGS_PROPERTY_FILENAME    "filename"
-#define MAILTC_SETTINGS_PROPERTY_ICON_COLOUR "iconcolour"
-#define MAILTC_SETTINGS_PROPERTY_INTERVAL    "interval"
-#define MAILTC_SETTINGS_PROPERTY_MODULES     "modules"
-#define MAILTC_SETTINGS_PROPERTY_NET_ERROR   "neterror"
+#define MAILTC_SETTINGS_GROUP_GLOBAL               "settings"
+#define MAILTC_SETTINGS_PROPERTY_ACCOUNTS          "accounts"
+#define MAILTC_SETTINGS_PROPERTY_COMMAND           "command"
+#define MAILTC_SETTINGS_PROPERTY_ERROR_ICON_COLOUR "erroriconcolour"
+#define MAILTC_SETTINGS_PROPERTY_FILENAME          "filename"
+#define MAILTC_SETTINGS_PROPERTY_ICON_COLOUR       "iconcolour"
+#define MAILTC_SETTINGS_PROPERTY_INTERVAL          "interval"
+#define MAILTC_SETTINGS_PROPERTY_MODULES           "modules"
+#define MAILTC_SETTINGS_PROPERTY_NET_ERROR         "neterror"
 
 #define MAILTC_SETTINGS_SET_STRING(settings, property) \
     mailtc_object_set_string (G_OBJECT (settings), MAILTC_TYPE_SETTINGS, \
@@ -73,6 +74,7 @@ struct _MailtcSettings
     MailtcSettingsPrivate* priv;
     MailtcModuleManager* modules;
     MailtcColour iconcolour;
+    MailtcColour erroriconcolour;
     GPtrArray* accounts;
     guint interval;
     guint neterror;
@@ -91,6 +93,7 @@ enum
     PROP_ACCOUNTS,
     PROP_FILENAME,
     PROP_COMMAND,
+    PROP_ERROR_ICON_COLOUR,
     PROP_INTERVAL,
     PROP_MODULES,
     PROP_NET_ERROR,
@@ -480,6 +483,8 @@ mailtc_settings_keyfile_read (MailtcSettings* settings,
         return FALSE;
     if (!mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR, error))
         return FALSE;
+    if (!mailtc_settings_keyfile_read_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ERROR_ICON_COLOUR, error))
+        return FALSE;
 
     return mailtc_settings_keyfile_read_accounts (settings, error);
 }
@@ -505,6 +510,7 @@ mailtc_settings_write (MailtcSettings* settings,
     mailtc_settings_keyfile_write_uint (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_NET_ERROR);
     mailtc_settings_keyfile_write_string (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_COMMAND);
     mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ICON_COLOUR);
+    mailtc_settings_keyfile_write_colour (settings, obj, key_group, MAILTC_SETTINGS_PROPERTY_ERROR_ICON_COLOUR);
     mailtc_settings_keyfile_write_accounts (settings);
 
     data = g_key_file_to_data (settings->priv->key_file, NULL, error);
@@ -589,6 +595,22 @@ mailtc_settings_get_iconcolour (MailtcSettings* settings,
     g_assert (MAILTC_IS_SETTINGS (settings));
 
     *iconcolour = settings->iconcolour;
+}
+
+void
+mailtc_settings_set_erroriconcolour (MailtcSettings*     settings,
+                                     const MailtcColour* erroriconcolour)
+{
+    MAILTC_SETTINGS_SET_COLOUR (settings, erroriconcolour);
+}
+
+void
+mailtc_settings_get_erroriconcolour (MailtcSettings* settings,
+                                     MailtcColour*   erroriconcolour)
+{
+    g_assert (MAILTC_IS_SETTINGS (settings));
+
+    *erroriconcolour = settings->erroriconcolour;
 }
 
 void
@@ -684,6 +706,10 @@ mailtc_settings_set_property (GObject*      object,
             mailtc_settings_set_iconcolour (settings, g_value_get_boxed (value));
             break;
 
+        case PROP_ERROR_ICON_COLOUR:
+            mailtc_settings_set_erroriconcolour (settings, g_value_get_boxed (value));
+            break;
+
         case PROP_ACCOUNTS:
             mailtc_settings_set_accounts (settings, g_value_get_boxed (value));
             break;
@@ -729,6 +755,11 @@ mailtc_settings_get_property (GObject*    object,
 
         case PROP_ICON_COLOUR:
             mailtc_settings_get_iconcolour (settings, &colour);
+            g_value_set_boxed (value, &colour);
+            break;
+
+        case PROP_ERROR_ICON_COLOUR:
+            mailtc_settings_get_erroriconcolour (settings, &colour);
             g_value_set_boxed (value, &colour);
             break;
 
@@ -844,6 +875,15 @@ mailtc_settings_class_init (MailtcSettingsClass* klass)
                                      MAILTC_SETTINGS_PROPERTY_ICON_COLOUR,
                                      "Iconcolour",
                                      "The icon colour",
+                                     MAILTC_TYPE_COLOUR,
+                                     flags));
+
+    g_object_class_install_property (gobject_class,
+                                     PROP_ERROR_ICON_COLOUR,
+                                     g_param_spec_boxed (
+                                     MAILTC_SETTINGS_PROPERTY_ERROR_ICON_COLOUR,
+                                     "Erroriconcolour",
+                                     "The error icon colour",
                                      MAILTC_TYPE_COLOUR,
                                      flags));
 

@@ -70,9 +70,11 @@ struct _MailtcConfigDialogPrivate
     GtkWidget* accounts_button_edit;
     GtkWidget* accounts_button_remove;
     GtkWidget* general_button_icon;
+    GtkWidget* general_button_error_icon;
     GtkWidget* general_combo_errordlg;
     GtkWidget* general_entry_command;
     GtkWidget* general_icon;
+    GtkWidget* general_error_icon;
     GtkWidget* general_label_connections;
     GtkWidget* general_spin_connections;
     GtkWidget* general_spin_interval;
@@ -108,6 +110,65 @@ enum
 };
 
 static void
+mailtc_gtk_message (GtkWidget*     parent,
+                    GtkMessageType msg_type,
+                    const gchar*   format,
+                    ...)
+{
+    const gchar* icon;
+    gchar* s;
+    va_list args;
+
+    va_start (args, format);
+    s = g_strdup_vprintf (format, args);
+    va_end (args);
+
+    switch (msg_type)
+    {
+        case GTK_MESSAGE_WARNING:
+            icon = "dialog-warning";
+            mailtc_warning ("%s", s);
+            break;
+        case GTK_MESSAGE_INFO:
+            icon = "dialog-information";
+            mailtc_info (s);
+            break;
+        case GTK_MESSAGE_ERROR:
+            mailtc_error ("%s", s);
+            icon = "dialog-error";
+            break;
+        default:
+            mailtc_error ("%s", s);
+            icon = NULL;
+    }
+
+    if (icon)
+    {
+        GtkWidget* dialog;
+        GtkWidget* button;
+        GtkWindow* toplevel;
+
+        toplevel = parent ? GTK_WINDOW (gtk_widget_get_toplevel (parent)) : NULL;
+
+        dialog = gtk_message_dialog_new (toplevel,
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         msg_type,
+                                         GTK_BUTTONS_NONE,
+                                         "%s", s);
+        button = gtk_button_new ();
+        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+        gtk_button_set_label (GTK_BUTTON (button), "_OK");
+        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
+        gtk_widget_show (button);
+        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
+        gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+        g_free (s);
+    }
+}
+
+static void
 mailtc_gerror_gtk (GtkWidget* parent,
                    GError**   error)
 {
@@ -122,7 +183,7 @@ static void
 mailtc_config_dialog_destroy_cb (GtkWidget* widget)
 {
     mailtc_gtk_message (widget, GTK_MESSAGE_INFO, "Now run " PACKAGE " to check mail.");
-    mailtc_quit ();
+    gtk_main_quit ();
 }
 
 static gboolean
@@ -167,6 +228,8 @@ mailtc_save_button_clicked_cb (GtkWidget*          button,
 
     mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
     mailtc_settings_set_iconcolour (settings, &colour);
+    mailtc_envelope_get_colour (MAILTC_ENVELOPE (priv->general_error_icon), &colour);
+    mailtc_settings_set_erroriconcolour (settings, &colour);
 
     net_error = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->general_combo_errordlg));
     if (net_error > 1)
@@ -176,7 +239,6 @@ mailtc_save_button_clicked_cb (GtkWidget*          button,
 
     if (!mailtc_settings_write (settings, &error))
         mailtc_gerror_gtk (GTK_WIDGET (dialog), &error);
-
 }
 
 static void
@@ -939,6 +1001,8 @@ mailtc_config_dialog_constructed (GObject* object)
 
     mailtc_settings_get_iconcolour (settings, &colour);
     mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->general_icon), &colour);
+    mailtc_settings_get_erroriconcolour (settings, &colour);
+    mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->general_error_icon), &colour);
 
     store = GTK_LIST_STORE (gtk_combo_box_get_model (GTK_COMBO_BOX (priv->account_combo_protocol)));
     mailtc_module_manager_foreach_extension (priv->modules, (GFunc) mailtc_combo_protocol_add_items, store);
@@ -946,6 +1010,7 @@ mailtc_config_dialog_constructed (GObject* object)
     g_signal_connect (priv->account_dialog, "destroy", G_CALLBACK (gtk_widget_destroyed), &priv->account_dialog);
     g_signal_connect (priv->account_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->account_icon);
     g_signal_connect (priv->general_button_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->general_icon);
+    g_signal_connect (priv->general_button_error_icon, "clicked", G_CALLBACK (mailtc_button_icon_clicked_cb), priv->general_error_icon);
     gtk_widget_show_all (GTK_WIDGET (dialog));
 
     G_OBJECT_CLASS (mailtc_config_dialog_parent_class)->constructed (object);
@@ -991,9 +1056,11 @@ mailtc_config_dialog_class_init (MailtcConfigDialogClass* klass)
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, accounts_button_remove);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, accounts_tree_view);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_button_icon);
+    gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_button_error_icon);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_combo_errordlg);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_entry_command);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_icon);
+    gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_error_icon);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_label_connections);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_spin_connections);
     gtk_widget_class_bind_template_child_private (widget_class, MailtcConfigDialog, general_spin_interval);

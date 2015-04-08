@@ -23,7 +23,7 @@
 #include "mtc-colour.h"
 #include "mtc-modulemanager.h"
 
-#include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -39,55 +39,63 @@ typedef struct _MailtcSettingsClass   MailtcSettingsClass;
 typedef struct _MailtcSettingsPrivate MailtcSettingsPrivate;
 
 void
-mailtc_settings_set_command    (MailtcSettings*      settings,
-                                const gchar*         command);
+mailtc_settings_set_command         (MailtcSettings*      settings,
+                                     const gchar*         command);
 
 const gchar*
-mailtc_settings_get_command    (MailtcSettings*      settings);
+mailtc_settings_get_command         (MailtcSettings*      settings);
 
 void
-mailtc_settings_set_interval   (MailtcSettings*      settings,
-                                guint                interval);
+mailtc_settings_set_interval        (MailtcSettings*      settings,
+                                     guint                interval);
 
 guint
-mailtc_settings_get_interval   (MailtcSettings*      settings);
+mailtc_settings_get_interval        (MailtcSettings*      settings);
 
 void
-mailtc_settings_set_neterror   (MailtcSettings*      settings,
-                                guint                neterror);
+mailtc_settings_set_neterror        (MailtcSettings*      settings,
+                                     guint                neterror);
 
 guint
-mailtc_settings_get_neterror   (MailtcSettings*      settings);
+mailtc_settings_get_neterror        (MailtcSettings*      settings);
 
 void
-mailtc_settings_set_iconcolour (MailtcSettings*      settings,
-                                const MailtcColour*  colour);
+mailtc_settings_set_iconcolour      (MailtcSettings*      settings,
+                                     const MailtcColour*  colour);
 
 void
-mailtc_settings_get_iconcolour (MailtcSettings*      settings,
-                                MailtcColour*        colour);
+mailtc_settings_get_iconcolour      (MailtcSettings*      settings,
+                                     MailtcColour*        colour);
 
 void
-mailtc_settings_set_accounts   (MailtcSettings*      settings,
-                                GPtrArray*           accounts);
+mailtc_settings_set_erroriconcolour (MailtcSettings*      settings,
+                                     const MailtcColour*  colour);
+
+void
+mailtc_settings_get_erroriconcolour (MailtcSettings*      settings,
+                                     MailtcColour*        colour);
+
+void
+mailtc_settings_set_accounts        (MailtcSettings*      settings,
+                                     GPtrArray*           accounts);
 
 GPtrArray*
-mailtc_settings_get_accounts   (MailtcSettings*      settings);
+mailtc_settings_get_accounts        (MailtcSettings*      settings);
 
 MailtcModuleManager*
-mailtc_settings_get_modules    (MailtcSettings*      settings);
+mailtc_settings_get_modules         (MailtcSettings*      settings);
 
 gboolean
-mailtc_settings_write          (MailtcSettings*      settings,
-                                GError**             error);
+mailtc_settings_write               (MailtcSettings*      settings,
+                                     GError**             error);
 
 GType
-mailtc_settings_get_type       (void);
+mailtc_settings_get_type            (void);
 
 MailtcSettings*
-mailtc_settings_new            (gchar*               filename,
-                                MailtcModuleManager* modules,
-                                GError**             error);
+mailtc_settings_new                 (gchar*               filename,
+                                     MailtcModuleManager* modules,
+                                     GError**             error);
 
 G_END_DECLS
 

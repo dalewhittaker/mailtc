@@ -481,6 +481,67 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkAlignment" id="general_align_label_error_icon">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkLabel" id="general_label_error_icon">
+                        <property name="visible">TRUE</property>
+                        <property name="label">Error icon colour:</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkAlignment" id="general_align_box_error_icon">
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.5</property>
+                    <property name="xscale">0</property>
+                    <property name="yscale">0</property>
+                    <child>
+                      <object class="GtkBox" id="general_box_error_icon">
+                        <property name="visible">TRUE</property>
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">5</property>
+                        <child>
+                          <object class="MailtcEnvelope" id="general_error_icon">
+                            <property name="visible">TRUE</property>
+                            <property name="can-focus">FALSE</property>
+                          </object>
+                          <packing>
+                            <property name="expand">FALSE</property>
+                            <property name="fill">FALSE</property>
+                            <property name="pack-type">start</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="general_button_error_icon">
+                            <property name="visible">TRUE</property>
+                            <property name="can-focus">TRUE</property>
+                            <property name="can-default">TRUE</property>
+                            <property name="label">Select Colour...</property>
+                          </object>
+                          <packing>
+                            <property name="expand">TRUE</property>
+                            <property name="fill">TRUE</property>
+                            <property name="pack-type">end</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left-attach">1</property>
+                    <property name="top-attach">3</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkAlignment" id="general_align_label_errordlg">
                     <property name="xalign">0</property>
                     <property name="yalign">0.5</property>
@@ -489,13 +550,13 @@
                     <child>
                         <object class="GtkLabel" id="general_label_errordlg">
                             <property name="visible">TRUE</property>
-                            <property name="label">Show network error dialog:</property>
+                            <property name="label">Show network error icon:</property>
                         </object>
                     </child>
                   </object>
                   <packing>
                       <property name="left-attach">0</property>
-                      <property name="top-attach">3</property>
+                      <property name="top-attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -554,7 +615,7 @@
                   </object>
                   <packing>
                     <property name="left-attach">1</property>
-                    <property name="top-attach">3</property>
+                    <property name="top-attach">4</property>
                   </packing>
                 </child>
               </object>
@@ -583,6 +644,8 @@
                   <object class="GtkScrolledWindow" id="accounts_tree_scroll">
                     <property name="hexpand">TRUE</property>
                     <property name="halign">GTK_ALIGN_FILL</property>
+                    <property name="vexpand">TRUE</property>
+                    <property name="valign">GTK_ALIGN_FILL</property>
                     <property name="border-width">5</property>
                     <property name="shadow-type">GTK_SHADOW_IN</property>
                     <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>

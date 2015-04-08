@@ -45,14 +45,20 @@ mailtc_status_icon_set_default_colour (MailtcStatusIcon*   status_icon,
                                        const MailtcColour* colour);
 
 void
+mailtc_status_icon_set_error_colour   (MailtcStatusIcon*   status_icon,
+                                       const MailtcColour* colour);
+
+void
 mailtc_status_icon_add_item           (MailtcStatusIcon*   status_icon,
                                        const gchar*        account_name,
                                        const MailtcColour* account_colour);
 
-gint64
+void
 mailtc_status_icon_update             (MailtcStatusIcon*   status_icon,
                                        guint               id,
-                                       gint64              nmails);
+                                       gint64              nmails,
+                                       gint64              ntries);
+
 void
 mailtc_status_icon_clear              (MailtcStatusIcon*   status_icon);
 

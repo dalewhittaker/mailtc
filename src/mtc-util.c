@@ -43,65 +43,6 @@ mailtc_info (const gchar* format,
 }
 
 void
-mailtc_gtk_message (GtkWidget*     parent,
-                    GtkMessageType msg_type,
-                    const gchar*   format,
-                    ...)
-{
-    const gchar* icon;
-    gchar* s;
-    va_list args;
-
-    va_start (args, format);
-    s = g_strdup_vprintf (format, args);
-    va_end (args);
-
-    switch (msg_type)
-    {
-        case GTK_MESSAGE_WARNING:
-            icon = "dialog-warning";
-            mailtc_warning ("%s", s);
-            break;
-        case GTK_MESSAGE_INFO:
-            icon = "dialog-information";
-            mailtc_info (s);
-            break;
-        case GTK_MESSAGE_ERROR:
-            mailtc_error ("%s", s);
-            icon = "dialog-error";
-            break;
-        default:
-            mailtc_error ("%s", s);
-            icon = NULL;
-    }
-
-    if (icon)
-    {
-        GtkWidget* dialog;
-        GtkWidget* button;
-        GtkWindow* toplevel;
-
-        toplevel = parent ? GTK_WINDOW (gtk_widget_get_toplevel (parent)) : NULL;
-
-        dialog = gtk_message_dialog_new (toplevel,
-                                         GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         msg_type,
-                                         GTK_BUTTONS_NONE,
-                                         "%s", s);
-        button = gtk_button_new ();
-        gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
-        gtk_button_set_label (GTK_BUTTON (button), "_OK");
-        gtk_dialog_add_action_widget (GTK_DIALOG (dialog), button, GTK_RESPONSE_OK);
-        gtk_widget_show (button);
-        gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE);
-        gtk_window_set_icon_name (GTK_WINDOW (dialog), icon);
-        gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
-        g_free (s);
-    }
-}
-
-void
 mailtc_gerror (GError** error)
 {
     if (error && *error)
@@ -154,22 +95,9 @@ mailtc_run_command (const gchar* command)
     args = g_strsplit (command, " ", 0);
 
     if (!g_spawn_async (NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error))
-    {
-        if (error)
-        {
-            mailtc_gtk_message (NULL, GTK_MESSAGE_ERROR, "%s", error->message);
-            g_clear_error (&error);
-        }
-    }
+        mailtc_gerror (&error);
 
     g_strfreev (args);
-}
-
-gboolean
-mailtc_quit (void)
-{
-    gtk_main_quit ();
-    return FALSE;
 }
 
 void

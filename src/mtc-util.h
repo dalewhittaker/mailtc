@@ -20,8 +20,6 @@
 #ifndef __MAILTC_UTIL_H__
 #define __MAILTC_UTIL_H__
 
-#include <gtk/gtk.h>
-
 #include "mtc-colour.h"
 
 G_BEGIN_DECLS
@@ -42,12 +40,6 @@ void
 mailtc_gerror               (GError**           error);
 
 void
-mailtc_gtk_message          (GtkWidget*         parent,
-                             GtkMessageType     msg_type,
-                             const gchar*       format,
-                             ...);
-
-void
 mailtc_log                  (GIOChannel*        log,
                              const gchar*       message);
 
@@ -56,9 +48,6 @@ mailtc_directory            (void);
 
 void
 mailtc_run_command          (const gchar*       command);
-
-gboolean
-mailtc_quit                 (void);
 
 void
 mailtc_object_set_string    (GObject*           obj,
