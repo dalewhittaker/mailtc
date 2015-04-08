@@ -25,9 +25,11 @@
 #include "mtc-colour.h"
 #include "mtc-envelope.h"
 
+#include <gtk/gtk.h>
+
 struct _MailtcStatusIconPrivate
 {
-    GtkWidget* envelope;
+    MailtcEnvelope* envelope;
     GString* tooltip;
     guint nitems;
     GHashTable* items;
@@ -138,7 +140,7 @@ static void
 mailtc_status_icon_init (MailtcStatusIcon* status_icon)
 {
     MailtcStatusIconPrivate* priv;
-    GtkWidget* envelope;
+    MailtcEnvelope* envelope;
 
     status_icon->priv = G_TYPE_INSTANCE_GET_PRIVATE (status_icon,
                         MAILTC_TYPE_STATUS_ICON, MailtcStatusIconPrivate);
@@ -212,7 +214,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     MailtcStatusIconItem* item;
     MailtcStatusIconItem* dflitem;
     MailtcColour* colour;
-    GtkWidget* envelope;
+    MailtcEnvelope* envelope;
     GIcon* icon;
     gchar* tmp_str;
     GString* tooltip;
@@ -270,8 +272,8 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
         }
     }
 
-    mailtc_envelope_set_colour (MAILTC_ENVELOPE (envelope), colour);
-    icon = mailtc_envelope_get_icon (MAILTC_ENVELOPE (envelope));
+    mailtc_envelope_set_colour (envelope, colour);
+    icon = mailtc_envelope_get_icon (envelope);
     g_assert (icon);
 
     /*gtk_status_icon_set_from_gicon (GTK_STATUS_ICON (status_icon), icon);*/
@@ -302,7 +304,7 @@ mailtc_status_icon_clear (MailtcStatusIcon* status_icon)
         g_assert (item);
         item->nmails = 0;
     }
-    mailtc_envelope_set_colour (MAILTC_ENVELOPE (priv->envelope), NULL);
+    mailtc_envelope_set_colour (priv->envelope, NULL);
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
 }
 

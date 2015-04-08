@@ -283,7 +283,7 @@ mailtc_envelope_init (MailtcEnvelope* envelope)
             G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);
 }
 
-GtkWidget*
+MailtcEnvelope*
 mailtc_envelope_new (void)
 {
     return g_object_new (MAILTC_TYPE_ENVELOPE, NULL);

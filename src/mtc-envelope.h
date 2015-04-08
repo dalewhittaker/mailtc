@@ -22,7 +22,7 @@
 
 #include "mtc-colour.h"
 
-#include <gtk/gtk.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -40,7 +40,7 @@ typedef struct _MailtcEnvelopePrivate MailtcEnvelopePrivate;
 GType
 mailtc_envelope_get_type   (void);
 
-GtkWidget*
+MailtcEnvelope*
 mailtc_envelope_new        (void);
 
 void
