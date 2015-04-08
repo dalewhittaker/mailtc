@@ -488,7 +488,7 @@ mailtc_application_command_line_cb (GApplication*            app,
             if (is_running)
             {
                 g_assert (gtk_main_level () > 0);
-                mailtc_warning ("An instance of %s is already running.", PACKAGE);
+                g_application_command_line_printerr (cmdline, "An instance of %s is already running.\n", PACKAGE);
             }
             else
             {
