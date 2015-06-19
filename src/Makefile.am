@@ -46,7 +46,6 @@ mailtc_SOURCES = \
 		mtc-application.c \
 		mtc-checker.c \
 		mtc-colour.c \
-		mtc-envelope.c \
 		mtc-extension.c \
 		mtc-module.c \
 		mtc-modulemanager.c \
@@ -66,7 +65,6 @@ EXTRA_DIST = \
 		mtc-application.h \
 		mtc-checker.h \
 		mtc-colour.h \
-		mtc-envelope.h \
 		mtc-extension.h \
 		mtc-module.h \
 		mtc-modulemanager.h \

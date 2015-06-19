@@ -47,7 +47,6 @@ mailtc_config_SOURCES = \
 		$(SRC_DIR)/mtc-account.c \
 		$(SRC_DIR)/mtc-application.c \
 		$(SRC_DIR)/mtc-colour.c \
-		$(SRC_DIR)/mtc-envelope.c \
 		$(SRC_DIR)/mtc-extension.c \
 		$(SRC_DIR)/mtc-module.c \
 		$(SRC_DIR)/mtc-modulemanager.c \
@@ -55,10 +54,12 @@ mailtc_config_SOURCES = \
 		$(SRC_DIR)/mtc-settings.c \
 		$(SRC_DIR)/mtc-util.c \
 		mtc-resources.c \
+		mtc-envelope.c \
 		mtc-configdialog.c \
 		main.c
 
 EXTRA_DIST = \
 		$(RES_FILES) \
 		mtc-resources.h \
+		mtc-envelope.h \
 		mtc-configdialog.h
