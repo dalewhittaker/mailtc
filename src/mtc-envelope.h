@@ -51,9 +51,6 @@ void
 mailtc_envelope_get_colour (MailtcEnvelope*     envelope,
                             MailtcColour*       colour);
 
-GIcon*
-mailtc_envelope_get_icon   (MailtcEnvelope*     envelope);
-
 G_END_DECLS
 
 #endif /* __MAILTC_ENVELOPE_H__ */

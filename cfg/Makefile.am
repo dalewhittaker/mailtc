@@ -51,6 +51,7 @@ mailtc_config_SOURCES = \
 		$(SRC_DIR)/mtc-extension.c \
 		$(SRC_DIR)/mtc-module.c \
 		$(SRC_DIR)/mtc-modulemanager.c \
+		$(SRC_DIR)/mtc-pixbuf.c \
 		$(SRC_DIR)/mtc-settings.c \
 		$(SRC_DIR)/mtc-util.c \
 		mtc-resources.c \

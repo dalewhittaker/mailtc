@@ -19,6 +19,7 @@
 
 #include "mtc-colour.h"
 #include "mtc-envelope.h"
+#include "mtc-pixbuf.h"
 #include "mtc-util.h"
 
 #include <gtk/gtk.h>
@@ -29,8 +30,7 @@
 
 struct _MailtcEnvelopePrivate
 {
-    GdkPixbuf* pixbuf;
-    gboolean pixbuf_is_envelope;
+    MailtcPixbuf* pixbuf;
 };
 
 struct _MailtcEnvelope
@@ -55,130 +55,20 @@ enum
 };
 
 static void
-mailtc_envelope_set_pixbuf_colour (GdkPixbuf*          pixbuf,
-                                   const MailtcColour* colour)
-{
-    gint width;
-    gint height;
-    gint rowstride;
-    gint n_channels;
-    guchar* pixels;
-    guchar* p;
-    gint i;
-    gint j;
-    guint8 r;
-    guint8 g;
-    guint8 b;
-
-    if (colour)
-    {
-        r = (guint8) (colour->red * 255);
-        g = (guint8) (colour->green * 255);
-        b = (guint8) (colour->blue * 255);
-    }
-    else
-        r = g = b = 255;
-
-    n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-    g_assert (gdk_pixbuf_get_colorspace (pixbuf) == GDK_COLORSPACE_RGB);
-    g_assert (gdk_pixbuf_get_bits_per_sample (pixbuf) == 8);
-    g_assert (gdk_pixbuf_get_has_alpha (pixbuf));
-    g_assert (n_channels == 4);
-
-    width = gdk_pixbuf_get_width (pixbuf);
-    height = gdk_pixbuf_get_height (pixbuf);
-    rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-    pixels = gdk_pixbuf_get_pixels (pixbuf);
-
-    for (i = 0; i < width; i++)
-    {
-        for (j = 0; j < height; j++)
-        {
-            p = pixels + i * rowstride + j * n_channels;
-            if (p[0] == 0xFF && p[1] == 0xFF && p[2] == 0xFF && p[3] == 0xFF)
-            {
-                p[0] = r;
-                p[1] = g;
-                p[2] = b;
-                p[3] = 0xFF;
-            }
-        }
-    }
-}
-
-static GdkPixbuf*
-mailtc_envelope_create_pixbuf (MailtcEnvelope* envelope)
-{
-    GInputStream *stream;
-    GdkPixbuf* pixbuf;
-
-    g_assert (MAILTC_IS_ENVELOPE (envelope));
-
-    stream = g_resources_open_stream ("/org/mailtc/icon/envelope.png", 0, NULL);
-    pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, NULL);
-    g_object_unref (stream);
-
-    return pixbuf;
-}
-
-static void
-mailtc_envelope_notify_pixbuf_cb (GObject*    object,
-                                  GParamSpec* pspec)
-{
-    MailtcEnvelope* envelope;
-    GIcon* icon;
-    gboolean is_envelope = FALSE;
-
-    (void) pspec;
-    envelope = MAILTC_ENVELOPE (object);
-
-    icon = mailtc_envelope_get_icon (envelope);
-    if (icon)
-        is_envelope = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (icon), "mailtc_envelope"));
-
-    envelope->priv->pixbuf_is_envelope = is_envelope;
-}
-
-static void
 mailtc_envelope_notify_colour_cb (GObject*    object,
                                   GParamSpec* pspec)
 {
-    MailtcEnvelopePrivate* priv;
     MailtcEnvelope* envelope;
-    GdkPixbuf* pixbuf;
+    MailtcPixbuf* pixbuf;
 
     (void) pspec;
+    g_assert (MAILTC_IS_ENVELOPE (object));
+
     envelope = MAILTC_ENVELOPE (object);
+    pixbuf = envelope->priv->pixbuf;
 
-    g_assert (MAILTC_IS_ENVELOPE (envelope));
-
-    priv = envelope->priv;
-
-    pixbuf = mailtc_envelope_create_pixbuf (envelope);
-    g_assert (pixbuf);
-
-    mailtc_envelope_set_pixbuf_colour (pixbuf, &envelope->colour);
-
-    g_object_set_data (G_OBJECT (pixbuf), "mailtc_envelope", GUINT_TO_POINTER (1));
-    gtk_image_set_from_gicon (GTK_IMAGE (envelope), G_ICON (pixbuf), GTK_ICON_SIZE_LARGE_TOOLBAR);
-
-    if (priv->pixbuf)
-        g_object_unref (priv->pixbuf);
-
-    priv->pixbuf = pixbuf;
-}
-
-GIcon*
-mailtc_envelope_get_icon (MailtcEnvelope* envelope)
-{
-    GIcon* icon = NULL;
-
-    g_assert (MAILTC_IS_ENVELOPE (envelope));
-
-    if (gtk_image_get_storage_type (GTK_IMAGE (envelope)) == GTK_IMAGE_GICON)
-        gtk_image_get_gicon (GTK_IMAGE (envelope), &icon, NULL);
-
-    return (icon);
+    mailtc_pixbuf_set_colour (pixbuf, &envelope->colour);
+    gtk_image_set_from_gicon (GTK_IMAGE (envelope), mailtc_pixbuf_get_icon (pixbuf), GTK_ICON_SIZE_LARGE_TOOLBAR);
 }
 
 void
@@ -251,11 +141,22 @@ mailtc_envelope_finalize (GObject* object)
 }
 
 static void
+mailtc_envelope_constructed (GObject* object)
+{
+    MailtcEnvelope* envelope = MAILTC_ENVELOPE (object);
+
+    envelope->priv->pixbuf = mailtc_pixbuf_new ();
+
+    G_OBJECT_CLASS (mailtc_envelope_parent_class)->constructed (object);
+}
+
+static void
 mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 {
     GObjectClass* gobject_class;
 
     gobject_class = G_OBJECT_CLASS (klass);
+    gobject_class->constructed = mailtc_envelope_constructed;
     gobject_class->finalize = mailtc_envelope_finalize;
     gobject_class->set_property = mailtc_envelope_set_property;
     gobject_class->get_property = mailtc_envelope_get_property;
@@ -273,16 +174,10 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 static void
 mailtc_envelope_init (MailtcEnvelope* envelope)
 {
-    envelope->priv = G_TYPE_INSTANCE_GET_PRIVATE (envelope,
-                     MAILTC_TYPE_ENVELOPE, MailtcEnvelopePrivate);
-
+    envelope->priv = G_TYPE_INSTANCE_GET_PRIVATE (envelope, MAILTC_TYPE_ENVELOPE, MailtcEnvelopePrivate);
     envelope->priv->pixbuf = NULL;
-    envelope->priv->pixbuf_is_envelope = FALSE;
 
-    g_signal_connect (envelope, "notify::pixbuf",
-            G_CALLBACK (mailtc_envelope_notify_pixbuf_cb), NULL);
-    g_signal_connect (envelope, "notify::colour",
-            G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);
+    g_signal_connect (envelope, "notify::colour", G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);
 }
 
 MailtcEnvelope*

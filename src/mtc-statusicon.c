@@ -23,7 +23,7 @@
 
 #include "mtc-statusicon.h"
 #include "mtc-colour.h"
-#include "mtc-envelope.h"
+#include "mtc-pixbuf.h"
 
 #include <gtk/gtk.h>
 
@@ -32,7 +32,7 @@
 
 struct _MailtcStatusIconPrivate
 {
-    MailtcEnvelope* envelope;
+    MailtcPixbuf* pixbuf;
     GString* tooltip;
     guint nitems;
     GHashTable* items;
@@ -104,8 +104,8 @@ mailtc_status_icon_finalize (GObject* object)
     g_hash_table_destroy (priv->items);
     g_string_free (priv->tooltip, TRUE);
 
-    if (MAILTC_IS_ENVELOPE (priv->envelope))
-        g_object_unref (priv->envelope);
+    if (MAILTC_IS_PIXBUF (priv->pixbuf))
+        g_object_unref (priv->pixbuf);
 
     G_OBJECT_CLASS (mailtc_status_icon_parent_class)->finalize (object);
 }
@@ -143,16 +143,16 @@ static void
 mailtc_status_icon_init (MailtcStatusIcon* status_icon)
 {
     MailtcStatusIconPrivate* priv;
-    MailtcEnvelope* envelope;
+    MailtcPixbuf* pixbuf;
 
     status_icon->priv = G_TYPE_INSTANCE_GET_PRIVATE (status_icon,
                         MAILTC_TYPE_STATUS_ICON, MailtcStatusIconPrivate);
     priv = status_icon->priv;
 
-    envelope = mailtc_envelope_new ();
-    g_object_ref_sink (envelope);
+    pixbuf = mailtc_pixbuf_new ();
+    g_object_ref_sink (pixbuf);
 
-    priv->envelope = envelope;
+    priv->pixbuf = pixbuf;
     priv->tooltip = g_string_new (NULL);
     priv->nitems = 0;
     priv->items = g_hash_table_new_full (g_int_hash,
@@ -235,7 +235,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     MailtcStatusIconItem* dflitem;
     MailtcStatusIconItem* erritem;
     MailtcColour* colour;
-    MailtcEnvelope* envelope;
+    MailtcPixbuf* pixbuf;
     GIcon* icon;
     gchar* tmp_str;
     GString* tooltip;
@@ -249,7 +249,7 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
     tooltip = NULL;
     dflitem = NULL;
     priv = status_icon->priv;
-    envelope = priv->envelope;
+    pixbuf = priv->pixbuf;
     tooltip = priv->tooltip;
 
     g_assert (id < priv->nitems);
@@ -306,8 +306,8 @@ mailtc_status_icon_update (MailtcStatusIcon* status_icon,
         }
     }
 
-    mailtc_envelope_set_colour (envelope, colour);
-    icon = mailtc_envelope_get_icon (envelope);
+    mailtc_pixbuf_set_colour (pixbuf, colour);
+    icon = mailtc_pixbuf_get_icon (pixbuf);
     g_assert (icon);
 
     /*gtk_status_icon_set_from_gicon (GTK_STATUS_ICON (status_icon), icon);*/
@@ -336,7 +336,7 @@ mailtc_status_icon_clear (MailtcStatusIcon* status_icon)
         g_assert (item);
         item->nmails = 0;
     }
-    mailtc_envelope_set_colour (priv->envelope, NULL);
+    mailtc_pixbuf_set_colour (priv->pixbuf, NULL);
     gtk_status_icon_set_visible (GTK_STATUS_ICON (status_icon), FALSE);
 }
 
