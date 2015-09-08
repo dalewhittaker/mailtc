@@ -33,7 +33,6 @@ G_BEGIN_DECLS
 
 typedef struct _MailtcUidTable        MailtcUidTable;
 typedef struct _MailtcUidTableClass   MailtcUidTableClass;
-typedef struct _MailtcUidTablePrivate MailtcUidTablePrivate;
 
 gboolean
 mailtc_uid_table_load       (MailtcUidTable* uid_table,

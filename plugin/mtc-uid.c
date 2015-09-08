@@ -25,10 +25,10 @@ typedef enum
     UIDL_FLAG_READ = 2
 } uidl_flag;
 
-struct _MailtcUidTablePrivate
+typedef struct
 {
     GHashTable* uids;
-};
+} MailtcUidTablePrivate;
 
 struct _MailtcUidTable
 {
@@ -43,7 +43,7 @@ struct _MailtcUidTableClass
     GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcUidTable, mailtc_uid_table, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcUidTable))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcUidTable, mailtc_uid_table, G_TYPE_OBJECT)
 
 enum
 {

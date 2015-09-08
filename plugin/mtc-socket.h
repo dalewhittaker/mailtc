@@ -33,7 +33,6 @@ G_BEGIN_DECLS
 
 typedef struct _MailtcSocket        MailtcSocket;
 typedef struct _MailtcSocketClass   MailtcSocketClass;
-typedef struct _MailtcSocketPrivate MailtcSocketPrivate;
 
 gboolean
 mailtc_socket_supports_tls (void);

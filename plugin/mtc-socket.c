@@ -33,12 +33,12 @@ typedef enum
     MAILTC_SOCKET_ERROR_WRITE
 } MailtcSocketError;
 
-struct _MailtcSocketPrivate
+typedef struct
 {
     GIOStream* connection;
     GPollableInputStream* istream;
     GPollableOutputStream* ostream;
-};
+} MailtcSocketPrivate;
 
 struct _MailtcSocket
 {
@@ -53,7 +53,7 @@ struct _MailtcSocketClass
     GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcSocket))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT)
 
 enum
 {
