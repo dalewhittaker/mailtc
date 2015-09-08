@@ -25,22 +25,14 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_CONFIG_DIALOG            (mailtc_config_dialog_get_type  ())
-#define MAILTC_CONFIG_DIALOG(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialog))
-#define MAILTC_CONFIG_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogClass))
-#define MAILTC_IS_CONFIG_DIALOG(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_CONFIG_DIALOG))
-#define MAILTC_IS_CONFIG_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_CONFIG_DIALOG))
-#define MAILTC_CONFIG_DIALOG_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogClass))
+#define MAILTC_TYPE_CONFIG_DIALOG (mailtc_config_dialog_get_type  ())
 
-typedef struct _MailtcConfigDialog        MailtcConfigDialog;
-typedef struct _MailtcConfigDialogClass   MailtcConfigDialogClass;
+G_DECLARE_FINAL_TYPE              (MailtcConfigDialog, mailtc_config_dialog, MAILTC, CONFIG_DIALOG, GtkDialog)
+
 typedef struct _MailtcConfigDialogPrivate MailtcConfigDialogPrivate;
 
-GType
-mailtc_config_dialog_get_type   (void);
-
 GtkWidget*
-mailtc_config_dialog_new        (MailtcSettings* settings);
+mailtc_config_dialog_new          (MailtcSettings* settings);
 
 G_END_DECLS
 

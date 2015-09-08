@@ -27,18 +27,9 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_ACCOUNT            (mailtc_account_get_type ())
-#define MAILTC_ACCOUNT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_ACCOUNT, MailtcAccount))
-#define MAILTC_ACCOUNT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_ACCOUNT, MailtcAccountClass))
-#define MAILTC_IS_ACCOUNT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_ACCOUNT))
-#define MAILTC_IS_ACCOUNT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_ACCOUNT))
-#define MAILTC_ACCOUNT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_ACCOUNT, MailtcAccountClass))
+#define MAILTC_TYPE_ACCOUNT     (mailtc_account_get_type ())
 
-typedef struct _MailtcAccount          MailtcAccount;
-typedef struct _MailtcAccountClass     MailtcAccountClass;
-
-GType
-mailtc_account_get_type         (void);
+G_DECLARE_FINAL_TYPE            (MailtcAccount, mailtc_account, MAILTC, ACCOUNT, GObject)
 
 MailtcAccount*
 mailtc_account_new              (void);

@@ -40,7 +40,6 @@
     mailtc_object_set_pointer (G_OBJECT (account), MAILTC_TYPE_ACCOUNT, \
                                #property, &account->property, property)
 
-
 struct _MailtcAccount
 {
     GObject parent_instance;
@@ -54,11 +53,6 @@ struct _MailtcAccount
     gpointer private;
     MailtcExtension* extension;
     MailtcColour iconcolour;
-};
-
-struct _MailtcAccountClass
-{
-    GObjectClass parent_class;
 };
 
 G_DEFINE_TYPE (MailtcAccount, mailtc_account, G_TYPE_OBJECT)

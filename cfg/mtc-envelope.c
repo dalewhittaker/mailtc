@@ -22,8 +22,6 @@
 #include "mtc-pixbuf.h"
 #include "mtc-util.h"
 
-#include <gtk/gtk.h>
-
 #define MAILTC_ENVELOPE_SET_COLOUR(envelope,property) \
     mailtc_object_set_colour (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
                               #property, &envelope->property, property)
@@ -39,11 +37,6 @@ struct _MailtcEnvelope
 
     MailtcEnvelopePrivate* priv;
     MailtcColour colour;
-};
-
-struct _MailtcEnvelopeClass
-{
-    GtkImageClass parent_class;
 };
 
 G_DEFINE_TYPE_WITH_CODE (MailtcEnvelope, mailtc_envelope, GTK_TYPE_IMAGE, G_ADD_PRIVATE (MailtcEnvelope))

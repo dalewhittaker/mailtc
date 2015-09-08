@@ -82,11 +82,6 @@ struct _MailtcSettings
     gchar* filename;
 };
 
-struct _MailtcSettingsClass
-{
-    GObjectClass parent_class;
-};
-
 enum
 {
     PROP_0,

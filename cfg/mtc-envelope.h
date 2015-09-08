@@ -22,34 +22,26 @@
 
 #include "mtc-colour.h"
 
-#include <gio/gio.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_ENVELOPE            (mailtc_envelope_get_type ())
-#define MAILTC_ENVELOPE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_ENVELOPE, MailtcEnvelope))
-#define MAILTC_ENVELOPE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_ENVELOPE, MailtcEnvelopeClass))
-#define MAILTC_IS_ENVELOPE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_ENVELOPE))
-#define MAILTC_IS_ENVELOPE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_ENVELOPE))
-#define MAILTC_ENVELOPE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_ENVELOPE, MailtcEnvelopeClass))
+#define MAILTC_TYPE_ENVELOPE (mailtc_envelope_get_type ())
 
-typedef struct _MailtcEnvelope        MailtcEnvelope;
-typedef struct _MailtcEnvelopeClass   MailtcEnvelopeClass;
+G_DECLARE_FINAL_TYPE         (MailtcEnvelope, mailtc_envelope, MAILTC, ENVELOPE, GtkImage)
+
 typedef struct _MailtcEnvelopePrivate MailtcEnvelopePrivate;
 
-GType
-mailtc_envelope_get_type   (void);
-
 MailtcEnvelope*
-mailtc_envelope_new        (void);
+mailtc_envelope_new          (void);
 
 void
-mailtc_envelope_set_colour (MailtcEnvelope*     envelope,
-                            const MailtcColour* colour);
+mailtc_envelope_set_colour   (MailtcEnvelope*     envelope,
+                              const MailtcColour* colour);
 
 void
-mailtc_envelope_get_colour (MailtcEnvelope*     envelope,
-                            MailtcColour*       colour);
+mailtc_envelope_get_colour   (MailtcEnvelope*     envelope,
+                              MailtcColour*       colour);
 
 G_END_DECLS
 

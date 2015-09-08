@@ -27,15 +27,10 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_SETTINGS            (mailtc_settings_get_type ())
-#define MAILTC_SETTINGS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_SETTINGS, MailtcSettings))
-#define MAILTC_SETTINGS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_SETTINGS, MailtcSettingsClass))
-#define MAILTC_IS_SETTINGS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_SETTINGS))
-#define MAILTC_IS_SETTINGS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_SETTINGS))
-#define MAILTC_SETTINGS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_SETTINGS, MailtcSettingsClass))
+#define MAILTC_TYPE_SETTINGS        (mailtc_settings_get_type ())
 
-typedef struct _MailtcSettings        MailtcSettings;
-typedef struct _MailtcSettingsClass   MailtcSettingsClass;
+G_DECLARE_FINAL_TYPE                (MailtcSettings, mailtc_settings, MAILTC, SETTINGS, GObject)
+
 typedef struct _MailtcSettingsPrivate MailtcSettingsPrivate;
 
 void
@@ -88,9 +83,6 @@ mailtc_settings_get_modules         (MailtcSettings*      settings);
 gboolean
 mailtc_settings_write               (MailtcSettings*      settings,
                                      GError**             error);
-
-GType
-mailtc_settings_get_type            (void);
 
 MailtcSettings*
 mailtc_settings_new                 (gchar*               filename,

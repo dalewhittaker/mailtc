@@ -24,46 +24,39 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_MODULE            (mailtc_module_get_type ())
-#define MAILTC_MODULE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_MODULE, MailtcModule))
-#define MAILTC_MODULE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_MODULE, MailtcModuleClass))
-#define MAILTC_IS_MODULE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_MODULE))
-#define MAILTC_IS_MODULE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_MODULE))
-#define MAILTC_MODULE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_MODULE, MailtcModuleClass))
+#define MAILTC_TYPE_MODULE (mailtc_module_get_type ())
 
-typedef struct _MailtcModule        MailtcModule;
-typedef struct _MailtcModuleClass   MailtcModuleClass;
-typedef struct _MailtcModulePrivate MailtcModulePrivate;
+G_DECLARE_FINAL_TYPE       (MailtcModule, mailtc_module, MAILTC, MODULE, GObject)
 
-GType
-mailtc_module_get_type   (void);
+typedef struct             _MailtcModulePrivate MailtcModulePrivate;
+
 
 MailtcModule*
-mailtc_module_new        (void);
+mailtc_module_new          (void);
 
 gboolean
-mailtc_module_unload     (MailtcModule* module,
-                          GError**      error);
+mailtc_module_unload       (MailtcModule* module,
+                            GError**      error);
 
 gboolean
-mailtc_module_load       (MailtcModule* module,
-                          gchar*        filename,
-                          GError**      error);
+mailtc_module_load         (MailtcModule* module,
+                            gchar*        filename,
+                            GError**      error);
 
 gboolean
-mailtc_module_symbol     (MailtcModule* module,
-                          const gchar*  symbol_name,
-                          gpointer*     symbol,
-                          GError**      error);
+mailtc_module_symbol       (MailtcModule* module,
+                            const gchar*  symbol_name,
+                            gpointer*     symbol,
+                            GError**      error);
 
 const gchar*
-mailtc_module_get_name   (MailtcModule* module);
+mailtc_module_get_name     (MailtcModule* module);
 
 gboolean
-mailtc_module_supported  (GError** error);
+mailtc_module_supported    (GError** error);
 
 gboolean
-mailtc_module_filename   (const gchar* filename);
+mailtc_module_filename     (const gchar* filename);
 
 G_END_DECLS
 

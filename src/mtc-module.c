@@ -49,11 +49,6 @@ struct _MailtcModule
     gchar* name;
 };
 
-struct _MailtcModuleClass
-{
-    GObjectClass parent_class;
-};
-
 G_DEFINE_TYPE_WITH_CODE (MailtcModule, mailtc_module, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcModule))
 
 enum

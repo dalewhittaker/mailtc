@@ -24,28 +24,19 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_PIXBUF            (mailtc_pixbuf_get_type ())
-#define MAILTC_PIXBUF(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_PIXBUF, MailtcPixbuf))
-#define MAILTC_PIXBUF_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_PIXBUF, MailtcPixbufClass))
-#define MAILTC_IS_PIXBUF(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_PIXBUF))
-#define MAILTC_IS_PIXBUF_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_PIXBUF))
-#define MAILTC_PIXBUF_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_PIXBUF, MailtcPixbufClass))
+#define MAILTC_TYPE_PIXBUF (mailtc_pixbuf_get_type ())
 
-typedef struct _MailtcPixbuf        MailtcPixbuf;
-typedef struct _MailtcPixbufClass   MailtcPixbufClass;
-
-GType
-mailtc_pixbuf_get_type   (void);
+G_DECLARE_FINAL_TYPE       (MailtcPixbuf, mailtc_pixbuf, MAILTC, PIXBUF, GObject)
 
 MailtcPixbuf*
-mailtc_pixbuf_new        (void);
+mailtc_pixbuf_new          (void);
 
 void
-mailtc_pixbuf_set_colour (MailtcPixbuf*       pixbuf,
-                          const MailtcColour* colour);
+mailtc_pixbuf_set_colour   (MailtcPixbuf*       pixbuf,
+                            const MailtcColour* colour);
 
 GIcon*
-mailtc_pixbuf_get_icon   (MailtcPixbuf*       pixbuf);
+mailtc_pixbuf_get_icon     (MailtcPixbuf*       pixbuf);
 
 G_END_DECLS
 

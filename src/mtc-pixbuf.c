@@ -39,11 +39,6 @@ struct _MailtcPixbuf
     GIcon* icon;
 };
 
-struct _MailtcPixbufClass
-{
-    GObjectClass parent_class;
-};
-
 G_DEFINE_TYPE (MailtcPixbuf, mailtc_pixbuf, G_TYPE_OBJECT)
 
 enum

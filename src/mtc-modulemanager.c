@@ -56,11 +56,6 @@ struct _MailtcModuleManager
     MailtcModuleManagerPrivate* priv;
 };
 
-struct _MailtcModuleManagerClass
-{
-    GObjectClass parent_class;
-};
-
 static gboolean
 mailtc_module_manager_initable_init (GInitable*    initable,
                                      GCancellable* cancellable,

@@ -24,7 +24,7 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_COLOUR   (mailtc_colour_get_type ())
+#define MAILTC_TYPE_COLOUR (mailtc_colour_get_type ())
 
 struct _MailtcColour
 {
@@ -36,24 +36,24 @@ struct _MailtcColour
 typedef struct _MailtcColour MailtcColour;
 
 GType
-mailtc_colour_get_type  (void);
+mailtc_colour_get_type    (void);
 
 MailtcColour*
-mailtc_colour_copy      (const MailtcColour* colour);
+mailtc_colour_copy        (const MailtcColour* colour);
 
 void
-mailtc_colour_free      (MailtcColour* colour);
+mailtc_colour_free        (MailtcColour*       colour);
 
 gboolean
-mailtc_colour_parse     (MailtcColour* colour,
-                         const gchar*  str);
+mailtc_colour_parse       (MailtcColour*       colour,
+                           const gchar*        str);
 
 gchar*
-mailtc_colour_to_string (const MailtcColour* colour);
+mailtc_colour_to_string   (const MailtcColour* colour);
 
 gboolean
-mailtc_colour_equal     (const MailtcColour* a,
-                         const MailtcColour* b);
+mailtc_colour_equal       (const MailtcColour* a,
+                           const MailtcColour* b);
 
 G_END_DECLS
 

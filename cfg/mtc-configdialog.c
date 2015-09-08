@@ -96,11 +96,6 @@ struct _MailtcConfigDialog
     MailtcSettings* settings;
 };
 
-struct _MailtcConfigDialogClass
-{
-    GtkDialogClass parent_class;
-};
-
 G_DEFINE_TYPE_WITH_CODE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_WINDOW, G_ADD_PRIVATE (MailtcConfigDialog))
 
 enum
