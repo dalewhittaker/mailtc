@@ -35,7 +35,6 @@ G_BEGIN_DECLS
 
 typedef struct _MailtcStatusIcon        MailtcStatusIcon;
 typedef struct _MailtcStatusIconClass   MailtcStatusIconClass;
-typedef struct _MailtcStatusIconPrivate MailtcStatusIconPrivate;
 
 GType
 mailtc_status_icon_get_type           (void);

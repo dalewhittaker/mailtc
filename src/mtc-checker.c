@@ -41,13 +41,13 @@ enum
     LAST_SIGNAL
 };
 
-struct _MailtcCheckerPrivate
+typedef struct
 {
     guint idle_id;
     guint timeout_id;
     gboolean is_running;
     gboolean locked;
-};
+} MailtcCheckerPrivate;
 
 struct _MailtcChecker
 {
@@ -67,7 +67,7 @@ struct _MailtcCheckerClass
 
 static guint signals[LAST_SIGNAL];
 
-G_DEFINE_TYPE_WITH_CODE (MailtcChecker, mailtc_checker, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcChecker))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcChecker, mailtc_checker, G_TYPE_OBJECT)
 
 static gboolean
 mailtc_checker_timeout_func (MailtcChecker* checker)

@@ -76,13 +76,13 @@ enum
     LAST_SIGNAL
 };
 
-struct _MailtcApplicationPrivate
+typedef struct
 {
     GIOChannel* log;
     MailtcModuleManager* manager;
     gboolean is_running;
     gchar* directory;
-};
+} MailtcApplicationPrivate;
 
 struct _MailtcApplication
 {
@@ -104,7 +104,7 @@ struct _MailtcApplicationClass
 
 static guint signals[LAST_SIGNAL];
 
-G_DEFINE_TYPE_WITH_CODE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION, G_ADD_PRIVATE (MailtcApplication))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcApplication, mailtc_application, G_TYPE_APPLICATION)
 
 static void
 mailtc_application_quit (void)

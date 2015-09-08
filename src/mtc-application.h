@@ -35,7 +35,6 @@ G_BEGIN_DECLS
 
 typedef struct _MailtcApplication        MailtcApplication;
 typedef struct _MailtcApplicationClass   MailtcApplicationClass;
-typedef struct _MailtcApplicationPrivate MailtcApplicationPrivate;
 
 GType
 mailtc_application_get_type     (void);

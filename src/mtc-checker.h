@@ -35,7 +35,6 @@ G_BEGIN_DECLS
 
 typedef struct _MailtcChecker        MailtcChecker;
 typedef struct _MailtcCheckerClass   MailtcCheckerClass;
-typedef struct _MailtcCheckerPrivate MailtcCheckerPrivate;
 
 GType
 mailtc_checker_get_type        (void);

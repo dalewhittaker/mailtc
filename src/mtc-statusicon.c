@@ -30,13 +30,13 @@
 #define MAILTC_STATUS_ICON_ERROR   -2
 #define MAILTC_STATUS_ICON_DEFAULT -1
 
-struct _MailtcStatusIconPrivate
+typedef struct
 {
     MailtcPixbuf* pixbuf;
     GString* tooltip;
     guint nitems;
     GHashTable* items;
-};
+} MailtcStatusIconPrivate;
 
 struct _MailtcStatusIcon
 {
@@ -53,7 +53,7 @@ struct _MailtcStatusIconClass
     void (*mark_as_read) (MailtcStatusIcon* status_icon);
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON, G_ADD_PRIVATE (MailtcStatusIcon))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcStatusIcon, mailtc_status_icon, GTK_TYPE_STATUS_ICON)
 
 typedef struct
 {

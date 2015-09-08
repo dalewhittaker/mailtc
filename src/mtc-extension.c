@@ -73,7 +73,7 @@ enum
     PROP_PROTOCOLS
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcExtension, mailtc_extension, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcExtension))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcExtension, mailtc_extension, G_TYPE_OBJECT)
 
 static void
 mailtc_extension_set_compatibility (MailtcExtension* extension,
