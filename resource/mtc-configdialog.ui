@@ -261,13 +261,13 @@
   <object class="GtkImage" id="accounts_image_add">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
-    <property name="icon-name">document-properties</property>
+    <property name="icon-name">list-add</property>
     <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="accounts_image_edit">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
-    <property name="icon-name">list-add</property>
+    <property name="icon-name">document-properties</property>
     <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="accounts_image_remove">
