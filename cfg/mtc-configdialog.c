@@ -52,7 +52,7 @@ enum
     N_COMBO_COLUMNS
 };
 
-struct _MailtcConfigDialogPrivate
+typedef struct
 {
     GtkWidget* about_dialog;
     GtkWidget* account_button_extension;
@@ -86,7 +86,7 @@ struct _MailtcConfigDialogPrivate
     gulong entry_insert_text_id;
     gulong columns_changed_id;
     gulong cursor_changed_id;
-};
+} MailtcConfigDialogPrivate;
 
 struct _MailtcConfigDialog
 {
@@ -96,7 +96,7 @@ struct _MailtcConfigDialog
     MailtcSettings* settings;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_WINDOW, G_ADD_PRIVATE (MailtcConfigDialog))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcConfigDialog, mailtc_config_dialog, GTK_TYPE_WINDOW)
 
 enum
 {

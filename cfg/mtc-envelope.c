@@ -26,10 +26,10 @@
     mailtc_object_set_colour (G_OBJECT (envelope), MAILTC_TYPE_ENVELOPE, \
                               #property, &envelope->property, property)
 
-struct _MailtcEnvelopePrivate
+typedef struct
 {
     MailtcPixbuf* pixbuf;
-};
+} MailtcEnvelopePrivate;
 
 struct _MailtcEnvelope
 {
@@ -39,7 +39,7 @@ struct _MailtcEnvelope
     MailtcColour colour;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcEnvelope, mailtc_envelope, GTK_TYPE_IMAGE, G_ADD_PRIVATE (MailtcEnvelope))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcEnvelope, mailtc_envelope, GTK_TYPE_IMAGE)
 
 enum
 {

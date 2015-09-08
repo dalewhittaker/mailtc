@@ -30,8 +30,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE         (MailtcEnvelope, mailtc_envelope, MAILTC, ENVELOPE, GtkImage)
 
-typedef struct _MailtcEnvelopePrivate MailtcEnvelopePrivate;
-
 MailtcEnvelope*
 mailtc_envelope_new          (void);
 

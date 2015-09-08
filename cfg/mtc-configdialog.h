@@ -25,11 +25,9 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_CONFIG_DIALOG (mailtc_config_dialog_get_type  ())
+#define MAILTC_TYPE_CONFIG_DIALOG (mailtc_config_dialog_get_type ())
 
 G_DECLARE_FINAL_TYPE              (MailtcConfigDialog, mailtc_config_dialog, MAILTC, CONFIG_DIALOG, GtkDialog)
-
-typedef struct _MailtcConfigDialogPrivate MailtcConfigDialogPrivate;
 
 GtkWidget*
 mailtc_config_dialog_new          (MailtcSettings* settings);
