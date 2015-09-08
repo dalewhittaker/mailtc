@@ -955,6 +955,7 @@ mailtc_config_dialog_constructed (GObject* object)
     gtk_window_set_title (GTK_WINDOW (dialog), PACKAGE " Configuration");
     gtk_window_set_title (GTK_WINDOW (priv->account_dialog), PACKAGE " Configuration");
     gtk_window_set_transient_for (GTK_WINDOW (priv->account_dialog), GTK_WINDOW (dialog));
+    gtk_window_set_transient_for (GTK_WINDOW (priv->about_dialog), GTK_WINDOW (priv->account_dialog));
     gtk_entry_set_max_length (GTK_ENTRY (priv->general_entry_command), MAILTC_PATH_LENGTH);
     gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_name), MAILTC_PATH_LENGTH);
     gtk_entry_set_max_length (GTK_ENTRY (priv->account_entry_server), MAILTC_PATH_LENGTH);

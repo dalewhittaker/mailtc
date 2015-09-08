@@ -262,26 +262,31 @@
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
     <property name="icon-name">document-properties</property>
+    <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="accounts_image_edit">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
     <property name="icon-name">list-add</property>
+    <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="accounts_image_remove">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
     <property name="icon-name">list-remove</property>
+    <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="config_image_save">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
     <property name="icon-name">document-save</property>
+    <property name="margin">5</property>
   </object>
   <object class="GtkImage" id="config_image_close">
     <property name="visible">TRUE</property>
     <property name="can-focus">FALSE</property>
     <property name="icon-name">window-close</property>
+    <property name="margin">5</property>
   </object>
   <template class="MailtcConfigDialog" parent="GtkWindow">
     <property name="visible">TRUE</property>
@@ -331,8 +336,8 @@
                 <child>
                   <object class="GtkLabel" id="general_label_interval">
                     <property name="visible">TRUE</property>
-                    <property name="halign">1</property>
-                    <property name="valign">3</property>
+                    <property name="halign">GTK_ALIGN_START</property>
+                    <property name="valign">GTK_ALIGN_CENTER</property>
                     <property name="label">Interval in minutes for mail check:</property>
                   </object>
                   <packing>
@@ -343,8 +348,8 @@
                 <child>
                     <object class="GtkSpinButton" id="general_spin_interval">
                       <property name="visible">TRUE</property>
-                      <property name="halign">1</property>
-                      <property name="valign">3</property>
+                      <property name="halign">GTK_ALIGN_START</property>
+                      <property name="valign">GTK_ALIGN_CENTER</property>
                       <property name="climb-rate">1</property>
                       <property name="adjustment">general_adjust_interval</property>
                     </object>
@@ -356,8 +361,8 @@
                 <child>
                     <object class="GtkLabel" id="general_label_command">
                       <property name="visible">TRUE</property>
-                      <property name="halign">1</property>
-                      <property name="valign">3</property>
+                      <property name="halign">GTK_ALIGN_START</property>
+                      <property name="valign">GTK_ALIGN_CENTER</property>
                       <property name="label">Mail reading command:</property>
                     </object>
                   <packing>
@@ -368,8 +373,8 @@
                 <child>
                     <object class="GtkEntry" id="general_entry_command">
                       <property name="visible">TRUE</property>
-                      <property name="halign">1</property>
-                      <property name="valign">3</property>
+                      <property name="halign">GTK_ALIGN_START</property>
+                      <property name="valign">GTK_ALIGN_CENTER</property>
                       <property name="can-focus">TRUE</property>
                     </object>
                   <packing>
@@ -380,8 +385,8 @@
                 <child>
                   <object class="GtkLabel" id="general_label_icon">
                       <property name="visible">TRUE</property>
-                      <property name="halign">1</property>
-                      <property name="valign">3</property>
+                      <property name="halign">GTK_ALIGN_START</property>
+                      <property name="valign">GTK_ALIGN_CENTER</property>
                       <property name="label">Multiple icon colour:</property>
                   </object>
                   <packing>
@@ -392,8 +397,8 @@
                 <child>
                   <object class="GtkBox" id="general_box_icon">
                     <property name="visible">TRUE</property>
-                    <property name="halign">1</property>
-                    <property name="valign">3</property>
+                    <property name="halign">GTK_ALIGN_START</property>
+                    <property name="valign">GTK_ALIGN_CENTER</property>
                     <property name="orientation">horizontal</property>
                     <property name="spacing">5</property>
                     <child>
@@ -429,8 +434,8 @@
                 <child>
                     <object class="GtkLabel" id="general_label_error_icon">
                         <property name="visible">TRUE</property>
-                        <property name="halign">1</property>
-                        <property name="valign">3</property>
+                        <property name="halign">GTK_ALIGN_START</property>
+                        <property name="valign">GTK_ALIGN_CENTER</property>
                         <property name="label">Error icon colour:</property>
                     </object>
                   <packing>
@@ -441,8 +446,8 @@
                 <child>
                   <object class="GtkBox" id="general_box_error_icon">
                       <property name="visible">TRUE</property>
-                      <property name="halign">1</property>
-                      <property name="valign">3</property>
+                      <property name="halign">GTK_ALIGN_START</property>
+                      <property name="valign">GTK_ALIGN_CENTER</property>
                       <property name="orientation">horizontal</property>
                       <property name="spacing">5</property>
                       <child>
@@ -478,8 +483,8 @@
                 <child>
                     <object class="GtkLabel" id="general_label_errordlg">
                         <property name="visible">TRUE</property>
-                        <property name="halign">1</property>
-                        <property name="valign">3</property>
+                        <property name="halign">GTK_ALIGN_START</property>
+                        <property name="valign">GTK_ALIGN_CENTER</property>
                         <property name="label">Show network error icon:</property>
                     </object>
                   <packing>
@@ -490,8 +495,8 @@
                 <child>
                     <object class="GtkBox" id="general_box_errordlg">
                         <property name="visible">TRUE</property>
-                        <property name="halign">1</property>
-                        <property name="valign">3</property>
+                        <property name="halign">GTK_ALIGN_START</property>
+                        <property name="valign">GTK_ALIGN_CENTER</property>
                         <property name="orientation">horizontal</property>
                         <property name="spacing">5</property>
                         <child>
@@ -611,7 +616,7 @@
                     <property name="orientation">horizontal</property>
                     <property name="hexpand">TRUE</property>
                     <property name="halign">GTK_ALIGN_FILL</property>
-                    <property name="vexpand">TRUE</property>
+                  <!--  <property name="vexpand">TRUE</property> -->
                     <property name="valign">GTK_ALIGN_FILL</property>
                     <property name="border-width">5</property>
                     <child>
