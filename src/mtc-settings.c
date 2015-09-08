@@ -61,11 +61,11 @@ typedef enum
     MAILTC_SETTINGS_ERROR_FIND_EXTENSION = 0
 } MailtcApplicationError;
 
-struct _MailtcSettingsPrivate
+typedef struct
 {
     GKeyFile* key_file;
     GError* error;
-};
+} MailtcSettingsPrivate;
 
 struct _MailtcSettings
 {

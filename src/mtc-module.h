@@ -28,9 +28,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE       (MailtcModule, mailtc_module, MAILTC, MODULE, GObject)
 
-typedef struct             _MailtcModulePrivate MailtcModulePrivate;
-
-
 MailtcModule*
 mailtc_module_new          (void);
 

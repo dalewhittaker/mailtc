@@ -31,8 +31,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE                    (MailtcModuleManager, mailtc_module_manager, MAILTC, MODULE_MANAGER, GObject)
 
-typedef struct _MailtcModuleManagerPrivate MailtcModuleManagerPrivate;
-
 gboolean
 mailtc_module_manager_unload            (MailtcModuleManager* manager,
                                          GError**             error);

@@ -42,12 +42,12 @@ enum
     PROP_DIRECTORY
 };
 
-struct _MailtcModuleManagerPrivate
+typedef struct
 {
     GPtrArray* modules;
     gchar* directory;
     GError* error;
-};
+} MailtcModuleManagerPrivate;
 
 struct _MailtcModuleManager
 {

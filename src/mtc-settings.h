@@ -31,8 +31,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE                (MailtcSettings, mailtc_settings, MAILTC, SETTINGS, GObject)
 
-typedef struct _MailtcSettingsPrivate MailtcSettingsPrivate;
-
 void
 mailtc_settings_set_command         (MailtcSettings*      settings,
                                      const gchar*         command);

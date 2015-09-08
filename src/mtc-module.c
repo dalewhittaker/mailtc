@@ -36,10 +36,10 @@ typedef enum
 
 } MailtcModuleError;
 
-struct _MailtcModulePrivate
+typedef struct
 {
     GModule* module;
-};
+} MailtcModulePrivate;
 
 struct _MailtcModule
 {
@@ -49,7 +49,7 @@ struct _MailtcModule
     gchar* name;
 };
 
-G_DEFINE_TYPE_WITH_CODE (MailtcModule, mailtc_module, G_TYPE_OBJECT, G_ADD_PRIVATE (MailtcModule))
+G_DEFINE_TYPE_WITH_PRIVATE (MailtcModule, mailtc_module, G_TYPE_OBJECT)
 
 enum
 {
