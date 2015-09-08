@@ -24,15 +24,9 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_SOCKET            (mailtc_socket_get_type  ())
-#define MAILTC_SOCKET(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_SOCKET, MailtcSocket))
-#define MAILTC_SOCKET_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_SOCKET, MailtcSocketClass))
-#define MAILTC_IS_SOCKET(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_SOCKET))
-#define MAILTC_IS_SOCKET_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_SOCKET))
-#define MAILTC_SOCKET_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_SOCKET, MailtcSocketClass))
+#define MAILTC_TYPE_SOCKET (mailtc_socket_get_type  ())
 
-typedef struct _MailtcSocket        MailtcSocket;
-typedef struct _MailtcSocketClass   MailtcSocketClass;
+G_DECLARE_FINAL_TYPE       (MailtcSocket, mailtc_socket, MAILTC, SOCKET, GObject)
 
 gboolean
 mailtc_socket_supports_tls (void);
@@ -61,9 +55,6 @@ mailtc_socket_write        (MailtcSocket* sock,
                             const gchar*  buf,
                             gsize         len,
                             GError**      error);
-
-GType
-mailtc_socket_get_type     (void);
 
 MailtcSocket*
 mailtc_socket_new          (void);

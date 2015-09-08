@@ -27,7 +27,8 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_NET            (mailtc_net_get_type  ())
+#define MAILTC_TYPE_NET (mailtc_net_get_type  ())
+
 #define MAILTC_NET(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_NET, MailtcNet))
 #define MAILTC_NET_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_NET, MailtcNetClass))
 #define MAILTC_IS_NET(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_NET))
@@ -65,13 +66,13 @@ mailtc_net_read         (MailtcNet*   net,
                          GError**     error);
 
 gssize
-mailtc_net_write        (MailtcNet* net,
-                         GString*   msg,
-                         gboolean   debug,
-                         GError**   error);
+mailtc_net_write        (MailtcNet*   net,
+                         GString*     msg,
+                         gboolean     debug,
+                         GError**     error);
 
 void
-mailtc_net_disconnect   (MailtcNet* net);
+mailtc_net_disconnect   (MailtcNet*   net);
 
 gboolean
 mailtc_net_connect      (MailtcNet*   net,

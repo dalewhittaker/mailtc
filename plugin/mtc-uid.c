@@ -38,11 +38,6 @@ struct _MailtcUidTable
     gchar* filename;
 };
 
-struct _MailtcUidTableClass
-{
-    GObjectClass parent_class;
-};
-
 G_DEFINE_TYPE_WITH_PRIVATE (MailtcUidTable, mailtc_uid_table, G_TYPE_OBJECT)
 
 enum

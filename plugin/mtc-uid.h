@@ -24,39 +24,30 @@
 
 G_BEGIN_DECLS
 
-#define MAILTC_TYPE_UID_TABLE            (mailtc_uid_table_get_type  ())
-#define MAILTC_UID_TABLE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), MAILTC_TYPE_UID_TABLE, MailtcUidTable))
-#define MAILTC_UID_TABLE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),  MAILTC_TYPE_UID_TABLE, MailtcUidTableClass))
-#define MAILTC_IS_UID_TABLE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MAILTC_TYPE_UID_TABLE))
-#define MAILTC_IS_UID_TABLE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),  MAILTC_TYPE_UID_TABLE))
-#define MAILTC_UID_TABLE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),  MAILTC_TYPE_UID_TABLE, MailtcUidTableClass))
+#define MAILTC_TYPE_UID_TABLE (mailtc_uid_table_get_type  ())
 
-typedef struct _MailtcUidTable        MailtcUidTable;
-typedef struct _MailtcUidTableClass   MailtcUidTableClass;
+G_DECLARE_FINAL_TYPE          (MailtcUidTable, mailtc_uid_table, MAILTC, UID_TABLE, GObject)
 
 gboolean
-mailtc_uid_table_load       (MailtcUidTable* uid_table,
-                             GError**        error);
+mailtc_uid_table_load         (MailtcUidTable* uid_table,
+                               GError**        error);
 
 void
-mailtc_uid_table_age        (MailtcUidTable* uid_table);
+mailtc_uid_table_age          (MailtcUidTable* uid_table);
 
 gint64
-mailtc_uid_table_remove_old (MailtcUidTable* uid_table);
+mailtc_uid_table_remove_old   (MailtcUidTable* uid_table);
 
 void
-mailtc_uid_table_add        (MailtcUidTable* uid_table,
-                             gchar*          uid);
+mailtc_uid_table_add          (MailtcUidTable* uid_table,
+                               gchar*          uid);
 
 gboolean
-mailtc_uid_table_mark_read  (MailtcUidTable* uid_table,
-                             GError**        error);
-
-GType
-mailtc_uid_table_get_type   (void);
+mailtc_uid_table_mark_read    (MailtcUidTable* uid_table,
+                               GError**        error);
 
 MailtcUidTable*
-mailtc_uid_table_new        (gchar* filename);
+mailtc_uid_table_new          (gchar* filename);
 
 G_END_DECLS
 

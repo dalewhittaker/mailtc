@@ -48,11 +48,6 @@ struct _MailtcSocket
     gboolean tls;
 };
 
-struct _MailtcSocketClass
-{
-    GObjectClass parent_class;
-};
-
 G_DEFINE_TYPE_WITH_PRIVATE (MailtcSocket, mailtc_socket, G_TYPE_OBJECT)
 
 enum
