@@ -24,6 +24,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 		-Wall \
 		-Wextra \
+		-Wno-variadic-macros \
 		-ansi \
 		-pedantic \
 		-ggdb
