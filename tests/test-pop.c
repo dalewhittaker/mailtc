@@ -118,7 +118,6 @@ run_plugin_thread (server_data* data)
     extension = data->extension;
     g_assert (MAILTC_IS_EXTENSION (extension));
 
-    protocol = &g_array_index (data->protocols, MailtcProtocol, data->protocol);
     accdata = &data->accounts[data->protocol];
     baddata = &data->accounts[data->protocols->len];
 
