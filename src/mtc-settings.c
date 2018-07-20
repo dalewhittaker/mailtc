@@ -1,5 +1,5 @@
 /* mtc-settings.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2018 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -343,7 +343,7 @@ mailtc_settings_keyfile_write_accounts (MailtcSettings* settings)
     key_file = settings->priv->key_file;
     accounts = settings->accounts;
 
-    groups = g_new0 (gchar *, accounts->len);
+    groups = g_new0 (gchar *, accounts->len + 1);
     for (i = 0; i < accounts->len; i++)
     {
         account = g_ptr_array_index (accounts, i);
