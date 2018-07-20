@@ -1,5 +1,5 @@
 /* mtc-application.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2018 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -321,6 +321,9 @@ mailtc_application_server_init (MailtcApplication* app,
     {
         case MAILTC_MODE_DEBUG:
             mailtc_application_set_debug (app, TRUE);
+
+            /* FALL THROUGH */
+
         case MAILTC_MODE_NORMAL:
         case MAILTC_MODE_CONFIG:
             g_signal_emit (app, signals[SIGNAL_RUN], 0);

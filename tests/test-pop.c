@@ -1,5 +1,5 @@
 /* test-pop.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2018 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -103,7 +103,6 @@ run_plugin_thread (server_data* data)
 {
     MailtcAccount* account;
     MailtcExtension* extension;
-    MailtcProtocol* protocol;
     account_data* accdata;
     account_data* baddata;
     guint errval;
