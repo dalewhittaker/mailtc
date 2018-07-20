@@ -26,7 +26,6 @@ AM_CFLAGS = \
 		-Wextra \
 		-Wno-variadic-macros \
 		-ansi \
-		-pedantic \
 		-ggdb
 
 LDADD = \

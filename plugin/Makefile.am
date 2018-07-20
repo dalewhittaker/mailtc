@@ -12,8 +12,7 @@ AM_CFLAGS = \
 		-Wall \
 		-Wextra \
 		-Wno-variadic-macros \
-		-ansi \
-		-pedantic
+		-ansi
 
 if ENABLE_DEBUG
 AM_CPPFLAGS += \
