@@ -34,14 +34,14 @@
                               #property, (GObject **) (&extension->priv->property), G_OBJECT (property))
 
 #define MAILTC_EXTENSION_GET_OBJECT(extension, property) \
-                                    (extension)->priv->property ? g_object_ref ((extension)->priv->property) : NULL;
+                                    (extension)->priv->property ? (GObject *) g_object_ref ((extension)->priv->property) : NULL
 
 #define MAILTC_EXTENSION_SET_ARRAY(extension,property) \
     mailtc_object_set_array (G_OBJECT (extension), MAILTC_TYPE_EXTENSION, \
                               #property, &extension->priv->property, property)
 
 #define MAILTC_EXTENSION_GET_ARRAY(extension, property) \
-                                    (extension)->priv->property ? g_array_ref ((extension)->priv->property) : NULL;
+                                    (extension)->priv->property ? g_array_ref ((extension)->priv->property) : NULL
 
 struct _MailtcExtensionPrivate
 {
