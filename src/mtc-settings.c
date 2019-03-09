@@ -1,5 +1,5 @@
 /* mtc-settings.c
- * Copyright (C) 2009-2018 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2019 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -659,13 +659,22 @@ mailtc_settings_free_account (MailtcAccount* account)
 }
 
 static void
+mailtc_settings_free_account_func (gpointer data,
+                                   gpointer user_data)
+{
+    (void) user_data;
+
+    mailtc_settings_free_account (MAILTC_ACCOUNT (data));
+}
+
+static void
 mailtc_settings_free_accounts (MailtcSettings* settings)
 {
     g_assert (MAILTC_IS_SETTINGS (settings));
 
     if (settings->accounts)
     {
-        g_ptr_array_foreach (settings->accounts, (GFunc) mailtc_settings_free_account, NULL);
+        g_ptr_array_foreach (settings->accounts, mailtc_settings_free_account_func, NULL);
         g_ptr_array_unref (settings->accounts);
         settings->accounts = NULL;
     }

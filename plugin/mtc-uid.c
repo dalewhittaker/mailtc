@@ -1,5 +1,5 @@
 /* mtc-uid.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2019 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -205,10 +205,17 @@ mailtc_uid_table_age (MailtcUidTable* uid_table)
 }
 
 static gboolean
-mailtc_uid_table_remove_func (gchar* uidl,
-                              gchar* flags)
+mailtc_uid_table_remove_func (gpointer key,
+                              gpointer value,
+                              gpointer user_data)
 {
-    (void) uidl;
+    gchar* flags;
+
+    (void) key;
+    (void) user_data;
+
+    flags = value;
+
     return (!flags || !(*flags & UIDL_FLAG_NEW));
 }
 
