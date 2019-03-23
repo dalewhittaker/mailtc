@@ -186,7 +186,12 @@ mailtc_socket_read (MailtcSocket* sock,
             g_usleep (G_USEC_PER_SEC / TIMEOUT_FREQ);
         }
         else
+        {
+            if (error_read && error)
+                *error = error_read;
+
             break;
+        }
     }
     if (i == t)
     {
