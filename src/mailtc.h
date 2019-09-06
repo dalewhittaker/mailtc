@@ -1,5 +1,5 @@
 /* mailtc.h
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2019 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 
 #include <glib-object.h>
 
-#define MAILTC_DEFINE_TYPE(TN, t_n, t_p)                   G_DEFINE_TYPE (TN, t_n, g_type_from_name (#t_p))
+#define MAILTC_DEFINE_TYPE(TN, t_n, t_p)                   G_DEFINE_TYPE_WITH_PRIVATE (TN, t_n, g_type_from_name (#t_p))
 #define MAILTC_DEFINE_EXTENSION(TN, t_n)                   MAILTC_DEFINE_TYPE (TN, t_n, MailtcExtension)
 #define MAILTC_EXTENSION_CHECK_CLASS_CAST(klass, t_p, t_c) G_TYPE_CHECK_CLASS_CAST ((klass), g_type_from_name (#t_p), t_c)
 #define MAILTC_BASE_EXTENSION_CLASS(klass)                 MAILTC_EXTENSION_CHECK_CLASS_CAST ((klass), MailtcExtension, MailtcExtensionClass)

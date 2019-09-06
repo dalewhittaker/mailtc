@@ -230,8 +230,6 @@ mailtc_net_class_init (MailtcNetClass* klass)
     extension_class->add_account = (MailtcExtensionAddAccountFunc) mailtc_net_add_account;
     extension_class->remove_account = (MailtcExtensionRemoveAccountFunc) mailtc_net_remove_account;
     extension_class->read_messages = (MailtcExtensionReadMessagesFunc) mailtc_net_read_messages;
-
-    g_type_class_add_private (klass, sizeof (MailtcNetPrivate));
 }
 
 static void
