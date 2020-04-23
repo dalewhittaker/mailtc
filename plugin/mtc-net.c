@@ -1,5 +1,5 @@
 /* mtc-net.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -235,7 +235,7 @@ mailtc_net_class_init (MailtcNetClass* klass)
 static void
 mailtc_net_init (MailtcNet* net)
 {
-    net->priv = G_TYPE_INSTANCE_GET_PRIVATE (net, MAILTC_TYPE_NET, MailtcNetPrivate);
+    net->priv = mailtc_net_get_instance_private (net);
     net->priv->sock = NULL;
 }
 

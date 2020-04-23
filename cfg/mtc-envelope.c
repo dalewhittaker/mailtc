@@ -1,5 +1,5 @@
 /* mtc-envelope.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -167,7 +167,7 @@ mailtc_envelope_class_init (MailtcEnvelopeClass* klass)
 static void
 mailtc_envelope_init (MailtcEnvelope* envelope)
 {
-    envelope->priv = G_TYPE_INSTANCE_GET_PRIVATE (envelope, MAILTC_TYPE_ENVELOPE, MailtcEnvelopePrivate);
+    envelope->priv = mailtc_envelope_get_instance_private (envelope);
     envelope->priv->pixbuf = NULL;
 
     g_signal_connect (envelope, "notify::colour", G_CALLBACK (mailtc_envelope_notify_colour_cb), NULL);

@@ -1,5 +1,5 @@
 /* mtc-checker.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -305,7 +305,7 @@ mailtc_checker_init (MailtcChecker* checker)
 {
     MailtcCheckerPrivate* priv;
 
-    priv = checker->priv = G_TYPE_INSTANCE_GET_PRIVATE (checker, MAILTC_TYPE_CHECKER, MailtcCheckerPrivate);
+    priv = checker->priv = mailtc_checker_get_instance_private (checker);
 
     priv->idle_id = 0;
     priv->timeout_id = 0;

@@ -1,5 +1,5 @@
 /* mtc-module.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -254,9 +254,7 @@ mailtc_module_class_init (MailtcModuleClass* klass)
 static void
 mailtc_module_init (MailtcModule* module)
 {
-    module->priv = G_TYPE_INSTANCE_GET_PRIVATE (module,
-                     MAILTC_TYPE_MODULE, MailtcModulePrivate);
-
+    module->priv = mailtc_module_get_instance_private (module);
     module->priv->module = NULL;
 }
 

@@ -1,5 +1,5 @@
 /* mtc-settings.c
- * Copyright (C) 2009-2019 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -924,7 +924,7 @@ mailtc_settings_init (MailtcSettings* settings)
 {
     MailtcSettingsPrivate* priv;
 
-    priv = settings->priv = G_TYPE_INSTANCE_GET_PRIVATE (settings, MAILTC_TYPE_SETTINGS, MailtcSettingsPrivate);
+    priv = settings->priv = mailtc_settings_get_instance_private (settings);
 
     priv->key_file = NULL;
     priv->error = NULL;

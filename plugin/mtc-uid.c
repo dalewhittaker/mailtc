@@ -1,5 +1,5 @@
 /* mtc-uid.c
- * Copyright (C) 2009-2019 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -175,8 +175,7 @@ mailtc_uid_table_init (MailtcUidTable* uid_table)
 {
     MailtcUidTablePrivate* priv;
 
-    uid_table->priv = G_TYPE_INSTANCE_GET_PRIVATE (uid_table,
-                 MAILTC_TYPE_UID_TABLE, MailtcUidTablePrivate);
+    uid_table->priv = mailtc_uid_table_get_instance_private (uid_table);
 
     priv = uid_table->priv;
     priv->uids = g_hash_table_new_full (g_str_hash,

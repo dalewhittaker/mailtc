@@ -1,5 +1,5 @@
 /* mtc-statusicon.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -145,8 +145,7 @@ mailtc_status_icon_init (MailtcStatusIcon* status_icon)
     MailtcStatusIconPrivate* priv;
     MailtcPixbuf* pixbuf;
 
-    status_icon->priv = G_TYPE_INSTANCE_GET_PRIVATE (status_icon,
-                        MAILTC_TYPE_STATUS_ICON, MailtcStatusIconPrivate);
+    status_icon->priv = mailtc_status_icon_get_instance_private (status_icon);
     priv = status_icon->priv;
 
     pixbuf = mailtc_pixbuf_new ();

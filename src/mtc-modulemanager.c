@@ -1,5 +1,5 @@
 /* mtc-modulemanager.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2020 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -453,7 +453,7 @@ mailtc_module_manager_init (MailtcModuleManager* module_manager)
 {
     MailtcModuleManagerPrivate* priv;
 
-    priv = module_manager->priv = G_TYPE_INSTANCE_GET_PRIVATE (module_manager, MAILTC_TYPE_MODULE_MANAGER, MailtcModuleManagerPrivate);
+    priv = module_manager->priv = mailtc_module_manager_get_instance_private (module_manager);
     priv->error = NULL;
     priv->modules = NULL;
     priv->directory = NULL;
