@@ -8,10 +8,6 @@ AM_CPPFLAGS = \
 		$(GLIB_CFLAGS) \
 		$(GTK_CFLAGS) \
 		-I$(top_srcdir)/src \
-		-DG_DISABLE_DEPRECATED=1 \
-		-DGTK_DISABLE_DEPRECATED=1 \
-		-DGDK_PIXBUF_DISABLE_DEPRECATED=1 \
-		-DGDK_DISABLE_DEPRECATED=1 \
 		-DGDK_MULTIHEAD_SAFE=1 \
 		-DGTK_MULTIHEAD_SAFE=1 \
 		-DLIBDIR=\""$(libdir)/mailtc"\"
@@ -26,7 +22,7 @@ AM_CPPFLAGS += \
 		-DDEBUG
 
 AM_CFLAGS += \
-		-ggdb
+		-g
 endif
 
 LDADD = \

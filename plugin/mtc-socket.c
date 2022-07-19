@@ -1,5 +1,5 @@
 /* mtc-socket.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2022 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -148,8 +148,7 @@ mailtc_socket_init (MailtcSocket* sock)
 {
     MailtcSocketPrivate* priv;
 
-    sock->priv = G_TYPE_INSTANCE_GET_PRIVATE (sock,
-                 MAILTC_TYPE_SOCKET, MailtcSocketPrivate);
+    sock->priv = mailtc_socket_get_instance_private (sock);
     priv = sock->priv;
 
     priv->connection = NULL;
@@ -287,7 +286,6 @@ mailtc_socket_connect (MailtcSocket* sock,
     MailtcSocketPrivate* priv;
     GSocketClient* client;
     GSocketConnection* connection;
-    GTlsCertificateFlags flags;
 
     g_assert (MAILTC_IS_SOCKET (sock));
 
@@ -298,17 +296,6 @@ mailtc_socket_connect (MailtcSocket* sock,
 
     g_socket_client_set_timeout (client, TIMEOUT_NET);
     g_socket_client_set_tls (client, sock->tls);
-
-    /* Following flags are used to allow self-signed certificates */
-    flags = g_socket_client_get_tls_validation_flags (client);
-    flags &= ~(G_TLS_CERTIFICATE_UNKNOWN_CA |
-               G_TLS_CERTIFICATE_NOT_ACTIVATED |
-               /*G_TLS_CERTIFICATE_EXPIRED |*/
-               G_TLS_CERTIFICATE_REVOKED |
-               G_TLS_CERTIFICATE_INSECURE /*|
-               G_TLS_CERTIFICATE_BAD_IDENTITY*/);
-    flags = 0;
-    g_socket_client_set_tls_validation_flags (client, flags);
 
     connection = g_socket_client_connect_to_host (
                         client, server, port, NULL, error);

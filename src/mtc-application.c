@@ -1,5 +1,5 @@
 /* mtc-application.c
- * Copyright (C) 2009-2018 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2022 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -721,7 +721,7 @@ mailtc_application_init (MailtcApplication* app)
 {
     MailtcApplicationPrivate* priv;
 
-    priv = app->priv = G_TYPE_INSTANCE_GET_PRIVATE (app, MAILTC_TYPE_APPLICATION, MailtcApplicationPrivate);
+    priv = app->priv = mailtc_application_get_instance_private (app);
 
     app->debug = FALSE;
     app->settings = NULL;

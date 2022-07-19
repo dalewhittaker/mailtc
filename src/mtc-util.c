@@ -1,5 +1,5 @@
 /* mtc-util.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2022 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,21 @@
 gchar*
 mailtc_current_time (void)
 {
-    GTimeVal timeval;
+    GDateTime* dt;
+    gint64 realtime;
+    gchar* str;
 
-    g_get_current_time (&timeval);
-    return g_time_val_to_iso8601 (&timeval);
+    realtime = g_get_real_time () / G_USEC_PER_SEC;
+
+    dt = g_date_time_new_from_unix_utc (realtime);
+    if (!dt)
+        return NULL;
+
+    str = g_date_time_format_iso8601 (dt);
+
+    g_date_time_unref (dt);
+
+    return str;
 }
 
 void

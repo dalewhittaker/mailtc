@@ -5,7 +5,6 @@ plugin_LTLIBRARIES = net.la
 AM_CPPFLAGS = \
 		$(GLIB_CFLAGS) \
 		-I$(top_srcdir)/src \
-		-DG_DISABLE_DEPRECATED=1 \
 		-DLIBDIR=\"$(plugindir)\"
 
 AM_CFLAGS = \
@@ -19,7 +18,7 @@ AM_CPPFLAGS += \
 		-DDEBUG
 
 AM_CFLAGS += \
-		-ggdb
+		-g
 endif
 
 LDADD = \

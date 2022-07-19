@@ -1,5 +1,5 @@
 /* mtc-configdialog.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2022 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1083,7 +1083,7 @@ mailtc_config_dialog_init (MailtcConfigDialog* dialog)
 
     gtk_widget_init_template (GTK_WIDGET (dialog));
 
-    priv = dialog->priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog, MAILTC_TYPE_CONFIG_DIALOG, MailtcConfigDialogPrivate);
+    priv = dialog->priv = mailtc_config_dialog_get_instance_private (dialog);
     dialog->settings = NULL;
 
     priv->entry_insert_text_id = 0;

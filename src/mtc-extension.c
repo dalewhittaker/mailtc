@@ -1,5 +1,5 @@
 /* mtc-extension.c
- * Copyright (C) 2009-2015 Dale Whittaker <dayul@users.sf.net>
+ * Copyright (C) 2009-2022 Dale Whittaker <dayul@users.sf.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -563,8 +563,7 @@ mailtc_extension_class_init (MailtcExtensionClass* klass)
 static void
 mailtc_extension_init (MailtcExtension* extension)
 {
-    extension->priv = G_TYPE_INSTANCE_GET_PRIVATE (extension, MAILTC_TYPE_EXTENSION, MailtcExtensionPrivate);
-
+    extension->priv = mailtc_extension_get_instance_private (extension);
     extension->priv->module = NULL;
     extension->priv->protocols = NULL;
 }

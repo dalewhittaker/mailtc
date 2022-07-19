@@ -3,7 +3,7 @@ AC_PREREQ(2.57)
 m4_define([mailtc_package],[mailtc])
 m4_define([mailtc_version],[1.4.3])
 
-m4_define([glib_required_version],[GLIB_VERSION_2_44])
+m4_define([glib_required_version],[GLIB_VERSION_2_72])
 m4_define([gdk_pixbuf_required_version],[2.0.0])
 m4_define([gtk_required_version],[3.16.0])
 
