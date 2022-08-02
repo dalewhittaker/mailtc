@@ -7,7 +7,7 @@ m4_define([glib_required_version],[GLIB_VERSION_2_72])
 m4_define([gdk_pixbuf_required_version],[2.0.0])
 m4_define([gtk_required_version],[3.16.0])
 
-AC_INIT([mailtc_package],[mailtc_version],[dale@users.sf.net])
+AC_INIT([mailtc_package],[mailtc_version])
 
 AC_CONFIG_MACRO_DIR([autotools])
 AC_CONFIG_AUX_DIR([autotools])
